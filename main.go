@@ -7,6 +7,7 @@ import (
 
 	"net/http"
 
+	"./data"
 	"./logger"
 	"./whandlers"
 	"github.com/gorilla/mux"
@@ -15,21 +16,30 @@ import (
 
 var err error
 
-func main() {
+func init() {
 	//Начало работы, читаем настроечный фаил
 	if err = godotenv.Load(); err != nil {
 		fmt.Println("Can't load enc file - ", err.Error())
-		return
 	}
+}
 
+func main() {
 	//Загружаем модуль логирования
 	if err = logger.Init(os.Getenv("logger_path")); err != nil {
 		fmt.Println("Error opening logger subsystem ", err.Error())
 		return
 	}
+
+	//Подключение к базе данных
+	if err = data.ConnectDB(); err != nil {
+		logger.Info.Println("Error open DB", err.Error())
+		fmt.Println("Error open DB", err.Error())
+		return
+	}
+	defer data.GetDB().Close() // не забывает закрыть подключение
+
 	logger.Info.Println("Start work...")
 	fmt.Println("Start work...")
-
 	//----------------------------------------------------------------------
 
 	// Создаем новый ServeMux для HTTPS соединений
@@ -43,10 +53,10 @@ func main() {
 
 	//тестовая страница приветствия
 	router.HandleFunc("/hello", whandlers.TestHello).Methods("GET")
-
-
+	router.HandleFunc("/login", whandlers.LoginAcc).Methods("GET")
+	router.HandleFunc("/create", whandlers.CreateAcc).Methods("GET")
 	// Запуск HTTP сервера
-	if err = http.ListenAndServe(os.Getenv("server_ip"), handlers.LoggingHandler(os.Stdout,router)); err != nil {
+	if err = http.ListenAndServe(os.Getenv("server_ip"), handlers.LoggingHandler(os.Stdout, router)); err != nil {
 		logger.Info.Println("Server can't started ", err.Error())
 		fmt.Println("Server can't started ", err.Error())
 	}
