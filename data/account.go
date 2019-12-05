@@ -22,6 +22,7 @@ type Account struct {
 	Password string `json:"password"`
 	Point0   Point  `json:"point0",sql:"-"`
 	Point1   Point  `json:"point1",sql:"-"`
+	YaMapKey string `json:"ya_key",sql:"-"`
 	Token    string `json:"token",sql:"-"'`
 }
 
@@ -47,6 +48,11 @@ func Login(email, password string) map[string]interface{} {
 	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tk)
 	tokenString, _ := token.SignedString([]byte(os.Getenv("token_password")))
 	account.Token = tokenString
+	//Записываем координаты подложки
+	account.ParserPointsUser()
+	//Отдаем ключ для yandex map
+	account.YaMapKey = os.Getenv("ya_key")
+	//Формируем ответ
 	resp := u.Message(true, "Logged In")
 	resp["account"] = account
 	return resp
@@ -106,12 +112,12 @@ func (account *Account) Create() map[string]interface{} {
 func (account *Account) SuperCreate() *Account {
 	account.Email = "super@super"
 	account.Password = "$2a$10$ZCWyIEfEVF3KGj6OUtIeSOQ3WexMjuAZ43VSO6T.QqOndn4HN1J6C"
-	account.Point0.SetPoint(55, 55)
-	account.Point1.SetPoint(60, 20)
+	account.Point0.SetPoint(55.00000121541251, 36.000000154512121)
+	account.Point1.SetPoint(56.3, 36.5)
 	return account
 }
 
-func (account *Account) ParserPoints() {
+func (account *Account) ParserPointsUser() {
 	var str string
 	row := db.Raw("select points0 from accounts where email = ?", account.Email).Row()
 	row.Scan(&str)
