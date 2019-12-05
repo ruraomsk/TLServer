@@ -20,7 +20,9 @@ type Account struct {
 	gorm.Model
 	Email    string `json:"email"`
 	Password string `json:"password"`
-	Token    string `json:"token":sql:"-"'`
+	Point0   Point  `json:"point0",sql:"-"`
+	Point1   Point  `json:"point1",sql:"-"`
+	Token    string `json:"token",sql:"-"'`
 }
 
 //Login in system
@@ -88,6 +90,7 @@ func (account *Account) Create() map[string]interface{} {
 	if account.ID <= 0 {
 		return u.Message(false, "Failed to create account< connection error.")
 	}
+
 	//создаем токен для аккаунта
 	tk := &Token{UserID: account.ID}
 	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tk)
@@ -98,4 +101,22 @@ func (account *Account) Create() map[string]interface{} {
 	resp := u.Message(true, "Account has been created")
 	resp["account"] = account
 	return resp
+}
+
+func (account *Account) SuperCreate() *Account {
+	account.Email = "super@super"
+	account.Password = "$2a$10$ZCWyIEfEVF3KGj6OUtIeSOQ3WexMjuAZ43VSO6T.QqOndn4HN1J6C"
+	account.Point0.SetPoint(55, 55)
+	account.Point1.SetPoint(60, 20)
+	return account
+}
+
+func (account *Account) ParserPoints() {
+	var str string
+	row := db.Raw("select points0 from accounts where email = ?", account.Email).Row()
+	row.Scan(&str)
+	account.Point0.StrToFloat(str)
+	row = db.Raw("select points1 from accounts where email = ?", account.Email).Row()
+	row.Scan(&str)
+	account.Point1.StrToFloat(str)
 }

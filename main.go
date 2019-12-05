@@ -55,6 +55,7 @@ func main() {
 	router.HandleFunc("/hello", whandlers.TestHello).Methods("GET")
 	router.HandleFunc("/login", whandlers.LoginAcc).Methods("GET")
 	router.HandleFunc("/create", whandlers.CreateAcc).Methods("GET")
+	router.HandleFunc("/test",whandlers.TestHello).Methods("GET")
 	// Запуск HTTP сервера
 	if err = http.ListenAndServe(os.Getenv("server_ip"), handlers.LoggingHandler(os.Stdout, router)); err != nil {
 		logger.Info.Println("Server can't started ", err.Error())
