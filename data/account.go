@@ -11,19 +11,19 @@ import (
 
 //Token JWT claims struct
 type Token struct {
-	UserID uint
+	UserID uint     		//Уникальный ID пользователя
 	jwt.StandardClaims
 }
 
 //Account struct to user account
 type Account struct {
 	gorm.Model
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Point0   Point  `json:"point0",sql:"-"`
-	Point1   Point  `json:"point1",sql:"-"`
-	YaMapKey string `json:"ya_key",sql:"-"`
-	Token    string `json:"token",sql:"-"'`
+	Email    string `json:"email"`          //Почта пользователя
+	Password string `json:"password"` 		//Пароль
+	Point0   Point  `json:"point0",sql:"-"` //Первая точка области
+	Point1   Point  `json:"point1",sql:"-"` //Вторая точка области
+	YaMapKey string `json:"ya_key",sql:"-"` //Ключ доступа к ндекс карте
+	Token    string `json:"token",sql:"-"'` //Токен пользователя
 }
 
 //Login in system
@@ -52,9 +52,12 @@ func Login(email, password string) map[string]interface{} {
 	account.ParserPointsUser()
 	//Отдаем ключ для yandex map
 	account.YaMapKey = os.Getenv("ya_key")
+	//Получить информацию о сфетофорах которые входят в начальную зану
+	tflight := GetLightsFromBD(account.Point0, account.Point1)
 	//Формируем ответ
 	resp := u.Message(true, "Logged In")
 	resp["account"] = account
+	resp["tflight"] = tflight
 	return resp
 
 }
@@ -85,6 +88,7 @@ func (account *Account) Validate() (map[string]interface{}, bool) {
 
 }
 
+//Create создание аккаунта для пользователей
 func (account *Account) Create() map[string]interface{} {
 	if resp, ok := account.Validate(); !ok {
 		return resp
@@ -109,6 +113,7 @@ func (account *Account) Create() map[string]interface{} {
 	return resp
 }
 
+//SuperCreate создание суперпользователя
 func (account *Account) SuperCreate() *Account {
 	account.Email = "super@super"
 	account.Password = "$2a$10$ZCWyIEfEVF3KGj6OUtIeSOQ3WexMjuAZ43VSO6T.QqOndn4HN1J6C"
@@ -117,6 +122,7 @@ func (account *Account) SuperCreate() *Account {
 	return account
 }
 
+//ParserPointsUser заполняет поля Point в аккаунт
 func (account *Account) ParserPointsUser() {
 	var str string
 	row := db.Raw("select points0 from accounts where email = ?", account.Email).Row()
