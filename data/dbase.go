@@ -27,17 +27,26 @@ func ConnectDB() error {
 	// defer conn.Close()
 
 	db = conn
-	db.Table("accounts").AutoMigrate(Account{})
-	//Добавляю в созданную таблицу 2 колонки с координатами начального поля
-	db.Table("accounts").Exec("alter table accounts add points0 point")
-	db.Table("accounts").Exec("alter table accounts add points1 point")
+	if !db.HasTable(Account{}) {
+		if err = db.Table("accounts").AutoMigrate(Account{}).Error; err != nil {
+			return err
+		}
+		//Добавляю в созданную таблицу 2 колонки с координатами начального поля
+		if err = db.Table("accounts").Exec("alter table accounts add points0 point").Error; err != nil {
+			return err
+		}
+		if err = db.Table("accounts").Exec("alter table accounts add points1 point").Error; err != nil {
+			return err
+		}
 
-	// Супер пользователь
-	acc := Account{}
-	db.Table("accounts").Create(acc.SuperCreate())
-	//Записываю координаты в базу!!!
-	db.Exec(acc.Point0.ToSqlString("accounts", "points0", acc.Email))
-	db.Exec(acc.Point1.ToSqlString("accounts", "points1", acc.Email))
+		// Супер пользователь
+		acc := Account{}
+		db.Table("accounts").Create(acc.SuperCreate())
+		//Записываю координаты в базу!!!
+		db.Exec(acc.Point0.ToSqlString("accounts", "points0", acc.Email))
+		db.Exec(acc.Point1.ToSqlString("accounts", "points1", acc.Email))
+
+	}
 
 	return nil
 }

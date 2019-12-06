@@ -3,11 +3,12 @@ package data
 import "fmt"
 
 type TrafficLights struct {
-	ID          string `json:"ID"`
-	Description string `json:"description"`
-	Points      Point  `json:"points"`
+	ID          string `json:"ID"`				//Уникальный ID светофора
+	Description string `json:"description"`     //Описание светофора
+	Points      Point  `json:"points"`			//Координата где находится светофор
 }
 
+//GetLightsFromBD возвращает массив в котором содержатся светофоры, которые попали в указанную область
 func GetLightsFromBD(point0 Point, point1 Point) (tfdata []TrafficLights) {
 	var dgis string
 	temp := &TrafficLights{}
