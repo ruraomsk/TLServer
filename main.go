@@ -2,13 +2,15 @@ package main
 
 import (
 	"fmt"
-	"github.com/gorilla/handlers"
 	"os"
+
+	"github.com/gorilla/handlers"
 
 	"net/http"
 
 	"./data"
 	"./logger"
+	u "./utils"
 	"./whandlers"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
@@ -50,12 +52,14 @@ func main() {
 	router.Handle("/", http.FileServer(http.Dir("./views/")))
 	//страница с ресурсами картинки, подложка и тд...
 	router.PathPrefix("/static/").Handler(http.Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/")))))
-
 	//тестовая страница приветствия
+
 	router.HandleFunc("/hello", whandlers.TestHello).Methods("GET")
 	router.HandleFunc("/login", whandlers.LoginAcc).Methods("GET")
 	router.HandleFunc("/create", whandlers.CreateAcc).Methods("GET")
-	router.HandleFunc("/test",whandlers.TestHello).Methods("GET")
+	router.HandleFunc("/test", whandlers.TestHello).Methods("GET")
+	router.HandleFunc("/testtoken", whandlers.TestToken).Methods("GET")
+	router.Use(u.JwtAuth)
 	// Запуск HTTP сервера
 	if err = http.ListenAndServe(os.Getenv("server_ip"), handlers.LoggingHandler(os.Stdout, router)); err != nil {
 		logger.Info.Println("Server can't started ", err.Error())

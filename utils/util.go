@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 )
-sdewdewdddgffthtrhrtttbhfhr5tt5ter4r4
+
 func Message(status bool, message string) map[string]interface{} {
 	return map[string]interface{}{"status": status, "message": message}
 }
