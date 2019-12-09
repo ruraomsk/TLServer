@@ -7,10 +7,9 @@ import (
 	"github.com/gorilla/handlers"
 
 	"net/http"
-
+	"./routAuth"
 	"./data"
 	"./logger"
-	u "./utils"
 	"./whandlers"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
@@ -59,7 +58,7 @@ func main() {
 	router.HandleFunc("/create", whandlers.CreateAcc).Methods("GET")
 	router.HandleFunc("/test", whandlers.TestHello).Methods("GET")
 	router.HandleFunc("/testtoken", whandlers.TestToken).Methods("GET")
-	router.Use(u.JwtAuth)
+	router.Use(routAuth.JwtAuth)
 	// Запуск HTTP сервера
 	if err = http.ListenAndServe(os.Getenv("server_ip"), handlers.LoggingHandler(os.Stdout, router)); err != nil {
 		logger.Info.Println("Server can't started ", err.Error())

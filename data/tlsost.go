@@ -3,9 +3,9 @@ package data
 import "fmt"
 
 type TrafficLights struct {
-	ID          string `json:"ID"`				//Уникальный ID светофора
-	Description string `json:"description"`     //Описание светофора
-	Points      Point  `json:"points"`			//Координата где находится светофор
+	ID          string `json:"ID"`          //Уникальный ID светофора
+	Description string `json:"description"` //Описание светофора
+	Points      Point  `json:"points"`      //Координата где находится светофор
 }
 
 //GetLightsFromBD возвращает массив в котором содержатся светофоры, которые попали в указанную область

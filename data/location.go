@@ -7,7 +7,7 @@ import (
 )
 
 type Point struct {
-	X, Y float64    //Координата Х и Y
+	X, Y float64 //Координата Х и Y
 }
 
 //GetPoint возврашает значение координат

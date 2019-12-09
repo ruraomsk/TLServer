@@ -7,11 +7,12 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"os"
 	"strings"
+	"time"
 )
 
 //Token JWT claims struct
 type Token struct {
-	UserID uint     		//Уникальный ID пользователя
+	UserID uint //Уникальный ID пользователя
 	jwt.StandardClaims
 }
 
@@ -19,7 +20,7 @@ type Token struct {
 type Account struct {
 	gorm.Model
 	Email    string `json:"email"`          //Почта пользователя
-	Password string `json:"password"` 		//Пароль
+	Password string `json:"password"`       //Пароль
 	Point0   Point  `json:"point0",sql:"-"` //Первая точка области
 	Point1   Point  `json:"point1",sql:"-"` //Вторая точка области
 	YaMapKey string `json:"ya_key",sql:"-"` //Ключ доступа к ндекс карте
@@ -45,7 +46,13 @@ func Login(email, password string) map[string]interface{} {
 	//Залогинились, создаем токен
 	account.Password = ""
 	tk := &Token{UserID: account.ID}
+	//врямя выдачи токена
+	tk.IssuedAt = time.Now().Unix()
+	//время когда закончится действие токена (10 часов)
+	tk.ExpiresAt = time.Now().Add(time.Hour * 10).Unix()
+
 	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tk)
+
 	tokenString, _ := token.SignedString([]byte(os.Getenv("token_password")))
 	account.Token = tokenString
 	//Записываем координаты подложки
@@ -101,11 +108,14 @@ func (account *Account) Create() map[string]interface{} {
 		return u.Message(false, "Failed to create account< connection error.")
 	}
 
+	db.Exec(account.Point0.ToSqlString("accounts", "points0", account.Email))
+	db.Exec(account.Point1.ToSqlString("accounts", "points1", account.Email))
+
 	//создаем токен для аккаунта
-	tk := &Token{UserID: account.ID}
-	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tk)
-	tokenString, _ := token.SignedString([]byte(os.Getenv("token_password")))
-	account.Token = tokenString
+	//tk := &Token{UserID: account.ID}
+	//token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tk)
+	//tokenString, _ := token.SignedString([]byte(os.Getenv("token_password")))
+	//account.Token = tokenString
 
 	account.Password = ""
 	resp := u.Message(true, "Account has been created")
