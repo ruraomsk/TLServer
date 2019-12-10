@@ -48,6 +48,7 @@ func main() {
 	//основной обработчик
 	//корневая страница (загружаемый файл)
 	// router.Handle("/", http.FileServer(http.Dir("./views/")))
+	//asdasd
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./views/screen.html")
 	})
