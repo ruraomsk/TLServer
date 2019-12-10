@@ -14,9 +14,8 @@
 //        alert(JSON.stringify(account));
 //    }
 //}
-//T<FYSQ D HJN <KZNM
-    $(function(){
-        $("#submit").click(function(){
+    function check(){
+//        $("#submit").click(function(){
         var account = {login:$("#login").val(), password:$("#password").val()};
 //            alert($("#login").val() + " : " + $("#password").val());
 //        alert(JSON.stringify(account));
@@ -25,5 +24,6 @@
                    function(){
                        alert("Success!");
                    });
-        });
-    });
+                   alert(JSON.stringify(account));
+//        });
+    };
