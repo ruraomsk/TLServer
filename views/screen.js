@@ -16,14 +16,14 @@
 //}
 
     $(function(){
-        $("button").click(function(){
+        $("#submit").click(function(){
         var account = {login:$("#login").val(), password:$("#password").val()};
 //            alert($("#login").val() + " : " + $("#password").val());
 //        alert(JSON.stringify(account));
             $.post("/login",
-                    JSON.stringify(account),
-                    function(){
-                        alert("Success!");
-                    });
+                   JSON.stringify(account),
+                   function(){
+                       alert("Success!");
+                   });
         });
     });
