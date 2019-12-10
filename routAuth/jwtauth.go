@@ -15,21 +15,21 @@ var JwtAuth = func(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		//заполняем срез путями которые не нужно проверять токеном
 		//нужно бы перейти на саброутер чтобы не писать это!
-		notAuth := []string{
-			"/login",
-			"/test",
-			"/static/",
-			"/hello",
-			"/create",
-		}
-		requestPath := r.URL.Path
-		//если введенный путь совпал вываливаемся на исполнение
-		for _, val := range notAuth {
-			if val == requestPath {
-				next.ServeHTTP(w, r)
-				return
-			}
-		}
+		//notAuth := []string{
+		//	"/login",
+		//	"/test",
+		//	"/static/",
+		//	"/hello",
+		//	"/create",
+		//}
+		//requestPath := r.URL.Path
+		////если введенный путь совпал вываливаемся на исполнение
+		//for _, val := range notAuth {
+		//	if val == requestPath {
+		//		next.ServeHTTP(w, r)
+		//		return
+		//	}
+		//}
 
 		tokenHeader := r.Header.Get("Authorization")
 		//проверка если ли токен, если нету ошибка 403 нужно авторизироваться!

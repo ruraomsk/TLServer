@@ -8,6 +8,7 @@ import (
 
 	"./data"
 	"./logger"
+	"./routAuth"
 	"./whandlers"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
@@ -55,12 +56,16 @@ func main() {
 	router.PathPrefix("/static/").Handler(http.Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/")))))
 	//тестовая страница приветствия
 
-	router.HandleFunc("/hello", whandlers.TestHello).Methods("GET")
 	router.HandleFunc("/login", whandlers.LoginAcc).Methods("POST")
-	router.HandleFunc("/create", whandlers.CreateAcc).Methods("POST")
 	router.HandleFunc("/test", whandlers.TestHello).Methods("GET")
-	router.HandleFunc("/testtoken", whandlers.TestToken).Methods("GET")
-	//router.Use(routAuth.JwtAuth)
+
+	subRout := router.PathPrefix("/").Subrouter()
+	subRout.Use(routAuth.JwtAuth)
+	subRout.HandleFunc("/create", whandlers.CreateAcc).Methods("POST")
+	subRout.HandleFunc("/hello", whandlers.TestHello).Methods("GET")
+	subRout.HandleFunc("/test1", whandlers.TestHello).Methods("GET")
+	subRout.HandleFunc("/testtoken", whandlers.TestToken).Methods("GET")
+
 	// Запуск HTTP сервера
 	if err = http.ListenAndServe(os.Getenv("server_ip"), handlers.LoggingHandler(os.Stdout, router)); err != nil {
 		logger.Info.Println("Server can't started ", err.Error())

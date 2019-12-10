@@ -56,11 +56,14 @@ func Login(login, password string) map[string]interface{} {
 
 	tokenString, _ := token.SignedString([]byte(os.Getenv("token_password")))
 	account.Token = tokenString
+	account.ParserPointsUser()
+	trlight := GetLightsFromBD(account.Point0, account.Point1)
 	//Записываем координаты подложки
 	account.ParserPointsUser()
 	//Формируем ответ
 	resp := u.Message(true, "Logged In")
 	resp["login"] = account.Login
+	resp["trlight"] = trlight
 	resp["token"] = tokenString
 	return resp
 
