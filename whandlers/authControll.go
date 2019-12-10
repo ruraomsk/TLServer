@@ -15,7 +15,7 @@ var LoginAcc = func(w http.ResponseWriter, r *http.Request) {
 		u.Respond(w, u.Message(false, "Invalid request"))
 		return
 	}
-	resp := data.Login(account.Email, account.Password)
+	resp := data.Login(account.Login, account.Password)
 	u.Respond(w, resp)
 }
 

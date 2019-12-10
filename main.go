@@ -6,13 +6,12 @@ import (
 
 	"github.com/gorilla/handlers"
 
-	"net/http"
-	"./routAuth"
 	"./data"
 	"./logger"
 	"./whandlers"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
+	"net/http"
 )
 
 var err error
@@ -48,17 +47,20 @@ func main() {
 
 	//основной обработчик
 	//корневая страница (загружаемый файл)
-	router.Handle("/", http.FileServer(http.Dir("./views/")))
+	// router.Handle("/", http.FileServer(http.Dir("./views/")))
+	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./views/screen.html")
+	})
 	//страница с ресурсами картинки, подложка и тд...
 	router.PathPrefix("/static/").Handler(http.Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/")))))
 	//тестовая страница приветствия
 
 	router.HandleFunc("/hello", whandlers.TestHello).Methods("GET")
-	router.HandleFunc("/login", whandlers.LoginAcc).Methods("GET")
-	router.HandleFunc("/create", whandlers.CreateAcc).Methods("GET")
+	router.HandleFunc("/login", whandlers.LoginAcc).Methods("POST")
+	router.HandleFunc("/create", whandlers.CreateAcc).Methods("POST")
 	router.HandleFunc("/test", whandlers.TestHello).Methods("GET")
 	router.HandleFunc("/testtoken", whandlers.TestToken).Methods("GET")
-	router.Use(routAuth.JwtAuth)
+	//router.Use(routAuth.JwtAuth)
 	// Запуск HTTP сервера
 	if err = http.ListenAndServe(os.Getenv("server_ip"), handlers.LoggingHandler(os.Stdout, router)); err != nil {
 		logger.Info.Println("Server can't started ", err.Error())

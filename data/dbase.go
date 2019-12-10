@@ -1,11 +1,11 @@
 package data
 
 import (
+	"../logger"
 	"fmt"
-	"os"
-
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"os"
 )
 
 var db *gorm.DB
@@ -28,6 +28,7 @@ func ConnectDB() error {
 
 	db = conn
 	if !db.HasTable(Account{}) {
+		logger.Info.Println("Didn't find the Accounts table, created it with SuperUser")
 		if err = db.Table("accounts").AutoMigrate(Account{}).Error; err != nil {
 			return err
 		}
@@ -41,10 +42,11 @@ func ConnectDB() error {
 
 		// Супер пользователь
 		acc := Account{}
+
 		db.Table("accounts").Create(acc.SuperCreate())
 		//Записываю координаты в базу!!!
-		db.Exec(acc.Point0.ToSqlString("accounts", "points0", acc.Email))
-		db.Exec(acc.Point1.ToSqlString("accounts", "points1", acc.Email))
+		db.Exec(acc.Point0.ToSqlString("accounts", "points0", acc.Login))
+		db.Exec(acc.Point1.ToSqlString("accounts", "points1", acc.Login))
 
 	}
 

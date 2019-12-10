@@ -6,35 +6,36 @@ import (
 	"github.com/jinzhu/gorm"
 	"golang.org/x/crypto/bcrypt"
 	"os"
-	"strings"
 	"time"
 )
 
 //Token JWT claims struct
 type Token struct {
-	UserID uint //Уникальный ID пользователя
+	UserID uint   //Уникальный ID пользователя
+	Login  string //Уникальный логин пользователя
 	jwt.StandardClaims
 }
 
 //Account struct to user account
 type Account struct {
 	gorm.Model
-	Email    string `json:"email"`          //Почта пользователя
-	Password string `json:"password"`       //Пароль
-	Point0   Point  `json:"point0",sql:"-"` //Первая точка области
-	Point1   Point  `json:"point1",sql:"-"` //Вторая точка области
-	YaMapKey string `json:"ya_key",sql:"-"` //Ключ доступа к ндекс карте
-	Token    string `json:"token",sql:"-"'` //Токен пользователя
+	Login    string        `json:"login",sql:"login"` //Имя пользователя
+	Password string        `json:"password"`          //Пароль
+	Point0   Point         `json:"point0",sql:"-"`    //Первая точка области
+	Point1   Point         `json:"point1",sql:"-"`    //Вторая точка области
+	WTime    time.Duration `json:"wtime",sql:"wtime"` //Время работы пользователя в часах
+	YaMapKey string        `json:"ya_key",sql:"-"`    //Ключ доступа к ндекс карте
+	Token    string        `json:"token",sql:"-"'`    //Токен пользователя
 }
 
 //Login in system
-func Login(email, password string) map[string]interface{} {
+func Login(login, password string) map[string]interface{} {
 	account := &Account{}
 	//Забираю из базы запись с подходящей почтой
-	err := GetDB().Table("accounts").Where("email = ?", email).First(account).Error
+	err := GetDB().Table("accounts").Where("login = ?", login).First(account).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return u.Message(false, "Email address not found")
+			return u.Message(false, "login not found")
 		}
 		return u.Message(false, "Connection error. Please try again")
 	}
@@ -45,11 +46,11 @@ func Login(email, password string) map[string]interface{} {
 	}
 	//Залогинились, создаем токен
 	account.Password = ""
-	tk := &Token{UserID: account.ID}
+	tk := &Token{UserID: account.ID, Login: account.Login}
 	//врямя выдачи токена
 	tk.IssuedAt = time.Now().Unix()
-	//время когда закончится действие токена (10 часов)
-	tk.ExpiresAt = time.Now().Add(time.Hour * 10).Unix()
+	//время когда закончится действие токена
+	tk.ExpiresAt = time.Now().Add(time.Hour * account.WTime).Unix()
 
 	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tk)
 
@@ -57,38 +58,30 @@ func Login(email, password string) map[string]interface{} {
 	account.Token = tokenString
 	//Записываем координаты подложки
 	account.ParserPointsUser()
-	//Отдаем ключ для yandex map
-	account.YaMapKey = os.Getenv("ya_key")
-	//Получить информацию о сфетофорах которые входят в начальную зану
-	tflight := GetLightsFromBD(account.Point0, account.Point1)
 	//Формируем ответ
 	resp := u.Message(true, "Logged In")
-	resp["account"] = account
-	resp["tflight"] = tflight
+	resp["login"] = account.Login
+	resp["token"] = tokenString
 	return resp
 
 }
 
 //Validate checking for an account in the database
 func (account *Account) Validate() (map[string]interface{}, bool) {
-	if !strings.Contains(account.Email, "@") {
-		return u.Message(false, "Email address is required"), false
-	}
-
 	if len(account.Password) < 6 {
 		return u.Message(false, "Password is required"), false
 	}
 
-	//Email mast be unique
+	//login mast be unique
 	temp := &Account{}
 
-	//check for error and duplicate emails
-	err := GetDB().Table("accounts").Where("email = ?", account.Email).First(temp).Error
+	//check for error and duplicate login
+	err := GetDB().Table("accounts").Where("login = ?", account.Login).First(temp).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return u.Message(false, "Connection error, please try again"), false
 	}
-	if temp.Email != "" {
-		return u.Message(false, "Email address already in use by another user."), false
+	if temp.Login != "" {
+		return u.Message(false, "login already in use by another user."), false
 	}
 
 	return u.Message(false, "Requirement passed"), true
@@ -101,31 +94,31 @@ func (account *Account) Create() map[string]interface{} {
 		return resp
 	}
 
+	//Отдаем ключ для yandex map
+	account.YaMapKey = os.Getenv("ya_key")
+
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(account.Password), bcrypt.DefaultCost)
 	account.Password = string(hashedPassword)
 	GetDB().Table("accounts").Create(account)
 	if account.ID <= 0 {
-		return u.Message(false, "Failed to create account< connection error.")
+		return u.Message(false, "Failed to create account, connection error.")
 	}
 
-	db.Exec(account.Point0.ToSqlString("accounts", "points0", account.Email))
-	db.Exec(account.Point1.ToSqlString("accounts", "points1", account.Email))
-
-	//создаем токен для аккаунта
-	//tk := &Token{UserID: account.ID}
-	//token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tk)
-	//tokenString, _ := token.SignedString([]byte(os.Getenv("token_password")))
-	//account.Token = tokenString
+	db.Exec(account.Point0.ToSqlString("accounts", "points0", account.Login))
+	db.Exec(account.Point1.ToSqlString("accounts", "points1", account.Login))
 
 	account.Password = ""
 	resp := u.Message(true, "Account has been created")
-	resp["account"] = account
+	resp["login"] = account.Login
 	return resp
 }
 
 //SuperCreate создание суперпользователя
 func (account *Account) SuperCreate() *Account {
-	account.Email = "super@super"
+	account.Login = "Super"
+	//Отдаем ключ для yandex map
+	account.YaMapKey = os.Getenv("ya_key")
+	account.WTime = 24
 	account.Password = "$2a$10$ZCWyIEfEVF3KGj6OUtIeSOQ3WexMjuAZ43VSO6T.QqOndn4HN1J6C"
 	account.Point0.SetPoint(55.00000121541251, 36.000000154512121)
 	account.Point1.SetPoint(56.3, 36.5)
@@ -135,10 +128,10 @@ func (account *Account) SuperCreate() *Account {
 //ParserPointsUser заполняет поля Point в аккаунт
 func (account *Account) ParserPointsUser() {
 	var str string
-	row := db.Raw("select points0 from accounts where email = ?", account.Email).Row()
+	row := db.Raw("select points0 from accounts where login = ?", account.Login).Row()
 	row.Scan(&str)
 	account.Point0.StrToFloat(str)
-	row = db.Raw("select points1 from accounts where email = ?", account.Email).Row()
+	row = db.Raw("select points1 from accounts where login = ?", account.Login).Row()
 	row.Scan(&str)
 	account.Point1.StrToFloat(str)
 }

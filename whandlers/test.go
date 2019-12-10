@@ -9,7 +9,7 @@ import (
 //TestHello
 var TestHello = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	account := &data.Account{}
-	data.GetDB().Table("accounts").Where("email = ?", "super@super").First(&account)
+	data.GetDB().Table("accounts").Where("login = ?", "Super").First(&account)
 	account.ParserPointsUser()
 	tflight := data.GetLightsFromBD(account.Point0, account.Point1)
 	resp := u.Message(true, "Hello")
