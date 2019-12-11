@@ -32,3 +32,4 @@ var CreateAcc = func(w http.ResponseWriter, r *http.Request) {
 	resp := account.Create()
 	u.Respond(w, r, resp)
 }
+

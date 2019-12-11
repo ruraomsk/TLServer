@@ -51,7 +51,7 @@ func main() {
 	// router.Handle("/", http.FileServer(http.Dir("./views/")))
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./views/screen.html")
-	})
+	}).Methods("GET")
 	//страница с ресурсами картинки, подложка и тд...
 	router.PathPrefix("/static/").Handler(http.Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/")))))
 	//тестовая страница приветствия
