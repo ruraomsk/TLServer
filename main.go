@@ -57,14 +57,14 @@ func main() {
 	//тестовая страница приветствия
 
 	router.HandleFunc("/login", whandlers.LoginAcc).Methods("POST")
-	router.HandleFunc("/test", whandlers.TestHello).Methods("GET")
+	router.HandleFunc("/test", whandlers.TestHello).Methods("POST")
 
 	subRout := router.PathPrefix("/").Subrouter()
 	subRout.Use(routAuth.JwtAuth)
 	subRout.HandleFunc("/create", whandlers.CreateAcc).Methods("POST")
-	subRout.HandleFunc("/hello", whandlers.TestHello).Methods("GET")
-	subRout.HandleFunc("/test1", whandlers.TestHello).Methods("GET")
-	subRout.HandleFunc("/testtoken", whandlers.TestToken).Methods("GET")
+	subRout.HandleFunc("/hello", whandlers.TestHello).Methods("POST")
+	subRout.HandleFunc("/test1", whandlers.TestHello).Methods("POST")
+	subRout.HandleFunc("/testtoken", whandlers.TestToken).Methods("POST")
 
 	// Запуск HTTP сервера
 	if err = http.ListenAndServe(os.Getenv("server_ip"), handlers.LoggingHandler(os.Stdout, router)); err != nil {

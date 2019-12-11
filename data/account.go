@@ -13,6 +13,7 @@ import (
 type Token struct {
 	UserID uint   //Уникальный ID пользователя
 	Login  string //Уникальный логин пользователя
+	IP     string //IP пользователя
 	jwt.StandardClaims
 }
 
@@ -29,7 +30,7 @@ type Account struct {
 }
 
 //Login in system
-func Login(login, password string) map[string]interface{} {
+func Login(login, password, ip string) map[string]interface{} {
 	account := &Account{}
 	//Забираю из базы запись с подходящей почтой
 	err := GetDB().Table("accounts").Where("login = ?", login).First(account).Error
@@ -41,12 +42,12 @@ func Login(login, password string) map[string]interface{} {
 	}
 	//Сравниваю хэши полученного пароля и пароля взятого из БД
 	err = bcrypt.CompareHashAndPassword([]byte(account.Password), []byte(password))
-	if err != nil && err != bcrypt.ErrMismatchedHashAndPassword {
+	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
 		return u.Message(false, "Invalid login credentials. Please try again")
 	}
 	//Залогинились, создаем токен
 	account.Password = ""
-	tk := &Token{UserID: account.ID, Login: account.Login}
+	tk := &Token{UserID: account.ID, Login: account.Login, IP: ip}
 	//врямя выдачи токена
 	tk.IssuedAt = time.Now().Unix()
 	//время когда закончится действие токена
@@ -57,13 +58,13 @@ func Login(login, password string) map[string]interface{} {
 	tokenString, _ := token.SignedString([]byte(os.Getenv("token_password")))
 	account.Token = tokenString
 	account.ParserPointsUser()
-	trlight := GetLightsFromBD(account.Point0, account.Point1)
+	// trlight := GetLightsFromBD(account.Point0, account.Point1)
 	//Записываем координаты подложки
-	account.ParserPointsUser()
+	// account.ParserPointsUser()
 	//Формируем ответ
 	resp := u.Message(true, "Logged In")
 	resp["login"] = account.Login
-	resp["trlight"] = trlight
+	// resp["trlight"] = trlight
 	resp["token"] = tokenString
 	return resp
 

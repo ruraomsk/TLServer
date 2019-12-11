@@ -13,39 +13,21 @@ import (
 
 var JwtAuth = func(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		//заполняем срез путями которые не нужно проверять токеном
-		//нужно бы перейти на саброутер чтобы не писать это!
-		//notAuth := []string{
-		//	"/login",
-		//	"/test",
-		//	"/static/",
-		//	"/hello",
-		//	"/create",
-		//}
-		//requestPath := r.URL.Path
-		////если введенный путь совпал вываливаемся на исполнение
-		//for _, val := range notAuth {
-		//	if val == requestPath {
-		//		next.ServeHTTP(w, r)
-		//		return
-		//	}
-		//}
-
 		tokenHeader := r.Header.Get("Authorization")
+		ip := strings.Split(r.RemoteAddr, ":")
 		//проверка если ли токен, если нету ошибка 403 нужно авторизироваться!
 		if tokenHeader == "" {
 			response := u.Message(false, "Missing auth token")
 			w.WriteHeader(http.StatusForbidden)
-			u.Respond(w, response)
+			u.Respond(w, response, ip[0])
 			return
 		}
-
 		//токен приходит строкой в формате {слово пробел слово} разделяем строку и забираем нужную нам часть
 		splitted := strings.Split(tokenHeader, " ")
 		if len(splitted) != 2 {
 			response := u.Message(false, "Invalid token")
 			w.WriteHeader(http.StatusForbidden)
-			u.Respond(w, response)
+			u.Respond(w, response, ip[0])
 			return
 		}
 		//берем часть где хранится токен
@@ -60,7 +42,14 @@ var JwtAuth = func(next http.Handler) http.Handler {
 		if err != nil {
 			response := u.Message(false, "Wrong auth token")
 			w.WriteHeader(http.StatusForbidden)
-			u.Respond(w, response)
+			u.Respond(w, response, ip[0])
+			return
+		}
+
+		if tk.IP != ip[0] {
+			response := u.Message(false, "invalid token, log in again")
+			w.WriteHeader(http.StatusForbidden)
+			u.Respond(w, response, ip[0])
 			return
 		}
 
@@ -68,7 +57,7 @@ var JwtAuth = func(next http.Handler) http.Handler {
 		if !token.Valid {
 			response := u.Message(false, "Invalid auth token")
 			w.WriteHeader(http.StatusForbidden)
-			u.Respond(w, response)
+			u.Respond(w, response, ip[0])
 			return
 		}
 
