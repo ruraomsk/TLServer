@@ -58,13 +58,12 @@ func Login(login, password, ip string) map[string]interface{} {
 	tokenString, _ := token.SignedString([]byte(os.Getenv("token_password")))
 	account.Token = tokenString
 	account.ParserPointsUser()
-	// trlight := GetLightsFromBD(account.Point0, account.Point1)
-	//Записываем координаты подложки
-	// account.ParserPointsUser()
+	//сохраняем токен в БД чтобы точно знать что дейтвителен только 1 токен
+	GetDB().Exec("update accounts set token = ? where login = ?", account.Token, account.Login)
+
 	//Формируем ответ
 	resp := u.Message(true, "Logged In")
 	resp["login"] = account.Login
-	// resp["trlight"] = trlight
 	resp["token"] = tokenString
 	return resp
 
@@ -140,6 +139,7 @@ func (account *Account) ParserPointsUser() {
 	account.Point1.StrToFloat(str)
 }
 
+//GetInfoForUser собираю информацию для пользователя который только что залогинился
 func (account *Account) GetInfoForUser() map[string]interface{} {
 	err := GetDB().Table("accounts").Where("login = ?", account.Login).First(account).Error
 	if err != nil {

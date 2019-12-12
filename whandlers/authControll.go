@@ -37,7 +37,7 @@ var CreateAcc = func(w http.ResponseWriter, r *http.Request) {
 //BuildMainPage собираем данные для залогиневшегося пользователя
 var BuildMainPage = func(w http.ResponseWriter, r *http.Request) {
 	account := &data.Account{}
-	account.Login = fmt.Sprintf("%v",r.Context().Value("user"))
+	account.Login = fmt.Sprintf("%v", r.Context().Value("user"))
 	resp := account.GetInfoForUser()
 	u.Respond(w, r, resp)
 }

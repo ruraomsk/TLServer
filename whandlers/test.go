@@ -10,8 +10,6 @@ var TestHello = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 })
 
 var TestToken = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	//ctx := r.Context().Value("user")
-	//fmt.Println(ctx)
 	resp := make(map[string]interface{})
 	resp["Test"] = "OK!"
 	u.Respond(w, r, resp)

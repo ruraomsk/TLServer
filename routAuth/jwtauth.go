@@ -2,6 +2,7 @@ package routAuth
 
 import (
 	"context"
+	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
 	"os"
@@ -33,16 +34,33 @@ var JwtAuth = func(next http.Handler) http.Handler {
 			return
 		}
 		//берем часть где хранится токен
-		tokenPath := splitted[1]
+		tokenSTR := splitted[1]
 		tk := &data.Token{}
 
-		token, err := jwt.ParseWithClaims(tokenPath, tk, func(token *jwt.Token) (interface{}, error) {
+		token, err := jwt.ParseWithClaims(tokenSTR, tk, func(token *jwt.Token) (interface{}, error) {
 			return []byte(os.Getenv("token_password")), nil
 		})
 
 		//не правильный токен возвращаем ошибку с кодом 403
 		if err != nil {
 			response := u.Message(false, "Wrong auth token")
+			w.WriteHeader(http.StatusForbidden)
+			u.Respond(w, r, response)
+			return
+		}
+
+		//Проверка на уникальность токена
+		var tokenStrFromBd string
+		err = data.GetDB().Table("accounts").Select("token").Where("login = ?", tk.Login).Row().Scan(&tokenStrFromBd)
+		if err != nil {
+			response := u.Message(false, fmt.Sprintf("Can't take token from BD: %v", err.Error()))
+			w.WriteHeader(http.StatusForbidden)
+			u.Respond(w, r, response)
+			return
+		}
+
+		if tokenSTR != tokenStrFromBd {
+			response := u.Message(false, "Token is out of date, log in")
 			w.WriteHeader(http.StatusForbidden)
 			u.Respond(w, r, response)
 			return
