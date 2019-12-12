@@ -2,4 +2,4 @@
 *.pem
 .rnd
 .env
-_debug_bin
+*debug_bin

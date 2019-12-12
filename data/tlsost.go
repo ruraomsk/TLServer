@@ -1,13 +1,14 @@
 package data
 
 import (
+	u "../utils"
 	"fmt"
 	"os"
 )
 
 type TrafficLights struct {
 	ID          string `json:"ID"`          //Уникальный ID светофора
-	Region       string `json:"regin"`       //Регион
+	Region      string `json:"region"`      //Регион
 	Description string `json:"description"` //Описание светофора
 	Points      Point  `json:"points"`      //Координата где находится светофор
 }
@@ -26,4 +27,11 @@ func GetLightsFromBD(point0 Point, point1 Point) (tfdata []TrafficLights) {
 		tfdata = append(tfdata, *temp)
 	}
 	return
+}
+
+func UpdateTLightInfo(box BoxPoint) map[string]interface{} {
+	resp := u.Message(true, "Update box data")
+	tflight := GetLightsFromBD(box.Point0, box.Point1)
+	resp["tflight"] = tflight
+	return resp
 }

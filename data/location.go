@@ -6,8 +6,15 @@ import (
 	"strings"
 )
 
+//Point координаты точки
 type Point struct {
 	X, Y float64 //Координата Х и Y
+}
+
+//BoxPoint координаты для отрисовки квадрата
+type BoxPoint struct {
+	Point0 Point
+	Point1 Point
 }
 
 //GetPoint возврашает значение координат

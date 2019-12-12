@@ -45,8 +45,8 @@ func ConnectDB() error {
 
 		db.Table("accounts").Create(acc.SuperCreate())
 		//Записываю координаты в базу!!!
-		db.Exec(acc.Point0.ToSqlString("accounts", "points0", acc.Login))
-		db.Exec(acc.Point1.ToSqlString("accounts", "points1", acc.Login))
+		db.Exec(acc.BoxPoint.Point0.ToSqlString("accounts", "points0", acc.Login))
+		db.Exec(acc.BoxPoint.Point1.ToSqlString("accounts", "points1", acc.Login))
 
 	}
 

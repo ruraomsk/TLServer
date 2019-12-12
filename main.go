@@ -47,23 +47,30 @@ func main() {
 	router := mux.NewRouter()
 
 	//основной обработчик
-	//корневая страница (загружаемый файл)
-	// router.Handle("/", http.FileServer(http.Dir("./views/")))
+	//начальная страница
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./views/screen.html")
 	})
-	//страница с ресурсами картинки, подложка и тд...
-	router.PathPrefix("/static/").Handler(http.Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("//Fileserver/общая папка/TEMP рабочий/Semyon/lib/js")))))
-	//тестовая страница приветствия
-
+	//пусть к файлам скриптов и т.д.
+	router.PathPrefix("/static/").Handler(http.Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("//Fileserver/общая папка/TEMP рабочий/Semyon/lib/js"))))).Methods("GET")
+	router.PathPrefix("/img/").Handler(http.Handler(http.StripPrefix("/img/", http.FileServer(http.Dir("./views/img"))))).Methods("GET")
+	//запрос на вход в систему
 	router.HandleFunc("/login", whandlers.LoginAcc).Methods("POST")
 	router.HandleFunc("/test", whandlers.TestHello).Methods("POST")
-
+	router.HandleFunc("/create", whandlers.CreateAcc).Methods("POST")
 	subRout := router.PathPrefix("/").Subrouter()
 	subRout.Use(routAuth.JwtAuth)
+	//запрос на создание пользователя
 	subRout.HandleFunc("/{slug}/create", whandlers.CreateAcc).Methods("POST")
+	//запрос странички с картой
+	subRout.HandleFunc("/{slug}", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w,r,"./views/workplace.html")
+	}).Methods("GET")
+	//запрос информации для заполнения странички с картой
+	subRout.HandleFunc("/{slug}",whandlers.BuildMapPage).Methods("POST")
+	subRout.HandleFunc("/{slug}/update",whandlers.UpdateMapPage).Methods("POST")
+	//тест
 	subRout.HandleFunc("/{slug}/testtoken", whandlers.TestToken).Methods("POST")
-	subRout.HandleFunc("/{slug}",whandlers.BuildMainPage).Methods("POST")
 
 	// Запуск HTTP сервера
 	if err = http.ListenAndServe(os.Getenv("server_ip"), handlers.LoggingHandler(os.Stdout, router)); err != nil {

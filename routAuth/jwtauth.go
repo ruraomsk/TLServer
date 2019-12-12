@@ -16,7 +16,9 @@ import (
 var JwtAuth = func(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		tokenHeader := r.Header.Get("Authorization")
+		//tokenHeader := r.Header.Get("Authorization")
+		a,_ := r.Cookie("Authorization")
+		tokenHeader := a.Value
 		ip := strings.Split(r.RemoteAddr, ":")
 		//проверка если ли токен, если нету ошибка 403 нужно авторизироваться!
 		if tokenHeader == "" {

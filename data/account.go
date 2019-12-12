@@ -22,8 +22,7 @@ type Account struct {
 	gorm.Model
 	Login    string        `json:"login",sql:"login"` //Имя пользователя
 	Password string        `json:"password"`          //Пароль
-	Point0   Point         `json:"point0",sql:"-"`    //Первая точка области
-	Point1   Point         `json:"point1",sql:"-"`    //Вторая точка области
+	BoxPoint BoxPoint      `json:"boxpoint",sql:"-"`  //Точки области отображения
 	WTime    time.Duration `json:"wtime",sql:"wtime"` //Время работы пользователя в часах
 	YaMapKey string        `json:"ya_key",sql:"-"`    //Ключ доступа к ндекс карте
 	Token    string        `json:"token",sql:"-"'`    //Токен пользователя
@@ -107,8 +106,8 @@ func (account *Account) Create() map[string]interface{} {
 		return u.Message(false, "Failed to create account, connection error.")
 	}
 
-	db.Exec(account.Point0.ToSqlString("accounts", "points0", account.Login))
-	db.Exec(account.Point1.ToSqlString("accounts", "points1", account.Login))
+	db.Exec(account.BoxPoint.Point0.ToSqlString("accounts", "points0", account.Login))
+	db.Exec(account.BoxPoint.Point1.ToSqlString("accounts", "points1", account.Login))
 
 	account.Password = ""
 	resp := u.Message(true, "Account has been created")
@@ -123,8 +122,8 @@ func (account *Account) SuperCreate() *Account {
 	account.YaMapKey = os.Getenv("ya_key")
 	account.WTime = 24
 	account.Password = "$2a$10$ZCWyIEfEVF3KGj6OUtIeSOQ3WexMjuAZ43VSO6T.QqOndn4HN1J6C"
-	account.Point0.SetPoint(55.00000121541251, 36.000000154512121)
-	account.Point1.SetPoint(56.3, 36.5)
+	account.BoxPoint.Point0.SetPoint(55.00000121541251, 36.000000154512121)
+	account.BoxPoint.Point1.SetPoint(56.3, 36.5)
 	return account
 }
 
@@ -133,10 +132,10 @@ func (account *Account) ParserPointsUser() {
 	var str string
 	row := db.Raw("select points0 from accounts where login = ?", account.Login).Row()
 	row.Scan(&str)
-	account.Point0.StrToFloat(str)
+	account.BoxPoint.Point0.StrToFloat(str)
 	row = db.Raw("select points1 from accounts where login = ?", account.Login).Row()
 	row.Scan(&str)
-	account.Point1.StrToFloat(str)
+	account.BoxPoint.Point1.StrToFloat(str)
 }
 
 //GetInfoForUser собираю информацию для пользователя который только что залогинился
@@ -149,7 +148,7 @@ func (account *Account) GetInfoForUser() map[string]interface{} {
 		return u.Message(false, "Connection error. Please log in again")
 	}
 	account.ParserPointsUser()
-	tflight := GetLightsFromBD(account.Point0, account.Point1)
+	tflight := GetLightsFromBD(account.BoxPoint.Point0, account.BoxPoint.Point1)
 	resp := u.Message(true, "Take this DATA")
 
 	resp["ya_map"] = account.YaMapKey
@@ -160,7 +159,7 @@ func (account *Account) GetInfoForUser() map[string]interface{} {
 
 func (account *Account) PointToMap() (PointMap map[string]Point) {
 	PointMap = make(map[string]Point, 2)
-	PointMap["Point0"] = account.Point0
-	PointMap["Point1"] = account.Point1
+	PointMap["Point0"] = account.BoxPoint.Point0
+	PointMap["Point1"] = account.BoxPoint.Point1
 	return PointMap
 }
