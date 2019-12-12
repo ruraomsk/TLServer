@@ -139,3 +139,28 @@ func (account *Account) ParserPointsUser() {
 	row.Scan(&str)
 	account.Point1.StrToFloat(str)
 }
+
+func (account *Account) GetInfoForUser() map[string]interface{} {
+	err := GetDB().Table("accounts").Where("login = ?", account.Login).First(account).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return u.Message(false, "invalid token, log in again")
+		}
+		return u.Message(false, "Connection error. Please log in again")
+	}
+	account.ParserPointsUser()
+	tflight := GetLightsFromBD(account.Point0, account.Point1)
+	resp := u.Message(true, "Take this DATA")
+
+	resp["ya_map"] = account.YaMapKey
+	resp["point"] = account.PointToMap()
+	resp["tflight"] = tflight
+	return resp
+}
+
+func (account *Account) PointToMap() (PointMap map[string]Point) {
+	PointMap = make(map[string]Point, 2)
+	PointMap["Point0"] = account.Point0
+	PointMap["Point1"] = account.Point1
+	return PointMap
+}

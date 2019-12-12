@@ -4,6 +4,7 @@ import (
 	"../data"
 	u "../utils"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 )
@@ -33,3 +34,10 @@ var CreateAcc = func(w http.ResponseWriter, r *http.Request) {
 	u.Respond(w, r, resp)
 }
 
+//BuildMainPage собираем данные для залогиневшегося пользователя
+var BuildMainPage = func(w http.ResponseWriter, r *http.Request) {
+	account := &data.Account{}
+	account.Login = fmt.Sprintf("%v",r.Context().Value("user"))
+	resp := account.GetInfoForUser()
+	u.Respond(w, r, resp)
+}

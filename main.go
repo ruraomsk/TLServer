@@ -51,9 +51,9 @@ func main() {
 	// router.Handle("/", http.FileServer(http.Dir("./views/")))
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./views/screen.html")
-	}).Methods("GET")
+	})
 	//страница с ресурсами картинки, подложка и тд...
-	router.PathPrefix("/static/").Handler(http.Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/")))))
+	router.PathPrefix("/static/").Handler(http.Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("//Fileserver/общая папка/TEMP рабочий/Semyon/lib/js")))))
 	//тестовая страница приветствия
 
 	router.HandleFunc("/login", whandlers.LoginAcc).Methods("POST")
@@ -61,10 +61,9 @@ func main() {
 
 	subRout := router.PathPrefix("/").Subrouter()
 	subRout.Use(routAuth.JwtAuth)
-	subRout.HandleFunc("/create", whandlers.CreateAcc).Methods("POST")
-	subRout.HandleFunc("/hello", whandlers.TestHello).Methods("POST")
-	subRout.HandleFunc("/test1", whandlers.TestHello).Methods("POST")
-	subRout.HandleFunc("/testtoken", whandlers.TestToken).Methods("POST")
+	subRout.HandleFunc("/{slug}/create", whandlers.CreateAcc).Methods("POST")
+	subRout.HandleFunc("/{slug}/testtoken", whandlers.TestToken).Methods("POST")
+	subRout.HandleFunc("/{slug}",whandlers.BuildMainPage).Methods("POST")
 
 	// Запуск HTTP сервера
 	if err = http.ListenAndServe(os.Getenv("server_ip"), handlers.LoggingHandler(os.Stdout, router)); err != nil {

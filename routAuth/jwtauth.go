@@ -1,15 +1,15 @@
 package routAuth
 
 import (
-	"../data"
-	u "../utils"
 	"context"
-	"fmt"
-	"github.com/dgrijalva/jwt-go"
-	"golang.org/x/crypto/bcrypt"
+	"github.com/gorilla/mux"
 	"net/http"
 	"os"
 	"strings"
+
+	"../data"
+	u "../utils"
+	"github.com/dgrijalva/jwt-go"
 )
 
 var JwtAuth = func(next http.Handler) http.Handler {
@@ -48,6 +48,7 @@ var JwtAuth = func(next http.Handler) http.Handler {
 			return
 		}
 
+		//проверка с какого ip пришел токен
 		if tk.IP != ip[0] {
 			response := u.Message(false, "invalid token, log in again")
 			w.WriteHeader(http.StatusForbidden)
@@ -63,10 +64,13 @@ var JwtAuth = func(next http.Handler) http.Handler {
 			return
 		}
 
-		fmt.Println("User ", tk.Login)
-
-		a, _ := bcrypt.GenerateFromPassword([]byte(tk.Login), 7)
-		fmt.Println(string(a))
+		//проверка токен пришел от правльного URL
+		vars := mux.Vars(r)
+		slug := vars["slug"]
+		if slug != tk.Login {
+			u.Respond(w, r, u.Message(false, "token isn't registered for this user"))
+			return
+		}
 
 		ctx := context.WithValue(r.Context(), "user", tk.Login)
 		r = r.WithContext(ctx)
