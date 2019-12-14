@@ -41,6 +41,9 @@ func main() {
 
 	logger.Info.Println("Start work...")
 	fmt.Println("Start work...")
+
+	//раз в час обновляем данные регионов, и состояний
+	go data.CacheDataUpdate()
 	//----------------------------------------------------------------------
 
 	// Создаем новый ServeMux для HTTPS соединений
@@ -58,22 +61,24 @@ func main() {
 	router.HandleFunc("/login", whandlers.LoginAcc).Methods("POST")
 	router.HandleFunc("/test", whandlers.TestHello).Methods("POST")
 	router.HandleFunc("/create", whandlers.CreateAcc).Methods("POST")
+
 	subRout := router.PathPrefix("/").Subrouter()
 	subRout.Use(routAuth.JwtAuth)
 	//запрос на создание пользователя
 	subRout.HandleFunc("/{slug}/create", whandlers.CreateAcc).Methods("POST")
 	//запрос странички с картой
 	subRout.HandleFunc("/{slug}", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w,r,"./views/workplace.html")
+		http.ServeFile(w, r, "./views/workplace.html")
 	}).Methods("GET")
 	//запрос информации для заполнения странички с картой
-	subRout.HandleFunc("/{slug}",whandlers.BuildMapPage).Methods("POST")
-	subRout.HandleFunc("/{slug}/update",whandlers.UpdateMapPage).Methods("POST")
+	subRout.HandleFunc("/{slug}", whandlers.BuildMapPage).Methods("POST")
+	subRout.HandleFunc("/{slug}/update", whandlers.UpdateMapPage).Methods("POST")
 	//тест
 	subRout.HandleFunc("/{slug}/testtoken", whandlers.TestToken).Methods("POST")
 
 	// Запуск HTTP сервера
 	if err = http.ListenAndServe(os.Getenv("server_ip"), handlers.LoggingHandler(os.Stdout, router)); err != nil {
+		// if err = http.ListenAndServeTLS(os.Getenv("server_ip"),"domain.crt","domain.key", handlers.LoggingHandler(os.Stdout, router)); err != nil {
 		logger.Info.Println("Server can't started ", err.Error())
 		fmt.Println("Server can't started ", err.Error())
 	}

@@ -3,3 +3,7 @@
 .rnd
 .env
 *debug_bin
+domain.*
+domain.crt
+domain.csr
+domain.key

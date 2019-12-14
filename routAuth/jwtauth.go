@@ -16,9 +16,20 @@ import (
 var JwtAuth = func(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		//tokenHeader := r.Header.Get("Authorization")
-		a,_ := r.Cookie("Authorization")
-		tokenHeader := a.Value
+		tokenHeader := r.Header.Get("Authorization")
+		//if tokenHeader == ""{
+		//	cookie, err := r.Cookie("Authorization")
+		//	//Проверка куков получили ли их вообще
+		//	if err != nil {
+		//		response := u.Message(false, "Missing cookie")
+		//		w.WriteHeader(http.StatusForbidden)
+		//		u.Respond(w, r, response)
+		//		return
+		//	}
+		//	tokenHeader = cookie.Value
+		//}
+
+
 		ip := strings.Split(r.RemoteAddr, ":")
 		//проверка если ли токен, если нету ошибка 403 нужно авторизироваться!
 		if tokenHeader == "" {
