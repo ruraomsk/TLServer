@@ -3,6 +3,8 @@
 .rnd
 .env
 *debug_bin
+TLsost.js
+views/*
 domain.*
 domain.crt
 domain.csr

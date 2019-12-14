@@ -69,6 +69,7 @@ func GetRegionInfo() (region map[int]string, err error) {
 	return region, err
 }
 
+//GetTLSost получить данные о состоянии светофоров
 func GetTLSost() (TLsost map[int]string, err error) {
 	TLsost = make(map[int]string)
 	file, err := ioutil.ReadFile("./TLsost.js")
