@@ -26,12 +26,12 @@ type RegionInfo struct {
 }
 
 //TLSostInfo состояние
-type TLSostInfo struct {
-	Sost []InfoTL `json:"sost"`
+type InfoTL  struct {
+	Sost []TLSostInfo `json:"sost"`
 }
 
 //InfoTL информация о состояния светофоров
-type InfoTL struct {
+type TLSostInfo struct {
 	Num         int    `json:"num"`
 	Description string `json:"description"`
 }
@@ -44,7 +44,7 @@ func CacheDataUpdate() {
 		CacheInfo.TLSost, err = GetTLSost()
 		CacheInfo.mux.Unlock()
 		if err != nil {
-			logger.Info.Println("Произошла ошибка в чтении cache данных", err)
+			logger.Info.Println("Произошла ошибка в чтении cache данных :", err)
 		}
 		time.Sleep(time.Hour)
 	}
@@ -75,7 +75,7 @@ func GetTLSost() (TLsost map[int]string, err error) {
 	if err != nil {
 		return nil, err
 	}
-	temp := new(TLSostInfo)
+	temp := new(InfoTL)
 	if err := json.Unmarshal(file, &temp); err != nil {
 		return nil, err
 	}

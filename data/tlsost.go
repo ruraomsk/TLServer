@@ -3,6 +3,7 @@ package data
 import (
 	u "../utils"
 	"fmt"
+	"math/rand"
 	"os"
 )
 
@@ -11,6 +12,7 @@ type TrafficLights struct {
 	ID          string     `json:"ID"`          //Уникальный ID светофора
 	Region      RegionInfo `json:"region"`      //Регион
 	Idevice     int        `json:"idevice"`     //реальный номер устройства
+	Sost        TLSostInfo `json:"tlsost"`      //состояние светофора
 	Description string     `json:"description"` //Описание светофора
 	Points      Point      `json:"points"`      //Координата где находится светофор
 }
@@ -30,7 +32,12 @@ func GetLightsFromBD(point0 Point, point1 Point) (tfdata []TrafficLights) {
 	for rowsTL.Next() {
 		_ = rowsTL.Scan(&temp.Region.Num, &temp.ID, &temp.Idevice, &dgis, &temp.Description)
 		temp.Points.StrToFloat(dgis)
-		temp.Region.Name =  CacheInfo.Region[temp.Region.Num]
+		temp.Region.Name = CacheInfo.Region[temp.Region.Num]
+
+		//Состояние светофора!
+		temp.Sost.Num = rand.Intn(5) + 1
+		temp.Sost.Description = CacheInfo.TLSost[temp.Sost.Num]
+
 		tfdata = append(tfdata, *temp)
 	}
 
