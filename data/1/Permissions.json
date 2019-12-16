@@ -1,0 +1,24 @@
+{
+  "Permissions": [
+    {
+      "id": 1,
+      "command": "CreateUser",
+      "description": "Создание пользователя"
+    },
+    {
+      "id": 2,
+      "command": "DeleteUser",
+      "description": "Удаление пользователя"
+    },
+    {
+      "id": 3,
+      "command": "UpdateUser",
+      "description": "Обновление учетных данных"
+    },
+    {
+      "id": 4,
+      "command": "ViewCross",
+      "description": "Отображение перекрестков"
+    }
+  ]
+}
