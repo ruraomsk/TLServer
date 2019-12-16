@@ -3,7 +3,7 @@
 .rnd
 .env
 *debug_bin
-TLsost.js
+views/TLsost.js
 views/*
 domain.*
 domain.crt

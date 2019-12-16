@@ -77,8 +77,8 @@ func main() {
 	subRout.HandleFunc("/{slug}/testtoken", whandlers.TestToken).Methods("POST")
 
 	// Запуск HTTP сервера
-	if err = http.ListenAndServe(os.Getenv("server_ip"), handlers.LoggingHandler(os.Stdout, router)); err != nil {
-		// if err = http.ListenAndServeTLS(os.Getenv("server_ip"),"domain.crt","domain.key", handlers.LoggingHandler(os.Stdout, router)); err != nil {
+	// if err = http.ListenAndServe(os.Getenv("server_ip"), handlers.LoggingHandler(os.Stdout, router)); err != nil {
+	if err = http.ListenAndServeTLS(os.Getenv("server_ip"), "domain.crt", "domain.key", handlers.LoggingHandler(os.Stdout, router)); err != nil {
 		logger.Info.Println("Server can't started ", err.Error())
 		fmt.Println("Server can't started ", err.Error())
 	}

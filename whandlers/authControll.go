@@ -4,7 +4,6 @@ import (
 	"../data"
 	u "../utils"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 )
@@ -31,24 +30,5 @@ var CreateAcc = func(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	resp := account.Create()
-	u.Respond(w, r, resp)
-}
-
-//BuildMainPage собираем данные для залогиневшегося пользователя
-var BuildMapPage = func(w http.ResponseWriter, r *http.Request) {
-	account := &data.Account{}
-	account.Login = fmt.Sprintf("%v", r.Context().Value("user"))
-	resp := account.GetInfoForUser()
-	u.Respond(w, r, resp)
-}
-
-var UpdateMapPage = func(w http.ResponseWriter, r *http.Request) {
-	box := &data.BoxPoint{}
-	err := json.NewDecoder(r.Body).Decode(box)
-	if err != nil {
-		u.Respond(w, r, u.Message(false, "Invalid request"))
-	}
-
-	resp := data.UpdateTLightInfo(*box)
 	u.Respond(w, r, resp)
 }

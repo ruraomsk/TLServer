@@ -26,7 +26,7 @@ type RegionInfo struct {
 }
 
 //TLSostInfo состояние
-type InfoTL  struct {
+type InfoTL struct {
 	Sost []TLSostInfo `json:"sost"`
 }
 
@@ -55,7 +55,10 @@ func CacheDataUpdate() {
 func GetRegionInfo() (region map[int]string, err error) {
 	region = make(map[int]string)
 	sqlStr := fmt.Sprintf("select region, name from %s", os.Getenv("region_table"))
-	rows, _ := GetDB().Raw(sqlStr).Rows()
+	rows, err := GetDB().Raw(sqlStr).Rows()
+	if err != nil {
+		return CacheInfo.Region, err
+	}
 	for rows.Next() {
 		temp := &RegionInfo{}
 		err = rows.Scan(&temp.Num, &temp.Name)
@@ -72,7 +75,7 @@ func GetRegionInfo() (region map[int]string, err error) {
 //GetTLSost получить данные о состоянии светофоров
 func GetTLSost() (TLsost map[int]string, err error) {
 	TLsost = make(map[int]string)
-	file, err := ioutil.ReadFile("./TLsost.js")
+	file, err := ioutil.ReadFile("./cachefile/TLsost.js")
 	if err != nil {
 		return nil, err
 	}
