@@ -14,9 +14,10 @@ import (
 var CacheInfo CacheData
 
 type CacheData struct {
-	mux    sync.Mutex
-	Region map[int]string
-	TLSost map[int]string
+	mux       sync.Mutex
+	mapRegion map[int]string
+	mapTLSost map[int]string
+	mapRoles  map[string]Permissions
 }
 
 //RegionInfo расшифровка региона
@@ -38,10 +39,15 @@ type TLSostInfo struct {
 
 func CacheDataUpdate() {
 	var err error
+	CacheInfo.mapRoles = make(map[string]Permissions)
 	for {
 		CacheInfo.mux.Lock()
-		CacheInfo.Region, err = GetRegionInfo()
-		CacheInfo.TLSost, err = GetTLSost()
+		CacheInfo.mapRegion, err = GetRegionInfo()
+		CacheInfo.mapTLSost, err = GetTLSost()
+
+		 //_ = GetRoles()
+
+		//fmt.Println(CacheInfo.mapRoles["Super"])
 		CacheInfo.mux.Unlock()
 		if err != nil {
 			logger.Info.Println("Произошла ошибка в чтении cache данных :", err)
@@ -57,7 +63,7 @@ func GetRegionInfo() (region map[int]string, err error) {
 	sqlStr := fmt.Sprintf("select region, name from %s", os.Getenv("region_table"))
 	rows, err := GetDB().Raw(sqlStr).Rows()
 	if err != nil {
-		return CacheInfo.Region, err
+		return CacheInfo.mapRegion, err
 	}
 	for rows.Next() {
 		temp := &RegionInfo{}
@@ -89,4 +95,17 @@ func GetTLSost() (TLsost map[int]string, err error) {
 		}
 	}
 	return TLsost, err
+}
+
+func GetRoles() (err error) {
+	var temp = Roles{}
+	//CacheInfo.mapRoles = make(map[string]Permissions)
+	//mapRoles = make(map[string]Permissions)
+	err = temp.ReadRoleFile()
+	for _, role := range temp.Roles {
+		if _, ok := CacheInfo.mapRoles[role.Name]; !ok {
+			CacheInfo.mapRoles[role.Name] = role.Perm
+		}
+	}
+	return  err
 }

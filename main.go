@@ -56,7 +56,7 @@ func main() {
 	})
 	//пусть к файлам скриптов и т.д.
 	router.PathPrefix("/static/").Handler(http.Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("//Fileserver/общая папка/TEMP рабочий/Semyon/lib/js"))))).Methods("GET")
-	router.PathPrefix("/img/").Handler(http.Handler(http.StripPrefix("/img/", http.FileServer(http.Dir("./views/img"))))).Methods("POST")
+	router.PathPrefix("/img/").Handler(http.Handler(http.StripPrefix("/img/", http.FileServer(http.Dir("./views/img"))))).Methods("GET")
 	//запрос на вход в систему
 	router.HandleFunc("/login", whandlers.LoginAcc).Methods("POST")
 	router.HandleFunc("/test", whandlers.TestHello).Methods("POST")

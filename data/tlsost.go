@@ -44,7 +44,7 @@ func GetLightsFromBD(point0 Point, point1 Point) (tfdata []TrafficLights) {
 	for rowsTL.Next() {
 		_ = rowsTL.Scan(&temp.Region.Num, &temp.ID, &temp.Idevice, &dgis, &temp.Description, &StateStr)
 		temp.Points.StrToFloat(dgis)
-		temp.Region.Name = CacheInfo.Region[temp.Region.Num]
+		temp.Region.Name = CacheInfo.mapRegion[temp.Region.Num]
 
 		//Состояние светофора!
 		rState, err := ConvertStateStrToStruct(StateStr)
@@ -52,7 +52,7 @@ func GetLightsFromBD(point0 Point, point1 Point) (tfdata []TrafficLights) {
 			logger.Info.Println("Не удалось разобрать информацию о перекрестке", err)
 		}
 		temp.Sost.Num = rState.Status
-		temp.Sost.Description = CacheInfo.TLSost[temp.Sost.Num]
+		temp.Sost.Description = CacheInfo.mapTLSost[temp.Sost.Num]
 
 		tfdata = append(tfdata, *temp)
 	}

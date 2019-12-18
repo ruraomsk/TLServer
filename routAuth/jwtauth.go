@@ -16,30 +16,30 @@ import (
 var JwtAuth = func(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		tokenHeader := r.Header.Get("Authorization")
-		//if tokenHeader == ""{
-		//	cookie, err := r.Cookie("Authorization")
-		//	//Проверка куков получили ли их вообще
-		//	if err != nil {
-		//		response := u.Message(false, "Missing cookie")
-		//		w.WriteHeader(http.StatusForbidden)
-		//		u.Respond(w, r, response)
-		//		return
-		//	}
-		//	tokenHeader = cookie.Value
+		//tokenString := r.Header.Get("Authorization")
+		//if tokenString == "" {
+		var tokenString string
+		cookie, err := r.Cookie("Authorization")
+		//Проверка куков получили ли их вообще
+		if err != nil {
+			response := u.Message(false, "Missing cookie")
+			w.WriteHeader(http.StatusForbidden)
+			u.Respond(w, r, response)
+			return
+		}
+		tokenString = cookie.Value
 		//}
-
 
 		ip := strings.Split(r.RemoteAddr, ":")
 		//проверка если ли токен, если нету ошибка 403 нужно авторизироваться!
-		if tokenHeader == "" {
+		if tokenString == "" {
 			response := u.Message(false, "Missing auth token")
 			w.WriteHeader(http.StatusForbidden)
 			u.Respond(w, r, response)
 			return
 		}
 		//токен приходит строкой в формате {слово пробел слово} разделяем строку и забираем нужную нам часть
-		splitted := strings.Split(tokenHeader, " ")
+		splitted := strings.Split(tokenString, " ")
 		if len(splitted) != 2 {
 			response := u.Message(false, "Invalid token")
 			w.WriteHeader(http.StatusForbidden)
