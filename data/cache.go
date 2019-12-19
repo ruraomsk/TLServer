@@ -44,10 +44,8 @@ func CacheDataUpdate() {
 		CacheInfo.mux.Lock()
 		CacheInfo.mapRegion, err = GetRegionInfo()
 		CacheInfo.mapTLSost, err = GetTLSost()
+		err = GetRoles()
 
-		 //_ = GetRoles()
-
-		//fmt.Println(CacheInfo.mapRoles["Super"])
 		CacheInfo.mux.Unlock()
 		if err != nil {
 			logger.Info.Println("Произошла ошибка в чтении cache данных :", err)
@@ -99,13 +97,14 @@ func GetTLSost() (TLsost map[int]string, err error) {
 
 func GetRoles() (err error) {
 	var temp = Roles{}
-	//CacheInfo.mapRoles = make(map[string]Permissions)
-	//mapRoles = make(map[string]Permissions)
 	err = temp.ReadRoleFile()
+	if err != nil {
+		return err
+	}
 	for _, role := range temp.Roles {
 		if _, ok := CacheInfo.mapRoles[role.Name]; !ok {
 			CacheInfo.mapRoles[role.Name] = role.Perm
 		}
 	}
-	return  err
+	return err
 }

@@ -20,8 +20,9 @@ var BuildMapPage = func(w http.ResponseWriter, r *http.Request) {
 var UpdateMapPage = func(w http.ResponseWriter, r *http.Request) {
 	box := &data.BoxPoint{}
 	err := json.NewDecoder(r.Body).Decode(box)
-	if box.Point0 == box.Point1{
-		u.Respond(w,r,u.Message(false,"impossible coordinates"))
+	// fmt.Printf("X1 = %3.15f, Y1 = %3.15f, X2 = %3.15f, Y2 = %3.15f", box.Point1.X, box.Point1.Y, box.Point0.X, box.Point0.Y)
+	if box.Point0 == box.Point1 {
+		u.Respond(w, r, u.Message(false, "Impossible coordinates"))
 		return
 	}
 	if err != nil {

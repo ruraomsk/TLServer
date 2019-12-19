@@ -54,9 +54,9 @@ func main() {
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./views/screen.html")
 	})
-	//пусть к файлам скриптов и т.д.
+	//путь к скриптам они открыты
 	router.PathPrefix("/static/").Handler(http.Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("//Fileserver/общая папка/TEMP рабочий/Semyon/lib/js"))))).Methods("GET")
-	router.PathPrefix("/img/").Handler(http.Handler(http.StripPrefix("/img/", http.FileServer(http.Dir("./views/img"))))).Methods("GET")
+
 	//запрос на вход в систему
 	router.HandleFunc("/login", whandlers.LoginAcc).Methods("POST")
 	router.HandleFunc("/test", whandlers.TestHello).Methods("POST")
@@ -64,8 +64,6 @@ func main() {
 
 	subRout := router.PathPrefix("/user").Subrouter()
 	subRout.Use(routAuth.JwtAuth)
-	//пусть к файлам скриптов и т.д.
-	// subRout.PathPrefix("/img/").Handler(http.Handler(http.StripPrefix("/img/", http.FileServer(http.Dir("./views/img"))))).Methods("GET")
 	//запрос на создание пользователя
 	subRout.HandleFunc("/{slug}/create", whandlers.CreateAcc).Methods("POST")
 	//запрос странички с картой
@@ -77,6 +75,12 @@ func main() {
 	subRout.HandleFunc("/{slug}/update", whandlers.UpdateMapPage).Methods("POST")
 	//тест
 	subRout.HandleFunc("/{slug}/testtoken", whandlers.TestToken).Methods("POST")
+
+	//роутер для фаил сервера, он закрыт токеном, скачивать могут только авторизированные пользователи
+	fileRout := router.PathPrefix("/file").Subrouter()
+	fileRout.Use(routAuth.JwtFile)
+	fileRout.PathPrefix("/cross/").Handler(http.Handler(http.StripPrefix("/file/cross/", http.FileServer(http.Dir("./views/cross"))))).Methods("GET")
+	fileRout.PathPrefix("/img/").Handler(http.Handler(http.StripPrefix("/file/img/", http.FileServer(http.Dir("./views/img"))))).Methods("GET")
 
 	// Запуск HTTP сервера
 	// if err = http.ListenAndServe(os.Getenv("server_ip"), handlers.LoggingHandler(os.Stdout, router)); err != nil {

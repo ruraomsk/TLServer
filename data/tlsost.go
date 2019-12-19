@@ -74,3 +74,8 @@ func ConvertStateStrToStruct(str string) (rState State, err error) {
 	}
 	return rState, nil
 }
+
+func GetCrossInfo(TLignt TrafficLights)map[string]interface{}{
+	//TLignt.
+	return nil
+}
