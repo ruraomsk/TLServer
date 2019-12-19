@@ -22,8 +22,8 @@ type CacheData struct {
 
 //RegionInfo расшифровка региона
 type RegionInfo struct {
-	Num  int    //уникальный номер региона
-	Name string //расшифровка номера
+	Num  int    `json:"num"`  //уникальный номер региона
+	Name string `json:"name"` //расшифровка номера
 }
 
 //TLSostInfo состояние

@@ -72,7 +72,15 @@ func main() {
 	}).Methods("GET")
 	//запрос информации для заполнения странички с картой
 	subRout.HandleFunc("/{slug}", whandlers.BuildMapPage).Methods("POST")
+	//обновление странички с данными которые попали в область пользователя
 	subRout.HandleFunc("/{slug}/update", whandlers.UpdateMapPage).Methods("POST")
+	//запрос странички с перекрестком
+	subRout.HandleFunc("/{slug}/cross", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./views/cross.html")
+	}).Methods("GET")
+	//отправка информации с состояниями перекреста
+	subRout.HandleFunc("/{slug}/cross", whandlers.BuildCross).Methods("POST")
+
 	//тест
 	subRout.HandleFunc("/{slug}/testtoken", whandlers.TestToken).Methods("POST")
 
