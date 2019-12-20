@@ -13,6 +13,10 @@ var BuildCross = func(w http.ResponseWriter, r *http.Request) {
 	var err error
 	TLight := &data.TrafficLights{}
 
+	if len(r.URL.RawQuery) <= 0 {
+		u.Respond(w, r, u.Message(false, "Blank field"))
+		return
+	}
 	if TLight.Region.Num, err = strconv.Atoi(r.URL.Query().Get("Region")); err != nil {
 		u.Respond(w, r, u.Message(false, "Blank field: Region"))
 		return

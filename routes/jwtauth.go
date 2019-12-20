@@ -1,4 +1,4 @@
-package routAuth
+package routes
 
 import (
 	"context"
@@ -16,8 +16,6 @@ import (
 var JwtAuth = func(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		//tokenString := r.Header.Get("Authorization")
-		//if tokenString == "" {
 		var tokenString string
 		cookie, err := r.Cookie("Authorization")
 		//Проверка куков получили ли их вообще
@@ -28,7 +26,6 @@ var JwtAuth = func(next http.Handler) http.Handler {
 			return
 		}
 		tokenString = cookie.Value
-		//}
 
 		ip := strings.Split(r.RemoteAddr, ":")
 		//проверка если ли токен, если нету ошибка 403 нужно авторизироваться!
@@ -188,16 +185,6 @@ var JwtFile= func(next http.Handler) http.Handler {
 			return
 		}
 
-		////проверка токен пришел от правльного URL
-		//vars := mux.Vars(r)
-		//slug := vars["slug"]
-		//if slug != tk.Login {
-		//	u.Respond(w, r, u.Message(false, "token isn't registered for this user"))
-		//	return
-		//}
-		//
-		//ctx := context.WithValue(r.Context(), "user", tk.Login)
-		//r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 
 	})
