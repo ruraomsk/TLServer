@@ -5,6 +5,8 @@
 *debug_bin
 views/TLsost.js
 views/*
+views/img
+views/cross
 domain.*
 domain.crt
 domain.csr

@@ -24,11 +24,9 @@ func ConnectDB() error {
 		return err
 	}
 
-	// defer conn.Close()
-
 	db = conn
 	if !db.HasTable(Account{}) {
-		logger.Info.Println("Didn't find the Accounts table, created it with SuperUser")
+		logger.Info.Println("dbase: Didn't find the Accounts table, created it with SuperUser")
 		if err = db.Table("accounts").AutoMigrate(Account{}).Error; err != nil {
 			return err
 		}

@@ -4,15 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/gorilla/handlers"
-
 	"./data"
 	"./logger"
-	"./routAuth"
-	"./whandlers"
-	"github.com/gorilla/mux"
+	"./routes"
 	"github.com/joho/godotenv"
-	"net/http"
 )
 
 var err error
@@ -46,42 +41,8 @@ func main() {
 	go data.CacheDataUpdate()
 	//----------------------------------------------------------------------
 
-	// Создаем новый ServeMux для HTTPS соединений
-	router := mux.NewRouter()
-
-	//основной обработчик
-	//начальная страница
-	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./views/screen.html")
-	})
-	//пусть к файлам скриптов и т.д.
-	router.PathPrefix("/static/").Handler(http.Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("//Fileserver/общая папка/TEMP рабочий/Semyon/lib/js"))))).Methods("GET")
-	router.PathPrefix("/img/").Handler(http.Handler(http.StripPrefix("/img/", http.FileServer(http.Dir("./views/img"))))).Methods("GET")
-	//запрос на вход в систему
-	router.HandleFunc("/login", whandlers.LoginAcc).Methods("POST")
-	router.HandleFunc("/test", whandlers.TestHello).Methods("POST")
-	router.HandleFunc("/create", whandlers.CreateAcc).Methods("POST")
-
-	subRout := router.PathPrefix("/").Subrouter()
-	subRout.Use(routAuth.JwtAuth)
-	//запрос на создание пользователя
-	subRout.HandleFunc("/user/{slug}/create", whandlers.CreateAcc).Methods("POST")
-	//запрос странички с картой
-	subRout.HandleFunc("/user/{slug}", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./views/workplace.html")
-	}).Methods("GET")
-	//запрос информации для заполнения странички с картой
-	subRout.HandleFunc("/user/{slug}", whandlers.BuildMapPage).Methods("POST")
-	subRout.HandleFunc("/user/{slug}/update", whandlers.UpdateMapPage).Methods("POST")
-	//тест
-	subRout.HandleFunc("/user/{slug}/testtoken", whandlers.TestToken).Methods("POST")
-
-	// Запуск HTTP сервера
-	// if err = http.ListenAndServe(os.Getenv("server_ip"), handlers.LoggingHandler(os.Stdout, router)); err != nil {
-	if err = http.ListenAndServeTLS(os.Getenv("server_ip"), "domain.crt", "domain.key", handlers.LoggingHandler(os.Stdout, router)); err != nil {
-		logger.Info.Println("Server can't started ", err.Error())
-		fmt.Println("Server can't started ", err.Error())
-	}
+	//запуск сервера
+	routes.StartServer()
 
 	logger.Info.Println("Exit working...")
 	fmt.Println("Exit working...")
