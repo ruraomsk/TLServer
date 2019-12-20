@@ -15,7 +15,6 @@ var err error
 func StartServer() {
 	// Создаем новый ServeMux для HTTPS соединений
 	router := mux.NewRouter()
-
 	//основной обработчик
 	//начальная страница
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

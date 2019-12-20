@@ -1,6 +1,7 @@
 package data
 
 import (
+	"../logger"
 	u "../utils"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
@@ -35,13 +36,16 @@ func Login(login, password, ip string) map[string]interface{} {
 	err := GetDB().Table("accounts").Where("login = ?", login).First(account).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
+			logger.Info.Println("Account: Login not found: ", login)
 			return u.Message(false, "login not found")
 		}
+		logger.Info.Println("Account: Connection to DB err")
 		return u.Message(false, "Connection error. Please try again")
 	}
 	//Сравниваю хэши полученного пароля и пароля взятого из БД
 	err = bcrypt.CompareHashAndPassword([]byte(account.Password), []byte(password))
 	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
+		logger.Info.Println("Account: Invalid login credentials. Please try again, ", login)
 		return u.Message(false, "Invalid login credentials. Please try again")
 	}
 	//Залогинились, создаем токен
@@ -143,7 +147,8 @@ func (account *Account) GetInfoForUser() map[string]interface{} {
 	err := GetDB().Table("accounts").Where("login = ?", account.Login).First(account).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return u.Message(false, "invalid token, log in again")
+			logger.Info.Println("Account: Invalid token, log in again, ", account.Login)
+			return u.Message(false, "Invalid token, log in again")
 		}
 		return u.Message(false, "Connection error. Please log in again")
 	}

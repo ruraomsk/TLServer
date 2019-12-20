@@ -43,14 +43,18 @@ func GetLightsFromBD(point0 Point, point1 Point) (tfdata []TrafficLights) {
 	}
 	rowsTL, _ := GetDB().Raw(sqlStr).Rows()
 	for rowsTL.Next() {
-		_ = rowsTL.Scan(&temp.Region.Num, &temp.ID, &temp.Idevice, &dgis, &temp.Description, &StateStr)
+		err := rowsTL.Scan(&temp.Region.Num, &temp.ID, &temp.Idevice, &dgis, &temp.Description, &StateStr)
+		if err != nil {
+			logger.Info.Println("tlsost: Что-то не так с запросом", err)
+			return nil
+		}
 		temp.Points.StrToFloat(dgis)
 		temp.Region.Name = CacheInfo.mapRegion[temp.Region.Num]
 
 		//Состояние светофора!
 		rState, err := ConvertStateStrToStruct(StateStr)
 		if err != nil {
-			logger.Info.Println("Не удалось разобрать информацию о перекрестке", err)
+			logger.Info.Println("tlsost: Не удалось разобрать информацию о перекрестке", err)
 		}
 		temp.Sost.Num = rState.Status
 		temp.Sost.Description = CacheInfo.mapTLSost[temp.Sost.Num]
@@ -99,7 +103,7 @@ func GetCrossInfo(TLignt TrafficLights) map[string]interface{} {
 	//Состояние светофора!
 	rState, err := ConvertStateStrToStruct(StateStr)
 	if err != nil {
-		logger.Info.Println("Не удалось разобрать информацию о перекрестке", err)
+		logger.Info.Println("tlsost: Не удалось разобрать информацию о перекрестке", err)
 	}
 	TLignt.State = rState
 	TLignt.Sost.Num = rState.Status

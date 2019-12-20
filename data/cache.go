@@ -48,7 +48,7 @@ func CacheDataUpdate() {
 
 		CacheInfo.mux.Unlock()
 		if err != nil {
-			logger.Info.Println("Произошла ошибка в чтении cache данных :", err)
+			logger.Info.Println("Cache: Произошла ошибка в чтении cache данных :", err)
 		}
 		time.Sleep(time.Hour)
 	}
