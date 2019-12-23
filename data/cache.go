@@ -14,15 +14,16 @@ import (
 var CacheInfo CacheData
 
 type CacheData struct {
-	mux    sync.Mutex
-	Region map[int]string
-	TLSost map[int]string
+	mux       sync.Mutex
+	mapRegion map[int]string
+	mapTLSost map[int]string
+	mapRoles  map[string]Permissions
 }
 
 //RegionInfo расшифровка региона
 type RegionInfo struct {
-	Num  int    //уникальный номер региона
-	Name string //расшифровка номера
+	Num  int    `json:"num"`  //уникальный номер региона
+	Name string `json:"name"` //расшифровка номера
 }
 
 //TLSostInfo состояние
@@ -38,13 +39,16 @@ type TLSostInfo struct {
 
 func CacheDataUpdate() {
 	var err error
+	CacheInfo.mapRoles = make(map[string]Permissions)
 	for {
 		CacheInfo.mux.Lock()
-		CacheInfo.Region, err = GetRegionInfo()
-		CacheInfo.TLSost, err = GetTLSost()
+		CacheInfo.mapRegion, err = GetRegionInfo()
+		CacheInfo.mapTLSost, err = GetTLSost()
+		err = GetRoles()
+
 		CacheInfo.mux.Unlock()
 		if err != nil {
-			logger.Info.Println("Произошла ошибка в чтении cache данных :", err)
+			logger.Info.Println("Cache: Произошла ошибка в чтении cache данных :", err)
 		}
 		time.Sleep(time.Hour)
 	}
@@ -57,7 +61,7 @@ func GetRegionInfo() (region map[int]string, err error) {
 	sqlStr := fmt.Sprintf("select region, name from %s", os.Getenv("region_table"))
 	rows, err := GetDB().Raw(sqlStr).Rows()
 	if err != nil {
-		return CacheInfo.Region, err
+		return CacheInfo.mapRegion, err
 	}
 	for rows.Next() {
 		temp := &RegionInfo{}
@@ -75,7 +79,7 @@ func GetRegionInfo() (region map[int]string, err error) {
 //GetTLSost получить данные о состоянии светофоров
 func GetTLSost() (TLsost map[int]string, err error) {
 	TLsost = make(map[int]string)
-	file, err := ioutil.ReadFile("./cachefile/TLsost.js")
+	file, err := ioutil.ReadFile("./cachefile/TLsost.json")
 	if err != nil {
 		return nil, err
 	}
@@ -89,4 +93,18 @@ func GetTLSost() (TLsost map[int]string, err error) {
 		}
 	}
 	return TLsost, err
+}
+
+func GetRoles() (err error) {
+	var temp = Roles{}
+	err = temp.ReadRoleFile()
+	if err != nil {
+		return err
+	}
+	for _, role := range temp.Roles {
+		if _, ok := CacheInfo.mapRoles[role.Name]; !ok {
+			CacheInfo.mapRoles[role.Name] = role.Perm
+		}
+	}
+	return err
 }

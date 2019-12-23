@@ -3,6 +3,7 @@ package whandlers
 import (
 	"../data"
 	u "../utils"
+	"../logger"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -12,8 +13,9 @@ import (
 var LoginAcc = func(w http.ResponseWriter, r *http.Request) {
 	account := &data.Account{}
 	ip := strings.Split(r.RemoteAddr, ":")
-	err := json.NewDecoder(r.Body).Decode(account) //
+	err := json.NewDecoder(r.Body).Decode(account)
 	if err != nil {
+		logger.Info.Println("authControll, loginAcc: Invalid request ",r.RemoteAddr)
 		u.Respond(w, r, u.Message(false, "Invalid request"))
 		return
 	}
@@ -26,6 +28,7 @@ var CreateAcc = func(w http.ResponseWriter, r *http.Request) {
 	account := &data.Account{}
 	err := json.NewDecoder(r.Body).Decode(account) //
 	if err != nil {
+		logger.Info.Println("authControll, create: Invalid request ",r.RemoteAddr)
 		u.Respond(w, r, u.Message(false, "Invalid request"))
 		return
 	}

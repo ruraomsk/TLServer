@@ -1,6 +1,7 @@
 package data
 
 import (
+	"../logger"
 	u "../utils"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
@@ -20,12 +21,13 @@ type Token struct {
 //Account struct to user account
 type Account struct {
 	gorm.Model
-	Login    string        `json:"login",sql:"login"` //Имя пользователя
-	Password string        `json:"password"`          //Пароль
-	BoxPoint BoxPoint      `json:"boxpoint",sql:"-"`  //Точки области отображения
-	WTime    time.Duration `json:"wtime",sql:"wtime"` //Время работы пользователя в часах
-	YaMapKey string        `json:"ya_key",sql:"-"`    //Ключ доступа к ндекс карте
-	Token    string        `json:"token",sql:"-"'`    //Токен пользователя
+	Login     string        `json:"login",sql:"login"` //Имя пользователя
+	Password  string        `json:"password"`          //Пароль
+	BoxPoint  BoxPoint      `json:"boxpoint",sql:"-"`  //Точки области отображения
+	WTime     time.Duration `json:"wtime",sql:"wtime"` //Время работы пользователя в часах
+	YaMapKey  string        `json:"ya_key",sql:"-"`    //Ключ доступа к ндекс карте
+	Token     string        `json:"token",sql:"-"`     //Токен пользователя
+	Privilege Privilege     `json:"privilege",sql:"-"`
 }
 
 //Login in system
@@ -35,13 +37,16 @@ func Login(login, password, ip string) map[string]interface{} {
 	err := GetDB().Table("accounts").Where("login = ?", login).First(account).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
+			logger.Info.Println("Account: Login not found: ", login)
 			return u.Message(false, "login not found")
 		}
+		logger.Info.Println("Account: Connection to DB err")
 		return u.Message(false, "Connection error. Please try again")
 	}
 	//Сравниваю хэши полученного пароля и пароля взятого из БД
 	err = bcrypt.CompareHashAndPassword([]byte(account.Password), []byte(password))
 	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
+		logger.Info.Println("Account: Invalid login credentials. Please try again, ", login)
 		return u.Message(false, "Invalid login credentials. Please try again")
 	}
 	//Залогинились, создаем токен
@@ -108,6 +113,7 @@ func (account *Account) Create() map[string]interface{} {
 
 	db.Exec(account.BoxPoint.Point0.ToSqlString("accounts", "points0", account.Login))
 	db.Exec(account.BoxPoint.Point1.ToSqlString("accounts", "points1", account.Login))
+	db.Exec(account.Privilege.ToSqlStrUpdate("accounts",account.Login))
 
 	account.Password = ""
 	resp := u.Message(true, "Account has been created")
@@ -122,8 +128,8 @@ func (account *Account) SuperCreate() *Account {
 	account.YaMapKey = os.Getenv("ya_key")
 	account.WTime = 24
 	account.Password = "$2a$10$ZCWyIEfEVF3KGj6OUtIeSOQ3WexMjuAZ43VSO6T.QqOndn4HN1J6C"
-	account.BoxPoint.Point0.SetPoint(55.00000121541251, 36.000000154512121)
-	account.BoxPoint.Point1.SetPoint(56.3, 36.5)
+	account.BoxPoint.Point0.SetPoint(42.79610884568009, 25.56378846464164)
+	account.BoxPoint.Point1.SetPoint(77.13872007901705, -174.12371153535893)
 	return account
 }
 
@@ -143,7 +149,8 @@ func (account *Account) GetInfoForUser() map[string]interface{} {
 	err := GetDB().Table("accounts").Where("login = ?", account.Login).First(account).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return u.Message(false, "invalid token, log in again")
+			logger.Info.Println("Account: Invalid token, log in again, ", account.Login)
+			return u.Message(false, "Invalid token, log in again")
 		}
 		return u.Message(false, "Connection error. Please log in again")
 	}
@@ -152,14 +159,14 @@ func (account *Account) GetInfoForUser() map[string]interface{} {
 	resp := u.Message(true, "Take this DATA")
 
 	resp["ya_map"] = account.YaMapKey
-	resp["point"] = account.PointToMap()
+	resp["boxPoint"] = account.PointToMap()
 	resp["tflight"] = tflight
 	return resp
 }
 
 func (account *Account) PointToMap() (PointMap map[string]Point) {
 	PointMap = make(map[string]Point, 2)
-	PointMap["Point0"] = account.BoxPoint.Point0
-	PointMap["Point1"] = account.BoxPoint.Point1
+	PointMap["point0"] = account.BoxPoint.Point0
+	PointMap["point1"] = account.BoxPoint.Point1
 	return PointMap
 }

@@ -24,11 +24,9 @@ func ConnectDB() error {
 		return err
 	}
 
-	// defer conn.Close()
-
 	db = conn
 	if !db.HasTable(Account{}) {
-		logger.Info.Println("Didn't find the Accounts table, created it with SuperUser")
+		logger.Info.Println("dbase: Didn't find the Accounts table, created it with SuperUser")
 		if err = db.Table("accounts").AutoMigrate(Account{}).Error; err != nil {
 			return err
 		}
@@ -39,7 +37,9 @@ func ConnectDB() error {
 		if err = db.Table("accounts").Exec("alter table accounts add points1 point").Error; err != nil {
 			return err
 		}
-
+		if err = db.Table("accounts").Exec("alter table accounts add privilege jsonb").Error; err != nil {
+			return err
+		}
 		// Супер пользователь
 		acc := Account{}
 

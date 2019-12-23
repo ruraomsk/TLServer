@@ -8,7 +8,7 @@ import (
 
 //Point координаты точки
 type Point struct {
-	X, Y float64 //Координата Х и Y
+	Y, X float64 //Координата Х и Y
 }
 
 //BoxPoint координаты для отрисовки квадрата
@@ -18,18 +18,18 @@ type BoxPoint struct {
 }
 
 //GetPoint возврашает значение координат
-func (points *Point) GetPoint() (x, y float64) {
+func (points *Point) GetPoint() (y, x float64) {
 	return points.X, points.Y
 }
 
 //SetPoint задать значение координат
-func (points *Point) SetPoint(x, y float64) {
+func (points *Point) SetPoint(y, x float64) {
 	points.X, points.Y = x, y
 }
 
 //ToSqlString формирует SQL строку для обновления координат в БД
 func (points *Point) ToSqlString(table, column, login string) string {
-	return fmt.Sprintf("update %s set %s = '(%f,%f)' where login = '%s'", table, column, points.X, points.Y, login)
+	return fmt.Sprintf("update %s set %s = '(%f,%f)' where login = '%s'", table, column, points.Y, points.X, login)
 }
 
 //StrToFloat преобразует строку полученную из бз в структуру Point
@@ -37,6 +37,6 @@ func (points *Point) StrToFloat(str string) {
 	str = strings.TrimPrefix(str, "(")
 	str = strings.TrimSuffix(str, ")")
 	temp := strings.Split(str, ",")
-	points.X, _ = strconv.ParseFloat(temp[0], 64)
-	points.Y, _ = strconv.ParseFloat(temp[1], 64)
+	points.Y, _ = strconv.ParseFloat(temp[0], 64)
+	points.X, _ = strconv.ParseFloat(temp[1], 64)
 }
