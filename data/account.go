@@ -126,8 +126,8 @@ func (account *Account) SuperCreate() *Account {
 	account.YaMapKey = os.Getenv("ya_key")
 	account.WTime = 24
 	account.Password = "$2a$10$ZCWyIEfEVF3KGj6OUtIeSOQ3WexMjuAZ43VSO6T.QqOndn4HN1J6C"
-	account.BoxPoint.Point0.SetPoint(55.00000121541251, 36.000000154512121)
-	account.BoxPoint.Point1.SetPoint(56.3, 36.5)
+	account.BoxPoint.Point0.SetPoint(42.79610884568009, 25.56378846464164)
+	account.BoxPoint.Point1.SetPoint(77.13872007901705, -174.12371153535893)
 	return account
 }
 

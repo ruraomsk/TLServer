@@ -177,6 +177,7 @@ var JwtFile = func(next http.Handler) http.Handler {
 			return
 		}
 
+
 		if tokenSTR != tokenStrFromBd {
 			logger.Info.Println("jwtauthFileserv: Token is out of date, log in ", r.RemoteAddr)
 			response := u.Message(false, "Token is out of date, log in")
@@ -193,6 +194,9 @@ var JwtFile = func(next http.Handler) http.Handler {
 			u.Respond(w, r, response)
 			return
 		}
+
+
+
 
 		//токен не действителен, возможно не подписан на этом сервере
 		if !token.Valid {
