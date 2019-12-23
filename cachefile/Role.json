@@ -1,67 +1,59 @@
 {
-  "Roles": [
-    {
-      "Name": "Super",
-      "Permission": {
-        "Permissions": [
-          {
-            "id": 1,
-            "command": "CreateUser",
-            "description": "Создание пользователя"
-          },
-          {
-            "id": 2,
-            "command": "DeleteUser",
-            "description": "Удаление пользователя"
-          },
-          {
-            "id": 3,
-            "command": "UpdateUser",
-            "description": "Обновление учетных данных"
-          },
-          {
-            "id": 4,
-            "command": "ViewCross",
-            "description": "Отображение перекрестков"
-          }
-        ]
-      }
-    },
-    {
-      "Name": "Admin",
-      "Permission": {
-        "Permissions": [
-          {
-            "id": 4,
-            "command": "ViewCross",
-            "description": "Отображение перекрестков"
-          }
-        ]
-      }
-    },
-    {
-      "Name": "RegAdmin",
-      "Permission": {
-        "Permissions": [
-          {
-            "id": 4,
-            "command": "ViewCross",
-            "description": "Отображение перекрестков"
-          }
-        ]
-      }
-    },
-    {
-      "Name": "User",
-      "Permission": {
-        "Permissions": [
-          {
-            "id": 4,
-            "command": "ViewCross",
-            "description": "Отображение перекрестков"
-          }
-        ]
-      }
-    }
-  ]
+    "roles": [{
+            "name": "Super",
+            "permission": {
+                "permissions": [{
+                        "id": 1,
+                        "command": "CreateUser",
+                        "description": "Создание пользователя"
+                    },
+                    {
+                        "id": 2,
+                        "command": "DeleteUser",
+                        "description": "Удаление пользователя"
+                    },
+                    {
+                        "id": 3,
+                        "command": "UpdateUser",
+                        "description": "Обновление учетных данных"
+                    },
+                    {
+                        "id": 4,
+                        "command": "ViewCross",
+                        "description": "Отображение перекрестков"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Admin",
+            "permission": {
+                "permissions": [{
+                    "id": 4,
+                    "command": "ViewCross",
+                    "description": "Отображение перекрестков"
+                }]
+            }
+        },
+        {
+            "name": "RegAdmin",
+            "permission": {
+                "permissions": [{
+                    "id": 4,
+                    "command": "ViewCross",
+                    "description": "Отображение перекрестков"
+                }]
+            }
+        },
+        {
+            "name": "User",
+            "permission": {
+                "permissions": [{
+                    "id": 4,
+                    "command": "ViewCross",
+                    "description": "Отображение перекрестков"
+                }]
+            }
+        }
+    ]
 }

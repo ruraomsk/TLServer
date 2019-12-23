@@ -21,12 +21,13 @@ type Token struct {
 //Account struct to user account
 type Account struct {
 	gorm.Model
-	Login    string        `json:"login",sql:"login"` //Имя пользователя
-	Password string        `json:"password"`          //Пароль
-	BoxPoint BoxPoint      `json:"boxpoint",sql:"-"`  //Точки области отображения
-	WTime    time.Duration `json:"wtime",sql:"wtime"` //Время работы пользователя в часах
-	YaMapKey string        `json:"ya_key",sql:"-"`    //Ключ доступа к ндекс карте
-	Token    string        `json:"token",sql:"-"'`    //Токен пользователя
+	Login     string        `json:"login",sql:"login"` //Имя пользователя
+	Password  string        `json:"password"`          //Пароль
+	BoxPoint  BoxPoint      `json:"boxpoint",sql:"-"`  //Точки области отображения
+	WTime     time.Duration `json:"wtime",sql:"wtime"` //Время работы пользователя в часах
+	YaMapKey  string        `json:"ya_key",sql:"-"`    //Ключ доступа к ндекс карте
+	Token     string        `json:"token",sql:"-"`     //Токен пользователя
+	Privilege Privilege     `json:"privilege",sql:"-"`
 }
 
 //Login in system
@@ -112,6 +113,7 @@ func (account *Account) Create() map[string]interface{} {
 
 	db.Exec(account.BoxPoint.Point0.ToSqlString("accounts", "points0", account.Login))
 	db.Exec(account.BoxPoint.Point1.ToSqlString("accounts", "points1", account.Login))
+	db.Exec(account.Privilege.ToSqlStrUpdate("accounts",account.Login))
 
 	account.Password = ""
 	resp := u.Message(true, "Account has been created")

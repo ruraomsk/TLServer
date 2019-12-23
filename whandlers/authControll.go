@@ -13,7 +13,7 @@ import (
 var LoginAcc = func(w http.ResponseWriter, r *http.Request) {
 	account := &data.Account{}
 	ip := strings.Split(r.RemoteAddr, ":")
-	err := json.NewDecoder(r.Body).Decode(account) //
+	err := json.NewDecoder(r.Body).Decode(account)
 	if err != nil {
 		logger.Info.Println("authControll, loginAcc: Invalid request ",r.RemoteAddr)
 		u.Respond(w, r, u.Message(false, "Invalid request"))

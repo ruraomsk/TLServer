@@ -109,6 +109,6 @@ func GetCrossInfo(TLignt TrafficLights) map[string]interface{} {
 	TLignt.Sost.Num = rState.Status
 	TLignt.Sost.Description = CacheInfo.mapTLSost[TLignt.Sost.Num]
 	resp := u.Message(true, "Cross information")
-	resp["сross"] = TLignt
+	resp["cross"] = TLignt
 	return resp
 }

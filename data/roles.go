@@ -2,26 +2,33 @@ package data
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 )
 
 type Roles struct {
-	Roles []Role
+	Roles []Role `json:"roles"`
 }
 
 type Role struct {
-	Name string      `json:"Name"`
-	Perm Permissions `json:"Permission"`
+	Name string      `json:"name"`
+	Perm Permissions `json:"permission"`
 }
 
 type Permissions struct {
-	Permissions []Permission
+	Permissions []Permission `json:"permissions"`
 }
 
 type Permission struct {
 	ID          int    `json:"id"`
 	Command     string `json:"command"`
 	Description string `json:"description"`
+}
+
+type Privilege struct {
+	Role   Role       `json:"role"`
+	Region RegionInfo `json:"region"`
+	IDs    []int      `json:"IDs"`
 }
 
 //func (roles *Roles) CreateRole() (err error) {
@@ -38,6 +45,33 @@ type Permission struct {
 //	ioutil.WriteFile("test.json", file, os.ModePerm)
 //	return err
 //}
+
+func (privilege *Privilege) ReadFromBD() {
+	//login := "MMM"
+
+	//GetDB().Table("account").Where("login = ?", login).
+}
+
+func (privilege *Privilege) AddPrivilege(privilegeStr, login string) (err error) {
+	//sqlstr := fmt.Sprintf("alter table public.accounts add privilege jsonb where login = %s", login)
+	//err = GetDB().Exec(sqlstr).Error
+	//if err != nil{
+	//	return err
+	//}
+	err = json.Unmarshal([]byte(privilegeStr), privilege)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (privilege *Privilege) ToSqlStrUpdate(table, login string) (string) {
+	for _,perm := range CacheInfo.mapRoles[privilege.Role.Name].Permissions{
+		privilege.Role.Perm.Permissions = append(privilege.Role.Perm.Permissions,perm)
+	}
+	privilegeStr, _ := json.Marshal(privilege)
+	return fmt.Sprintf("update %s set privilege = '%s' where login = '%s'", table, string(privilegeStr), login)
+}
 
 func (roles *Roles) ReadRoleFile() (err error) {
 	file, err := ioutil.ReadFile("./cachefile/Role.json")

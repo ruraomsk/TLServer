@@ -37,7 +37,9 @@ func ConnectDB() error {
 		if err = db.Table("accounts").Exec("alter table accounts add points1 point").Error; err != nil {
 			return err
 		}
-
+		if err = db.Table("accounts").Exec("alter table accounts add privilege jsonb").Error; err != nil {
+			return err
+		}
 		// Супер пользователь
 		acc := Account{}
 

@@ -19,5 +19,5 @@
   + **`/{slug}/cross`** метод **`POST`** забирает из URL значение Region и ID, и возвращает информацию о данном перекрестке cross[ID,region[num,name],idevice,tlsost[num,description],points,state[ck,nk,pk,arrays,status,statistics]]
   
 + **Функции с префиксом /file**
-  + **`/cross`** метод **`GET`** файловый сервер для перекрество 
+  + **`/cross`** метод **`GET`** файловый сервер для перекрестков 
   + **`/img`** метод **`GET`** файловый сервер для состояний светофоров
