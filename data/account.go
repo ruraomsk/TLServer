@@ -157,14 +157,14 @@ func (account *Account) GetInfoForUser() map[string]interface{} {
 	resp := u.Message(true, "Take this DATA")
 
 	resp["ya_map"] = account.YaMapKey
-	resp["point"] = account.PointToMap()
+	resp["boxPoint"] = account.PointToMap()
 	resp["tflight"] = tflight
 	return resp
 }
 
 func (account *Account) PointToMap() (PointMap map[string]Point) {
 	PointMap = make(map[string]Point, 2)
-	PointMap["Point0"] = account.BoxPoint.Point0
-	PointMap["Point1"] = account.BoxPoint.Point1
+	PointMap["point0"] = account.BoxPoint.Point0
+	PointMap["point1"] = account.BoxPoint.Point1
 	return PointMap
 }
