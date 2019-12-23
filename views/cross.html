@@ -1,18 +1,139 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-        <meta charset="UTF-8">
-        <title>Перекрёсток</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-        <!--        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>-->
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
-        <script src="/static/cross.js" type="text/javascript"></script>
-    </head>
-    <body>
-
-        <img src="" style= "background-image: url(); background-repeat: no-repeat;" id="img">
-    </body>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="UTF-8">
+    <title>Перекрёсток</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <!--        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>-->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+    <script src="/static/cross.js" type="text/javascript"></script>
+</head>
+<body>
+<div class="container-sm text-center mt-3"><h5><strong id="description">Сахалин дк 1. г. Южно-Сахалинск, пр. Мира - ул. Украинская</strong></h5></div>
+<div class="row">
+    <div class="col-sm-1 text-right mt-3 my-auto">
+        <a class="btn btn-warning border disabled" id="p1" data-toggle="tooltip" title="Включить 1 фазу" role="button"><img src="p1.svg" height="50"></a>
+        <a class="btn btn-warning border mt-2" id="p2" data-toggle="tooltip" title="Включить 2 фазу" role="button"><img src="p2.svg" height="50"></a>
+        <a class="btn btn-warning border mt-2" id="jm" data-toggle="tooltip" title="Включить жел мигание" role="button"><img src="jm.svg" height="50"></a>
+        <a class="btn btn-warning border mt-2" id="os" data-toggle="tooltip" title="Отключить светофоры" role="button"><img src="os.svg" height="50"></a>
+        <a class="btn btn-warning border mt-2" id="lr" data-toggle="tooltip" title="Локальный режим" role="button"><img src="lr.svg" height="50"></a>
+        <a class="btn btn-warning border mt-2" id="ky" data-toggle="tooltip" title="Отменить все команды" role="button"><img src="ky.svg" height="50"></a>
+        <a class="btn btn-warning border mt-2" id="sy" data-toggle="tooltip" title="Снять управление" role="button"><img src="sy.svg" height="50"></a>
+    </div>
+    <div class="col-sm-3 text-left mt-4 my-auto">
+        <img src="cross.svg" style= "background-image: url('map.bmp.png'); background-repeat: no-repeat;" id="img">
+    </div>
+    <div class="col-sm-3 mt-3 my-auto">
+        <form class="form-inline well ml-3 mt-5 justify-content-center">
+            <div class="form-group">
+                <label for="ck">ck = </label>
+                <select id="ck" class="form-control ml-2">
+                    <option>0</option>
+                    <option>1</option>
+                    <option>2</option>
+                    <option>3</option>
+                    <option>4</option>
+                    <option>5</option>
+                    <option>6</option>
+                    <option>7</option>
+                    <option>8</option>
+                    <option>9</option>
+                    <option>10</option>
+                </select>
+            </div>
+        </form>
+        <form class="form-inline well ml-3 mt-5 justify-content-center">
+            <div class="form-group">
+                <label for="nk">nk = </label>
+                <select id="nk" class="form-control ml-2">
+                    <option>0</option>
+                    <option>1</option>
+                    <option>2</option>
+                    <option>3</option>
+                    <option>4</option>
+                    <option>5</option>
+                    <option>6</option>
+                    <option>7</option>
+                    <option>8</option>
+                    <option>9</option>
+                    <option>10</option>
+                </select>
+            </div>
+        </form>
+        <form class="form-inline well ml-3 mt-5 justify-content-center">
+            <div class="form-group">
+                <label for="pk">pk = </label>
+                <select id="pk" class="form-control ml-2">
+                    <option>0</option>
+                    <option>1</option>
+                    <option>2</option>
+                    <option>3</option>
+                    <option>4</option>
+                    <option>5</option>
+                    <option>6</option>
+                    <option>7</option>
+                    <option>8</option>
+                    <option>9</option>
+                    <option>10</option>
+                </select>
+            </div>
+        </form>
+        <div class="container-sm ml-3 mt-5 text-center">
+            <label id="status">Статус: Длинный промежуточный такт</label>
+        </div>
+    </div>
+    <div class="col-sm-5 mt-3">
+        <table class="table table-bordered" id="array">
+            <thead>
+            <tr>
+                <th>N фазы</th>
+                <th>Т пр.</th>
+                <th>Т осн.</th>
+                <th>Длит.</th>
+            </tr>
+            </thead>
+            <tbody> <tr>
+                <td><input class="form-control border-0" type="text" id="nf-1"></td>
+                <td><input class="form-control border-0" type="text" id="tp-1"></td>
+                <td><input class="form-control border-0" type="text" id="to-1"></td>
+                <td><input class="form-control border-0" type="text" id="dl-1"></td>
+            </tr>
+            <tr>
+                <td><input class="form-control border-0" type="text" id="nf-2"></td>
+                <td><input class="form-control border-0" type="text" id="tp-2"></td>
+                <td><input class="form-control border-0" type="text" id="to-2"></td>
+                <td><input class="form-control border-0" type="text" id="dl-2"></td>
+            </tr>
+            <tr>
+                <td><input class="form-control border-0" type="text" id="nf-3"></td>
+                <td><input class="form-control border-0" type="text" id="tp-3"></td>
+                <td><input class="form-control border-0" type="text" id="to-3"></td>
+                <td><input class="form-control border-0" type="text" id="dl-3"></td>
+            </tr>
+            <tr>
+                <td><input class="form-control border-0" type="text" id="nf-4"></td>
+                <td><input class="form-control border-0" type="text" id="tp-4"></td>
+                <td><input class="form-control border-0" type="text" id="to-4"></td>
+                <td><input class="form-control border-0" type="text" id="dl-4"></td>
+            </tr>
+            <tr>
+                <td><input class="form-control border-0" type="text" id="nf-5"></td>
+                <td><input class="form-control border-0" type="text" id="tp-5"></td>
+                <td><input class="form-control border-0" type="text" id="to-5"></td>
+                <td><input class="form-control border-0" type="text" id="dl-5"></td>
+            </tr>
+            <tr>
+                <td><input class="form-control border-0" type="text" id="nf-6"></td>
+                <td><input class="form-control border-0" type="text" id="tp-6"></td>
+                <td><input class="form-control border-0" type="text" id="to-6"></td>
+                <td><input class="form-control border-0" type="text" id="dl-6"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
 </html>
