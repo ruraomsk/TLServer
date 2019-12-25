@@ -65,9 +65,9 @@ func (privilege *Privilege) AddPrivilege(privilegeStr, login string) (err error)
 	return nil
 }
 
-func (privilege *Privilege) ToSqlStrUpdate(table, login string) (string) {
-	for _,perm := range CacheInfo.mapRoles[privilege.Role.Name].Permissions{
-		privilege.Role.Perm.Permissions = append(privilege.Role.Perm.Permissions,perm)
+func (privilege *Privilege) ToSqlStrUpdate(table, login string) string {
+	for _, perm := range CacheInfo.mapRoles[privilege.Role.Name].Permissions {
+		privilege.Role.Perm.Permissions = append(privilege.Role.Perm.Permissions, perm)
 	}
 	privilegeStr, _ := json.Marshal(privilege)
 	return fmt.Sprintf("update %s set privilege = '%s' where login = '%s'", table, string(privilegeStr), login)

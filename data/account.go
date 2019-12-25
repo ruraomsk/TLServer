@@ -27,13 +27,19 @@ type Account struct {
 	WTime     time.Duration `json:"wtime",sql:"wtime"` //Время работы пользователя в часах
 	YaMapKey  string        `json:"ya_key",sql:"-"`    //Ключ доступа к ндекс карте
 	Token     string        `json:"token",sql:"-"`     //Токен пользователя
-	Privilege Privilege     `json:"privilege",sql:"-"`
+	//Privilege Privilege     `json:"privilege",sql:"-"`
 }
 
 //Login in system
 func Login(login, password, ip string) map[string]interface{} {
 	account := &Account{}
+	//privilege := Privilege{}
 	//Забираю из базы запись с подходящей почтой
+
+	//sqlStr := fmt.Sprintf("select id, login, password, w_time, ya_map_key from %s ", os.Getenv("gis_table"))
+
+
+
 	err := GetDB().Table("accounts").Where("login = ?", login).First(account).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -43,6 +49,8 @@ func Login(login, password, ip string) map[string]interface{} {
 		logger.Info.Println("Account: Connection to DB err")
 		return u.Message(false, "Connection error. Please try again")
 	}
+
+
 	//Сравниваю хэши полученного пароля и пароля взятого из БД
 	err = bcrypt.CompareHashAndPassword([]byte(account.Password), []byte(password))
 	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
@@ -113,7 +121,7 @@ func (account *Account) Create() map[string]interface{} {
 
 	db.Exec(account.BoxPoint.Point0.ToSqlString("accounts", "points0", account.Login))
 	db.Exec(account.BoxPoint.Point1.ToSqlString("accounts", "points1", account.Login))
-	db.Exec(account.Privilege.ToSqlStrUpdate("accounts",account.Login))
+	//db.Exec(account.Privilege.ToSqlStrUpdate("accounts", account.Login))
 
 	account.Password = ""
 	resp := u.Message(true, "Account has been created")
@@ -130,6 +138,7 @@ func (account *Account) SuperCreate() *Account {
 	account.Password = "$2a$10$ZCWyIEfEVF3KGj6OUtIeSOQ3WexMjuAZ43VSO6T.QqOndn4HN1J6C"
 	account.BoxPoint.Point0.SetPoint(42.79610884568009, 25.56378846464164)
 	account.BoxPoint.Point1.SetPoint(77.13872007901705, -174.12371153535893)
+	//account.Privilege.Role.Name = "Super"
 	return account
 }
 

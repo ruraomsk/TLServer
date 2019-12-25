@@ -47,7 +47,7 @@ func ConnectDB() error {
 		//Записываю координаты в базу!!!
 		db.Exec(acc.BoxPoint.Point0.ToSqlString("accounts", "points0", acc.Login))
 		db.Exec(acc.BoxPoint.Point1.ToSqlString("accounts", "points1", acc.Login))
-
+		//db.Exec(acc.Privilege.ToSqlStrUpdate("accounts", acc.Login))
 	}
 
 	return nil
