@@ -16,14 +16,20 @@ var CacheInfo CacheData
 type CacheData struct {
 	mux       sync.Mutex
 	mapRegion map[int]string
+	mapArea   map[string]map[int]string
 	mapTLSost map[int]string
 	mapRoles  map[string]Permissions
 }
 
 //RegionInfo расшифровка региона
 type RegionInfo struct {
-	Num  int    `json:"num"`  //уникальный номер региона
-	Name string `json:"name"` //расшифровка номера
+	Num        int    `json:"num"`        //уникальный номер региона
+	NameRegion string `json:"nameRegion"` //расшифровка номера
+}
+
+type AreaInfo struct {
+	Num      int    `json:"num"`      //уникальный номер зоны
+	NameArea string `json:"nameArea"` //расшифровка номера
 }
 
 //TLSostInfo состояние
@@ -42,38 +48,57 @@ func CacheDataUpdate() {
 	CacheInfo.mapRoles = make(map[string]Permissions)
 	for {
 		CacheInfo.mux.Lock()
-		CacheInfo.mapRegion, err = GetRegionInfo()
+		CacheInfo.mapRegion, CacheInfo.mapArea, err = GetRegionInfo()
 		CacheInfo.mapTLSost, err = GetTLSost()
 		err = GetRoles()
 
 		CacheInfo.mux.Unlock()
+
 		if err != nil {
 			logger.Info.Println("Cache: Произошла ошибка в чтении cache данных :", err)
 		}
+		//создадим суперпользователя если таблица только была создана
+		if FirstCreate {
+			FirstCreate = false
+			// Супер пользователь
+			_ = SuperCreate()
+		}
+
 		time.Sleep(time.Hour)
 	}
 
 }
 
 //GetRegionInfo получить таблицу регионов
-func GetRegionInfo() (region map[int]string, err error) {
+func GetRegionInfo() (region map[int]string, area map[string]map[int]string, err error) {
 	region = make(map[int]string)
-	sqlStr := fmt.Sprintf("select region, name from %s", os.Getenv("region_table"))
+	area = make(map[string]map[int]string)
+	sqlStr := fmt.Sprintf("select region, nameregion, area, namearea from %s", os.Getenv("region_table"))
 	rows, err := GetDB().Raw(sqlStr).Rows()
 	if err != nil {
-		return CacheInfo.mapRegion, err
+		return CacheInfo.mapRegion, CacheInfo.mapArea, err
 	}
 	for rows.Next() {
-		temp := &RegionInfo{}
-		err = rows.Scan(&temp.Num, &temp.Name)
+		var (
+			tempReg  = &RegionInfo{}
+			tempArea = &AreaInfo{}
+		)
+		err = rows.Scan(&tempReg.Num, &tempReg.NameRegion, &tempArea.Num, &tempArea.NameArea)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
-		if _, ok := region[temp.Num]; !ok {
-			region[temp.Num] = temp.Name
+		if _, ok := region[tempReg.Num]; !ok {
+			region[tempReg.Num] = tempReg.NameRegion
+		}
+
+		if _, ok := area[tempReg.NameRegion][tempArea.Num]; !ok {
+			if _, ok := area[tempReg.NameRegion]; !ok {
+				area[tempReg.NameRegion] = make(map[int]string)
+			}
+			area[tempReg.NameRegion][tempArea.Num] = tempArea.NameArea
 		}
 	}
-	return region, err
+	return region, area, err
 }
 
 //GetTLSost получить данные о состоянии светофоров

@@ -8,7 +8,10 @@ import (
 	"os"
 )
 
-var db *gorm.DB
+var (
+	db          *gorm.DB
+	FirstCreate bool
+)
 
 //ConnectDB connecting to DB
 func ConnectDB() error {
@@ -26,6 +29,7 @@ func ConnectDB() error {
 
 	db = conn
 	if !db.HasTable(Account{}) {
+		FirstCreate = true
 		logger.Info.Println("dbase: Didn't find the Accounts table, created it with SuperUser")
 		if err = db.Table("accounts").AutoMigrate(Account{}).Error; err != nil {
 			return err
@@ -40,14 +44,7 @@ func ConnectDB() error {
 		if err = db.Table("accounts").Exec("alter table accounts add privilege jsonb").Error; err != nil {
 			return err
 		}
-		// Супер пользователь
-		acc := Account{}
 
-		db.Table("accounts").Create(acc.SuperCreate())
-		//Записываю координаты в базу!!!
-		db.Exec(acc.BoxPoint.Point0.ToSqlString("accounts", "points0", acc.Login))
-		db.Exec(acc.BoxPoint.Point1.ToSqlString("accounts", "points1", acc.Login))
-		//db.Exec(acc.Privilege.ToSqlStrUpdate("accounts", acc.Login))
 	}
 
 	return nil

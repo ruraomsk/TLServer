@@ -19,6 +19,11 @@
       "id": 4,
       "command": "ViewCross",
       "description": "Отображение перекрестков"
+    },
+    {
+      "id": 5,
+      "command": "ControlCross",
+      "description": "Управление перекрестков"
     }
   ]
 }

@@ -8,21 +8,6 @@
             "id": 1,
             "command": "CreateUser",
             "description": "Создание пользователя"
-          },
-          {
-            "id": 2,
-            "command": "DeleteUser",
-            "description": "Удаление пользователя"
-          },
-          {
-            "id": 3,
-            "command": "UpdateUser",
-            "description": "Обновление учетных данных"
-          },
-          {
-            "id": 4,
-            "command": "ViewCross",
-            "description": "Отображение перекрестков"
           }
         ]
       }
@@ -50,6 +35,11 @@
             "id": 4,
             "command": "ViewCross",
             "description": "Отображение перекрестков"
+          },
+          {
+            "id": 5,
+            "command": "ControlCross",
+            "description": "Управление перекрестков"
           }
         ]
       }
@@ -59,20 +49,52 @@
       "permission": {
         "permissions": [
           {
+            "id": 1,
+            "command": "CreateUser",
+            "description": "Создание пользователя"
+          },
+          {
             "id": 3,
             "command": "UpdateUser",
             "description": "Обновление учетных данных"
           },
           {
+            "id": 2,
+            "command": "DeleteUser",
+            "description": "Удаление пользователя"
+          },
+          {
             "id": 4,
             "command": "ViewCross",
             "description": "Отображение перекрестков"
+          },
+          {
+            "id": 5,
+            "command": "ControlCross",
+            "description": "Управление перекрестков"
           }
         ]
       }
     },
     {
       "name": "User",
+      "permission": {
+        "permissions": [
+          {
+            "id": 4,
+            "command": "ViewCross",
+            "description": "Отображение перекрестков"
+          },
+          {
+            "id": 5,
+            "command": "ControlCross",
+            "description": "Управление перекрестков"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Viewer",
       "permission": {
         "permissions": [
           {

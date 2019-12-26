@@ -26,9 +26,9 @@ type Permission struct {
 }
 
 type Privilege struct {
-	Role   Role       `json:"role"`
-	Region RegionInfo `json:"region"`
-	IDs    []int      `json:"IDs"`
+	Role   string `json:"role"`
+	Region int    `json:"region"`
+	Area   []int  `json:"area"`
 }
 
 //func (roles *Roles) CreateRole() (err error) {
@@ -46,10 +46,20 @@ type Privilege struct {
 //	return err
 //}
 
-func (privilege *Privilege) ReadFromBD() {
-	//login := "MMM"
-
-	//GetDB().Table("account").Where("login = ?", login).
+//ReadFromBD прочитать данные из бд и разобрать
+func (privilege *Privilege) ReadFromBD(login string) error {
+	var privilegestr string
+	sqlStr := fmt.Sprintf("select privilege from public.accounts where login = '%s'", login)
+	rowsTL := GetDB().Raw(sqlStr).Row()
+	err := rowsTL.Scan(&privilegestr)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal([]byte(privilegestr), privilege)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (privilege *Privilege) AddPrivilege(privilegeStr, login string) (err error) {
@@ -65,10 +75,8 @@ func (privilege *Privilege) AddPrivilege(privilegeStr, login string) (err error)
 	return nil
 }
 
+//ToSqlStrUpdate запись привелегий в базу
 func (privilege *Privilege) ToSqlStrUpdate(table, login string) string {
-	for _, perm := range CacheInfo.mapRoles[privilege.Role.Name].Permissions {
-		privilege.Role.Perm.Permissions = append(privilege.Role.Perm.Permissions, perm)
-	}
 	privilegeStr, _ := json.Marshal(privilege)
 	return fmt.Sprintf("update %s set privilege = '%s' where login = '%s'", table, string(privilegeStr), login)
 }

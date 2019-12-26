@@ -31,6 +31,9 @@ var UpdateMapPage = func(w http.ResponseWriter, r *http.Request) {
 		u.Respond(w, r, u.Message(false, "Invalid request"))
 		return
 	}
-	resp := data.UpdateTLightInfo(*box)
+	resp := u.Message(true, "Update box data")
+	//resp := data.UpdateTLightInfo(*box)
+	tflight := data.GetLightsFromBD(*box)
+	resp["tflight"] = tflight
 	u.Respond(w, r, resp)
 }

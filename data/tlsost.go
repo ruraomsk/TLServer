@@ -12,6 +12,8 @@ import (
 type TrafficLights struct {
 	ID          int        `json:"ID"`          //Уникальный ID светофора
 	Region      RegionInfo `json:"region"`      //Регион
+	Area        AreaInfo   `json:"area"`        //Район
+	Subarea     int        `json:"subarea"`     //ПодРайон
 	Idevice     int        `json:"idevice"`     //Реальный номер устройства
 	Sost        TLSostInfo `json:"tlsost"`      //Состояние светофора
 	Description string     `json:"description"` //Описание светофора
@@ -20,16 +22,41 @@ type TrafficLights struct {
 }
 
 type State struct {
-	Ck         int    `json:"ck",sql:"ck"`
-	Nk         int    `json:"nk",sql:"nk"`
-	Pk         int    `json:"pk",sql:"pk"`
-	Arrays     string `json:"arrays",sql:"Arrays"`
-	Status     int    `json:"status",sql:"status"`
-	Statistics string `json:"statistics",sql:"Statistics"`
+	Ck         int   `json:"ck",sql:"ck"`
+	Nk         int   `json:"nk",sql:"nk"`
+	Pk         int   `json:"pk",sql:"pk"`
+	Arrays     []int `json:"arrays",sql:"Arrays"`
+	Status     int   `json:"status",sql:"status"`
+	Statistics []int `json:"statistics",sql:"Statistics"`
 }
 
 //GetLightsFromBD возвращает массив в котором содержатся светофоры, которые попали в указанную область
-func GetLightsFromBD(point0 Point, point1 Point) (tfdata []TrafficLights) {
+func GetLightsFromBD(box BoxPoint) (tfdata []TrafficLights) {
+	var tflight = []TrafficLights{}
+	if box.Point1.X > -180 && box.Point1.X < 0 {
+		var (
+			point0 Point
+			point1 Point
+		)
+		//для первую область
+		point0 = box.Point0
+		point1.Y = box.Point1.Y
+		point1.X = 179.9999999999
+		tflight = SelectTL(point0, point1)
+		//для второй области
+		point0.Y = box.Point0.Y
+		point0.X = -179.9999999999
+		point1 = box.Point1
+		tempTF := SelectTL(point0, point1)
+		tflight = append(tflight, tempTF...)
+
+	} else {
+		tflight = SelectTL(box.Point0, box.Point1)
+	}
+	return tflight
+}
+
+func SelectTL(point0 Point, point1 Point) (tfdata []TrafficLights) {
 	var (
 		dgis     string
 		sqlStr   string
@@ -37,20 +64,20 @@ func GetLightsFromBD(point0 Point, point1 Point) (tfdata []TrafficLights) {
 	)
 	temp := &TrafficLights{}
 	//tempState := &State{}
-	sqlStr = fmt.Sprintf("select region, id, idevice, dgis, describ, state from %s ", os.Getenv("gis_table"))
+	sqlStr = fmt.Sprintf("select region, area, subarea, id, idevice, dgis, describ, state from %s ", os.Getenv("gis_table"))
 	if !((point0.X == 0) && (point0.Y == 0) && (point1.X == 0) && (point1.Y == 0)) {
 		sqlStr = sqlStr + fmt.Sprintf("where box '((%3.15f,%3.15f),(%3.15f,%3.15f))'@> dgis", point0.Y, point0.X, point1.Y, point1.X)
 	}
 	rowsTL, _ := GetDB().Raw(sqlStr).Rows()
 	for rowsTL.Next() {
-		err := rowsTL.Scan(&temp.Region.Num, &temp.ID, &temp.Idevice, &dgis, &temp.Description, &StateStr)
+		err := rowsTL.Scan(&temp.Region.Num, &temp.Area.Num, &temp.Subarea, &temp.ID, &temp.Idevice, &dgis, &temp.Description, &StateStr)
 		if err != nil {
 			logger.Info.Println("tlsost: Что-то не так с запросом", err)
 			return nil
 		}
 		temp.Points.StrToFloat(dgis)
-		temp.Region.Name = CacheInfo.mapRegion[temp.Region.Num]
-
+		temp.Region.NameRegion = CacheInfo.mapRegion[temp.Region.Num]
+		temp.Area.NameArea = CacheInfo.mapArea[temp.Region.NameRegion][temp.Area.Num]
 		//Состояние светофора!
 		rState, err := ConvertStateStrToStruct(StateStr)
 		if err != nil {
@@ -58,23 +85,10 @@ func GetLightsFromBD(point0 Point, point1 Point) (tfdata []TrafficLights) {
 		}
 		temp.Sost.Num = rState.Status
 		temp.Sost.Description = CacheInfo.mapTLSost[temp.Sost.Num]
-
 		tfdata = append(tfdata, *temp)
 	}
 
 	return tfdata
-}
-
-//UpdateTLightInfo обновить данные о светофорах вощедших в область
-func UpdateTLightInfo(box BoxPoint) map[string]interface{} {
-	resp := u.Message(true, "Update box data")
-	//кривая работа с 180 меридианом приходится его обрезать (postgreqsl не может )
-	if box.Point1.X > -180 && box.Point1.X < -160 {
-		box.Point1.X = 179.999999999999999
-	}
-	tflight := GetLightsFromBD(box.Point0, box.Point1)
-	resp["tflight"] = tflight
-	return resp
 }
 
 func ConvertStateStrToStruct(str string) (rState State, err error) {
@@ -90,20 +104,20 @@ func GetCrossInfo(TLignt TrafficLights) map[string]interface{} {
 		sqlStr   string
 		StateStr string
 	)
-	sqlStr = fmt.Sprintf("select idevice, dgis, describ, state from %s where region = %d and id = %d", os.Getenv("gis_table"), TLignt.Region.Num, TLignt.ID)
+	sqlStr = fmt.Sprintf("select area, subarea, idevice, dgis, describ, state from %s where region = %d and id = %d", os.Getenv("gis_table"), TLignt.Region.Num, TLignt.ID)
 	rowsTL := GetDB().Raw(sqlStr).Row()
-	err := rowsTL.Scan(&TLignt.Idevice, &dgis, &TLignt.Description, &StateStr)
+	err := rowsTL.Scan(&TLignt.Area.Num, &TLignt.Subarea, &TLignt.Idevice, &dgis, &TLignt.Description, &StateStr)
 	if err != nil {
-		resp := u.Message(false, "No result at these points")
-		return resp
+		logger.Info.Println("getCrossInfo: Что-то не так с запросом", err)
+		return u.Message(false, "No result at these points")
 	}
 	TLignt.Points.StrToFloat(dgis)
-	TLignt.Region.Name = CacheInfo.mapRegion[TLignt.Region.Num]
-
+	TLignt.Region.NameRegion = CacheInfo.mapRegion[TLignt.Region.Num]
+	TLignt.Area.NameArea = CacheInfo.mapArea[TLignt.Region.NameRegion][TLignt.Area.Num]
 	//Состояние светофора!
 	rState, err := ConvertStateStrToStruct(StateStr)
 	if err != nil {
-		logger.Info.Println("tlsost: Не удалось разобрать информацию о перекрестке", err)
+		logger.Info.Println("getCrossInfo: Не удалось разобрать информацию о перекрестке", err)
 	}
 	TLignt.State = rState
 	TLignt.Sost.Num = rState.Status
