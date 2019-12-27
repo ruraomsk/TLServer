@@ -16,8 +16,8 @@ var LoginAcc = func(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(account)
 	if err != nil {
 		logger.Info.Println("authControll, loginAcc: Invalid request ", r.RemoteAddr)
-		u.Respond(w, r, u.Message(false, "Invalid request"))
 		w.WriteHeader(http.StatusBadRequest)
+		u.Respond(w, r, u.Message(false, "Invalid request"))
 		return
 	}
 	resp := data.Login(account.Login, account.Password, ip[0])
@@ -30,8 +30,8 @@ var CreateAcc = func(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(account) //
 	if err != nil {
 		logger.Info.Println("authControll, create: Invalid request ", r.RemoteAddr)
-		u.Respond(w, r, u.Message(false, "Invalid request"))
 		w.WriteHeader(http.StatusBadRequest)
+		u.Respond(w, r, u.Message(false, "Invalid request"))
 		return
 	}
 

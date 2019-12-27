@@ -16,20 +16,20 @@ var BuildCross = func(w http.ResponseWriter, r *http.Request) {
 
 	if len(r.URL.RawQuery) <= 0 {
 		logger.Info.Println("crossArm: Blank field ", r.RemoteAddr)
-		u.Respond(w, r, u.Message(false, "Blank field"))
 		w.WriteHeader(http.StatusBadRequest)
+		u.Respond(w, r, u.Message(false, "Blank field"))
 		return
 	}
 	if TLight.Region.Num, err = strconv.Atoi(r.URL.Query().Get("Region")); err != nil {
 		logger.Info.Println("crossArm: Blank field: Region ", r.RemoteAddr)
-		u.Respond(w, r, u.Message(false, "Blank field: Region"))
 		w.WriteHeader(http.StatusBadRequest)
+		u.Respond(w, r, u.Message(false, "Blank field: Region"))
 		return
 	}
 	if TLight.ID, err = strconv.Atoi(r.URL.Query().Get("ID")); err != nil {
 		logger.Info.Println("crossArm: Blank field: ID ", r.RemoteAddr)
-		u.Respond(w, r, u.Message(false, "Blank field: ID"))
 		w.WriteHeader(http.StatusBadRequest)
+		u.Respond(w, r, u.Message(false, "Blank field: ID"))
 		return
 	}
 
