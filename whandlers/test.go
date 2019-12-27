@@ -17,7 +17,27 @@ var TestHello = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 })
 
 var TestToken = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	resp := make(map[string]interface{})
-	resp["Test"] = "OK!"
+	//resp := make(map[string]interface{})
+	//num, err := strconv.Atoi(r.URL.Query().Get("Num"))
+	//var flag bool
+	//if num == 1 {
+	//	flag, err = data.RoleCheck(data.ParserInterface(r.Context().Value("info")), "MakeTest")
+	//
+	//}
+	//if num == 2 {
+	//	flag, err = data.RoleCheck(data.ParserInterface(r.Context().Value("info")), "akeTest")
+	//
+	//}
+	//if err != nil {
+	//	resp["Test"] = err.Error()
+	//	u.Respond(w, r, resp)
+	//	return
+	//}
+
+	flag, resp := FuncAccessCheak(w, r, "MakeTest")
+	if flag {
+		resp["Test"] = "OK!"
+	}
+
 	u.Respond(w, r, resp)
 })

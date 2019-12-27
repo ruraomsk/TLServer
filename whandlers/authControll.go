@@ -2,8 +2,8 @@ package whandlers
 
 import (
 	"../data"
-	u "../utils"
 	"../logger"
+	u "../utils"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -15,8 +15,9 @@ var LoginAcc = func(w http.ResponseWriter, r *http.Request) {
 	ip := strings.Split(r.RemoteAddr, ":")
 	err := json.NewDecoder(r.Body).Decode(account)
 	if err != nil {
-		logger.Info.Println("authControll, loginAcc: Invalid request ",r.RemoteAddr)
+		logger.Info.Println("authControll, loginAcc: Invalid request ", r.RemoteAddr)
 		u.Respond(w, r, u.Message(false, "Invalid request"))
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	resp := data.Login(account.Login, account.Password, ip[0])
@@ -28,10 +29,16 @@ var CreateAcc = func(w http.ResponseWriter, r *http.Request) {
 	account := &data.Account{}
 	err := json.NewDecoder(r.Body).Decode(account) //
 	if err != nil {
-		logger.Info.Println("authControll, create: Invalid request ",r.RemoteAddr)
+		logger.Info.Println("authControll, create: Invalid request ", r.RemoteAddr)
 		u.Respond(w, r, u.Message(false, "Invalid request"))
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	resp := account.Create()
+
+	flag, resp := FuncAccessCheak(w, r, "CreateAcc")
+	if flag {
+		resp = account.Create()
+	}
+
 	u.Respond(w, r, resp)
 }

@@ -5,15 +5,19 @@ import (
 	"../logger"
 	u "../utils"
 	"encoding/json"
-	"fmt"
 	"net/http"
 )
 
 //BuildMainPage собираем данные для залогиневшегося пользователя
 var BuildMapPage = func(w http.ResponseWriter, r *http.Request) {
 	account := &data.Account{}
-	account.Login = fmt.Sprintf("%v", r.Context().Value("user"))
-	resp := account.GetInfoForUser()
+	mapContx := data.ParserInterface(r.Context().Value("info"))
+	account.Login = mapContx["login"]
+
+	flag, resp := FuncAccessCheak(w, r, "BuildMapPage")
+	if flag {
+		resp = account.GetInfoForUser()
+	}
 	u.Respond(w, r, resp)
 }
 
@@ -24,16 +28,21 @@ var UpdateMapPage = func(w http.ResponseWriter, r *http.Request) {
 	if box.Point0 == box.Point1 {
 		logger.Info.Println("mapPage: Impossible coordinates ", r.RemoteAddr)
 		u.Respond(w, r, u.Message(false, "Impossible coordinates"))
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	if err != nil {
 		logger.Info.Println("Invalid request ", r.RemoteAddr)
 		u.Respond(w, r, u.Message(false, "Invalid request"))
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	resp := u.Message(true, "Update box data")
-	//resp := data.UpdateTLightInfo(*box)
-	tflight := data.GetLightsFromBD(*box)
-	resp["tflight"] = tflight
+
+	flag, resp := FuncAccessCheak(w, r, "UpdateMapPage")
+	if flag {
+		tflight := data.GetLightsFromBD(*box)
+		resp["tflight"] = tflight
+	}
 	u.Respond(w, r, resp)
 }

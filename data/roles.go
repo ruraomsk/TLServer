@@ -3,6 +3,7 @@ package data
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 	"io/ioutil"
 )
 
@@ -46,6 +47,28 @@ type Privilege struct {
 //	return err
 //}
 
+func RoleCheck(mapContx map[string]string, act string) (accept bool, err error) {
+	privilege := Privilege{}
+	//Проверил соответствует ли роль которую мне дали с ролью установленной в БД
+	err = privilege.ReadFromBD(mapContx["login"])
+	if err != nil {
+		return false, err
+	}
+	if privilege.Role != mapContx["role"] {
+		err = errors.New("Access denied")
+		return false, err
+	}
+
+	//Проверяю можно ли делать этой роле данное действие
+	for _, perm := range CacheInfo.mapRoles[mapContx["role"]].Permissions {
+		if perm.Command == act {
+			return true, nil
+		}
+	}
+	err = errors.New("Access denied")
+	return false, err
+}
+
 //ReadFromBD прочитать данные из бд и разобрать
 func (privilege *Privilege) ReadFromBD(login string) error {
 	var privilegestr string
@@ -62,6 +85,7 @@ func (privilege *Privilege) ReadFromBD(login string) error {
 	return nil
 }
 
+//AddPrivilege когдато нужно будет редактировать привелегии наверно...
 func (privilege *Privilege) AddPrivilege(privilegeStr, login string) (err error) {
 	err = json.Unmarshal([]byte(privilegeStr), privilege)
 	if err != nil {
@@ -76,6 +100,7 @@ func (privilege *Privilege) ToSqlStrUpdate(table, login string) string {
 	return fmt.Sprintf("update %s set privilege = '%s' where login = '%s'", table, string(privilegeStr), login)
 }
 
+//ReadRoleFile прочитать файл role.json
 func (roles *Roles) ReadRoleFile() (err error) {
 	file, err := ioutil.ReadFile("./cachefile/Role.json")
 	if err != nil {
@@ -88,6 +113,7 @@ func (roles *Roles) ReadRoleFile() (err error) {
 	return err
 }
 
+//ReadPermissionsFile прочитать файл permissions.json
 func (perm *Permissions) ReadPermissionsFile() (err error) {
 	file, err := ioutil.ReadFile("./cachefile/Permissions.json")
 	if err != nil {

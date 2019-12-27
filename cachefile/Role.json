@@ -6,7 +6,7 @@
         "permissions": [
           {
             "id": 1,
-            "command": "CreateUser",
+            "command": "CreateAcc",
             "description": "Создание пользователя"
           }
         ]
@@ -18,28 +18,43 @@
         "permissions": [
           {
             "id": 1,
-            "command": "CreateUser",
+            "command": "CreateAcc",
             "description": "Создание пользователя"
           },
           {
             "id": 2,
-            "command": "DeleteUser",
+            "command": "DeleteAcc",
             "description": "Удаление пользователя"
           },
           {
             "id": 3,
-            "command": "UpdateUser",
+            "command": "UpdateAcc",
             "description": "Обновление учетных данных"
           },
           {
             "id": 4,
-            "command": "ViewCross",
+            "command": "BuildCross",
             "description": "Отображение перекрестков"
           },
           {
             "id": 5,
             "command": "ControlCross",
             "description": "Управление перекрестков"
+          },
+          {
+            "id": 6,
+            "command": "MakeTest",
+            "description": "Делать тесты"
+          },
+          {
+            "id": 7,
+            "command": "BuildMapPage",
+            "description": "Собираем данные для пользователей"
+          },
+          {
+            "id": 8,
+            "command": "UpdateMapPage",
+            "description": "Обновление информации о светофорах"
           }
         ]
       }
@@ -50,28 +65,38 @@
         "permissions": [
           {
             "id": 1,
-            "command": "CreateUser",
+            "command": "CreateAcc",
             "description": "Создание пользователя"
           },
           {
             "id": 3,
-            "command": "UpdateUser",
+            "command": "UpdateAcc",
             "description": "Обновление учетных данных"
           },
           {
             "id": 2,
-            "command": "DeleteUser",
+            "command": "DeleteAcc",
             "description": "Удаление пользователя"
           },
           {
             "id": 4,
-            "command": "ViewCross",
+            "command": "BuildCross",
             "description": "Отображение перекрестков"
           },
           {
             "id": 5,
             "command": "ControlCross",
             "description": "Управление перекрестков"
+          },
+          {
+            "id": 7,
+            "command": "BuildMapPage",
+            "description": "Собираем данные для пользователей"
+          },
+          {
+            "id": 8,
+            "command": "UpdateMapPage",
+            "description": "Обновление информации о светофорах"
           }
         ]
       }
@@ -82,13 +107,23 @@
         "permissions": [
           {
             "id": 4,
-            "command": "ViewCross",
+            "command": "BuildCross",
             "description": "Отображение перекрестков"
           },
           {
             "id": 5,
             "command": "ControlCross",
             "description": "Управление перекрестков"
+          },
+          {
+            "id": 7,
+            "command": "BuildMapPage",
+            "description": "Собираем данные для пользователей"
+          },
+          {
+            "id": 8,
+            "command": "UpdateMapPage",
+            "description": "Обновление информации о светофорах"
           }
         ]
       }
@@ -99,8 +134,18 @@
         "permissions": [
           {
             "id": 4,
-            "command": "ViewCross",
+            "command": "BuildCross",
             "description": "Отображение перекрестков"
+          },
+          {
+            "id": 7,
+            "command": "BuildMapPage",
+            "description": "Собираем данные для пользователей"
+          },
+          {
+            "id": 8,
+            "command": "UpdateMapPage",
+            "description": "Обновление информации о светофорах"
           }
         ]
       }
