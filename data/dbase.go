@@ -28,6 +28,8 @@ func ConnectDB() error {
 	}
 
 	db = conn
+	//db.DB().SetMaxOpenConns(100)
+	//db.DB().SetMaxIdleConns(10)
 	if !db.HasTable(Account{}) {
 		FirstCreate = true
 		logger.Info.Println("dbase: Didn't find the Accounts table, created it with SuperUser")

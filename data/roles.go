@@ -63,11 +63,6 @@ func (privilege *Privilege) ReadFromBD(login string) error {
 }
 
 func (privilege *Privilege) AddPrivilege(privilegeStr, login string) (err error) {
-	//sqlstr := fmt.Sprintf("alter table public.accounts add privilege jsonb where login = %s", login)
-	//err = GetDB().Exec(sqlstr).Error
-	//if err != nil{
-	//	return err
-	//}
 	err = json.Unmarshal([]byte(privilegeStr), privilege)
 	if err != nil {
 		return err

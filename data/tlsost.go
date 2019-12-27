@@ -33,7 +33,7 @@ type State struct {
 //GetLightsFromBD возвращает массив в котором содержатся светофоры, которые попали в указанную область
 func GetLightsFromBD(box BoxPoint) (tfdata []TrafficLights) {
 	var tflight = []TrafficLights{}
-	if box.Point1.X > -180 && box.Point1.X < 0 {
+	if (box.Point1.X > -180 && box.Point1.X < 0) && (box.Point0.X > 0 && box.Point0.X < 180) {
 		var (
 			point0 Point
 			point1 Point
@@ -64,10 +64,7 @@ func SelectTL(point0 Point, point1 Point) (tfdata []TrafficLights) {
 	)
 	temp := &TrafficLights{}
 	//tempState := &State{}
-	sqlStr = fmt.Sprintf("select region, area, subarea, id, idevice, dgis, describ, state from %s ", os.Getenv("gis_table"))
-	if !((point0.X == 0) && (point0.Y == 0) && (point1.X == 0) && (point1.Y == 0)) {
-		sqlStr = sqlStr + fmt.Sprintf("where box '((%3.15f,%3.15f),(%3.15f,%3.15f))'@> dgis", point0.Y, point0.X, point1.Y, point1.X)
-	}
+	sqlStr = fmt.Sprintf("select region, area, subarea, id, idevice, dgis, describ, state from %s where box '((%3.15f,%3.15f),(%3.15f,%3.15f))'@> dgis", os.Getenv("gis_table"), point0.Y, point0.X, point1.Y, point1.X)
 	rowsTL, _ := GetDB().Raw(sqlStr).Rows()
 	for rowsTL.Next() {
 		err := rowsTL.Scan(&temp.Region.Num, &temp.Area.Num, &temp.Subarea, &temp.ID, &temp.Idevice, &dgis, &temp.Description, &StateStr)
