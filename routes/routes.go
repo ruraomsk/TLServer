@@ -48,6 +48,12 @@ func StartServer() {
 	//отправка информации с состояниями перекреста
 	subRout.HandleFunc("/{slug}/cross", whandlers.BuildCross).Methods("POST")
 
+	//обработка создание и редактирования пользователя
+	subRout.HandleFunc("/{slug}/manage", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "//Fileserver/общая папка/TEMP рабочий/Semyon/lib/js/manage.html")
+	}).Methods("GET")
+	subRout.HandleFunc("/{slug}/manage", whandlers.DisplayAccInfo).Methods("POST")
+
 	//тест
 	subRout.HandleFunc("/{slug}/testtoken", whandlers.TestToken).Methods("POST")
 

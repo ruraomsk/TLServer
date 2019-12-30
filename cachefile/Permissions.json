@@ -1,43 +1,49 @@
 {
-    "Permissions": [{
-            "id": 1,
-            "command": "CreateAcc",
-            "description": "Создание пользователя"
-        },
-        {
-            "id": 2,
-            "command": "DeleteAcc",
-            "description": "Удаление пользователя"
-        },
-        {
-            "id": 3,
-            "command": "UpdateAcc",
-            "description": "Обновление учетных данных"
-        },
-        {
-            "id": 4,
-            "command": "BuildCross",
-            "description": "Отображение перекрестков"
-        },
-        {
-            "id": 5,
-            "command": "ControlCross",
-            "description": "Управление перекрестков"
-        },
-        {
-            "id": 6,
-            "command": "MakeTest",
-            "description": "Делать тесты"
-        },
-        {
-            "id": 7,
-            "command": "BuildMapPage",
-            "description": "Собираем данные для пользователей"
-        },
-        {
-            "id": 8,
-            "command": "UpdateMapPage",
-            "description": "Обновление информации о светофорах"
-        }
-    ]
+  "Permissions": [
+    {
+      "id": 1,
+      "command": "CreateAcc",
+      "description": "Создание пользователя"
+    },
+    {
+      "id": 2,
+      "command": "DeleteAcc",
+      "description": "Удаление пользователя"
+    },
+    {
+      "id": 3,
+      "command": "UpdateAcc",
+      "description": "Обновление учетных данных"
+    },
+    {
+      "id": 4,
+      "command": "BuildCross",
+      "description": "Отображение перекрестков"
+    },
+    {
+      "id": 5,
+      "command": "ControlCross",
+      "description": "Управление перекрестков"
+    },
+    {
+      "id": 6,
+      "command": "MakeTest",
+      "description": "Делать тесты"
+    },
+    {
+      "id": 7,
+      "command": "BuildMapPage",
+      "description": "Собираем данные для пользователей"
+    },
+    {
+      "id": 8,
+      "command": "UpdateMapPage",
+      "description": "Обновление информации о светофорах"
+    },
+    {
+      "id": 9,
+      "command": "DisplayAccInfo",
+      "description": "Доступ к странице manage и получение информации об аккаунтах в системе"
+    }
+  ]
 }

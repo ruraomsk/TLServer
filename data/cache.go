@@ -133,3 +133,13 @@ func GetRoles() (err error) {
 	}
 	return err
 }
+
+func (region *RegionInfo) SetRegionInfo(num int) {
+	region.Num = num
+	region.NameRegion = CacheInfo.mapRegion[num]
+}
+
+func (area *AreaInfo) SetAreaInfo(numReg, numArea int) {
+	area.Num = numArea
+	area.NameArea = CacheInfo.mapArea[CacheInfo.mapRegion[numReg]][numArea]
+}

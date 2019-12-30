@@ -32,6 +32,15 @@ type Account struct {
 	Token    string        `json:"token",sql:"-"`     //Токен пользователя
 }
 
+type ShortAccount struct {
+	Login     string     `json:"login"`
+	Wtime     int        `json:"wtime"`
+	Role      string     `json:"role"`
+	Privilege string     `json:"-"`
+	Region    RegionInfo `json:"region"`
+	Area      []AreaInfo `json:"area"`
+}
+
 //Login in system
 func Login(login, password, ip string) map[string]interface{} {
 	account := &Account{}
@@ -130,6 +139,50 @@ func (account *Account) Create() map[string]interface{} {
 	account.Password = ""
 	resp := u.Message(true, "Account has been created")
 	resp["login"] = account.Login
+	return resp
+}
+
+func (account *Account) DisplayInfoForAdmin(mapContx map[string]string) map[string]interface{} {
+	var (
+		privilege = Privilege{}
+		sqlStr    string
+		shortAcc  []ShortAccount
+	)
+	privilege.ReadFromBD(mapContx["login"])
+	sqlStr = fmt.Sprintf("select login, w_time, privilege from public.accounts where login != '%s'", mapContx["login"])
+	if privilege.Region > 0 {
+		sqlStr += fmt.Sprintf("and privilege::jsonb->'region' = '%d'", privilege.Region)
+	}
+
+	rowsTL, _ := GetDB().Raw(sqlStr).Rows()
+	for rowsTL.Next() {
+		var tempSA = ShortAccount{}
+		err := rowsTL.Scan(&tempSA.Login, &tempSA.Wtime, &tempSA.Privilege)
+		if err != nil {
+			logger.Info.Println("DisplayInfoForAdmin: Что-то не так с запросом", err)
+			return nil
+		}
+		var tempPrivilege = Privilege{}
+		err = tempPrivilege.ConvertToJson(tempSA.Privilege)
+		if err != nil {
+			logger.Info.Println("DisplayInfoForAdmin: Что-то не так со строкой привилегий", err)
+			return nil
+		}
+		tempSA.Role = tempPrivilege.Role
+		tempSA.Region.SetRegionInfo(tempPrivilege.Region)
+		for _, num := range tempPrivilege.Area {
+			tempArea := AreaInfo{}
+			tempArea.SetAreaInfo(tempSA.Region.Num, num)
+			tempSA.Area = append(tempSA.Area, tempArea)
+		}
+
+		shortAcc = append(shortAcc, tempSA)
+	}
+
+	resp := u.Message(true, "DisplayInfoForAdmin")
+	resp["accInfo"] = shortAcc
+	resp["regionInfo"] = CacheInfo.mapRegion
+	resp["areaInfo"] = CacheInfo.mapArea
 	return resp
 }
 
@@ -271,7 +324,7 @@ func SuperCreate() (err error) {
 	account.BoxPoint.Point0.SetPoint(42.7961, 25.5637)
 	account.BoxPoint.Point1.SetPoint(77.1387, -174.1237)
 	privilege = Privilege{}
-	privilege.Role = "Admin"
+	privilege.Role = "RegAdmin"
 	privilege.Region = 1
 	privilege.Area = append(privilege.Area, 0)
 	db.Table("accounts").Create(account)

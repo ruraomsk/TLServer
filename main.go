@@ -17,6 +17,7 @@ func init() {
 	//Начало работы, читаем настроечный фаил
 	if err = godotenv.Load(); err != nil {
 		fmt.Println("Can't load enc file - ", err.Error())
+		
 	}
 }
 

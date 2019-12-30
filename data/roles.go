@@ -85,6 +85,14 @@ func (privilege *Privilege) ReadFromBD(login string) error {
 	return nil
 }
 
+func (privilege *Privilege) ConvertToJson(privilegeStr string) (err error) {
+	err = json.Unmarshal([]byte(privilegeStr), privilege)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 //AddPrivilege когдато нужно будет редактировать привелегии наверно...
 func (privilege *Privilege) AddPrivilege(privilegeStr, login string) (err error) {
 	err = json.Unmarshal([]byte(privilegeStr), privilege)

@@ -24,7 +24,7 @@ var LoginAcc = func(w http.ResponseWriter, r *http.Request) {
 	u.Respond(w, r, resp)
 }
 
-//CreateAcc create new acc !!! this func only for admin
+//CreateAcc create new acc
 var CreateAcc = func(w http.ResponseWriter, r *http.Request) {
 	account := &data.Account{}
 	err := json.NewDecoder(r.Body).Decode(account) //
@@ -40,5 +40,17 @@ var CreateAcc = func(w http.ResponseWriter, r *http.Request) {
 		resp = account.Create()
 	}
 
+	u.Respond(w, r, resp)
+}
+
+var DisplayAccInfo = func(w http.ResponseWriter, r *http.Request) {
+	account := &data.Account{}
+	mapContx := data.ParserInterface(r.Context().Value("info"))
+	account.Login = mapContx["login"]
+
+	flag, resp := FuncAccessCheak(w, r, "DisplayAccInfo")
+	if flag {
+		resp = account.DisplayInfoForAdmin(mapContx)
+	}
 	u.Respond(w, r, resp)
 }
