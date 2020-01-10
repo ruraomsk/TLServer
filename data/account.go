@@ -81,7 +81,6 @@ func Login(login, password, ip string) map[string]interface{} {
 
 	tokenString, _ := token.SignedString([]byte(os.Getenv("token_password")))
 	account.Token = tokenString
-	account.ParserPointsUser()
 	//сохраняем токен в БД чтобы точно знать что дейтвителен только 1 токен
 	GetDB().Exec("update accounts set token = ? where login = ?", account.Token, account.Login)
 
@@ -99,10 +98,8 @@ func (account *Account) Validate() (map[string]interface{}, bool) {
 	if len(account.Password) < 6 {
 		return u.Message(false, "Password is required"), false
 	}
-
 	//login mast be unique
 	temp := &Account{}
-
 	//check for error and duplicate login
 	err := GetDB().Table("accounts").Where("login = ?", account.Login).First(temp).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
@@ -111,9 +108,7 @@ func (account *Account) Validate() (map[string]interface{}, bool) {
 	if temp.Login != "" {
 		return u.Message(false, "login already in use by another user."), false
 	}
-
 	return u.Message(false, "Requirement passed"), true
-
 }
 
 //Create создание аккаунта для пользователей
@@ -121,21 +116,15 @@ func (account *Account) Create() map[string]interface{} {
 	if resp, ok := account.Validate(); !ok {
 		return resp
 	}
-
 	//Отдаем ключ для yandex map
 	account.YaMapKey = os.Getenv("ya_key")
-
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(account.Password), bcrypt.DefaultCost)
 	account.Password = string(hashedPassword)
 	GetDB().Table("accounts").Create(account)
 	if account.ID <= 0 {
 		return u.Message(false, "Failed to create account, connection error.")
 	}
-
-	db.Exec(account.BoxPoint.Point0.ToSqlString("accounts", "points0", account.Login))
-	db.Exec(account.BoxPoint.Point1.ToSqlString("accounts", "points1", account.Login))
 	//db.Exec(account.Privilege.ToSqlStrUpdate("accounts", account.Login))
-
 	account.Password = ""
 	resp := u.Message(true, "Account has been created")
 	resp["login"] = account.Login
@@ -148,7 +137,11 @@ func (account *Account) DisplayInfoForAdmin(mapContx map[string]string) map[stri
 		sqlStr    string
 		shortAcc  []ShortAccount
 	)
-	privilege.ReadFromBD(mapContx["login"])
+	err := privilege.ReadFromBD(mapContx["login"])
+	if err != nil {
+		logger.Info.Println("DisplayInfoForAdmin: Не смог считать привилегии пользователя", err)
+		return nil
+	}
 	sqlStr = fmt.Sprintf("select login, w_time, privilege from public.accounts where login != '%s'", mapContx["login"])
 	if privilege.Region > 0 {
 		sqlStr += fmt.Sprintf("and privilege::jsonb->'region' = '%d'", privilege.Region)
@@ -186,203 +179,35 @@ func (account *Account) DisplayInfoForAdmin(mapContx map[string]string) map[stri
 	return resp
 }
 
-//SuperCreate создание суперпользователя
-func SuperCreate() (err error) {
-	account := &Account{}
-	account.Login = "Super"
-	//Отдаем ключ для yandex map
-	account.YaMapKey = os.Getenv("ya_key")
-	account.WTime = 24
-	account.Password = "$2a$10$ZCWyIEfEVF3KGj6OUtIeSOQ3WexMjuAZ43VSO6T.QqOndn4HN1J6C"
-	account.BoxPoint.Point0.SetPoint(54.1907, 32.6603)
-	account.BoxPoint.Point1.SetPoint(56.9351, 42.6798)
-	privilege := Privilege{}
-	privilege.Role = "Super"
-	privilege.Region = 1
-	privilege.Area = append(privilege.Area, 1, 2, 3)
-	db.Table("accounts").Create(account)
-	////Записываю координаты в базу!!!
-	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
-	db.Exec(account.BoxPoint.Point0.ToSqlString("accounts", "points0", account.Login))
-	db.Exec(account.BoxPoint.Point1.ToSqlString("accounts", "points1", account.Login))
-
-	//!!!!! Другие пользователи Для ОТЛАДКИ потом УДАЛИТЬ все что ниже
-	account = &Account{}
-	account.Login = "Moscow"
-	//Отдаем ключ для yandex map
-	account.YaMapKey = os.Getenv("ya_key")
-	account.WTime = 12
-	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
-	account.BoxPoint.Point0.SetPoint(54.1907, 32.6603)
-	account.BoxPoint.Point1.SetPoint(56.9351, 42.6798)
-	privilege = Privilege{}
-	privilege.Role = "RegAdmin"
-	privilege.Region = 1
-	privilege.Area = append(privilege.Area, 1, 2, 3)
-	db.Table("accounts").Create(account)
-	////Записываю координаты в базу!!!
-	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
-	db.Exec(account.BoxPoint.Point0.ToSqlString("accounts", "points0", account.Login))
-	db.Exec(account.BoxPoint.Point1.ToSqlString("accounts", "points1", account.Login))
-
-	account = &Account{}
-	account.Login = "Sachalin"
-	//Отдаем ключ для yandex map
-	account.YaMapKey = os.Getenv("ya_key")
-	account.WTime = 12
-	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
-	account.BoxPoint.Point0.SetPoint(43.0725, 122.5584)
-	account.BoxPoint.Point1.SetPoint(55.6369, 162.6364)
-	privilege = Privilege{}
-	privilege.Role = "RegAdmin"
-	privilege.Region = 3
-	privilege.Area = append(privilege.Area, 1)
-	db.Table("accounts").Create(account)
-	////Записываю координаты в базу!!!
-	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
-	db.Exec(account.BoxPoint.Point0.ToSqlString("accounts", "points0", account.Login))
-	db.Exec(account.BoxPoint.Point1.ToSqlString("accounts", "points1", account.Login))
-
-	account = &Account{}
-	account.Login = "Cykotka"
-	//Отдаем ключ для yandex map
-	account.YaMapKey = os.Getenv("ya_key")
-	account.WTime = 12
-	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
-	account.BoxPoint.Point0.SetPoint(56.7247, 104.2294)
-	account.BoxPoint.Point1.SetPoint(72.7364, -175.6143)
-	privilege = Privilege{}
-	privilege.Role = "RegAdmin"
-	privilege.Region = 2
-	privilege.Area = append(privilege.Area, 1, 2)
-	db.Table("accounts").Create(account)
-	////Записываю координаты в базу!!!
-	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
-	db.Exec(account.BoxPoint.Point0.ToSqlString("accounts", "points0", account.Login))
-	db.Exec(account.BoxPoint.Point1.ToSqlString("accounts", "points1", account.Login))
-
-	account = &Account{}
-	account.Login = "All"
-	//Отдаем ключ для yandex map
-	account.YaMapKey = os.Getenv("ya_key")
-	account.WTime = 12
-	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
-	account.BoxPoint.Point0.SetPoint(42.7961, 25.5637)
-	account.BoxPoint.Point1.SetPoint(77.1387, -174.1237)
-	privilege = Privilege{}
-	privilege.Role = "Admin"
-	privilege.Region = 0
-	privilege.Area = append(privilege.Area, 0)
-	db.Table("accounts").Create(account)
-	////Записываю координаты в базу!!!
-	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
-	db.Exec(account.BoxPoint.Point0.ToSqlString("accounts", "points0", account.Login))
-	db.Exec(account.BoxPoint.Point1.ToSqlString("accounts", "points1", account.Login))
-
-	account = &Account{}
-	account.Login = "MMM"
-	//Отдаем ключ для yandex map
-	account.YaMapKey = os.Getenv("ya_key")
-	account.WTime = 12
-	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
-	account.BoxPoint.Point0.SetPoint(42.7961, 25.5637)
-	account.BoxPoint.Point1.SetPoint(77.1387, -174.1237)
-	privilege = Privilege{}
-	privilege.Role = "Admin"
-	privilege.Region = 0
-	privilege.Area = append(privilege.Area, 0)
-	db.Table("accounts").Create(account)
-	////Записываю координаты в базу!!!
-	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
-	db.Exec(account.BoxPoint.Point0.ToSqlString("accounts", "points0", account.Login))
-	db.Exec(account.BoxPoint.Point1.ToSqlString("accounts", "points1", account.Login))
-
-	account = &Account{}
-	account.Login = "Admin"
-	//Отдаем ключ для yandex map
-	account.YaMapKey = os.Getenv("ya_key")
-	account.WTime = 12
-	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
-	account.BoxPoint.Point0.SetPoint(42.7961, 25.5637)
-	account.BoxPoint.Point1.SetPoint(77.1387, -174.1237)
-	privilege = Privilege{}
-	privilege.Role = "Admin"
-	privilege.Region = 0
-	privilege.Area = append(privilege.Area, 0)
-	db.Table("accounts").Create(account)
-	////Записываю координаты в базу!!!
-	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
-	db.Exec(account.BoxPoint.Point0.ToSqlString("accounts", "points0", account.Login))
-	db.Exec(account.BoxPoint.Point1.ToSqlString("accounts", "points1", account.Login))
-
-	account = &Account{}
-	account.Login = "RegAdmin"
-	//Отдаем ключ для yandex map
-	account.YaMapKey = os.Getenv("ya_key")
-	account.WTime = 12
-	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
-	account.BoxPoint.Point0.SetPoint(42.7961, 25.5637)
-	account.BoxPoint.Point1.SetPoint(77.1387, -174.1237)
-	privilege = Privilege{}
-	privilege.Role = "RegAdmin"
-	privilege.Region = 1
-	privilege.Area = append(privilege.Area, 0)
-	db.Table("accounts").Create(account)
-	////Записываю координаты в базу!!!
-	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
-	db.Exec(account.BoxPoint.Point0.ToSqlString("accounts", "points0", account.Login))
-	db.Exec(account.BoxPoint.Point1.ToSqlString("accounts", "points1", account.Login))
-
-	account = &Account{}
-	account.Login = "User"
-	//Отдаем ключ для yandex map
-	account.YaMapKey = os.Getenv("ya_key")
-	account.WTime = 12
-	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
-	account.BoxPoint.Point0.SetPoint(42.7961, 25.5637)
-	account.BoxPoint.Point1.SetPoint(77.1387, -174.1237)
-	privilege = Privilege{}
-	privilege.Role = "User"
-	privilege.Region = 2
-	privilege.Area = append(privilege.Area, 2)
-	db.Table("accounts").Create(account)
-	////Записываю координаты в базу!!!
-	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
-	db.Exec(account.BoxPoint.Point0.ToSqlString("accounts", "points0", account.Login))
-	db.Exec(account.BoxPoint.Point1.ToSqlString("accounts", "points1", account.Login))
-
-	account = &Account{}
-	account.Login = "Viewer"
-	//Отдаем ключ для yandex map
-	account.YaMapKey = os.Getenv("ya_key")
-	account.WTime = 12
-	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
-	account.BoxPoint.Point0.SetPoint(42.7961, 25.5637)
-	account.BoxPoint.Point1.SetPoint(77.1387, -174.1237)
-	privilege = Privilege{}
-	privilege.Role = "Viewer"
-	privilege.Region = 3
-	privilege.Area = append(privilege.Area, 1)
-	db.Table("accounts").Create(account)
-	////Записываю координаты в базу!!!
-	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
-	db.Exec(account.BoxPoint.Point0.ToSqlString("accounts", "points0", account.Login))
-	db.Exec(account.BoxPoint.Point1.ToSqlString("accounts", "points1", account.Login))
-	//!!!!! НЕ забудь удалить все что вышел
-	logger.Info.Println("Super created!")
-	fmt.Println("Super created!")
-	return err
-}
-
 //ParserPointsUser заполняет поля Point в аккаунт
-func (account *Account) ParserPointsUser() {
-	var str string
-	row := db.Raw("select points0 from accounts where login = ?", account.Login).Row()
-	row.Scan(&str)
-	account.BoxPoint.Point0.StrToFloat(str)
-	row = db.Raw("select points1 from accounts where login = ?", account.Login).Row()
-	row.Scan(&str)
-	account.BoxPoint.Point1.StrToFloat(str)
+func (account *Account) ParserPointsUser() (err error) {
+	var (
+		boxpoint  = BoxPoint{}
+		privilege = Privilege{}
+	)
+	err = privilege.ReadFromBD(account.Login)
+	if err != nil {
+		logger.Info.Println("ParserPointsUser: Не смог считать привилегии пользователя", err)
+		return err
+	}
+	if privilege.Region == 0 {
+		boxpoint.Point0.SetPoint(42.7961, 25.5637)
+		boxpoint.Point1.SetPoint(77.1387, -174.1237)
+	} else {
+		row := db.Raw(`SELECT Min(dgis[0]) as "Y0", Min(convTo360(dgis[1])) as "X0", Max(dgis[0]) as "Y1", Max(convTo360(dgis[1])) as "X1"  FROM public."cross" where region = ?;`, privilege.Region).Row()
+		err := row.Scan(&boxpoint.Point0.Y, &boxpoint.Point0.X, &boxpoint.Point1.Y, &boxpoint.Point1.X)
+		if err != nil {
+			logger.Info.Println("ParserPointsUser: Что-то не так с запросом", err)
+			return err
+		}
+		if boxpoint.Point0.X > 180 {
+			boxpoint.Point0.X -= 360
+		}
+		if boxpoint.Point1.X > 180 {
+			boxpoint.Point0.X -= 360
+		}
+	}
+	account.BoxPoint = boxpoint
 }
 
 //GetInfoForUser собираю информацию для пользователя который только что залогинился
@@ -398,16 +223,157 @@ func (account *Account) GetInfoForUser() map[string]interface{} {
 	account.ParserPointsUser()
 	tflight := GetLightsFromBD(account.BoxPoint)
 	resp := u.Message(true, "Take this DATA")
-
 	resp["ya_map"] = account.YaMapKey
-	resp["boxPoint"] = account.PointToMap()
+	resp["boxPoint"] = account.BoxPoint
 	resp["tflight"] = tflight
 	return resp
 }
 
-func (account *Account) PointToMap() (PointMap map[string]Point) {
-	PointMap = make(map[string]Point, 2)
-	PointMap["point0"] = account.BoxPoint.Point0
-	PointMap["point1"] = account.BoxPoint.Point1
-	return PointMap
+//SuperCreate создание суперпользователя
+func SuperCreate() (err error) {
+	account := &Account{}
+	account.Login = "Super"
+	//Отдаем ключ для yandex map
+	account.YaMapKey = os.Getenv("ya_key")
+	account.WTime = 24
+	account.Password = "$2a$10$ZCWyIEfEVF3KGj6OUtIeSOQ3WexMjuAZ43VSO6T.QqOndn4HN1J6C"
+	privilege := Privilege{}
+	privilege.Role = "Super"
+	privilege.Region = 1
+	privilege.Area = append(privilege.Area, 1, 2, 3)
+	db.Table("accounts").Create(account)
+	////Записываю координаты в базу!!!
+	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
+
+	//!!!!! Другие пользователи Для ОТЛАДКИ потом УДАЛИТЬ все что ниже
+	account = &Account{}
+	account.Login = "Moscow"
+	//Отдаем ключ для yandex map
+	account.YaMapKey = os.Getenv("ya_key")
+	account.WTime = 12
+	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
+	privilege = Privilege{}
+	privilege.Role = "RegAdmin"
+	privilege.Region = 1
+	privilege.Area = append(privilege.Area, 1, 2, 3)
+	db.Table("accounts").Create(account)
+	////Записываю координаты в базу!!!
+	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
+
+	account = &Account{}
+	account.Login = "Sachalin"
+	//Отдаем ключ для yandex map
+	account.YaMapKey = os.Getenv("ya_key")
+	account.WTime = 12
+	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
+	privilege = Privilege{}
+	privilege.Role = "RegAdmin"
+	privilege.Region = 3
+	privilege.Area = append(privilege.Area, 1)
+	db.Table("accounts").Create(account)
+	////Записываю координаты в базу!!!
+	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
+
+	account = &Account{}
+	account.Login = "Cykotka"
+	//Отдаем ключ для yandex map
+	account.YaMapKey = os.Getenv("ya_key")
+	account.WTime = 12
+	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
+	privilege = Privilege{}
+	privilege.Role = "RegAdmin"
+	privilege.Region = 2
+	privilege.Area = append(privilege.Area, 1, 2)
+	db.Table("accounts").Create(account)
+	////Записываю координаты в базу!!!
+	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
+
+	account = &Account{}
+	account.Login = "All"
+	//Отдаем ключ для yandex map
+	account.YaMapKey = os.Getenv("ya_key")
+	account.WTime = 12
+	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
+	privilege = Privilege{}
+	privilege.Role = "Admin"
+	privilege.Region = 0
+	privilege.Area = append(privilege.Area, 0)
+	db.Table("accounts").Create(account)
+	////Записываю координаты в базу!!!
+	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
+
+	account = &Account{}
+	account.Login = "MMM"
+	//Отдаем ключ для yandex map
+	account.YaMapKey = os.Getenv("ya_key")
+	account.WTime = 12
+	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
+	privilege = Privilege{}
+	privilege.Role = "Admin"
+	privilege.Region = 0
+	privilege.Area = append(privilege.Area, 0)
+	db.Table("accounts").Create(account)
+	////Записываю координаты в базу!!!
+	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
+
+	account = &Account{}
+	account.Login = "Admin"
+	//Отдаем ключ для yandex map
+	account.YaMapKey = os.Getenv("ya_key")
+	account.WTime = 12
+	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
+	privilege = Privilege{}
+	privilege.Role = "Admin"
+	privilege.Region = 0
+	privilege.Area = append(privilege.Area, 0)
+	db.Table("accounts").Create(account)
+	////Записываю координаты в базу!!!
+	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
+
+	account = &Account{}
+	account.Login = "RegAdmin"
+	//Отдаем ключ для yandex map
+	account.YaMapKey = os.Getenv("ya_key")
+	account.WTime = 12
+	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
+	privilege = Privilege{}
+	privilege.Role = "RegAdmin"
+	privilege.Region = 1
+	privilege.Area = append(privilege.Area, 0)
+	db.Table("accounts").Create(account)
+	////Записываю координаты в базу!!!
+	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
+
+	account = &Account{}
+	account.Login = "User"
+	//Отдаем ключ для yandex map
+	account.YaMapKey = os.Getenv("ya_key")
+	account.WTime = 12
+	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
+	privilege = Privilege{}
+	privilege.Role = "User"
+	privilege.Region = 2
+	privilege.Area = append(privilege.Area, 2)
+	db.Table("accounts").Create(account)
+	////Записываю координаты в базу!!!
+	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
+
+	account = &Account{}
+	account.Login = "Viewer"
+	//Отдаем ключ для yandex map
+	account.YaMapKey = os.Getenv("ya_key")
+	account.WTime = 12
+	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
+	privilege = Privilege{}
+	privilege.Role = "Viewer"
+	privilege.Region = 3
+	privilege.Area = append(privilege.Area, 1)
+	db.Table("accounts").Create(account)
+	////Записываю координаты в базу!!!
+	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
+
+	//!!!!! НЕ забудь удалить все что вышел
+	logger.Info.Println("Super created!")
+	fmt.Println("Super created!")
+	return err
 }

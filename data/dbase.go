@@ -15,13 +15,24 @@ var (
 
 //ConnectDB connecting to DB
 func ConnectDB() error {
-	username := os.Getenv("db_user")
-	password := os.Getenv("db_password")
-	dbName := os.Getenv("db_name")
-	dbHost := os.Getenv("db_host")
-	dbType := os.Getenv("db_type")
+	var (
+		CreateFuncSql = `Create or replace function convTo360(x double precision) returns double precision as $$
+		begin
+		if x < 0 then
+		return x + 360;
+		else
+		return x;
+		end if;
+		end
+		$$ language plpgsql;`
+		username = os.Getenv("db_user")
+		password = os.Getenv("db_password")
+		dbName   = os.Getenv("db_name")
+		dbHost   = os.Getenv("db_host")
+		dbType   = os.Getenv("db_type")
+		dbURI    = fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable password=%s", dbHost, username, dbName, password)
+	)
 
-	dbURI := fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable password=%s", dbHost, username, dbName, password)
 	conn, err := gorm.Open(dbType, dbURI)
 	if err != nil {
 		return err
@@ -36,11 +47,7 @@ func ConnectDB() error {
 		if err = db.Table("accounts").AutoMigrate(Account{}).Error; err != nil {
 			return err
 		}
-		//Добавляю в созданную таблицу 2 колонки с координатами начального поля
-		if err = db.Table("accounts").Exec("alter table accounts add points0 point").Error; err != nil {
-			return err
-		}
-		if err = db.Table("accounts").Exec("alter table accounts add points1 point").Error; err != nil {
+		if err = db.Exec(CreateFuncSql).Error; err != nil {
 			return err
 		}
 		if err = db.Table("accounts").Exec("alter table accounts add privilege jsonb").Error; err != nil {
@@ -48,7 +55,6 @@ func ConnectDB() error {
 		}
 
 	}
-
 	return nil
 }
 

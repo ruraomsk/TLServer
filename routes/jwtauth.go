@@ -16,7 +16,6 @@ import (
 
 var JwtAuth = func(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
 		var tokenString string
 		cookie, err := r.Cookie("Authorization")
 		//Проверка куков получили ли их вообще

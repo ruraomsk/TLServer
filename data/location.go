@@ -1,7 +1,6 @@
 package data
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 )
@@ -13,8 +12,8 @@ type Point struct {
 
 //BoxPoint координаты для отрисовки квадрата
 type BoxPoint struct {
-	Point0 Point
-	Point1 Point
+	Point0 Point `json:"point0"`
+	Point1 Point `json:"point1"`
 }
 
 //GetPoint возврашает значение координат
@@ -27,10 +26,10 @@ func (points *Point) SetPoint(y, x float64) {
 	points.X, points.Y = x, y
 }
 
-//ToSqlString формирует SQL строку для обновления координат в БД
-func (points *Point) ToSqlString(table, column, login string) string {
-	return fmt.Sprintf("update %s set %s = '(%f,%f)' where login = '%s'", table, column, points.Y, points.X, login)
-}
+// //ToSqlString формирует SQL строку для обновления координат в БД
+// func (points *Point) ToSqlString(table, column, login string) string {
+// 	return fmt.Sprintf("update %s set %s = '(%f,%f)' where login = '%s'", table, column, points.Y, points.X, login)
+// }
 
 //StrToFloat преобразует строку полученную из бз в структуру Point
 func (points *Point) StrToFloat(str string) {

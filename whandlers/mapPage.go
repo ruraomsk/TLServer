@@ -14,6 +14,11 @@ var BuildMapPage = func(w http.ResponseWriter, r *http.Request) {
 	mapContx := data.ParserInterface(r.Context().Value("info"))
 	account.Login = mapContx["login"]
 
+	if account.Login == "Super" {
+		u.Respond(w, r, nil)
+		return
+	}
+
 	flag, resp := FuncAccessCheak(w, r, "BuildMapPage")
 	if flag {
 		resp = account.GetInfoForUser()

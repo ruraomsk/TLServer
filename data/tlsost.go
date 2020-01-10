@@ -5,29 +5,28 @@ import (
 	u "../utils"
 	"encoding/json"
 	"fmt"
+	agS_pudge "github.com/ruraomsk/ag-server/pudge"
 	"os"
 )
 
 //TrafficLights информация о светофоре
 type TrafficLights struct {
-	ID          int        `json:"ID"`          //Уникальный ID светофора
-	Region      RegionInfo `json:"region"`      //Регион
-	Area        AreaInfo   `json:"area"`        //Район
-	Subarea     int        `json:"subarea"`     //ПодРайон
-	Idevice     int        `json:"idevice"`     //Реальный номер устройства
-	Sost        TLSostInfo `json:"tlsost"`      //Состояние светофора
-	Description string     `json:"description"` //Описание светофора
-	Points      Point      `json:"points"`      //Координата где находится светофор
-	State       State      `json:"state"`       //Полное состояние светофора полученное от устройства
+	ID          int             `json:"ID"`          //Уникальный ID светофора
+	Region      RegionInfo      `json:"region"`      //Регион
+	Area        AreaInfo        `json:"area"`        //Район
+	Subarea     int             `json:"subarea"`     //ПодРайон
+	Idevice     int             `json:"idevice"`     //Реальный номер устройства
+	Sost        TLSostInfo      `json:"tlsost"`      //Состояние светофора
+	Description string          `json:"description"` //Описание светофора
+	Points      Point           `json:"points"`      //Координата где находится светофор
 }
 
 type State struct {
-	Ck         int   `json:"ck",sql:"ck"`
-	Nk         int   `json:"nk",sql:"nk"`
-	Pk         int   `json:"pk",sql:"pk"`
-	Arrays     []int `json:"arrays",sql:"Arrays"`
-	Status     int   `json:"status",sql:"status"`
-	Statistics []int `json:"statistics",sql:"Statistics"`
+	Ck     int    `json:"ck",sql:"ck"`
+	Nk     int    `json:"nk",sql:"nk"`
+	Pk     int    `json:"pk",sql:"pk"`
+	Fone   string `json:"fone",sql:"fone"`
+	Status int    `json:"status",sql:"status"`
 }
 
 //GetLightsFromBD возвращает массив в котором содержатся светофоры, которые попали в указанную область
@@ -62,8 +61,8 @@ func SelectTL(point0 Point, point1 Point) (tfdata []TrafficLights) {
 		sqlStr   string
 		StateStr string
 	)
+
 	temp := &TrafficLights{}
-	//tempState := &State{}
 	sqlStr = fmt.Sprintf("select region, area, subarea, id, idevice, dgis, describ, state from %s where box '((%3.15f,%3.15f),(%3.15f,%3.15f))'@> dgis", os.Getenv("gis_table"), point0.Y, point0.X, point1.Y, point1.X)
 	rowsTL, _ := GetDB().Raw(sqlStr).Rows()
 	for rowsTL.Next() {
@@ -80,7 +79,7 @@ func SelectTL(point0 Point, point1 Point) (tfdata []TrafficLights) {
 		if err != nil {
 			logger.Info.Println("tlsost: Не удалось разобрать информацию о перекрестке", err)
 		}
-		temp.Sost.Num = rState.Status
+		temp.Sost.Num = rState.StatusDevice
 		temp.Sost.Description = CacheInfo.mapTLSost[temp.Sost.Num]
 		tfdata = append(tfdata, *temp)
 	}
@@ -88,7 +87,7 @@ func SelectTL(point0 Point, point1 Point) (tfdata []TrafficLights) {
 	return tfdata
 }
 
-func ConvertStateStrToStruct(str string) (rState State, err error) {
+func ConvertStateStrToStruct(str string) (rState agS_pudge.Cross, err error) {
 	if err := json.Unmarshal([]byte(str), &rState); err != nil {
 		return rState, err
 	}
@@ -116,10 +115,10 @@ func GetCrossInfo(TLignt TrafficLights) map[string]interface{} {
 	if err != nil {
 		logger.Info.Println("getCrossInfo: Не удалось разобрать информацию о перекрестке", err)
 	}
-	TLignt.State = rState
-	TLignt.Sost.Num = rState.Status
+	TLignt.Sost.Num = rState.StatusDevice
 	TLignt.Sost.Description = CacheInfo.mapTLSost[TLignt.Sost.Num]
 	resp := u.Message(true, "Cross information")
 	resp["cross"] = TLignt
+	resp["state"] = rState
 	return resp
 }
