@@ -6,8 +6,8 @@
         "permissions": [
           {
             "id": 1,
-            "command": "CreateAcc",
-            "description": "Создание пользователя"
+            "command": "ManageAccount",
+            "description": "Управление аккаунтами удаление, создание, обновление"
           },
           {
             "id": 9,
@@ -23,18 +23,8 @@
         "permissions": [
           {
             "id": 1,
-            "command": "CreateAcc",
-            "description": "Создание пользователя"
-          },
-          {
-            "id": 2,
-            "command": "DeleteAcc",
-            "description": "Удаление пользователя"
-          },
-          {
-            "id": 3,
-            "command": "UpdateAcc",
-            "description": "Обновление учетных данных"
+            "command": "ManageAccount",
+            "description": "Управление аккаунтами удаление, создание, обновление"
           },
           {
             "id": 4,
@@ -75,18 +65,8 @@
         "permissions": [
           {
             "id": 1,
-            "command": "CreateAcc",
-            "description": "Создание пользователя"
-          },
-          {
-            "id": 3,
-            "command": "UpdateAcc",
-            "description": "Обновление учетных данных"
-          },
-          {
-            "id": 2,
-            "command": "DeleteAcc",
-            "description": "Удаление пользователя"
+            "command": "ManageAccount",
+            "description": "Управление аккаунтами удаление, создание, обновление"
           },
           {
             "id": 4,

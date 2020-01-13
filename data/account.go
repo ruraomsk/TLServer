@@ -3,6 +3,7 @@ package data
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"time"
 
 	"../logger"
@@ -35,6 +36,7 @@ type Account struct {
 type ShortAccount struct {
 	Login     string     `json:"login"`
 	Wtime     int        `json:"wtime"`
+	Password  string     `json:"password"`
 	Role      string     `json:"role"`
 	Privilege string     `json:"-"`
 	Region    RegionInfo `json:"region"`
@@ -95,6 +97,12 @@ func Login(login, password, ip string) map[string]interface{} {
 
 //Validate checking for an account in the database
 func (account *Account) Validate() (map[string]interface{}, bool) {
+	if account.Login != regexp.QuoteMeta(account.Login) {
+		return u.Message(false, "Login contains invalid characters"), false
+	}
+	if account.Password != regexp.QuoteMeta(account.Password) {
+		return u.Message(false, "Password contains invalid characters"), false
+	}
 	if len(account.Password) < 6 {
 		return u.Message(false, "Password is required"), false
 	}
@@ -112,7 +120,7 @@ func (account *Account) Validate() (map[string]interface{}, bool) {
 }
 
 //Create создание аккаунта для пользователей
-func (account *Account) Create() map[string]interface{} {
+func (account *Account) Create(privilege Privilege) map[string]interface{} {
 	if resp, ok := account.Validate(); !ok {
 		return resp
 	}
@@ -124,7 +132,7 @@ func (account *Account) Create() map[string]interface{} {
 	if account.ID <= 0 {
 		return u.Message(false, "Failed to create account, connection error.")
 	}
-	//db.Exec(account.Privilege.ToSqlStrUpdate("accounts", account.Login))
+	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
 	account.Password = ""
 	resp := u.Message(true, "Account has been created")
 	resp["login"] = account.Login
@@ -228,6 +236,20 @@ func (account *Account) GetInfoForUser() map[string]interface{} {
 	resp["boxPoint"] = account.BoxPoint
 	resp["tflight"] = tflight
 	return resp
+}
+
+func (shortAcc *ShortAccount) ConvertShortToAcc() (account Account, privilege Privilege) {
+	account = Account{}
+	privilege = Privilege{}
+	account.Password = shortAcc.Password
+	account.Login = shortAcc.Login
+	account.WTime = time.Duration(shortAcc.Wtime)
+	privilege.Region = shortAcc.Region.Num
+	privilege.Role = shortAcc.Role
+	for _, area := range shortAcc.Area {
+		privilege.Area = append(privilege.Area, area.Num)
+	}
+	return account, privilege
 }
 
 //SuperCreate создание суперпользователя

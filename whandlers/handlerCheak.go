@@ -13,9 +13,9 @@ var FuncAccessCheak = func(w http.ResponseWriter, r *http.Request, act string) (
 	if err != nil || !flag {
 		resp = u.Message(false, err.Error())
 		if err != nil {
-			resp = u.Message(false, "Invalid request")
+			resp = u.Message(false, "Access denied")
 		}
-		logger.Info.Println("FuncAccessCheak: Invalid request", r.RemoteAddr)
+		logger.Info.Println("FuncAccessCheak: Access denied", r.RemoteAddr)
 		w.WriteHeader(http.StatusForbidden)
 	}
 	return flag, resp

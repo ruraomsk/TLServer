@@ -2,47 +2,44 @@ package whandlers
 
 import (
 	"../data"
+	"../logger"
+	u "../utils"
+	"encoding/json"
 	"fmt"
 	"net/http"
 )
 
-var actParser = func(w http.ResponseWriter, r *http.Request) {
+var ActParser = func(w http.ResponseWriter, r *http.Request) {
 	mapContx := data.ParserInterface(r.Context().Value("info"))
-	//var actions = []string{
-	//	"update",
-	//	"delete",
-	//	"add",
-	//}
 
-	switch mapContx["act"] {
-	case "update":
-		fmt.Println("update")
-	case "delete":
-		fmt.Println("delete")
-	case "add":
-		fmt.Println("add")
-	default:
-		fmt.Println("bad requst")
+	flag, resp := FuncAccessCheak(w, r, "ManageAccount")
+	if flag {
+		switch mapContx["act"] {
+		case "update":
+			fmt.Println("update")
+		case "delete":
+			fmt.Println("delete")
+		case "add":
+			{
+				var shortAcc = &data.ShortAccount{}
+				err := json.NewDecoder(r.Body).Decode(shortAcc)
+				if err != nil {
+					logger.Info.Println("ActParser: Incorrectly filled data ", r.RemoteAddr)
+					w.WriteHeader(http.StatusBadRequest)
+					u.Respond(w, r, u.Message(false, "Incorrectly filled data"))
+					return
+				}
+				account, privilege := shortAcc.ConvertShortToAcc()
+				resp = account.Create(privilege)
+			}
+		default:
+			{
+				logger.Info.Println("ManageAct: Unregistered action", r.RemoteAddr)
+				w.WriteHeader(http.StatusBadRequest)
+				u.Respond(w, r, u.Message(false, "Unregistered action"))
+				return
+			}
+		}
 	}
-
-
-	//if mapContx["act"] == actions[0] { //проверка update
-	//	flag, resp := FuncAccessCheak(w, r, "BuildMapPage")
-	//	if flag {
-	//
-	//	}
-	//} else if mapContx["act"] == actions[1] { //проверка delete
-	//	flag, resp := FuncAccessCheak(w, r, "BuildMapPage")
-	//	if flag {
-	//
-	//	}
-	//} else if mapContx["act"] == actions[2] { //проверка add
-	//	flag, resp := FuncAccessCheak(w, r, "BuildMapPage")
-	//	if flag {
-	//
-	//	}
-	//} else {
-	//
-	//}
-
+	u.Respond(w, r, resp)
 }

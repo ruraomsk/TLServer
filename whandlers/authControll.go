@@ -37,7 +37,7 @@ var CreateAcc = func(w http.ResponseWriter, r *http.Request) {
 
 	flag, resp := FuncAccessCheak(w, r, "CreateAcc")
 	if flag {
-		resp = account.Create()
+		//resp = account.Create(nil)
 	}
 
 	u.Respond(w, r, resp)
