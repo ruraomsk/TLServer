@@ -100,16 +100,18 @@ var JwtAuth = func(next http.Handler) http.Handler {
 			return
 		}
 
-		//проверка токен пришел от правльного URL
+		//проверка токен пришел от правильного URL
 		vars := mux.Vars(r)
+		var mapCont = make(map[string]string)
 		slug := vars["slug"]
+		if strings.Contains(r.RequestURI, "/manage/") {
+			mapCont["act"] = vars["act"]
+		}
 		if slug != tk.Login {
 			logger.Info.Println("jwtauth: token isn't registered for this user ", r.RemoteAddr, "  ", tk.Login)
 			u.Respond(w, r, u.Message(false, "token isn't registered for this user"))
 			return
 		}
-
-		var mapCont = make(map[string]string)
 		mapCont["login"] = tk.Login
 		mapCont["role"] = tk.Role
 		ctx := context.WithValue(r.Context(), "info", mapCont)

@@ -208,6 +208,7 @@ func (account *Account) ParserPointsUser() (err error) {
 		}
 	}
 	account.BoxPoint = boxpoint
+	return nil
 }
 
 //GetInfoForUser собираю информацию для пользователя который только что залогинился
