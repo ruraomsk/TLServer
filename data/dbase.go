@@ -6,6 +6,7 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"os"
+	"strconv"
 )
 
 var (
@@ -25,12 +26,14 @@ func ConnectDB() error {
 		end if;
 		end
 		$$ language plpgsql;`
-		username = os.Getenv("db_user")
-		password = os.Getenv("db_password")
-		dbName   = os.Getenv("db_name")
-		dbHost   = os.Getenv("db_host")
-		dbType   = os.Getenv("db_type")
-		dbURI    = fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable password=%s", dbHost, username, dbName, password)
+		username              = os.Getenv("db_user")
+		password              = os.Getenv("db_password")
+		dbName                = os.Getenv("db_name")
+		dbHost                = os.Getenv("db_host")
+		dbType                = os.Getenv("db_type")
+		dbURI                 = fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable password=%s", dbHost, username, dbName, password)
+		db_SetMaxOpenConns, _ = strconv.Atoi(os.Getenv("db_SetMaxOpenConns"))
+		db_SetMaxIdleConns, _ = strconv.Atoi(os.Getenv("db_SetMaxIdleConns"))
 	)
 
 	conn, err := gorm.Open(dbType, dbURI)
@@ -39,8 +42,8 @@ func ConnectDB() error {
 	}
 
 	db = conn
-	db.DB().SetMaxOpenConns(50)
-	db.DB().SetMaxIdleConns(10)
+	db.DB().SetMaxOpenConns(db_SetMaxOpenConns)
+	db.DB().SetMaxIdleConns(db_SetMaxIdleConns)
 	if !db.HasTable(Account{}) {
 		FirstCreate = true
 		logger.Info.Println("dbase: Didn't find the Accounts table, created it with SuperUser")

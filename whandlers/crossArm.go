@@ -32,7 +32,12 @@ var BuildCross = func(w http.ResponseWriter, r *http.Request) {
 		u.Respond(w, r, u.Message(false, "Blank field: ID"))
 		return
 	}
-
+	if TLight.Area.Num, err = strconv.Atoi(r.URL.Query().Get("Area")); err != nil {
+		logger.Info.Println("crossArm: Blank field: Area ", r.RemoteAddr)
+		w.WriteHeader(http.StatusBadRequest)
+		u.Respond(w, r, u.Message(false, "Blank field: Area"))
+		return
+	}
 	flag, resp := FuncAccessCheak(w, r, "BuildCross")
 	if flag {
 		resp = data.GetCrossInfo(*TLight)

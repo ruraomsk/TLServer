@@ -29,8 +29,18 @@ var ActParser = func(w http.ResponseWriter, r *http.Request) {
 					u.Respond(w, r, u.Message(false, "Incorrectly filled data"))
 					return
 				}
+				if mapContx["login"] == "RegAdmin" {
+					if shortAcc.Role == "Admin" {
+						u.Respond(w, r, u.Message(false, "No authority to create admins"))
+						return
+					}
+				}
 				account, privilege := shortAcc.ConvertShortToAcc()
 				resp = account.Create(privilege)
+			}
+		case "changepw":
+			{
+
 			}
 		default:
 			{
