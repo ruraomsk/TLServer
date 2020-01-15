@@ -2,6 +2,8 @@ package data
 
 import (
 	"fmt"
+	"github.com/jinzhu/gorm"
+	"github.com/ruraomsk/ag-server/logger"
 	"strconv"
 	"time"
 )
@@ -37,7 +39,7 @@ func (shortAcc *ShortAccount) ValidCreate(role string, region string) (err error
 	}
 	//проверка кто создает
 	if role == "RegAdmin" {
-		if shortAcc.Role == "Admin" {
+		if shortAcc.Role == "Admin" || shortAcc.Role == role {
 			return fmt.Errorf("this role cannot be created")
 		}
 		if num, _ := strconv.Atoi(region); shortAcc.Region.Num != num {
@@ -67,4 +69,70 @@ func (shortAcc *ShortAccount) ValidCreate(role string, region string) (err error
 	}
 
 	return nil
+}
+
+func (shortAcc *ShortAccount) ValidDelete(role string, region string) (account *Account, err error) {
+	account = &Account{}
+	//Забираю из базы запись с подходящей почтой
+	err = GetDB().Table("accounts").Where("login = ?", shortAcc.Login).First(account).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			logger.Info.Println("Account: Login not found: ", shortAcc.Login)
+			return nil, fmt.Errorf("login not found")
+		}
+		logger.Info.Println("Account: Connection to DB err")
+		return nil, fmt.Errorf("connection error")
+	}
+
+	//Авторизировались добираем полномочия
+	privilege := Privilege{}
+	err = privilege.ReadFromBD(account.Login)
+	if err != nil {
+		logger.Info.Println("Account: Bad privilege")
+		return nil, fmt.Errorf("bad privilege")
+	}
+
+	if role == "RegAdmin" {
+		if privilege.Role == "Admin" || privilege.Role == role {
+			return nil, fmt.Errorf("this role cannot be deleted")
+		}
+		if num, _ := strconv.Atoi(region); shortAcc.Region.Num != num {
+			return nil, fmt.Errorf("regions dn't match")
+		}
+	}
+
+	return account, nil
+}
+
+func (shortAcc *ShortAccount) ValidChangePW(role string, region string) (account *Account, err error) {
+	account = &Account{}
+	//Забираю из базы запись с подходящей почтой
+	err = GetDB().Table("accounts").Where("login = ?", shortAcc.Login).First(account).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			logger.Info.Println("Account: Login not found: ", shortAcc.Login)
+			return nil, fmt.Errorf("login not found")
+		}
+		logger.Info.Println("Account: Connection to DB err")
+		return nil, fmt.Errorf("connection error")
+	}
+	account.Password = shortAcc.Password
+	//Авторизировались добираем полномочия
+	privilege := Privilege{}
+	err = privilege.ReadFromBD(account.Login)
+	if err != nil {
+		logger.Info.Println("Account: Bad privilege")
+		return nil, fmt.Errorf("bad privilege")
+	}
+
+	if role == "RegAdmin" {
+		if privilege.Role == "Admin" || privilege.Role == role {
+			return nil, fmt.Errorf("you cannot change the password for this user")
+		}
+		if num, _ := strconv.Atoi(region); shortAcc.Region.Num != num {
+			return nil, fmt.Errorf("regions dn't match")
+		}
+	}
+
+	return account, nil
 }

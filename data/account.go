@@ -76,7 +76,7 @@ func Login(login, password, ip string) map[string]interface{} {
 	tokenString, _ := token.SignedString([]byte(os.Getenv("token_password")))
 	account.Token = tokenString
 	//сохраняем токен в БД чтобы точно знать что дейтвителен только 1 токен
-	GetDB().Exec("update accounts set token = ? where login = ?", account.Token, account.Login)
+	GetDB().Exec("update public.accounts set token = ? where login = ?", account.Token, account.Login)
 
 	//Формируем ответ
 	resp := u.Message(true, "Logged In")
@@ -133,9 +133,37 @@ func (account *Account) Create(privilege Privilege) map[string]interface{} {
 
 func (account *Account) Update(privilege Privilege) map[string]interface{} {
 	privStr, _ := json.Marshal(privilege)
-	updateStr := fmt.Sprintf("update accounts set privilege = '%s',w_time = %d where login = '%s'", string(privStr), account.WTime, account.Login)
-	db.Exec(updateStr)
+	updateStr := fmt.Sprintf("update public.accounts set privilege = '%s',w_time = %d where login = '%s'", string(privStr), account.WTime, account.Login)
+	err := db.Exec(updateStr).Error
+	if err != nil {
+		resp := u.Message(true, "account update error "+err.Error())
+		return resp
+	}
 	resp := u.Message(true, "Account has updated")
+	return resp
+}
+
+func (account *Account) Delete() map[string]interface{} {
+	sqlStr := fmt.Sprintf("DELETE FROM public.accounts WHERE login = '%s';", account.Login)
+	err := db.Exec(sqlStr).Error
+	if err != nil {
+		resp := u.Message(true, "account deletion error "+err.Error())
+		return resp
+	}
+	resp := u.Message(true, "Account deleted")
+	return resp
+}
+
+func (account *Account) ChangePW() map[string]interface{} {
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(account.Password), bcrypt.DefaultCost)
+	account.Password = string(hashedPassword)
+	sqlStr := fmt.Sprintf("update public.accounts set password = '%s' where login = '%s'", account.Password, account.Login)
+	err := db.Exec(sqlStr).Error
+	if err != nil {
+		resp := u.Message(true, "password change error "+err.Error())
+		return resp
+	}
+	resp := u.Message(true, "Password changed")
 	return resp
 }
 
