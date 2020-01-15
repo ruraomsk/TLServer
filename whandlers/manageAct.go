@@ -4,7 +4,6 @@ import (
 	"../data"
 	"../logger"
 	u "../utils"
-	"encoding/json"
 	"net/http"
 )
 
@@ -17,11 +16,8 @@ var ActParser = func(w http.ResponseWriter, r *http.Request) {
 		case "update":
 			{
 				var shortAcc = &data.ShortAccount{}
-				err := json.NewDecoder(r.Body).Decode(shortAcc)
+				err := shortAcc.DecodeRequest(w, r)
 				if err != nil {
-					logger.Info.Println("ActParser, Add: Incorrectly filled data ", r.RemoteAddr)
-					w.WriteHeader(http.StatusBadRequest)
-					u.Respond(w, r, u.Message(false, "Incorrectly filled data"))
 					return
 				}
 				err = shortAcc.ValidCreate(mapContx["role"], mapContx["region"])
@@ -37,11 +33,8 @@ var ActParser = func(w http.ResponseWriter, r *http.Request) {
 		case "delete":
 			{
 				var shortAcc = &data.ShortAccount{}
-				err := json.NewDecoder(r.Body).Decode(shortAcc)
+				err := shortAcc.DecodeRequest(w, r)
 				if err != nil {
-					logger.Info.Println("ActParser, Add: Incorrectly filled data ", r.RemoteAddr)
-					w.WriteHeader(http.StatusBadRequest)
-					u.Respond(w, r, u.Message(false, "Incorrectly filled data"))
 					return
 				}
 				account, err := shortAcc.ValidDelete(mapContx["role"], mapContx["region"])
@@ -56,11 +49,8 @@ var ActParser = func(w http.ResponseWriter, r *http.Request) {
 		case "add":
 			{
 				var shortAcc = &data.ShortAccount{}
-				err := json.NewDecoder(r.Body).Decode(shortAcc)
+				err := shortAcc.DecodeRequest(w, r)
 				if err != nil {
-					logger.Info.Println("ActParser, Add: Incorrectly filled data ", r.RemoteAddr)
-					w.WriteHeader(http.StatusBadRequest)
-					u.Respond(w, r, u.Message(false, "Incorrectly filled data"))
 					return
 				}
 				err = shortAcc.ValidCreate(mapContx["role"], mapContx["region"])
@@ -77,11 +67,8 @@ var ActParser = func(w http.ResponseWriter, r *http.Request) {
 		case "changepw":
 			{
 				var shortAcc = &data.ShortAccount{}
-				err := json.NewDecoder(r.Body).Decode(shortAcc)
+				err := shortAcc.DecodeRequest(w, r)
 				if err != nil {
-					logger.Info.Println("ActParser, Add: Incorrectly filled data ", r.RemoteAddr)
-					w.WriteHeader(http.StatusBadRequest)
-					u.Respond(w, r, u.Message(false, "Incorrectly filled data"))
 					return
 				}
 				account, err := shortAcc.ValidChangePW(mapContx["role"], mapContx["region"])

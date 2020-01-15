@@ -1,9 +1,12 @@
 package data
 
 import (
+	u "../utils"
+	"encoding/json"
 	"fmt"
 	"github.com/jinzhu/gorm"
 	"github.com/ruraomsk/ag-server/logger"
+	"net/http"
 	"strconv"
 	"time"
 )
@@ -30,6 +33,17 @@ func (shortAcc *ShortAccount) ConvertShortToAcc() (account Account, privilege Pr
 		privilege.Area = append(privilege.Area, area.Num)
 	}
 	return account, privilege
+}
+
+func (shortAcc *ShortAccount) DecodeRequest(w http.ResponseWriter, r *http.Request) error {
+	err := json.NewDecoder(r.Body).Decode(shortAcc)
+	if err != nil {
+		logger.Info.Println("ActParser, Add: Incorrectly filled data ", r.RemoteAddr)
+		w.WriteHeader(http.StatusBadRequest)
+		u.Respond(w, r, u.Message(false, "Incorrectly filled data"))
+		return err
+	}
+	return nil
 }
 
 func (shortAcc *ShortAccount) ValidCreate(role string, region string) (err error) {
