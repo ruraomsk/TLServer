@@ -16,31 +16,53 @@ var ActParser = func(w http.ResponseWriter, r *http.Request) {
 	if flag {
 		switch mapContx["act"] {
 		case "update":
-			fmt.Println("update")
+			{
+				var shortAcc = &data.ShortAccount{}
+				err := json.NewDecoder(r.Body).Decode(shortAcc)
+				if err != nil {
+					logger.Info.Println("ActParser, Add: Incorrectly filled data ", r.RemoteAddr)
+					w.WriteHeader(http.StatusBadRequest)
+					u.Respond(w, r, u.Message(false, "Incorrectly filled data"))
+					return
+				}
+				err = shortAcc.ValidCreate(mapContx["role"], mapContx["region"])
+				if err != nil {
+					logger.Info.Println("ActParser, Add: Incorrectly filled data: ", err.Error(), "  ", r.RemoteAddr)
+					w.WriteHeader(http.StatusBadRequest)
+					u.Respond(w, r, u.Message(false, err.Error()))
+					return
+				}
+				account, privilege := shortAcc.ConvertShortToAcc()
+				resp = account.Update(privilege)
+			}
 		case "delete":
-			fmt.Println("delete")
+			{
+				fmt.Println("delete")
+			}
 		case "add":
 			{
 				var shortAcc = &data.ShortAccount{}
 				err := json.NewDecoder(r.Body).Decode(shortAcc)
 				if err != nil {
-					logger.Info.Println("ActParser: Incorrectly filled data ", r.RemoteAddr)
+					logger.Info.Println("ActParser, Add: Incorrectly filled data ", r.RemoteAddr)
 					w.WriteHeader(http.StatusBadRequest)
 					u.Respond(w, r, u.Message(false, "Incorrectly filled data"))
 					return
 				}
-				if mapContx["login"] == "RegAdmin" {
-					if shortAcc.Role == "Admin" {
-						u.Respond(w, r, u.Message(false, "No authority to create admins"))
-						return
-					}
+				err = shortAcc.ValidCreate(mapContx["role"], mapContx["region"])
+				if err != nil {
+					logger.Info.Println("ActParser, Add: Incorrectly filled data: ", err.Error(), "  ", r.RemoteAddr)
+					w.WriteHeader(http.StatusBadRequest)
+					u.Respond(w, r, u.Message(false, err.Error()))
+					return
 				}
+
 				account, privilege := shortAcc.ConvertShortToAcc()
 				resp = account.Create(privilege)
 			}
 		case "changepw":
 			{
-
+				fmt.Println("changepw")
 			}
 		default:
 			{

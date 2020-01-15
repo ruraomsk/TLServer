@@ -1,6 +1,7 @@
 package data
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"regexp"
@@ -18,7 +19,8 @@ type Token struct {
 	UserID uint   //Уникальный ID пользователя
 	Login  string //Уникальный логин пользователя
 	IP     string //IP пользователя
-	Role   string
+	Role   string //Роль
+	Region int    //Регион пользователя
 	jwt.StandardClaims
 }
 
@@ -63,7 +65,7 @@ func Login(login, password, ip string) map[string]interface{} {
 	}
 	//Залогинились, создаем токен
 	account.Password = ""
-	tk := &Token{UserID: account.ID, Login: account.Login, IP: ip, Role: privilege.Role}
+	tk := &Token{UserID: account.ID, Login: account.Login, IP: ip, Role: privilege.Role, Region: privilege.Region}
 	//врямя выдачи токена
 	tk.IssuedAt = time.Now().Unix()
 	//время когда закончится действие токена
@@ -126,6 +128,14 @@ func (account *Account) Create(privilege Privilege) map[string]interface{} {
 	account.Password = ""
 	resp := u.Message(true, "Account has been created")
 	resp["login"] = account.Login
+	return resp
+}
+
+func (account *Account) Update(privilege Privilege) map[string]interface{} {
+	privStr, _ := json.Marshal(privilege)
+	updateStr := fmt.Sprintf("update accounts set privilege = '%s',w_time = %d where login = '%s'", string(privStr), account.WTime, account.Login)
+	db.Exec(updateStr)
+	resp := u.Message(true, "Account has updated")
 	return resp
 }
 
