@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"github.com/jinzhu/gorm"
 	"github.com/ruraomsk/ag-server/logger"
+	"golang.org/x/crypto/bcrypt"
 	"net/http"
+	"regexp"
 	"strconv"
 	"time"
 )
@@ -19,6 +21,11 @@ type ShortAccount struct {
 	Privilege string     `json:"-"`
 	Region    RegionInfo `json:"region"`
 	Area      []AreaInfo `json:"area"`
+}
+
+type PassChange struct {
+	OldPW string `json:"oldPW"`
+	NewPW string `json:"newPW"`
 }
 
 func (shortAcc *ShortAccount) ConvertShortToAcc() (account Account, privilege Privilege) {
@@ -147,6 +154,34 @@ func (shortAcc *ShortAccount) ValidChangePW(role string, region string) (account
 			return nil, fmt.Errorf("regions dn't match")
 		}
 	}
+
+	return account, nil
+}
+
+func (passChange *PassChange) ValidOldNewPW(login string) (account *Account, err error) {
+	account = &Account{}
+	//Забираю из базы запись с подходящей почтой
+	err = GetDB().Table("accounts").Where("login = ?", login).First(account).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			logger.Info.Println("Account: Login not found: ", login)
+			return nil, fmt.Errorf("login not found")
+		}
+		logger.Info.Println("Account: Connection to DB err")
+		return nil, fmt.Errorf("connection error")
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(account.Password), []byte(passChange.OldPW))
+	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
+		logger.Info.Println("Account: Invalid login credentials. ", login)
+		return nil, fmt.Errorf("Invalid login credentials.")
+	}
+	if passChange.NewPW != regexp.QuoteMeta(passChange.NewPW) {
+		return nil, fmt.Errorf("password contains invalid characters")
+	}
+	if len(passChange.NewPW) < 6 {
+		return nil, fmt.Errorf("password is required")
+	}
+	account.Password = passChange.NewPW
 
 	return account, nil
 }

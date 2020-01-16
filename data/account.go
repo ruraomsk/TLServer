@@ -157,7 +157,7 @@ func (account *Account) Delete() map[string]interface{} {
 func (account *Account) ChangePW() map[string]interface{} {
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(account.Password), bcrypt.DefaultCost)
 	account.Password = string(hashedPassword)
-	sqlStr := fmt.Sprintf("update public.accounts set password = '%s' where login = '%s'", account.Password, account.Login)
+	sqlStr := fmt.Sprintf("update public.accounts set password = '%s' where login = '%s';UPDATE public.accounts SET token='' WHERE login='%s'", account.Password, account.Login, account.Login)
 	err := db.Exec(sqlStr).Error
 	if err != nil {
 		resp := u.Message(true, "password change error "+err.Error())

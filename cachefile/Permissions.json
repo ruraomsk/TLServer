@@ -6,6 +6,11 @@
       "description": "Управление аккаунтами удаление, создание, обновление"
     },
     {
+      "id": 2,
+      "command": "ActChangePw",
+      "description": "Изменение пароля"
+    },
+    {
       "id": 4,
       "command": "BuildCross",
       "description": "Отображение перекрестков"

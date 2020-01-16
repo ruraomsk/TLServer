@@ -27,6 +27,11 @@
             "description": "Управление аккаунтами удаление, создание, обновление"
           },
           {
+            "id": 2,
+            "command": "ActChangePw",
+            "description": "Изменение пароля"
+          },
+          {
             "id": 4,
             "command": "BuildCross",
             "description": "Отображение перекрестков"
@@ -69,6 +74,11 @@
             "description": "Управление аккаунтами удаление, создание, обновление"
           },
           {
+            "id": 2,
+            "command": "ActChangePw",
+            "description": "Изменение пароля"
+          },
+          {
             "id": 4,
             "command": "BuildCross",
             "description": "Отображение перекрестков"
@@ -101,6 +111,11 @@
       "permission": {
         "permissions": [
           {
+            "id": 2,
+            "command": "ActChangePw",
+            "description": "Изменение пароля"
+          },
+          {
             "id": 4,
             "command": "BuildCross",
             "description": "Отображение перекрестков"
@@ -127,6 +142,11 @@
       "name": "Viewer",
       "permission": {
         "permissions": [
+          {
+            "id": 2,
+            "command": "ActChangePw",
+            "description": "Изменение пароля"
+          },
           {
             "id": 4,
             "command": "BuildCross",
