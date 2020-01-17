@@ -9,7 +9,7 @@ import (
 )
 
 var ActParser = func(w http.ResponseWriter, r *http.Request) {
-	mapContx := data.ParserInterface(r.Context().Value("info"))
+	mapContx := u.ParserInterface(r.Context().Value("info"))
 
 	flag, resp := FuncAccessCheak(w, r, "ManageAccount")
 	if flag {
@@ -94,7 +94,7 @@ var ActParser = func(w http.ResponseWriter, r *http.Request) {
 }
 
 var ActChangePw = func(w http.ResponseWriter, r *http.Request) {
-	mapContx := data.ParserInterface(r.Context().Value("info"))
+	mapContx := u.ParserInterface(r.Context().Value("info"))
 	flag, resp := FuncAccessCheak(w, r, "ActChangePw")
 	if flag {
 		var passChange = &data.PassChange{}

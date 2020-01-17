@@ -11,7 +11,7 @@ import (
 //BuildMainPage собираем данные для залогиневшегося пользователя
 var BuildMapPage = func(w http.ResponseWriter, r *http.Request) {
 	account := &data.Account{}
-	mapContx := data.ParserInterface(r.Context().Value("info"))
+	mapContx := u.ParserInterface(r.Context().Value("info"))
 	account.Login = mapContx["login"]
 
 	if account.Login == "Super" {
@@ -42,12 +42,12 @@ var UpdateMapPage = func(w http.ResponseWriter, r *http.Request) {
 		u.Respond(w, r, u.Message(false, "Invalid request"))
 		return
 	}
-	resp := u.Message(true, "Update box data")
 
 	flag, resp := FuncAccessCheak(w, r, "UpdateMapPage")
 	if flag {
 		tflight := data.GetLightsFromBD(*box)
 		resp["tflight"] = tflight
+		resp = u.Message(true, "Update box data")
 	}
 	u.Respond(w, r, resp)
 }

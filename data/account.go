@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 	"time"
 
 	"../logger"
@@ -37,15 +38,16 @@ type Account struct {
 
 //Login in system
 func Login(login, password, ip string) map[string]interface{} {
+	ipSplit := strings.Split(ip, ":")
 	account := &Account{}
 	//Забираю из базы запись с подходящей почтой
 	err := GetDB().Table("accounts").Where("login = ?", login).First(account).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			logger.Info.Println("Account: Login not found: ", login)
-			return u.Message(false, "login not found")
+			logger.Warning.Println("IP: " + ip + " Login: " + login + " Message: " + "Login not found")
+			return u.Message(false, "Login not found")
 		}
-		logger.Info.Println("Account: Connection to DB err")
+		logger.Error.Println("IP: " + ip + " Login: " + login + " Message: " + "Connection to DB err")
 		return u.Message(false, "Connection error. Please try again")
 	}
 
@@ -53,19 +55,19 @@ func Login(login, password, ip string) map[string]interface{} {
 	privilege := Privilege{}
 	err = privilege.ReadFromBD(account.Login)
 	if err != nil {
-		logger.Info.Println("Account: Bad privilege")
+		logger.Error.Println("IP: " + ip + " Login: " + login + " Message: " + "Bad privilege")
 		return u.Message(false, "Account: Bad privilege")
 	}
 
 	//Сравниваю хэши полученного пароля и пароля взятого из БД
 	err = bcrypt.CompareHashAndPassword([]byte(account.Password), []byte(password))
 	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
-		logger.Info.Println("Account: Invalid login credentials. Please try again, ", login)
+		logger.Warning.Println("IP: " + ip + " Login: " + login + " Message: " + "Invalid login credentials")
 		return u.Message(false, "Invalid login credentials. Please try again")
 	}
 	//Залогинились, создаем токен
 	account.Password = ""
-	tk := &Token{UserID: account.ID, Login: account.Login, IP: ip, Role: privilege.Role, Region: privilege.Region}
+	tk := &Token{UserID: account.ID, Login: account.Login, IP: ipSplit[0], Role: privilege.Role, Region: privilege.Region}
 	//врямя выдачи токена
 	tk.IssuedAt = time.Now().Unix()
 	//время когда закончится действие токена
@@ -83,8 +85,8 @@ func Login(login, password, ip string) map[string]interface{} {
 	resp["role"] = privilege.Role
 	resp["login"] = account.Login
 	resp["token"] = tokenString
+	logger.Info.Println("IP: " + ip + " Login: " + account.Login + " Message: " + "User logged in")
 	return resp
-
 }
 
 //Validate checking for an account in the database
@@ -164,54 +166,6 @@ func (account *Account) ChangePW() map[string]interface{} {
 		return resp
 	}
 	resp := u.Message(true, "Password changed")
-	return resp
-}
-
-func (account *Account) DisplayInfoForAdmin(mapContx map[string]string) map[string]interface{} {
-	var (
-		privilege = Privilege{}
-		sqlStr    string
-		shortAcc  []ShortAccount
-	)
-	err := privilege.ReadFromBD(mapContx["login"])
-	if err != nil {
-		logger.Info.Println("DisplayInfoForAdmin: Не смог считать привилегии пользователя", err)
-		return nil
-	}
-	sqlStr = fmt.Sprintf("select login, w_time, privilege from public.accounts where login != '%s'", mapContx["login"])
-	if privilege.Region > 0 {
-		sqlStr += fmt.Sprintf("and privilege::jsonb->'region' = '%d'", privilege.Region)
-	}
-
-	rowsTL, _ := GetDB().Raw(sqlStr).Rows()
-	for rowsTL.Next() {
-		var tempSA = ShortAccount{}
-		err := rowsTL.Scan(&tempSA.Login, &tempSA.Wtime, &tempSA.Privilege)
-		if err != nil {
-			logger.Info.Println("DisplayInfoForAdmin: Что-то не так с запросом", err)
-			return nil
-		}
-		var tempPrivilege = Privilege{}
-		err = tempPrivilege.ConvertToJson(tempSA.Privilege)
-		if err != nil {
-			logger.Info.Println("DisplayInfoForAdmin: Что-то не так со строкой привилегий", err)
-			return nil
-		}
-		tempSA.Role = tempPrivilege.Role
-		tempSA.Region.SetRegionInfo(tempPrivilege.Region)
-		for _, num := range tempPrivilege.Area {
-			tempArea := AreaInfo{}
-			tempArea.SetAreaInfo(tempSA.Region.Num, num)
-			tempSA.Area = append(tempSA.Area, tempArea)
-		}
-
-		shortAcc = append(shortAcc, tempSA)
-	}
-
-	resp := u.Message(true, "DisplayInfoForAdmin")
-	resp["accInfo"] = shortAcc
-	resp["regionInfo"] = CacheInfo.mapRegion
-	resp["areaInfo"] = CacheInfo.mapArea
 	return resp
 }
 

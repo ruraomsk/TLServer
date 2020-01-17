@@ -9,7 +9,7 @@ import (
 
 var FuncAccessCheak = func(w http.ResponseWriter, r *http.Request, act string) (flag bool, resp map[string]interface{}) {
 	resp = make(map[string]interface{})
-	flag, err := data.RoleCheck(data.ParserInterface(r.Context().Value("info")), act)
+	flag, err := data.RoleCheck(u.ParserInterface(r.Context().Value("info")), act)
 	if err != nil || !flag {
 		resp = u.Message(false, err.Error())
 		if err != nil {

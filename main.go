@@ -17,7 +17,7 @@ func init() {
 	//Начало работы, читаем настроечный фаил
 	if err = godotenv.Load(); err != nil {
 		fmt.Println("Can't load enc file - ", err.Error())
-		
+
 	}
 }
 
@@ -30,7 +30,7 @@ func main() {
 
 	//Подключение к базе данных
 	if err = data.ConnectDB(); err != nil {
-		logger.Info.Println("Error open DB", err.Error())
+		logger.Warning.Println("Error open DB", err.Error())
 		fmt.Println("Error open DB", err.Error())
 		return
 	}

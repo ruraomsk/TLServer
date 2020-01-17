@@ -26,13 +26,10 @@ func StartServer() {
 	//запрос на вход в систему
 	router.HandleFunc("/login", whandlers.LoginAcc).Methods("POST")
 	router.HandleFunc("/test", whandlers.TestHello).Methods("POST")
-	router.HandleFunc("/create", whandlers.CreateAcc).Methods("POST")
 
 	subRout := router.PathPrefix("/user").Subrouter()
 
 	subRout.Use(JwtAuth)
-	//запрос на создание пользователя
-	subRout.HandleFunc("/{slug}/create", whandlers.CreateAcc).Methods("POST")
 	//запрос странички с картой
 	subRout.HandleFunc("/{slug}", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./views/workplace.html")
@@ -67,7 +64,7 @@ func StartServer() {
 	// Запуск HTTP сервера
 	// if err = http.ListenAndServe(os.Getenv("server_ip"), handlers.LoggingHandler(os.Stdout, router)); err != nil {
 	if err = http.ListenAndServeTLS(os.Getenv("server_ip"), "domain.crt", "domain.key", handlers.LoggingHandler(os.Stdout, router)); err != nil {
-		logger.Info.Println("Server can't started ", err.Error())
+		logger.Warning.Println("Server can't started ", err.Error())
 		fmt.Println("Server can't started ", err.Error())
 	}
 }

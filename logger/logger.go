@@ -37,7 +37,7 @@ func Init(path string) (err error) {
 	if err != nil {
 		return err
 	}
-	Trace = log.New(logfile,
+	Debug = log.New(logfile,
 		"DEBUG: ",
 		log.Ldate|log.Ltime|log.Lshortfile)
 
@@ -47,11 +47,11 @@ func Init(path string) (err error) {
 
 	Info = log.New(logfile,
 		"INFO: ",
-		log.Ldate|log.Ltime|log.Lshortfile)
+		log.Ldate|log.Ltime)
 
 	Warning = log.New(logfile,
 		"WARNING: ",
-		log.Ldate|log.Ltime|log.Lshortfile)
+		log.Ldate|log.Ltime)
 
 	Error = log.New(logfile,
 		"ERROR: ",
@@ -69,6 +69,7 @@ func logOpen(path string) (log *LogFile, err error) {
 	log.flog, err = os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	return
 }
+
 func (l *LogFile) Read(p []byte) (n int, err error) {
 	n, err = l.flog.Read(p)
 	return

@@ -21,10 +21,10 @@ var JwtAuth = func(next http.Handler) http.Handler {
 		cookie, err := r.Cookie("Authorization")
 		//Проверка куков получили ли их вообще
 		if err != nil {
-			logger.Info.Println("jwtauth: Missing cookie ", r.RemoteAddr)
-			response := u.Message(false, "Missing cookie")
+			logger.Warning.Println("IP: " + r.RemoteAddr + " Login: " + "-" + " Message: " + "Missing cookie")
+			resp := u.Message(false, "Missing cookie")
 			w.WriteHeader(http.StatusForbidden)
-			u.Respond(w, r, response)
+			u.Respond(w, r, resp)
 			return
 		}
 		tokenString = cookie.Value
@@ -32,19 +32,19 @@ var JwtAuth = func(next http.Handler) http.Handler {
 		ip := strings.Split(r.RemoteAddr, ":")
 		//проверка если ли токен, если нету ошибка 403 нужно авторизироваться!
 		if tokenString == "" {
-			logger.Info.Println("jwtauth: Missing auth token ", r.RemoteAddr)
-			response := u.Message(false, "Missing auth token")
+			logger.Warning.Println("IP: " + r.RemoteAddr + " Login: " + "-" + " Message: " + "Missing auth token")
+			resp := u.Message(false, "Missing auth token")
 			w.WriteHeader(http.StatusForbidden)
-			u.Respond(w, r, response)
+			u.Respond(w, r, resp)
 			return
 		}
 		//токен приходит строкой в формате {слово пробел слово} разделяем строку и забираем нужную нам часть
 		splitted := strings.Split(tokenString, " ")
 		if len(splitted) != 2 {
-			logger.Info.Println("jwtauth: Invalid token ", r.RemoteAddr)
-			response := u.Message(false, "Invalid token")
+			logger.Warning.Println("IP: " + r.RemoteAddr + " Login: " + "-" + " Message: " + "Invalid token")
+			resp := u.Message(false, "Invalid token")
 			w.WriteHeader(http.StatusForbidden)
-			u.Respond(w, r, response)
+			u.Respond(w, r, resp)
 			return
 		}
 		//берем часть где хранится токен
@@ -57,10 +57,10 @@ var JwtAuth = func(next http.Handler) http.Handler {
 
 		//не правильный токен возвращаем ошибку с кодом 403
 		if err != nil {
-			logger.Info.Println("jwtauth: Wrong auth token ", r.RemoteAddr)
-			response := u.Message(false, "Wrong auth token")
+			logger.Warning.Println("IP: " + r.RemoteAddr + " Login: " + "-" + " Message: " + "Wrong auth token")
+			resp := u.Message(false, "Wrong auth token")
 			w.WriteHeader(http.StatusForbidden)
-			u.Respond(w, r, response)
+			u.Respond(w, r, resp)
 			return
 		}
 
@@ -68,36 +68,36 @@ var JwtAuth = func(next http.Handler) http.Handler {
 		var tokenStrFromBd string
 		err = data.GetDB().Table("accounts").Select("token").Where("login = ?", tk.Login).Row().Scan(&tokenStrFromBd)
 		if err != nil {
-			logger.Info.Println("jwtauth: Can't take token from BD ", r.RemoteAddr)
-			response := u.Message(false, fmt.Sprintf("Can't take token from BD: %v", err.Error()))
+			logger.Warning.Println("IP: " + r.RemoteAddr + " Login: " + "-" + " Message: " + "Can't take token from BD")
+			resp := u.Message(false, fmt.Sprintf("Can't take token from BD: %v", err.Error()))
 			w.WriteHeader(http.StatusForbidden)
-			u.Respond(w, r, response)
+			u.Respond(w, r, resp)
 			return
 		}
 
 		if tokenSTR != tokenStrFromBd {
-			logger.Info.Println("jwtauth: Token is out of date, log in ", r.RemoteAddr)
-			response := u.Message(false, "Token is out of date, log in")
+			logger.Warning.Println("IP: " + r.RemoteAddr + " Login: " + tk.Login + " Message: " + "Token is out of date, log in")
+			resp := u.Message(false, "Token is out of date, log in")
 			w.WriteHeader(http.StatusForbidden)
-			u.Respond(w, r, response)
+			u.Respond(w, r, resp)
 			return
 		}
 
 		//проверка с какого ip пришел токен
 		if tk.IP != ip[0] {
-			logger.Info.Println("jwtauth: invalid token, log in again ", r.RemoteAddr)
-			response := u.Message(false, "invalid token, log in again")
+			logger.Warning.Println("IP: " + r.RemoteAddr + " Login: " + tk.Login + " Message: " + "Invalid token, log in again")
+			resp := u.Message(false, "Invalid token, log in again")
 			w.WriteHeader(http.StatusForbidden)
-			u.Respond(w, r, response)
+			u.Respond(w, r, resp)
 			return
 		}
 
 		//токен не действителен, возможно не подписан на этом сервере
 		if !token.Valid {
-			logger.Info.Println("jwtauth: Invalid auth token ", r.RemoteAddr)
-			response := u.Message(false, "Invalid auth token")
+			logger.Warning.Println("IP: " + r.RemoteAddr + " Login: " + tk.Login + " Message: " + "Invalid auth token")
+			resp := u.Message(false, "Invalid auth token")
 			w.WriteHeader(http.StatusForbidden)
-			u.Respond(w, r, response)
+			u.Respond(w, r, resp)
 			return
 		}
 
@@ -109,8 +109,8 @@ var JwtAuth = func(next http.Handler) http.Handler {
 			mapCont["act"] = vars["act"]
 		}
 		if slug != tk.Login {
-			logger.Info.Println("jwtauth: token isn't registered for this user ", r.RemoteAddr, "  ", tk.Login)
-			u.Respond(w, r, u.Message(false, "token isn't registered for this user"))
+			logger.Warning.Println("IP: " + r.RemoteAddr + " Login: " + tk.Login + " Message: " + "Token isn't registered for this user")
+			u.Respond(w, r, u.Message(false, "Token isn't registered for this user"))
 			return
 		}
 		mapCont["login"] = tk.Login
@@ -129,10 +129,10 @@ var JwtFile = func(next http.Handler) http.Handler {
 		cookie, err := r.Cookie("Authorization")
 		//Проверка куков получили ли их вообще
 		if err != nil {
-			logger.Info.Println("jwtauthFileserv: Missing cookie ", r.RemoteAddr)
-			response := u.Message(false, "Missing cookie")
+			logger.Warning.Println("IP: " + r.RemoteAddr + " Login: " + "-" + " Message: " + "Missing cookie")
+			resp := u.Message(false, "Missing cookie")
 			w.WriteHeader(http.StatusForbidden)
-			u.Respond(w, r, response)
+			u.Respond(w, r, resp)
 			return
 		}
 		tokenString = cookie.Value
@@ -140,19 +140,19 @@ var JwtFile = func(next http.Handler) http.Handler {
 		ip := strings.Split(r.RemoteAddr, ":")
 		//проверка если ли токен, если нету ошибка 403 нужно авторизироваться!
 		if tokenString == "" {
-			logger.Info.Println("jwtauthFileserv: Missing auth token ", r.RemoteAddr)
-			response := u.Message(false, "Missing auth token")
+			logger.Warning.Println("IP: " + r.RemoteAddr + " Login: " + "-" + " Message: " + "Missing auth token")
+			resp := u.Message(false, "Missing auth token")
 			w.WriteHeader(http.StatusForbidden)
-			u.Respond(w, r, response)
+			u.Respond(w, r, resp)
 			return
 		}
 		//токен приходит строкой в формате {слово пробел слово} разделяем строку и забираем нужную нам часть
 		splitted := strings.Split(tokenString, " ")
 		if len(splitted) != 2 {
-			logger.Info.Println("jwtauthFileserv: Invalid token ", r.RemoteAddr)
-			response := u.Message(false, "Invalid token")
+			logger.Warning.Println("IP: " + r.RemoteAddr + " Login: " + "-" + " Message: " + "Invalid token")
+			resp := u.Message(false, "Invalid token")
 			w.WriteHeader(http.StatusForbidden)
-			u.Respond(w, r, response)
+			u.Respond(w, r, resp)
 			return
 		}
 		//берем часть где хранится токен
@@ -165,10 +165,10 @@ var JwtFile = func(next http.Handler) http.Handler {
 
 		//не правильный токен возвращаем ошибку с кодом 403
 		if err != nil {
-			logger.Info.Println("jwtauthFileserv: Wrong auth token ", r.RemoteAddr)
-			response := u.Message(false, "Wrong auth token")
+			logger.Warning.Println("IP: " + r.RemoteAddr + " Login: " + "-" + " Message: " + "Wrong auth token")
+			resp := u.Message(false, "Wrong auth token")
 			w.WriteHeader(http.StatusForbidden)
-			u.Respond(w, r, response)
+			u.Respond(w, r, resp)
 			return
 		}
 
@@ -176,36 +176,36 @@ var JwtFile = func(next http.Handler) http.Handler {
 		var tokenStrFromBd string
 		err = data.GetDB().Table("accounts").Select("token").Where("login = ?", tk.Login).Row().Scan(&tokenStrFromBd)
 		if err != nil {
-			logger.Info.Println("jwtauthFileserv: Can't take token from BD ", r.RemoteAddr)
-			response := u.Message(false, fmt.Sprintf("Can't take token from BD: %v", err.Error()))
+			logger.Warning.Println("IP: " + r.RemoteAddr + " Login: " + "-" + " Message: " + "Can't take token from BD")
+			resp := u.Message(false, fmt.Sprintf("Can't take token from BD: %v", err.Error()))
 			w.WriteHeader(http.StatusForbidden)
-			u.Respond(w, r, response)
+			u.Respond(w, r, resp)
 			return
 		}
 
 		if tokenSTR != tokenStrFromBd {
-			logger.Info.Println("jwtauthFileserv: Token is out of date, log in ", r.RemoteAddr)
-			response := u.Message(false, "Token is out of date, log in")
+			logger.Warning.Println("IP: " + r.RemoteAddr + " Login: " + tk.Login + " Message: " + "Token is out of date, log in")
+			resp := u.Message(false, "Token is out of date, log in")
 			w.WriteHeader(http.StatusForbidden)
-			u.Respond(w, r, response)
+			u.Respond(w, r, resp)
 			return
 		}
 
 		//проверка с какого ip пришел токен
 		if tk.IP != ip[0] {
-			logger.Info.Println("jwtauthFileserv: Invalid token, log in again ", r.RemoteAddr)
-			response := u.Message(false, "Invalid token, log in again")
+			logger.Warning.Println("IP: " + r.RemoteAddr + " Login: " + tk.Login + " Message: " + "Invalid token, log in again")
+			resp := u.Message(false, "Invalid token, log in again")
 			w.WriteHeader(http.StatusForbidden)
-			u.Respond(w, r, response)
+			u.Respond(w, r, resp)
 			return
 		}
 
 		//токен не действителен, возможно не подписан на этом сервере
 		if !token.Valid {
-			logger.Info.Println("jwtauthFileserv: Invalid auth token ", r.RemoteAddr)
-			response := u.Message(false, "Invalid auth token")
+			logger.Warning.Println("IP: " + r.RemoteAddr + " Login: " + tk.Login + " Message: " + "Invalid auth token")
+			resp := u.Message(false, "Invalid auth token")
 			w.WriteHeader(http.StatusForbidden)
-			u.Respond(w, r, response)
+			u.Respond(w, r, resp)
 			return
 		}
 
