@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
-	"github.com/ruraomsk/ag-server/logger"
 	"io/ioutil"
 )
 
@@ -56,8 +55,8 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) map[
 	)
 	err := privilege.ReadFromBD(mapContx["login"])
 	if err != nil {
-		logger.Info.Println("DisplayInfoForAdmin: Не смог считать привилегии пользователя", err)
-		return nil
+		//logger.Info.Println("DisplayInfoForAdmin: Не смог считать привилегии пользователя", err)
+		return u.Message(false, "Display info: Privilege error")
 	}
 	sqlStr = fmt.Sprintf("select login, w_time, privilege from public.accounts where login != '%s'", mapContx["login"])
 	if privilege.Region > 0 {
@@ -69,14 +68,14 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) map[
 		var tempSA = ShortAccount{}
 		err := rowsTL.Scan(&tempSA.Login, &tempSA.Wtime, &tempSA.Privilege)
 		if err != nil {
-			logger.Info.Println("DisplayInfoForAdmin: Что-то не так с запросом", err)
-			return nil
+			//logger.Info.Println("DisplayInfoForAdmin: Что-то не так с запросом", err)
+			return u.Message(false, "Display info: Bad request")
 		}
 		var tempPrivilege = Privilege{}
 		err = tempPrivilege.ConvertToJson(tempSA.Privilege)
 		if err != nil {
-			logger.Info.Println("DisplayInfoForAdmin: Что-то не так со строкой привилегий", err)
-			return nil
+			//logger.Info.Println("DisplayInfoForAdmin: Что-то не так со строкой привилегий", err)
+			return u.Message(false, "Display info: Privilege json error")
 		}
 		tempSA.Role = tempPrivilege.Role
 		tempSA.Region.SetRegionInfo(tempPrivilege.Region)
@@ -89,7 +88,7 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) map[
 		shortAcc = append(shortAcc, tempSA)
 	}
 
-	resp := u.Message(true, "DisplayInfoForAdmin")
+	resp := u.Message(true, "Display information for Admins")
 	resp["accInfo"] = shortAcc
 	resp["regionInfo"] = CacheInfo.mapRegion
 	resp["areaInfo"] = CacheInfo.mapArea

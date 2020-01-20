@@ -2,7 +2,6 @@ package whandlers
 
 import (
 	"../data"
-	"../logger"
 	u "../utils"
 	"encoding/json"
 	"net/http"
@@ -13,9 +12,10 @@ var LoginAcc = func(w http.ResponseWriter, r *http.Request) {
 	account := &data.Account{}
 	err := json.NewDecoder(r.Body).Decode(account)
 	if err != nil {
-		logger.Warning.Println("IP: " + r.RemoteAddr + " Login: " + "-" + " Message: " + "Invalid request")
 		w.WriteHeader(http.StatusBadRequest)
-		u.Respond(w, r, u.Message(false, "Invalid request"))
+		resp := u.Message(false, "Invalid request")
+		resp["logLogin"] = account.Login
+		u.Respond(w, r, resp)
 		return
 	}
 	resp := data.Login(account.Login, account.Password, r.RemoteAddr)

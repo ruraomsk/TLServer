@@ -2,7 +2,6 @@ package whandlers
 
 import (
 	"../data"
-	"../logger"
 	u "../utils"
 	"net/http"
 )
@@ -15,7 +14,6 @@ var FuncAccessCheak = func(w http.ResponseWriter, r *http.Request, act string) (
 		if err != nil {
 			resp = u.Message(false, "Access denied")
 		}
-		logger.Info.Println("FuncAccessCheak: Access denied", r.RemoteAddr)
 		w.WriteHeader(http.StatusForbidden)
 	}
 	return flag, resp

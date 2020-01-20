@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/jinzhu/gorm"
+	"github.com/pkg/errors"
 	"github.com/ruraomsk/ag-server/logger"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
@@ -45,7 +46,7 @@ func (shortAcc *ShortAccount) ConvertShortToAcc() (account Account, privilege Pr
 func (shortAcc *ShortAccount) DecodeRequest(w http.ResponseWriter, r *http.Request) error {
 	err := json.NewDecoder(r.Body).Decode(shortAcc)
 	if err != nil {
-		logger.Info.Println("ActParser, Add: Incorrectly filled data ", r.RemoteAddr)
+		//logger.Info.Println("ActParser, Add: Incorrectly filled data ", r.RemoteAddr)
 		w.WriteHeader(http.StatusBadRequest)
 		u.Respond(w, r, u.Message(false, "Incorrectly filled data"))
 		return err
@@ -56,37 +57,37 @@ func (shortAcc *ShortAccount) DecodeRequest(w http.ResponseWriter, r *http.Reque
 func (shortAcc *ShortAccount) ValidCreate(role string, region string) (err error) {
 	//проверка полученной роли
 	if _, ok := CacheInfo.mapRoles[shortAcc.Role]; !ok || shortAcc.Role == "Super" {
-		return fmt.Errorf("role not found")
+		return errors.New("Role not found")
 	}
 	//проверка кто создает
 	if role == "RegAdmin" {
 		if shortAcc.Role == "Admin" || shortAcc.Role == role {
-			return fmt.Errorf("this role cannot be created")
+			return errors.New("This role cannot be created")
 		}
 		if num, _ := strconv.Atoi(region); shortAcc.Region.Num != num {
-			return fmt.Errorf("regions dn't match")
+			return errors.New("Regions don't match")
 		}
 	}
 	//проверка региона
 	//у всех кроме админа регион не равен 0
 	if shortAcc.Role != "Admin" {
 		if shortAcc.Region.Num == 0 {
-			return fmt.Errorf("region is incorrect")
+			return errors.New("Region is incorrect")
 		}
 	}
 	//регион должен существовать
 	if _, ok := CacheInfo.mapRegion[shortAcc.Region.Num]; !ok {
-		return fmt.Errorf("region not found")
+		return errors.New("Region not found")
 	}
 	//все области для этого региона должны существовать
 	for _, area := range shortAcc.Area {
 		if _, ok := CacheInfo.mapArea[CacheInfo.mapRegion[shortAcc.Region.Num]][area.Num]; !ok {
-			return fmt.Errorf("area not found")
+			return errors.New("Area not found")
 		}
 	}
 	//проверка времени работы
 	if shortAcc.Wtime < 2 {
-		return fmt.Errorf("working time should be indicated more than 2 hours")
+		return errors.New("Working time should be indicated more than 2 hours")
 	}
 
 	return nil
@@ -98,27 +99,27 @@ func (shortAcc *ShortAccount) ValidDelete(role string, region string) (account *
 	err = GetDB().Table("accounts").Where("login = ?", shortAcc.Login).First(account).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			logger.Info.Println("Account: Login not found: ", shortAcc.Login)
-			return nil, fmt.Errorf("login not found")
+			//logger.Info.Println("Account: Login not found: ", shortAcc.Login)
+			return nil, errors.New(fmt.Sprintf("Login: %s, not found", shortAcc.Login))
 		}
-		logger.Info.Println("Account: Connection to DB err")
-		return nil, fmt.Errorf("connection error")
+		//logger.Info.Println("Account: Connection to DB err")
+		return nil, errors.New("Connection to DB error")
 	}
 
 	//Авторизировались добираем полномочия
 	privilege := Privilege{}
 	err = privilege.ReadFromBD(account.Login)
 	if err != nil {
-		logger.Info.Println("Account: Bad privilege")
-		return nil, fmt.Errorf("bad privilege")
+		//logger.Info.Println("Account: Bad privilege")
+		return nil, errors.New(fmt.Sprintf("Privilege error. Login(%s)", account.Login))
 	}
 
 	if role == "RegAdmin" {
 		if privilege.Role == "Admin" || privilege.Role == role {
-			return nil, fmt.Errorf("this role cannot be deleted")
+			return nil, errors.New("This role cannot be deleted")
 		}
 		if num, _ := strconv.Atoi(region); shortAcc.Region.Num != num {
-			return nil, fmt.Errorf("regions dn't match")
+			return nil, errors.New("Regions dn't match")
 		}
 	}
 
@@ -131,27 +132,27 @@ func (shortAcc *ShortAccount) ValidChangePW(role string, region string) (account
 	err = GetDB().Table("accounts").Where("login = ?", shortAcc.Login).First(account).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			logger.Info.Println("Account: Login not found: ", shortAcc.Login)
-			return nil, fmt.Errorf("login not found")
+			//logger.Info.Println("Account: Login not found: ", shortAcc.Login)
+			return nil, errors.New("Login not found")
 		}
-		logger.Info.Println("Account: Connection to DB err")
-		return nil, fmt.Errorf("connection error")
+		//logger.Info.Println("Account: Connection to DB err")
+		return nil, errors.New("Connection to DB error")
 	}
 	account.Password = shortAcc.Password
 	//Авторизировались добираем полномочия
 	privilege := Privilege{}
 	err = privilege.ReadFromBD(account.Login)
 	if err != nil {
-		logger.Info.Println("Account: Bad privilege")
-		return nil, fmt.Errorf("bad privilege")
+		//logger.Info.Println("Account: Bad privilege")
+		return nil, errors.New(fmt.Sprintf("Privilege error. Login(%s)", account.Login))
 	}
 
 	if role == "RegAdmin" {
 		if privilege.Role == "Admin" || privilege.Role == role {
-			return nil, fmt.Errorf("you cannot change the password for this user")
+			return nil, errors.New("Cannot change the password for this user")
 		}
 		if num, _ := strconv.Atoi(region); shortAcc.Region.Num != num {
-			return nil, fmt.Errorf("regions dn't match")
+			return nil, errors.New("Regions don't match")
 		}
 	}
 
@@ -164,22 +165,22 @@ func (passChange *PassChange) ValidOldNewPW(login string) (account *Account, err
 	err = GetDB().Table("accounts").Where("login = ?", login).First(account).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			logger.Info.Println("Account: Login not found: ", login)
-			return nil, fmt.Errorf("login not found")
+			//logger.Info.Println("Account: Login not found: ", login)
+			return nil, errors.New("Login not found")
 		}
-		logger.Info.Println("Account: Connection to DB err")
-		return nil, fmt.Errorf("connection error")
+		logger.Error.Println("Account: Connection to DB err")
+		return nil, errors.New("Connection to DB error")
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(account.Password), []byte(passChange.OldPW))
 	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
-		logger.Info.Println("Account: Invalid login credentials. ", login)
-		return nil, fmt.Errorf("Invalid login credentials.")
+		//logger.Info.Println("Account: Invalid login credentials. ", login)
+		return nil, errors.New("Invalid login credentials")
 	}
 	if passChange.NewPW != regexp.QuoteMeta(passChange.NewPW) {
-		return nil, fmt.Errorf("password contains invalid characters")
+		return nil, errors.New("Password contains invalid characters")
 	}
 	if len(passChange.NewPW) < 6 {
-		return nil, fmt.Errorf("password is required")
+		return nil, errors.New("Password is required")
 	}
 	account.Password = passChange.NewPW
 

@@ -3,6 +3,7 @@ package data
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 	"os"
 	"regexp"
 	"strings"
@@ -44,26 +45,26 @@ func Login(login, password, ip string) map[string]interface{} {
 	err := GetDB().Table("accounts").Where("login = ?", login).First(account).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			logger.Warning.Println("IP: " + ip + " Login: " + login + " Message: " + "Login not found")
-			return u.Message(false, "Login not found")
+			//logger.Warning.Println("IP: " + ip + " Login: " + login + " Message: " + "Login not found")
+			return u.Message(false, fmt.Sprintf("Login: %s not found", login))
 		}
-		logger.Error.Println("IP: " + ip + " Login: " + login + " Message: " + "Connection to DB err")
-		return u.Message(false, "Connection error. Please try again")
+		// logger.Error.Println("IP: " + ip + " Login: " + "-" + " Message: " + "Connection to DB err")
+		return u.Message(false, "Connection to DB error. Please try again")
 	}
 
 	//Авторизировались добираем полномочия
 	privilege := Privilege{}
 	err = privilege.ReadFromBD(account.Login)
 	if err != nil {
-		logger.Error.Println("IP: " + ip + " Login: " + login + " Message: " + "Bad privilege")
-		return u.Message(false, "Account: Bad privilege")
+		// logger.Error.Println("IP: " + ip + " Login: " + login + " Message: " + "Privilege error")
+		return u.Message(false, fmt.Sprintf("Privilege error. Login(%s)", login))
 	}
 
 	//Сравниваю хэши полученного пароля и пароля взятого из БД
 	err = bcrypt.CompareHashAndPassword([]byte(account.Password), []byte(password))
 	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
-		logger.Warning.Println("IP: " + ip + " Login: " + login + " Message: " + "Invalid login credentials")
-		return u.Message(false, "Invalid login credentials. Please try again")
+		//logger.Warning.Println("IP: " + ip + " Login: " + login + " Message: " + "Invalid login credentials")
+		return u.Message(false, fmt.Sprintf("Invalid login credentials. Login(%s)", account.Login))
 	}
 	//Залогинились, создаем токен
 	account.Password = ""
@@ -85,7 +86,6 @@ func Login(login, password, ip string) map[string]interface{} {
 	resp["role"] = privilege.Role
 	resp["login"] = account.Login
 	resp["token"] = tokenString
-	logger.Info.Println("IP: " + ip + " Login: " + account.Login + " Message: " + "User logged in")
 	return resp
 }
 
@@ -138,7 +138,7 @@ func (account *Account) Update(privilege Privilege) map[string]interface{} {
 	updateStr := fmt.Sprintf("update public.accounts set privilege = '%s',w_time = %d where login = '%s'", string(privStr), account.WTime, account.Login)
 	err := db.Exec(updateStr).Error
 	if err != nil {
-		resp := u.Message(true, "account update error "+err.Error())
+		resp := u.Message(false, fmt.Sprintf("Account update error: %s", err.Error()))
 		return resp
 	}
 	resp := u.Message(true, "Account has updated")
@@ -177,8 +177,8 @@ func (account *Account) ParserPointsUser() (err error) {
 	)
 	err = privilege.ReadFromBD(account.Login)
 	if err != nil {
-		logger.Info.Println("ParserPointsUser: Не смог считать привилегии пользователя", err)
-		return err
+		//logger.Info.Println("ParserPoints. Privilege error:", err)
+		return errors.New(fmt.Sprintf("ParserPoints. Privilege error: %s", err.Error()))
 	}
 	if privilege.Region == 0 {
 		boxpoint.Point0.SetPoint(42.7961, 25.5637)
@@ -188,7 +188,7 @@ func (account *Account) ParserPointsUser() (err error) {
 		err := row.Scan(&boxpoint.Point0.Y, &boxpoint.Point0.X, &boxpoint.Point1.Y, &boxpoint.Point1.X)
 		if err != nil {
 			logger.Info.Println("ParserPointsUser: Что-то не так с запросом", err)
-			return err
+			return errors.New(fmt.Sprintf("ParserPoints. Request error: %s", err.Error()))
 		}
 		if boxpoint.Point0.X > 180 {
 			boxpoint.Point0.X -= 360
@@ -206,14 +206,17 @@ func (account *Account) GetInfoForUser() map[string]interface{} {
 	err := GetDB().Table("accounts").Where("login = ?", account.Login).First(account).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			logger.Info.Println("Account: Invalid token, log in again, ", account.Login)
+			//logger.Info.Println("Account: Invalid token, log in again, ", account.Login)
 			return u.Message(false, "Invalid token, log in again")
 		}
-		return u.Message(false, "Connection error. Please log in again")
+		return u.Message(false, "Connection to DB error. Please log in again")
 	}
-	account.ParserPointsUser()
+	err = account.ParserPointsUser()
+	if err != nil {
+		return u.Message(false, err.Error())
+	}
 	tflight := GetLightsFromBD(account.BoxPoint)
-	resp := u.Message(true, "Take this DATA")
+	resp := u.Message(true, "Loading content for the main page")
 	resp["ya_map"] = account.YaMapKey
 	resp["boxPoint"] = account.BoxPoint
 	resp["tflight"] = tflight

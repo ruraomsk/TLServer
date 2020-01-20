@@ -30,7 +30,7 @@ func main() {
 
 	//Подключение к базе данных
 	if err = data.ConnectDB(); err != nil {
-		logger.Warning.Println("Error open DB", err.Error())
+		logger.Error.Println("Error open DB", err.Error())
 		fmt.Println("Error open DB", err.Error())
 		return
 	}
