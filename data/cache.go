@@ -136,10 +136,19 @@ func GetRoles() (err error) {
 
 func (region *RegionInfo) SetRegionInfo(num int) {
 	region.Num = num
-	region.NameRegion = CacheInfo.mapRegion[num]
+	if region.Num == 0 {
+		region.NameRegion = "Все регионы"
+	} else {
+		region.NameRegion = CacheInfo.mapRegion[num]
+	}
 }
 
 func (area *AreaInfo) SetAreaInfo(numReg, numArea int) {
 	area.Num = numArea
-	area.NameArea = CacheInfo.mapArea[CacheInfo.mapRegion[numReg]][numArea]
+	if area.Num == 0 {
+		area.NameArea = "Все районы"
+	} else {
+		area.NameArea = CacheInfo.mapArea[CacheInfo.mapRegion[numReg]][numArea]
+	}
+
 }

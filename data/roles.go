@@ -85,6 +85,8 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) map[
 			tempSA.Area = append(tempSA.Area, tempArea)
 		}
 
+
+
 		shortAcc = append(shortAcc, tempSA)
 	}
 

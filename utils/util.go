@@ -13,7 +13,7 @@ func Message(status bool, message string) map[string]interface{} {
 
 func Respond(w http.ResponseWriter, r *http.Request, data map[string]interface{}) {
 	if !strings.Contains(fmt.Sprint(data["message"]), "Update map data") {
-		WriteLogMessage(r.RemoteAddr, data, r.Context().Value("info"))
+		WriteLogMessage(r.RemoteAddr, r.RequestURI, data, r.Context().Value("info"))
 		delete(data, "logLogin")
 	}
 	w.Header().Add("Content-Type", "application/json")

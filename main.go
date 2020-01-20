@@ -30,13 +30,13 @@ func main() {
 
 	//Подключение к базе данных
 	if err = data.ConnectDB(); err != nil {
-		logger.Error.Println("Error open DB", err.Error())
+		logger.Error.Println("Message: Error open DB", err.Error())
 		fmt.Println("Error open DB", err.Error())
 		return
 	}
 	defer data.GetDB().Close() // не забывает закрыть подключение
 
-	logger.Info.Println("Start work...")
+	logger.Info.Println("Message: Start work...")
 	fmt.Println("Start work...")
 
 	//раз в час обновляем данные регионов, и состояний
@@ -46,6 +46,6 @@ func main() {
 	//запуск сервера
 	routes.StartServer()
 
-	logger.Info.Println("Exit working...")
+	logger.Info.Println("Message: Exit working...")
 	fmt.Println("Exit working...")
 }
