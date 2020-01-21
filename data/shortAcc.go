@@ -10,7 +10,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"regexp"
-	"strconv"
+	"strings"
 	"time"
 )
 
@@ -64,14 +64,14 @@ func (shortAcc *ShortAccount) ValidCreate(role string, region string) (err error
 		if shortAcc.Role == "Admin" || shortAcc.Role == role {
 			return errors.New("This role cannot be created")
 		}
-		if num, _ := strconv.Atoi(region); shortAcc.Region.Num != num {
+		if !strings.EqualFold(shortAcc.Region.Num, region) {
 			return errors.New("Regions don't match")
 		}
 	}
 	//проверка региона
 	//у всех кроме админа регион не равен 0
 	if shortAcc.Role != "Admin" {
-		if shortAcc.Region.Num == 0 {
+		if strings.EqualFold(shortAcc.Region.Num, "*") {
 			return errors.New("Region is incorrect")
 		}
 	}
@@ -118,7 +118,7 @@ func (shortAcc *ShortAccount) ValidDelete(role string, region string) (account *
 		if privilege.Role == "Admin" || privilege.Role == role {
 			return nil, errors.New("This role cannot be deleted")
 		}
-		if num, _ := strconv.Atoi(region); shortAcc.Region.Num != num {
+		if !strings.EqualFold(shortAcc.Region.Num, region) {
 			return nil, errors.New("Regions dn't match")
 		}
 	}
@@ -151,7 +151,7 @@ func (shortAcc *ShortAccount) ValidChangePW(role string, region string) (account
 		if privilege.Role == "Admin" || privilege.Role == role {
 			return nil, errors.New("Cannot change the password for this user")
 		}
-		if num, _ := strconv.Atoi(region); shortAcc.Region.Num != num {
+		if !strings.EqualFold(shortAcc.Region.Num, region) {
 			return nil, errors.New("Regions don't match")
 		}
 	}

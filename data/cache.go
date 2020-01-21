@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 	"sync"
 	"time"
 )
@@ -15,20 +16,20 @@ var CacheInfo CacheData
 
 type CacheData struct {
 	mux       sync.Mutex
-	mapRegion map[int]string
-	mapArea   map[string]map[int]string
+	mapRegion map[string]string
+	mapArea   map[string]map[string]string
 	mapTLSost map[int]string
 	mapRoles  map[string]Permissions
 }
 
 //RegionInfo расшифровка региона
 type RegionInfo struct {
-	Num        int    `json:"num"`        //уникальный номер региона
+	Num        string `json:"num"`        //уникальный номер региона
 	NameRegion string `json:"nameRegion"` //расшифровка номера
 }
 
 type AreaInfo struct {
-	Num      int    `json:"num"`      //уникальный номер зоны
+	Num      string `json:"num"`      //уникальный номер зоны
 	NameArea string `json:"nameArea"` //расшифровка номера
 }
 
@@ -70,9 +71,9 @@ func CacheDataUpdate() {
 }
 
 //GetRegionInfo получить таблицу регионов
-func GetRegionInfo() (region map[int]string, area map[string]map[int]string, err error) {
-	region = make(map[int]string)
-	area = make(map[string]map[int]string)
+func GetRegionInfo() (region map[string]string, area map[string]map[string]string, err error) {
+	region = make(map[string]string)
+	area = make(map[string]map[string]string)
 	sqlStr := fmt.Sprintf("select region, nameregion, area, namearea from %s", os.Getenv("region_table"))
 	rows, err := GetDB().Raw(sqlStr).Rows()
 	if err != nil {
@@ -93,7 +94,7 @@ func GetRegionInfo() (region map[int]string, area map[string]map[int]string, err
 
 		if _, ok := area[tempReg.NameRegion][tempArea.Num]; !ok {
 			if _, ok := area[tempReg.NameRegion]; !ok {
-				area[tempReg.NameRegion] = make(map[int]string)
+				area[tempReg.NameRegion] = make(map[string]string)
 			}
 			area[tempReg.NameRegion][tempArea.Num] = tempArea.NameArea
 		}
@@ -134,18 +135,18 @@ func GetRoles() (err error) {
 	return err
 }
 
-func (region *RegionInfo) SetRegionInfo(num int) {
+func (region *RegionInfo) SetRegionInfo(num string) {
 	region.Num = num
-	if region.Num == 0 {
+	if strings.EqualFold(region.Num, "*") {
 		region.NameRegion = "Все регионы"
 	} else {
 		region.NameRegion = CacheInfo.mapRegion[num]
 	}
 }
 
-func (area *AreaInfo) SetAreaInfo(numReg, numArea int) {
+func (area *AreaInfo) SetAreaInfo(numReg, numArea string) {
 	area.Num = numArea
-	if area.Num == 0 {
+	if strings.EqualFold(area.Num, "*") {
 		area.NameArea = "Все районы"
 	} else {
 		area.NameArea = CacheInfo.mapArea[CacheInfo.mapRegion[numReg]][numArea]

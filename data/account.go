@@ -22,7 +22,7 @@ type Token struct {
 	Login  string //Уникальный логин пользователя
 	IP     string //IP пользователя
 	Role   string //Роль
-	Region int    //Регион пользователя
+	Region string //Регион пользователя
 	jwt.StandardClaims
 }
 
@@ -180,7 +180,7 @@ func (account *Account) ParserPointsUser() (err error) {
 		//logger.Info.Println("ParserPoints. Privilege error:", err)
 		return errors.New(fmt.Sprintf("ParserPoints. Privilege error: %s", err.Error()))
 	}
-	if privilege.Region == 0 {
+	if strings.EqualFold(privilege.Region, "*") {
 		boxpoint.Point0.SetPoint(42.7961, 25.5637)
 		boxpoint.Point1.SetPoint(77.1387, -174.1237)
 	} else {
@@ -233,8 +233,8 @@ func SuperCreate() (err error) {
 	account.Password = "$2a$10$ZCWyIEfEVF3KGj6OUtIeSOQ3WexMjuAZ43VSO6T.QqOndn4HN1J6C"
 	privilege := Privilege{}
 	privilege.Role = "Super"
-	privilege.Region = 1
-	privilege.Area = append(privilege.Area, 1, 2, 3)
+	privilege.Region = "1"
+	privilege.Area = append(privilege.Area, "1", "2", "3")
 	db.Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
 	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
@@ -248,8 +248,8 @@ func SuperCreate() (err error) {
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = Privilege{}
 	privilege.Role = "RegAdmin"
-	privilege.Region = 1
-	privilege.Area = append(privilege.Area, 1, 2, 3)
+	privilege.Region = "1"
+	privilege.Area = append(privilege.Area, "1", "2", "3")
 	db.Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
 	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
@@ -262,8 +262,8 @@ func SuperCreate() (err error) {
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = Privilege{}
 	privilege.Role = "RegAdmin"
-	privilege.Region = 3
-	privilege.Area = append(privilege.Area, 1)
+	privilege.Region = "3"
+	privilege.Area = append(privilege.Area, "1")
 	db.Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
 	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
@@ -276,8 +276,8 @@ func SuperCreate() (err error) {
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = Privilege{}
 	privilege.Role = "RegAdmin"
-	privilege.Region = 2
-	privilege.Area = append(privilege.Area, 1, 2)
+	privilege.Region = "2"
+	privilege.Area = append(privilege.Area, "1", "2")
 	db.Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
 	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
@@ -290,8 +290,8 @@ func SuperCreate() (err error) {
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = Privilege{}
 	privilege.Role = "Admin"
-	privilege.Region = 0
-	privilege.Area = append(privilege.Area, 0)
+	privilege.Region = "*"
+	privilege.Area = append(privilege.Area, "*")
 	db.Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
 	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
@@ -304,8 +304,8 @@ func SuperCreate() (err error) {
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = Privilege{}
 	privilege.Role = "Admin"
-	privilege.Region = 0
-	privilege.Area = append(privilege.Area, 0)
+	privilege.Region = "*"
+	privilege.Area = append(privilege.Area, "*")
 	db.Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
 	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
@@ -318,8 +318,8 @@ func SuperCreate() (err error) {
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = Privilege{}
 	privilege.Role = "Admin"
-	privilege.Region = 0
-	privilege.Area = append(privilege.Area, 0)
+	privilege.Region = "*"
+	privilege.Area = append(privilege.Area, "*")
 	db.Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
 	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
@@ -332,8 +332,8 @@ func SuperCreate() (err error) {
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = Privilege{}
 	privilege.Role = "RegAdmin"
-	privilege.Region = 1
-	privilege.Area = append(privilege.Area, 0)
+	privilege.Region = "1"
+	privilege.Area = append(privilege.Area, "*")
 	db.Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
 	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
@@ -346,8 +346,8 @@ func SuperCreate() (err error) {
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = Privilege{}
 	privilege.Role = "User"
-	privilege.Region = 2
-	privilege.Area = append(privilege.Area, 2)
+	privilege.Region = "2"
+	privilege.Area = append(privilege.Area, "2")
 	db.Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
 	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
@@ -360,8 +360,8 @@ func SuperCreate() (err error) {
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = Privilege{}
 	privilege.Role = "Viewer"
-	privilege.Region = 3
-	privilege.Area = append(privilege.Area, 1)
+	privilege.Region = "3"
+	privilege.Area = append(privilege.Area, "1")
 	db.Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
 	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))

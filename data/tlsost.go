@@ -101,7 +101,7 @@ func GetCrossInfo(TLignt TrafficLights) map[string]interface{} {
 		sqlStr   string
 		StateStr string
 	)
-	sqlStr = fmt.Sprintf("select area, subarea, idevice, dgis, describ, state from %s where region = %d and id = %d and area = %d", os.Getenv("gis_table"), TLignt.Region.Num, TLignt.ID, TLignt.Area.Num)
+	sqlStr = fmt.Sprintf("select area, subarea, idevice, dgis, describ, state from %v where region = %v and id = %v and area = %v", os.Getenv("gis_table"), TLignt.Region.Num, TLignt.ID, TLignt.Area.Num)
 	rowsTL := GetDB().Raw(sqlStr).Row()
 	err := rowsTL.Scan(&TLignt.Area.Num, &TLignt.Subarea, &TLignt.Idevice, &dgis, &TLignt.Description, &StateStr)
 	if err != nil {

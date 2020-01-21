@@ -6,7 +6,6 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 
 	"../data"
@@ -118,7 +117,7 @@ var JwtAuth = func(next http.Handler) http.Handler {
 			return
 		}
 		mapCont["login"] = tk.Login
-		mapCont["region"] = strconv.Itoa(tk.Region)
+		mapCont["region"] = tk.Region
 		mapCont["role"] = tk.Role
 		ctx := context.WithValue(r.Context(), "info", mapCont)
 		r = r.WithContext(ctx)

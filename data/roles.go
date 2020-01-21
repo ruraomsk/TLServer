@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"io/ioutil"
+	"strings"
 )
 
 type Roles struct {
@@ -28,9 +29,9 @@ type Permission struct {
 }
 
 type Privilege struct {
-	Role   string `json:"role"`
-	Region int    `json:"region"`
-	Area   []int  `json:"area"`
+	Role   string   `json:"role"`
+	Region string   `json:"region"`
+	Area   []string `json:"area"`
 }
 
 //func (roles *Roles) CreateRole() (err error) {
@@ -59,8 +60,8 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) map[
 		return u.Message(false, "Display info: Privilege error")
 	}
 	sqlStr = fmt.Sprintf("select login, w_time, privilege from public.accounts where login != '%s'", mapContx["login"])
-	if privilege.Region > 0 {
-		sqlStr += fmt.Sprintf("and privilege::jsonb->'region' = '%d'", privilege.Region)
+	if !strings.EqualFold(privilege.Region, "*") {
+		sqlStr += fmt.Sprintf("and privilege::jsonb->'region' = '%s'", privilege.Region)
 	}
 
 	rowsTL, _ := GetDB().Raw(sqlStr).Rows()
@@ -84,8 +85,6 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) map[
 			tempArea.SetAreaInfo(tempSA.Region.Num, num)
 			tempSA.Area = append(tempSA.Area, tempArea)
 		}
-
-
 
 		shortAcc = append(shortAcc, tempSA)
 	}
