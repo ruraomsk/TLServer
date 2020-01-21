@@ -38,23 +38,23 @@ func Init(path string) (err error) {
 		return err
 	}
 	Debug = log.New(logfile,
-		"DEBUG: ",
+		"DEBUG: TIME: ",
 		log.Ldate|log.Ltime|log.Lshortfile)
 
 	Trace = log.New(logfile,
-		"TRACE: ",
+		"TRACE: TIME: ",
 		log.Ldate|log.Ltime|log.Lshortfile)
 
 	Info = log.New(logfile,
-		"INFO: ",
+		"INFO: TIME: ",
 		log.Ldate|log.Ltime)
 
 	Warning = log.New(logfile,
-		"WARNING: ",
+		"WARNING: TIME: ",
 		log.Ldate|log.Ltime)
 
 	Error = log.New(logfile,
-		"ERROR: ",
+		"ERROR: TIME: ",
 		log.Ldate|log.Ltime|log.Lshortfile)
 	return nil
 }

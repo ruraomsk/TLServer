@@ -11,6 +11,11 @@
       "description": "Изменение пароля"
     },
     {
+      "id": 3,
+      "command": "LogInfo",
+      "description": "Проспотр логов"
+    },
+    {
       "id": 4,
       "command": "BuildCross",
       "description": "Отображение перекрестков"

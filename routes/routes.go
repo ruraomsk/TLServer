@@ -51,6 +51,12 @@ func StartServer() {
 	}).Methods("GET")
 	subRout.HandleFunc("/{slug}/manage", whandlers.DisplayAccInfo).Methods("POST")
 	subRout.HandleFunc("/{slug}/manage/changepw", whandlers.ActChangePw).Methods("POST")
+	subRout.HandleFunc("/{slug}/manage/log", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "//Fileserver/общая папка/TEMP рабочий/Semyon/lib/js/log.html")
+	}).Methods("GET")
+	subRout.HandleFunc("/{slug}/manage/log", whandlers.DisplayLogFile).Methods("POST")
+	subRout.HandleFunc("/{slug}/manage/log/info", whandlers.DisplayLogInfo).Methods("POST")
+
 	subRout.HandleFunc("/{slug}/manage/{act}", whandlers.ActParser).Methods("POST")
 	//тест
 	subRout.HandleFunc("/{slug}/testtoken", whandlers.TestToken).Methods("POST")

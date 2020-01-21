@@ -367,7 +367,6 @@ func SuperCreate() (err error) {
 	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
 
 	//!!!!! НЕ забудь удалить все что вышел
-	logger.Info.Println("Super created!")
 	fmt.Println("Super created!")
 	return err
 }
