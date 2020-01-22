@@ -20,8 +20,8 @@ func WriteLogMessage(ip string, url string, data map[string]interface{}, info in
 		}
 	}
 	if data["status"] == false {
-		logger.Warning.Printf("IP: %s Login: %s Resource: %s Message: %v", ip, login, url, data["message"])
+		logger.Warning.Printf("|IP: %s |Login: %s |Resource: %s |Message: %v", ip, login, url, data["message"])
 	} else {
-		logger.Info.Printf("IP: %s Login: %s Resource: %s Message: %v", ip, login, url, data["message"])
+		logger.Info.Printf("|IP: %s |Login: %s |Resource: %s |Message: %v", ip, login, url, data["message"])
 	}
 }

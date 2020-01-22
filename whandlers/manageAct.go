@@ -1,12 +1,12 @@
 package whandlers
 
 import (
-	"../data"
-	"../logger"
-	u "../utils"
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"../data"
+	u "../utils"
 )
 
 var ActParser = func(w http.ResponseWriter, r *http.Request) {
@@ -107,7 +107,7 @@ var ActChangePw = func(w http.ResponseWriter, r *http.Request) {
 		}
 		account, err := passChange.ValidOldNewPW(mapContx["login"])
 		if err != nil {
-			logger.Info.Println("ActParser, Add: Incorrectly filled data: ", err.Error(), "  ", r.RemoteAddr)
+			// logger.Info.Println("|Message: Incorrectly filled data: ", err.Error(), "  ", r.RemoteAddr)
 			w.WriteHeader(http.StatusBadRequest)
 			u.Respond(w, r, u.Message(false, err.Error()))
 			return

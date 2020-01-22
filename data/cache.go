@@ -56,7 +56,7 @@ func CacheDataUpdate() {
 		CacheInfo.mux.Unlock()
 
 		if err != nil {
-			logger.Error.Println(fmt.Sprintf("error reading data cache: %s", err.Error()))
+			logger.Error.Println(fmt.Sprintf("|Message: Error reading data cache: %s", err.Error()))
 		}
 		//создадим суперпользователя если таблица только была создана
 		if FirstCreate {

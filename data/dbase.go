@@ -46,7 +46,7 @@ func ConnectDB() error {
 	db.DB().SetMaxIdleConns(db_SetMaxIdleConns)
 	if !db.HasTable(Account{}) {
 		FirstCreate = true
-		logger.Info.Println("Message: DBase: Didn't find the Accounts table, created it with SuperUser")
+		logger.Info.Println("|Message: DBase: Didn't find the Accounts table, created it with SuperUser")
 		if err = db.Table("accounts").AutoMigrate(Account{}).Error; err != nil {
 			return err
 		}

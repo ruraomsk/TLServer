@@ -68,7 +68,7 @@ func SelectTL(point0 Point, point1 Point) (tfdata []TrafficLights) {
 	for rowsTL.Next() {
 		err := rowsTL.Scan(&temp.Region.Num, &temp.Area.Num, &temp.Subarea, &temp.ID, &temp.Idevice, &dgis, &temp.Description, &StateStr)
 		if err != nil {
-			logger.Error.Println("No result at these points", err.Error())
+			logger.Error.Println("|Message: No result at these points", err.Error())
 			return nil
 		}
 		temp.Points.StrToFloat(dgis)
@@ -77,7 +77,7 @@ func SelectTL(point0 Point, point1 Point) (tfdata []TrafficLights) {
 		//Состояние светофора!
 		rState, err := ConvertStateStrToStruct(StateStr)
 		if err != nil {
-			logger.Error.Println("Failed to parse cross information", err.Error())
+			logger.Error.Println("|Message: Failed to parse cross information", err.Error())
 			return nil
 		}
 		temp.Sost.Num = rState.StatusDevice
@@ -105,7 +105,7 @@ func GetCrossInfo(TLignt TrafficLights) map[string]interface{} {
 	rowsTL := GetDB().Raw(sqlStr).Row()
 	err := rowsTL.Scan(&TLignt.Area.Num, &TLignt.Subarea, &TLignt.Idevice, &dgis, &TLignt.Description, &StateStr)
 	if err != nil {
-		logger.Error.Println("No result at these points", err.Error())
+		logger.Error.Println("|Message: No result at these points", err.Error())
 		return u.Message(false, "No result at these points")
 	}
 	TLignt.Points.StrToFloat(dgis)
@@ -114,7 +114,7 @@ func GetCrossInfo(TLignt TrafficLights) map[string]interface{} {
 	//Состояние светофора!
 	rState, err := ConvertStateStrToStruct(StateStr)
 	if err != nil {
-		logger.Error.Println("Failed to parse cross information", err.Error())
+		logger.Error.Println("|Message: Failed to parse cross information", err.Error())
 		return u.Message(false, "Failed to parse cross information")
 	}
 	TLignt.Sost.Num = rState.StatusDevice

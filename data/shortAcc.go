@@ -168,7 +168,7 @@ func (passChange *PassChange) ValidOldNewPW(login string) (account *Account, err
 			//logger.Info.Println("Account: Login not found: ", login)
 			return nil, errors.New("Login not found")
 		}
-		logger.Error.Println("Account: Connection to DB err")
+		logger.Error.Println("|Message: Connection to DB err")
 		return nil, errors.New("Connection to DB error")
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(account.Password), []byte(passChange.OldPW))

@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"../logger"
 	u "../utils"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
@@ -187,7 +186,7 @@ func (account *Account) ParserPointsUser() (err error) {
 		row := db.Raw(`SELECT Min(dgis[0]) as "Y0", Min(convTo360(dgis[1])) as "X0", Max(dgis[0]) as "Y1", Max(convTo360(dgis[1])) as "X1"  FROM public."cross" where region = ?;`, privilege.Region).Row()
 		err := row.Scan(&boxpoint.Point0.Y, &boxpoint.Point0.X, &boxpoint.Point1.Y, &boxpoint.Point1.X)
 		if err != nil {
-			logger.Info.Println("ParserPointsUser: Что-то не так с запросом", err)
+			// logger.Info.Println("ParserPointsUser: Что-то не так с запросом", err)
 			return errors.New(fmt.Sprintf("ParserPoints. Request error: %s", err.Error()))
 		}
 		if boxpoint.Point0.X > 180 {

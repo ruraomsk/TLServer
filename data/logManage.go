@@ -24,7 +24,7 @@ var logFileSuffix = ".log"
 func DisplayLogFiles() map[string]interface{} {
 	files, err := ioutil.ReadDir(os.Getenv("logger_path"))
 	if err != nil {
-		logger.Error.Println("Error reading directory with log files")
+		logger.Error.Println("|Message: Error reading directory with log files")
 		resp := u.Message(false, "Log dir can't open")
 		return resp
 	}
@@ -41,7 +41,7 @@ func DisplayFileLog(fileName string) map[string]interface{} {
 	path := os.Getenv("logger_path") + "//" + fileName + logFileSuffix
 	byteFile, err := ioutil.ReadFile(path)
 	if err != nil {
-		logger.Error.Println("Error reading directory with log files")
+		logger.Error.Println("|Message: Error reading directory with log files")
 		resp := u.Message(false, "Log files not found")
 		return resp
 	}
@@ -66,55 +66,36 @@ func logParser(rawData string) (logData []LogInfo) {
 			continue
 		}
 		var tempLogData = LogInfo{}
-		//Type
-		start := 0
-		finish := strings.Index(line, Type)
-		tempLogData.Type = logStrPars(start, finish, line)
 
-		//Time //!!!!!!бля
-		start = newStart(start, finish, strings.Index(line, IP), Time)
-		finish = strings.Index(line, IP)
-		tempLogData.Time = logStrPars(start, finish, line)
+		splitLines := strings.Split(line, " |")
 
-		//IP
-		start = newStart(start, finish, strings.Index(line, Login), IP)
-		finish = strings.Index(line, Login)
-		tempLogData.IP = logStrPars(start, finish, line)
-
-		//Login
-		start = newStart(start, finish, strings.Index(line, Resource), Login)
-		finish = strings.Index(line, Resource)
-		tempLogData.Login = logStrPars(start, finish, line)
-
-		//Resource
-		start = newStart(start, finish, strings.Index(line, Message), Resource)
-		finish = strings.Index(line, Message)
-		tempLogData.Resource = logStrPars(start, finish, line)
-
-		//Message
-		start = newStart(start, finish, len(line)-1, Message)
-		finish = len(line) - 1
-		tempLogData.Message = logStrPars(start, finish, line)
-
+		for num, spLine := range splitLines {
+			if num == 0 {
+				tempLogData.Type = spLine[0:strings.Index(spLine, Type)]
+				tempLogData.Time = logStrPars(Time, spLine)
+			}
+			if strings.Index(spLine, IP) >= 0 {
+				tempLogData.IP = logStrPars(IP, spLine)
+			}
+			if strings.Index(spLine, Login) >= 0 {
+				tempLogData.Login = logStrPars(Login, spLine)
+			}
+			if strings.Index(spLine, Resource) >= 0 {
+				tempLogData.Resource = logStrPars(Resource, spLine)
+			}
+			if strings.Index(spLine, Message) >= 0 {
+				tempLogData.Message = logStrPars(Message, spLine)
+			}
+		}
 		logData = append(logData, tempLogData)
 	}
 	return logData
 }
 
-func newStart(start, oldFin, newFin int, str string) int {
-	if newFin > 0 {
-		return oldFin + len(str)
-	} else {
-		return start
-	}
-}
-
-func logStrPars(start, finish int, str string) string {
-	if finish < 0 {
-		return "-"
-	}
-	str = str[start:finish]
-	str = strings.TrimPrefix(str, " ")
-	str = strings.TrimSuffix(str, " ")
-	return str
+func logStrPars(sep, line string) string {
+	start := strings.Index(line, sep) + len(sep)
+	line = line[start:]
+	line = strings.TrimPrefix(line, " ")
+	line = strings.TrimSuffix(line, " ")
+	return line
 }
