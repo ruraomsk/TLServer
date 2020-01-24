@@ -82,7 +82,7 @@ func Login(login, password, ip string) map[string]interface{} {
 
 	//Формируем ответ
 	resp := u.Message(true, "Logged In")
-	resp["role"] = privilege.Role
+	//resp["role"] = privilege.Role
 	resp["login"] = account.Login
 	resp["token"] = tokenString
 	return resp
@@ -179,23 +179,24 @@ func (account *Account) ParserPointsUser() (err error) {
 		//logger.Info.Println("ParserPoints. Privilege error:", err)
 		return errors.New(fmt.Sprintf("ParserPoints. Privilege error: %s", err.Error()))
 	}
-	if strings.EqualFold(privilege.Region, "*") {
-		boxpoint.Point0.SetPoint(42.7961, 25.5637)
-		boxpoint.Point1.SetPoint(77.1387, -174.1237)
-	} else {
-		row := db.Raw(`SELECT Min(dgis[0]) as "Y0", Min(convTo360(dgis[1])) as "X0", Max(dgis[0]) as "Y1", Max(convTo360(dgis[1])) as "X1"  FROM public."cross" where region = ?;`, privilege.Region).Row()
-		err := row.Scan(&boxpoint.Point0.Y, &boxpoint.Point0.X, &boxpoint.Point1.Y, &boxpoint.Point1.X)
-		if err != nil {
-			// logger.Info.Println("ParserPointsUser: Что-то не так с запросом", err)
-			return errors.New(fmt.Sprintf("ParserPoints. Request error: %s", err.Error()))
-		}
-		if boxpoint.Point0.X > 180 {
-			boxpoint.Point0.X -= 360
-		}
-		if boxpoint.Point1.X > 180 {
-			boxpoint.Point0.X -= 360
-		}
+	var sqlString = `SELECT Min(dgis[0]) as "Y0", Min(convTo360(dgis[1])) as "X0", Max(dgis[0]) as "Y1", Max(convTo360(dgis[1])) as "X1"  FROM public."cross"`
+	if !strings.EqualFold(privilege.Region, "*") {
+		sqlString = sqlString + fmt.Sprintf(" where region = %s;", privilege.Region)
 	}
+	fmt.Println(sqlString)
+	row := db.Raw(sqlString).Row()
+	err = row.Scan(&boxpoint.Point0.Y, &boxpoint.Point0.X, &boxpoint.Point1.Y, &boxpoint.Point1.X)
+	if err != nil {
+		// logger.Info.Println("ParserPointsUser: Что-то не так с запросом", err)
+		return errors.New(fmt.Sprintf("ParserPoints. Request error: %s", err.Error()))
+	}
+	if boxpoint.Point0.X > 180 {
+		boxpoint.Point0.X -= 360
+	}
+	if boxpoint.Point1.X > 180 {
+		boxpoint.Point1.X -= 360
+	}
+
 	account.BoxPoint = boxpoint
 	return nil
 }

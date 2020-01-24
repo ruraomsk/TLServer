@@ -118,7 +118,7 @@ func (shortAcc *ShortAccount) ValidDelete(role string, region string) (account *
 		if privilege.Role == "Admin" || privilege.Role == role {
 			return nil, errors.New("This role cannot be deleted")
 		}
-		if !strings.EqualFold(shortAcc.Region.Num, region) {
+		if !strings.EqualFold(privilege.Region, region) {
 			return nil, errors.New("Regions dn't match")
 		}
 	}

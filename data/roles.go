@@ -61,9 +61,8 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) map[
 	}
 	sqlStr = fmt.Sprintf("select login, w_time, privilege from public.accounts where login != '%s'", mapContx["login"])
 	if !strings.EqualFold(privilege.Region, "*") {
-		sqlStr += fmt.Sprintf("and privilege::jsonb->'region' = '%s'", privilege.Region)
+		sqlStr += fmt.Sprintf(`and privilege::jsonb @> '{"region":"%s"}'::jsonb`, privilege.Region)
 	}
-
 	rowsTL, _ := GetDB().Raw(sqlStr).Rows()
 	for rowsTL.Next() {
 		var tempSA = ShortAccount{}
@@ -90,8 +89,30 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) map[
 	}
 
 	resp := u.Message(true, "Display information for Admins")
+
+	var roles []string
+	for roleName, _ := range CacheInfo.mapRoles {
+		if roleName != "Super" {
+			if (mapContx["role"] == "Admin") && (roleName == "Admin") {
+				continue
+			}
+			if (mapContx["role"] == "RegAdmin") && ((roleName == "Admin") || (roleName == "RegAdmin")) {
+				continue
+			}
+			roles = append(roles, roleName)
+		}
+	}
+	resp["roles"] = roles
+
+	chosenRegion := make(map[string]string)
+	if mapContx["role"] != "RegAdmin" {
+		chosenRegion = CacheInfo.mapRegion
+	} else {
+		chosenRegion[mapContx["region"]] = CacheInfo.mapRegion[mapContx["region"]]
+	}
+	resp["regionInfo"] = chosenRegion
+
 	resp["accInfo"] = shortAcc
-	resp["regionInfo"] = CacheInfo.mapRegion
 	resp["areaInfo"] = CacheInfo.mapArea
 	return resp
 }
