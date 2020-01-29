@@ -33,7 +33,7 @@ func DisplayLogFiles() map[string]interface{} {
 		nameFile = append(nameFile, strings.TrimSuffix(file.Name(), ".log"))
 	}
 	resp := u.Message(true, "Display a list of log files")
-	resp["filesName"] = nameFile
+	resp["fileNames"] = nameFile
 	return resp
 }
 

@@ -183,7 +183,6 @@ func (account *Account) ParserPointsUser() (err error) {
 	if !strings.EqualFold(privilege.Region, "*") {
 		sqlString = sqlString + fmt.Sprintf(" where region = %s;", privilege.Region)
 	}
-	fmt.Println(sqlString)
 	row := db.Raw(sqlString).Row()
 	err = row.Scan(&boxpoint.Point0.Y, &boxpoint.Point0.X, &boxpoint.Point1.Y, &boxpoint.Point1.X)
 	if err != nil {
@@ -233,8 +232,8 @@ func SuperCreate() (err error) {
 	account.Password = "$2a$10$ZCWyIEfEVF3KGj6OUtIeSOQ3WexMjuAZ43VSO6T.QqOndn4HN1J6C"
 	privilege := Privilege{}
 	privilege.Role = "Super"
-	privilege.Region = "1"
-	privilege.Area = append(privilege.Area, "1", "2", "3")
+	privilege.Region = "*"
+	privilege.Area = append(privilege.Area, "*")
 	db.Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
 	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
@@ -277,7 +276,7 @@ func SuperCreate() (err error) {
 	privilege = Privilege{}
 	privilege.Role = "RegAdmin"
 	privilege.Region = "2"
-	privilege.Area = append(privilege.Area, "1", "2")
+	privilege.Area = append(privilege.Area, "1", "2", "3")
 	db.Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
 	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
@@ -333,7 +332,7 @@ func SuperCreate() (err error) {
 	privilege = Privilege{}
 	privilege.Role = "RegAdmin"
 	privilege.Region = "1"
-	privilege.Area = append(privilege.Area, "*")
+	privilege.Area = append(privilege.Area, "1","2","3")
 	db.Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
 	db.Exec(privilege.ToSqlStrUpdate("accounts", account.Login))

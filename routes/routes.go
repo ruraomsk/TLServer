@@ -18,7 +18,7 @@ func StartServer() {
 	//основной обработчик
 	//начальная страница
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./views/screen.html")
+		http.ServeFile(w, r, "//Fileserver/общая папка/TEMP рабочий/Semyon/lib/js/screen.html")
 	})
 	//путь к скриптам они открыты
 	router.PathPrefix("/static/").Handler(http.Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("//Fileserver/общая папка/TEMP рабочий/Semyon/lib/js"))))).Methods("GET")
@@ -32,7 +32,7 @@ func StartServer() {
 	subRout.Use(JwtAuth)
 	//запрос странички с картой
 	subRout.HandleFunc("/{slug}", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./views/workplace.html")
+		http.ServeFile(w, r, "//Fileserver/общая папка/TEMP рабочий/Semyon/lib/js/workplace.html")
 	}).Methods("GET")
 	//запрос информации для заполнения странички с картой
 	subRout.HandleFunc("/{slug}", whandlers.BuildMapPage).Methods("POST")
@@ -40,7 +40,7 @@ func StartServer() {
 	subRout.HandleFunc("/{slug}/update", whandlers.UpdateMapPage).Methods("POST")
 	//запрос странички с перекрестком
 	subRout.HandleFunc("/{slug}/cross", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./views/cross.html")
+		http.ServeFile(w, r, "//Fileserver/общая папка/TEMP рабочий/Semyon/lib/js/cross.html")
 	}).Methods("GET")
 	//отправка информации с состояниями перекреста
 	subRout.HandleFunc("/{slug}/cross", whandlers.BuildCross).Methods("POST")
@@ -55,7 +55,7 @@ func StartServer() {
 		http.ServeFile(w, r, "//Fileserver/общая папка/TEMP рабочий/Semyon/lib/js/log.html")
 	}).Methods("GET")
 	subRout.HandleFunc("/{slug}/manage/log", whandlers.DisplayLogFile).Methods("POST")
-	subRout.HandleFunc("/{slug}/manage/log/info", whandlers.DisplayLogInfo).Methods("POST")
+	subRout.HandleFunc("/{slug}/manage/log/info", whandlers.DisplayLogInfo).Methods("GET")
 
 	subRout.HandleFunc("/{slug}/manage/{act}", whandlers.ActParser).Methods("POST")
 	//тест

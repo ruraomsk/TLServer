@@ -19,6 +19,9 @@ var LoginAcc = func(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	resp := data.Login(account.Login, account.Password, r.RemoteAddr)
+	if resp["status"] == false {
+		w.WriteHeader(http.StatusUnauthorized)
+	}
 	u.Respond(w, r, resp)
 }
 

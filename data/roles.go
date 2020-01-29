@@ -84,36 +84,60 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) map[
 			tempArea.SetAreaInfo(tempSA.Region.Num, num)
 			tempSA.Area = append(tempSA.Area, tempArea)
 		}
-
-		shortAcc = append(shortAcc, tempSA)
+		if tempSA.Role != "Super" {
+			shortAcc = append(shortAcc, tempSA)
+		}
 	}
 
 	resp := u.Message(true, "Display information for Admins")
 
+	//собираем в кучу роли
 	var roles []string
-	for roleName, _ := range CacheInfo.mapRoles {
-		if roleName != "Super" {
-			if (mapContx["role"] == "Admin") && (roleName == "Admin") {
-				continue
+	if mapContx["role"] == "Super" {
+		roles = append(roles, "Admin")
+	} else {
+		for roleName, _ := range CacheInfo.mapRoles {
+			if roleName != "Super" {
+				if (mapContx["role"] == "Admin") && (roleName == "Admin") {
+					continue
+				}
+				if (mapContx["role"] == "RegAdmin") && ((roleName == "Admin") || (roleName == "RegAdmin")) {
+					continue
+				}
+				roles = append(roles, roleName)
 			}
-			if (mapContx["role"] == "RegAdmin") && ((roleName == "Admin") || (roleName == "RegAdmin")) {
-				continue
-			}
-			roles = append(roles, roleName)
 		}
 	}
 	resp["roles"] = roles
 
+	//собираю в кучу регионы для отображения
 	chosenRegion := make(map[string]string)
-	if mapContx["role"] != "RegAdmin" {
-		chosenRegion = CacheInfo.mapRegion
+	if mapContx["role"] != "Super" {
+		if mapContx["role"] != "RegAdmin" {
+			for first, second := range CacheInfo.mapRegion {
+				chosenRegion[first] = second
+			}
+		} else {
+			chosenRegion[mapContx["region"]] = CacheInfo.mapRegion[mapContx["region"]]
+		}
+		delete(chosenRegion, "*")
 	} else {
-		chosenRegion[mapContx["region"]] = CacheInfo.mapRegion[mapContx["region"]]
+		chosenRegion["*"] = CacheInfo.mapRegion["*"]
 	}
 	resp["regionInfo"] = chosenRegion
 
+	//собираю в кучу районы для отображения
+	chosenArea := make(map[string]map[string]string)
+	for first, second := range CacheInfo.mapArea {
+		chosenArea[first] = make(map[string]string)
+		chosenArea[first] = second
+	}
+	if mapContx["role"] != "Super" {
+		delete(chosenArea, "Все регионы")
+	}
+	resp["areaInfo"] = chosenArea
+
 	resp["accInfo"] = shortAcc
-	resp["areaInfo"] = CacheInfo.mapArea
 	return resp
 }
 

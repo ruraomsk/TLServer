@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"strings"
 	"sync"
 	"time"
 )
@@ -99,6 +98,14 @@ func GetRegionInfo() (region map[string]string, area map[string]map[string]strin
 			area[tempReg.NameRegion][tempArea.Num] = tempArea.NameArea
 		}
 	}
+	if _, ok := region["*"]; !ok {
+		region["*"] = "Все регионы"
+	}
+	if _, ok := area["Все регионы"]["*"]; !ok {
+		area["Все регионы"] = make(map[string]string)
+		area["Все регионы"]["*"] = "Все районы"
+	}
+
 	return region, area, err
 }
 
@@ -137,19 +144,22 @@ func GetRoles() (err error) {
 
 func (region *RegionInfo) SetRegionInfo(num string) {
 	region.Num = num
-	if strings.EqualFold(region.Num, "*") {
-		region.NameRegion = "Все регионы"
-	} else {
-		region.NameRegion = CacheInfo.mapRegion[num]
-	}
+	region.NameRegion = CacheInfo.mapRegion[num]
+	//if strings.EqualFold(region.Num, "*") {
+	//	region.NameRegion = "Все регионы"
+	//} else {
+	//	region.NameRegion = CacheInfo.mapRegion[num]
+	//}
 }
 
 func (area *AreaInfo) SetAreaInfo(numReg, numArea string) {
 	area.Num = numArea
-	if strings.EqualFold(area.Num, "*") {
-		area.NameArea = "Все районы"
-	} else {
-		area.NameArea = CacheInfo.mapArea[CacheInfo.mapRegion[numReg]][numArea]
-	}
+	area.NameArea = CacheInfo.mapArea[CacheInfo.mapRegion[numReg]][numArea]
+
+	//if strings.EqualFold(area.Num, "*") {
+	//	area.NameArea = "Все районы"
+	//} else {
+	//	area.NameArea = CacheInfo.mapArea[CacheInfo.mapRegion[numReg]][numArea]
+	//}
 
 }
