@@ -26,10 +26,10 @@ var DisplayLogInfo = func(w http.ResponseWriter, r *http.Request) {
 		u.Respond(w, r, u.Message(false, "Blank field: fileName"))
 		return
 	}
-
+	mapContx := u.ParserInterface(r.Context().Value("info"))
 	flag, resp := FuncAccessCheak(w, r, "LogInfo")
 	if flag {
-		resp = data.DisplayFileLog(fileName)
+		resp = data.DisplayFileLog(fileName, mapContx)
 	}
 	u.Respond(w, r, resp)
 }
