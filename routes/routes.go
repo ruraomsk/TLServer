@@ -65,7 +65,12 @@ func StartServer() {
 	subRout.HandleFunc("/{slug}/manage", whandlers.DisplayAccInfo).Methods("POST")
 	//обработчик для изменения пароля
 	subRout.HandleFunc("/{slug}/manage/changepw", whandlers.ActChangePw).Methods("POST")
-
+	//обработчик для удаления аккаунтов
+	subRout.HandleFunc("/{slug}/manage/delete", whandlers.ActDeleteAccount).Methods("POST")
+	//обработчик для добавления аккаунтов
+	subRout.HandleFunc("/{slug}/manage/add", whandlers.ActAddAccount).Methods("POST")
+	//обработчик для редактирования данных аккаунта
+	subRout.HandleFunc("/{slug}/manage/update", whandlers.ActUpdateAccount).Methods("POST")
 
 	//обработка лог файлов (страничка)
 	subRout.HandleFunc("/{slug}/manage/log", func(w http.ResponseWriter, r *http.Request) {
@@ -76,8 +81,11 @@ func StartServer() {
 	//обработчик выбранного лог файла
 	subRout.HandleFunc("/{slug}/manage/log/info", whandlers.DisplayLogInfo).Methods("GET")
 
-	//обработчик для редактирования и создания пользователей (должен быть по иерархии поле changepw)
-	subRout.HandleFunc("/{slug}/manage/{act}", whandlers.ActParser).Methods("POST")
+	//обработка создания каталога карты перекрестков (страничка)
+	subRout.HandleFunc("/{slug}/manage/crossCreator", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "//Fileserver/общая папка/TEMP рабочий/Semyon/lib/js/crossCreator.html")
+	}).Methods("GET")
+	
 
 	//тест просто тест!
 	subRout.HandleFunc("/{slug}/testtoken", whandlers.TestToken).Methods("POST")
