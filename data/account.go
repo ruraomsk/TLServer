@@ -132,6 +132,7 @@ func (account *Account) Create(privilege Privilege) map[string]interface{} {
 	return resp
 }
 
+//Update обновление данных аккаунты (привелегии, время работы)
 func (account *Account) Update(privilege Privilege) map[string]interface{} {
 	privStr, _ := json.Marshal(privilege)
 	updateStr := fmt.Sprintf("update public.accounts set privilege = '%s',w_time = %d where login = '%s'", string(privStr), account.WTime, account.Login)
@@ -144,6 +145,7 @@ func (account *Account) Update(privilege Privilege) map[string]interface{} {
 	return resp
 }
 
+//Delete удаление аккаунта из БД
 func (account *Account) Delete() map[string]interface{} {
 	sqlStr := fmt.Sprintf("DELETE FROM public.accounts WHERE login = '%s';", account.Login)
 	err := db.Exec(sqlStr).Error
@@ -155,6 +157,7 @@ func (account *Account) Delete() map[string]interface{} {
 	return resp
 }
 
+//ChangePW изменение пароля пользователя
 func (account *Account) ChangePW() map[string]interface{} {
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(account.Password), bcrypt.DefaultCost)
 	account.Password = string(hashedPassword)

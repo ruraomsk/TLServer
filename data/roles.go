@@ -9,25 +9,30 @@ import (
 	"strings"
 )
 
+//Roles срез ролей
 type Roles struct {
 	Roles []Role `json:"roles"`
 }
 
+//Role структура содержащая имя роли и ее привелегии
 type Role struct {
 	Name string      `json:"name"`
 	Perm Permissions `json:"permission"`
 }
 
+//Permissions срез полномочий
 type Permissions struct {
 	Permissions []Permission `json:"permissions"`
 }
 
+//Permission структура полномойчий содержит ID, команду и описание команды
 type Permission struct {
 	ID          int    `json:"id"`
 	Command     string `json:"command"`
 	Description string `json:"description"`
 }
 
+//Privilege структура привилегий содержит роль, регион, и массив районов
 type Privilege struct {
 	Role   string   `json:"role"`
 	Region string   `json:"region"`
@@ -49,6 +54,7 @@ type Privilege struct {
 //	return err
 //}
 
+//DisplayInfoForAdmin отображение информации о пользователях для администраторов
 func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) map[string]interface{} {
 	var (
 		sqlStr   string
@@ -141,6 +147,7 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) map[
 	return resp
 }
 
+//RoleCheck проверка полученной роли на соответствие заданной и разрешение на выполнение действия
 func RoleCheck(mapContx map[string]string, act string) (accept bool, err error) {
 	privilege := Privilege{}
 	//Проверил соответствует ли роль которую мне дали с ролью установленной в БД
@@ -179,6 +186,7 @@ func (privilege *Privilege) ReadFromBD(login string) error {
 	return nil
 }
 
+//ConvertToJson преобразуем структуру в строку для записи в БД
 func (privilege *Privilege) ConvertToJson(privilegeStr string) (err error) {
 	err = json.Unmarshal([]byte(privilegeStr), privilege)
 	if err != nil {

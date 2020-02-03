@@ -21,6 +21,7 @@ type TrafficLights struct {
 	Points      Point      `json:"points"`      //Координата где находится светофор
 }
 
+//State короткий стейт который расшифрован из большого json
 type State struct {
 	Ck     int    `json:"ck",sql:"ck"`
 	Nk     int    `json:"nk",sql:"nk"`
@@ -29,7 +30,7 @@ type State struct {
 	Status int    `json:"status",sql:"status"`
 }
 
-//GetLightsFromBD возвращает массив в котором содержатся светофоры, которые попали в указанную область
+//GetLightsFromBD определяем правильную область для светофоров
 func GetLightsFromBD(box BoxPoint) (tfdata []TrafficLights) {
 	var tflight = []TrafficLights{}
 	if (box.Point1.X > -180 && box.Point1.X < 0) && (box.Point0.X > 0 && box.Point0.X < 180) {
@@ -55,6 +56,7 @@ func GetLightsFromBD(box BoxPoint) (tfdata []TrafficLights) {
 	return tflight
 }
 
+//SelectTL возвращает массив в котором содержатся светофоры, которые попали в указанную область
 func SelectTL(point0 Point, point1 Point) (tfdata []TrafficLights) {
 	var (
 		dgis     string
@@ -88,6 +90,7 @@ func SelectTL(point0 Point, point1 Point) (tfdata []TrafficLights) {
 	return tfdata
 }
 
+//ConvertStateStrToStruct разбор данных полученных из БД в нужную структуру
 func ConvertStateStrToStruct(str string) (rState agS_pudge.Cross, err error) {
 	if err := json.Unmarshal([]byte(str), &rState); err != nil {
 		return rState, err
@@ -95,6 +98,7 @@ func ConvertStateStrToStruct(str string) (rState agS_pudge.Cross, err error) {
 	return rState, nil
 }
 
+//GetCrossInfo сбор информации для пользователя и выбранном перекрестке
 func GetCrossInfo(TLignt TrafficLights) map[string]interface{} {
 	var (
 		dgis     string
@@ -121,6 +125,40 @@ func GetCrossInfo(TLignt TrafficLights) map[string]interface{} {
 	TLignt.Sost.Description = CacheInfo.mapTLSost[TLignt.Sost.Num]
 	resp := u.Message(true, "Cross information")
 	resp["cross"] = TLignt
+	//resp["state"] = rState
+	return resp
+}
+
+//ControlGetCrossInfo сбор информации для пользователя в расширенном варианте
+func ControlGetCrossInfo(TLignt TrafficLights) map[string]interface{} {
+	var (
+		dgis     string
+		sqlStr   string
+		StateStr string
+	)
+	sqlStr = fmt.Sprintf("select area, subarea, idevice, dgis, describ, state from %v where region = %v and id = %v and area = %v", os.Getenv("gis_table"), TLignt.Region.Num, TLignt.ID, TLignt.Area.Num)
+	rowsTL := GetDB().Raw(sqlStr).Row()
+	err := rowsTL.Scan(&TLignt.Area.Num, &TLignt.Subarea, &TLignt.Idevice, &dgis, &TLignt.Description, &StateStr)
+	if err != nil {
+		logger.Error.Println("|Message: No result at these points", err.Error())
+		return u.Message(false, "No result at these points")
+	}
+	TLignt.Points.StrToFloat(dgis)
+	TLignt.Region.NameRegion = CacheInfo.mapRegion[TLignt.Region.Num]
+	TLignt.Area.NameArea = CacheInfo.mapArea[TLignt.Region.NameRegion][TLignt.Area.Num]
+	//Состояние светофора!
+	rState, err := ConvertStateStrToStruct(StateStr)
+	if err != nil {
+		logger.Error.Println("|Message: Failed to parse cross information", err.Error())
+		return u.Message(false, "Failed to parse cross information")
+	}
+	TLignt.Sost.Num = rState.StatusDevice
+	TLignt.Sost.Description = CacheInfo.mapTLSost[TLignt.Sost.Num]
+	resp := u.Message(true, "Cross information")
+	resp["cross"] = TLignt
 	resp["state"] = rState
+
+	resp["areaMap"] = CacheInfo.mapArea[TLignt.Region.NameRegion]
+
 	return resp
 }

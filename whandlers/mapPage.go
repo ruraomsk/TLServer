@@ -12,7 +12,7 @@ var BuildMapPage = func(w http.ResponseWriter, r *http.Request) {
 	account := &data.Account{}
 	mapContx := u.ParserInterface(r.Context().Value("info"))
 	account.Login = mapContx["login"]
-	flag, resp := FuncAccessCheak(w, r, "BuildMapPage")
+	flag, resp := FuncAccessCheck(w, r, "BuildMapPage")
 	if flag {
 		resp = account.GetInfoForUser()
 	}
@@ -37,7 +37,7 @@ var UpdateMapPage = func(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	flag, resp := FuncAccessCheak(w, r, "UpdateMapPage")
+	flag, resp := FuncAccessCheck(w, r, "UpdateMapPage")
 	if flag {
 		tflight := data.GetLightsFromBD(*box)
 		resp = u.Message(true, "Update map data")

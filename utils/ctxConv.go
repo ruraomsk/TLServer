@@ -5,6 +5,7 @@ import (
 	"reflect"
 )
 
+//ParserInterface разбирает рефлексией интерфейс в map[string]string
 func ParserInterface(in interface{}) (contx map[string]string) {
 	contx = make(map[string]string)
 	v := reflect.ValueOf(in)

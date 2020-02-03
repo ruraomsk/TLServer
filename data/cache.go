@@ -10,9 +10,10 @@ import (
 	"time"
 )
 
-//CacheInfo Данные для обновления в определенный период
+//CacheInfo глобальная переменная для обращения к данным
 var CacheInfo CacheData
 
+//CacheData Данные для обновления в определенный период
 type CacheData struct {
 	mux       sync.Mutex
 	mapRegion map[string]string
@@ -27,6 +28,7 @@ type RegionInfo struct {
 	NameRegion string `json:"nameRegion"` //расшифровка номера
 }
 
+//AreaInfo расшифровка раона
 type AreaInfo struct {
 	Num      string `json:"num"`      //уникальный номер зоны
 	NameArea string `json:"nameArea"` //расшифровка номера
@@ -43,14 +45,15 @@ type TLSostInfo struct {
 	Description string `json:"description"`
 }
 
+//CacheDataUpdate обновление данных из бд, период обновления 1 час
 func CacheDataUpdate() {
 	var err error
 	CacheInfo.mapRoles = make(map[string]Permissions)
 	for {
 		CacheInfo.mux.Lock()
-		CacheInfo.mapRegion, CacheInfo.mapArea, err = GetRegionInfo()
-		CacheInfo.mapTLSost, err = GetTLSost()
-		err = GetRoles()
+		CacheInfo.mapRegion, CacheInfo.mapArea, err = getRegionInfo()
+		CacheInfo.mapTLSost, err = getTLSost()
+		err = getRoles()
 
 		CacheInfo.mux.Unlock()
 
@@ -69,8 +72,8 @@ func CacheDataUpdate() {
 
 }
 
-//GetRegionInfo получить таблицу регионов
-func GetRegionInfo() (region map[string]string, area map[string]map[string]string, err error) {
+//getRegionInfo получить таблицу регионов
+func getRegionInfo() (region map[string]string, area map[string]map[string]string, err error) {
 	region = make(map[string]string)
 	area = make(map[string]map[string]string)
 	sqlStr := fmt.Sprintf("select region, nameregion, area, namearea from %s", os.Getenv("region_table"))
@@ -109,8 +112,8 @@ func GetRegionInfo() (region map[string]string, area map[string]map[string]strin
 	return region, area, err
 }
 
-//GetTLSost получить данные о состоянии светофоров
-func GetTLSost() (TLsost map[int]string, err error) {
+//getTLSost получить данные о состоянии светофоров
+func getTLSost() (TLsost map[int]string, err error) {
 	TLsost = make(map[int]string)
 	file, err := ioutil.ReadFile("./cachefile/TLsost.json")
 	if err != nil {
@@ -128,7 +131,8 @@ func GetTLSost() (TLsost map[int]string, err error) {
 	return TLsost, err
 }
 
-func GetRoles() (err error) {
+//getRoles получать данны о ролях
+func getRoles() (err error) {
 	var temp = Roles{}
 	err = temp.ReadRoleFile()
 	if err != nil {
@@ -142,24 +146,14 @@ func GetRoles() (err error) {
 	return err
 }
 
+//SetRegionInfo установить в структуру номер и имя региона по номеру
 func (region *RegionInfo) SetRegionInfo(num string) {
 	region.Num = num
 	region.NameRegion = CacheInfo.mapRegion[num]
-	//if strings.EqualFold(region.Num, "*") {
-	//	region.NameRegion = "Все регионы"
-	//} else {
-	//	region.NameRegion = CacheInfo.mapRegion[num]
-	//}
 }
 
+//SetAreaInfo установить в структуру номер и имя района по номеру района и региона
 func (area *AreaInfo) SetAreaInfo(numReg, numArea string) {
 	area.Num = numArea
 	area.NameArea = CacheInfo.mapArea[CacheInfo.mapRegion[numReg]][numArea]
-
-	//if strings.EqualFold(area.Num, "*") {
-	//	area.NameArea = "Все районы"
-	//} else {
-	//	area.NameArea = CacheInfo.mapArea[CacheInfo.mapRegion[numReg]][numArea]
-	//}
-
 }

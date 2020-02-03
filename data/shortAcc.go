@@ -14,6 +14,7 @@ import (
 	"time"
 )
 
+//ShortAccount удобная структура аккаунта для обмена с пользователем
 type ShortAccount struct {
 	Login     string     `json:"login"`
 	Wtime     int        `json:"wtime"`
@@ -24,11 +25,13 @@ type ShortAccount struct {
 	Area      []AreaInfo `json:"area"`
 }
 
+//PassChange структура для изменения пароля
 type PassChange struct {
 	OldPW string `json:"oldPW"`
 	NewPW string `json:"newPW"`
 }
 
+//ConvertShortToAcc преобразование 2х структур информации об аккаунте в одну целую
 func (shortAcc *ShortAccount) ConvertShortToAcc() (account Account, privilege Privilege) {
 	account = Account{}
 	privilege = Privilege{}
@@ -43,6 +46,7 @@ func (shortAcc *ShortAccount) ConvertShortToAcc() (account Account, privilege Pr
 	return account, privilege
 }
 
+//DecodeRequest расшифровываем json данные полученные от пользователя
 func (shortAcc *ShortAccount) DecodeRequest(w http.ResponseWriter, r *http.Request) error {
 	err := json.NewDecoder(r.Body).Decode(shortAcc)
 	if err != nil {
@@ -54,6 +58,7 @@ func (shortAcc *ShortAccount) DecodeRequest(w http.ResponseWriter, r *http.Reque
 	return nil
 }
 
+//ValidCreate проверка данных полученных от пользователя на создание нового пользователя
 func (shortAcc *ShortAccount) ValidCreate(role string, region string) (err error) {
 	//проверка полученной роли
 	if _, ok := CacheInfo.mapRoles[shortAcc.Role]; !ok || shortAcc.Role == "Super" {
@@ -93,6 +98,7 @@ func (shortAcc *ShortAccount) ValidCreate(role string, region string) (err error
 	return nil
 }
 
+//ValidDelete проверка данных полученных от пользователя на удаление аккаунта
 func (shortAcc *ShortAccount) ValidDelete(role string, region string) (account *Account, err error) {
 	account = &Account{}
 	//Забираю из базы запись с подходящей почтой
@@ -126,6 +132,7 @@ func (shortAcc *ShortAccount) ValidDelete(role string, region string) (account *
 	return account, nil
 }
 
+//ValidChangePW проверка данных полученных от админа для смены паролей пользователя
 func (shortAcc *ShortAccount) ValidChangePW(role string, region string) (account *Account, err error) {
 	account = &Account{}
 	//Забираю из базы запись с подходящей почтой
@@ -159,6 +166,7 @@ func (shortAcc *ShortAccount) ValidChangePW(role string, region string) (account
 	return account, nil
 }
 
+//ValidOldNewPW проверка данных полученных от пользователя из изменения своего пароля
 func (passChange *PassChange) ValidOldNewPW(login string) (account *Account, err error) {
 	account = &Account{}
 	//Забираю из базы запись с подходящей почтой

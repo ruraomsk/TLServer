@@ -9,9 +9,10 @@ import (
 	u "../utils"
 )
 
+//ActParser обработчик запроса {act} update, delete, add работа с пользователем
 var ActParser = func(w http.ResponseWriter, r *http.Request) {
 	mapContx := u.ParserInterface(r.Context().Value("info"))
-	flag, resp := FuncAccessCheak(w, r, "ManageAccount")
+	flag, resp := FuncAccessCheck(w, r, "ManageAccount")
 	if flag {
 		switch mapContx["act"] {
 		case "update":
@@ -93,9 +94,10 @@ var ActParser = func(w http.ResponseWriter, r *http.Request) {
 	u.Respond(w, r, resp)
 }
 
+//ActChangePw обработчик запроса смены пароля для пользователя
 var ActChangePw = func(w http.ResponseWriter, r *http.Request) {
 	mapContx := u.ParserInterface(r.Context().Value("info"))
-	flag, resp := FuncAccessCheak(w, r, "ActChangePw")
+	flag, resp := FuncAccessCheck(w, r, "ActChangePw")
 	if flag {
 		var passChange = &data.PassChange{}
 		err := json.NewDecoder(r.Body).Decode(passChange)

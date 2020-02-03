@@ -34,7 +34,7 @@ var TestToken = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	//	return
 	//}
 
-	flag, resp := FuncAccessCheak(w, r, "MakeTest")
+	flag, resp := FuncAccessCheck(w, r, "MakeTest")
 	if flag {
 		resp["Test"] = "OK!"
 	}

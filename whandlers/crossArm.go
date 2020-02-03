@@ -1,6 +1,7 @@
 package whandlers
 
 import (
+	"github.com/pkg/errors"
 	"net/http"
 	"strconv"
 
@@ -13,39 +14,61 @@ var BuildCross = func(w http.ResponseWriter, r *http.Request) {
 	var err error
 	TLight := &data.TrafficLights{}
 
+	TLight.Region.Num, TLight.Area.Num, TLight.ID, err = queryParser(w, r)
+	if err != nil {
+		return
+	}
+
+	flag, resp := FuncAccessCheck(w, r, "BuildCross")
+	if flag {
+		resp = data.GetCrossInfo(*TLight)
+	}
+	mapContx := u.ParserInterface(r.Context().Value("info"))
+	resp["controlCrossFlag"], _ = data.RoleCheck(mapContx, "ControlCross")
+	u.Respond(w, r, resp)
+}
+
+//ControlCross данные для заполнения таблиц управления
+var ControlCross = func(w http.ResponseWriter, r *http.Request) {
+	var err error
+	TLight := &data.TrafficLights{}
+	TLight.Region.Num, TLight.Area.Num, TLight.ID, err = queryParser(w, r)
+	if err != nil {
+		return
+	}
+	flag, resp := FuncAccessCheck(w, r, "ControlCross")
+	if flag {
+		resp = data.ControlGetCrossInfo(*TLight)
+	}
+	u.Respond(w, r, resp)
+}
+
+//queryParser разбор URL строки
+func queryParser(w http.ResponseWriter, r *http.Request) (region, area string, ID int, err error) {
 	if len(r.URL.RawQuery) <= 0 {
-		//logger.Info.Println("crossArm: Blank field ", r.RemoteAddr)
 		w.WriteHeader(http.StatusBadRequest)
 		u.Respond(w, r, u.Message(false, "Blank field"))
+		err = errors.New("Blank field")
 		return
 	}
 	if _, err = strconv.Atoi(r.URL.Query().Get("Region")); err != nil {
-		//logger.Info.Println("crossArm: Blank field: Region ", r.RemoteAddr)
 		w.WriteHeader(http.StatusBadRequest)
 		u.Respond(w, r, u.Message(false, "Blank field: Region"))
 		return
 	} else {
-		TLight.Region.Num = r.URL.Query().Get("Region")
+		region = r.URL.Query().Get("Region")
 	}
-	if TLight.ID, err = strconv.Atoi(r.URL.Query().Get("ID")); err != nil {
-		//logger.Info.Println("crossArm: Blank field: ID ", r.RemoteAddr)
+	if ID, err = strconv.Atoi(r.URL.Query().Get("ID")); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		u.Respond(w, r, u.Message(false, "Blank field: ID"))
 		return
 	}
 	if _, err = strconv.Atoi(r.URL.Query().Get("Area")); err != nil {
-		//logger.Info.Println("crossArm: Blank field: Area ", r.RemoteAddr)
 		w.WriteHeader(http.StatusBadRequest)
 		u.Respond(w, r, u.Message(false, "Blank field: Area"))
 		return
 	} else {
-		TLight.Area.Num = r.URL.Query().Get("Area")
+		area = r.URL.Query().Get("Area")
 	}
-	flag, resp := FuncAccessCheak(w, r, "BuildCross")
-	if flag {
-		resp = data.GetCrossInfo(*TLight)
-	}
-
-	u.Respond(w, r, resp)
-
+	return
 }

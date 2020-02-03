@@ -6,14 +6,16 @@ import (
 	"net/http"
 )
 
+//DisplayLogFile обработчик отображения файлов лога
 var DisplayLogFile = func(w http.ResponseWriter, r *http.Request) {
-	flag, resp := FuncAccessCheak(w, r, "LogInfo")
+	flag, resp := FuncAccessCheck(w, r, "LogInfo")
 	if flag {
 		resp = data.DisplayLogFiles()
 	}
 	u.Respond(w, r, resp)
 }
 
+//DisplayLogInfo обработчик выгрузки содержимого лог файла
 var DisplayLogInfo = func(w http.ResponseWriter, r *http.Request) {
 	if len(r.URL.RawQuery) <= 0 {
 		w.WriteHeader(http.StatusBadRequest)
@@ -27,7 +29,7 @@ var DisplayLogInfo = func(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	mapContx := u.ParserInterface(r.Context().Value("info"))
-	flag, resp := FuncAccessCheak(w, r, "LogInfo")
+	flag, resp := FuncAccessCheck(w, r, "LogInfo")
 	if flag {
 		resp = data.DisplayFileLog(fileName, mapContx)
 	}

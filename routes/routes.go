@@ -12,6 +12,7 @@ import (
 
 var err error
 
+//StartServer запуск сервера
 func StartServer() {
 	// Создаем новый ServeMux для HTTPS соединений
 	router := mux.NewRouter()
@@ -27,10 +28,13 @@ func StartServer() {
 	router.HandleFunc("/login", whandlers.LoginAcc).Methods("POST")
 	router.HandleFunc("/test", whandlers.TestHello).Methods("POST")
 
+	//------------------------------------------------------------------------------------------------------------------
+	//обязательный общий путь
 	subRout := router.PathPrefix("/user").Subrouter()
-
+	//добавление к роутеру контроля токена
 	subRout.Use(JwtAuth)
-	//запрос странички с картой
+
+	//работа с основной страничкой карты
 	subRout.HandleFunc("/{slug}", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "//Fileserver/общая папка/TEMP рабочий/Semyon/lib/js/workplace.html")
 	}).Methods("GET")
@@ -38,35 +42,59 @@ func StartServer() {
 	subRout.HandleFunc("/{slug}", whandlers.BuildMapPage).Methods("POST")
 	//обновление странички с данными которые попали в область пользователя
 	subRout.HandleFunc("/{slug}/update", whandlers.UpdateMapPage).Methods("POST")
-	//запрос странички с перекрестком
+
+	//работа со странички перекрестков (страничка)
 	subRout.HandleFunc("/{slug}/cross", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "//Fileserver/общая папка/TEMP рабочий/Semyon/lib/js/cross.html")
 	}).Methods("GET")
-	//отправка информации с состояниями перекреста
+	//отправка информации с состояниями перекреста видна всем основная информация
 	subRout.HandleFunc("/{slug}/cross", whandlers.BuildCross).Methods("POST")
 
-	//обработка создание и редактирования пользователя
+	//расширеная страничка настройки перекрестка (страничка)
+	subRout.HandleFunc("/{slug}/cross/control", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "//Fileserver/общая папка/TEMP рабочий/Semyon/lib/js/crossControl.html")
+	}).Methods("GET")
+	//данные по расширенной странички перекрестков
+	subRout.HandleFunc("/{slug}/cross/control", whandlers.ControlCross).Methods("POST")
+
+	//обработка создание и редактирования пользователя (страничка)
 	subRout.HandleFunc("/{slug}/manage", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "//Fileserver/общая папка/TEMP рабочий/Semyon/lib/js/manage.html")
 	}).Methods("GET")
+	//обработчик запроса лог файлов
 	subRout.HandleFunc("/{slug}/manage", whandlers.DisplayAccInfo).Methods("POST")
+	//обработчик для изменения пароля
 	subRout.HandleFunc("/{slug}/manage/changepw", whandlers.ActChangePw).Methods("POST")
+
+
+	//обработка лог файлов (страничка)
 	subRout.HandleFunc("/{slug}/manage/log", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "//Fileserver/общая папка/TEMP рабочий/Semyon/lib/js/log.html")
 	}).Methods("GET")
+	//обработчик по выгрузке лог файлов
 	subRout.HandleFunc("/{slug}/manage/log", whandlers.DisplayLogFile).Methods("POST")
+	//обработчик выбранного лог файла
 	subRout.HandleFunc("/{slug}/manage/log/info", whandlers.DisplayLogInfo).Methods("GET")
 
+	//обработчик для редактирования и создания пользователей (должен быть по иерархии поле changepw)
 	subRout.HandleFunc("/{slug}/manage/{act}", whandlers.ActParser).Methods("POST")
-	//тест
+
+	//тест просто тест!
 	subRout.HandleFunc("/{slug}/testtoken", whandlers.TestToken).Methods("POST")
 
+	//------------------------------------------------------------------------------------------------------------------
 	//роутер для фаил сервера, он закрыт токеном, скачивать могут только авторизированные пользователи
 	fileRout := router.PathPrefix("/file").Subrouter()
+	//добавление к роутеру контроля токена
 	fileRout.Use(JwtFile)
+	//описание пути и скриптов для получения файлов для перекрестка
 	fileRout.PathPrefix("/cross/").Handler(http.Handler(http.StripPrefix("/file/cross/", http.FileServer(http.Dir("./views/cross"))))).Methods("GET")
+	//описание пути и скриптов для получения файлов для основных картинок
 	fileRout.PathPrefix("/img/").Handler(http.Handler(http.StripPrefix("/file/img/", http.FileServer(http.Dir("./views/img"))))).Methods("GET")
+	//описание пути и скриптов для получения файлов для иконок
+	fileRout.PathPrefix("/icons/").Handler(http.Handler(http.StripPrefix("/file/icons/", http.FileServer(http.Dir("./views/icons"))))).Methods("GET")
 
+	//------------------------------------------------------------------------------------------------------------------
 	// Запуск HTTP сервера
 	// if err = http.ListenAndServe(os.Getenv("server_ip"), handlers.LoggingHandler(os.Stdout, router)); err != nil {
 	if err = http.ListenAndServeTLS(os.Getenv("server_ip"), "domain.crt", "domain.key", handlers.LoggingHandler(os.Stdout, router)); err != nil {

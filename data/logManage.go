@@ -9,6 +9,7 @@ import (
 	"strings"
 )
 
+//LogInfo данные для хранения информации лог файлов
 type LogInfo struct {
 	Type string `json:"type"`
 	//Time     time.Duration `json:"time"`
@@ -21,6 +22,7 @@ type LogInfo struct {
 
 var logFileSuffix = ".log"
 
+//DisplayLogFiles отображения всех лог файлов в каталоге
 func DisplayLogFiles() map[string]interface{} {
 	files, err := ioutil.ReadDir(os.Getenv("logger_path"))
 	if err != nil {
@@ -37,6 +39,7 @@ func DisplayLogFiles() map[string]interface{} {
 	return resp
 }
 
+//DisplayFileLog получение мапы данных из заданного файла
 func DisplayFileLog(fileName string, mapContex map[string]string) map[string]interface{} {
 	path := os.Getenv("logger_path") + "//" + fileName + logFileSuffix
 	byteFile, err := ioutil.ReadFile(path)
@@ -65,6 +68,7 @@ func DisplayFileLog(fileName string, mapContex map[string]string) map[string]int
 	return resp
 }
 
+//logParser разборщик лог файла
 func logParser(rawData string, loginNames []string) (logData []LogInfo) {
 	var (
 		Type     = ":"
@@ -106,6 +110,7 @@ func logParser(rawData string, loginNames []string) (logData []LogInfo) {
 	return logData
 }
 
+//compareLoginNames решение по добавлению записи в ответ
 func compareLoginNames(loginNames []string, login string) bool {
 	if len(loginNames) == 0 {
 		return true
@@ -118,6 +123,7 @@ func compareLoginNames(loginNames []string, login string) bool {
 	return false
 }
 
+//logStrPars разбор строки с удалением лишних пробелов в начале и конце
 func logStrPars(sep, line string) string {
 	start := strings.Index(line, sep) + len(sep)
 	line = line[start:]

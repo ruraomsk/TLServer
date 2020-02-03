@@ -13,6 +13,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
+//JwtAuth контроль токена для всех прошедших регистрацию и обрашающихся к ресурсу
 var JwtAuth = func(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var tokenString string
@@ -126,6 +127,7 @@ var JwtAuth = func(next http.Handler) http.Handler {
 	})
 }
 
+//JwtFile упрошенных контроль токена для получения данных из файлового хранилища
 var JwtFile = func(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var tokenString string
@@ -214,8 +216,6 @@ var JwtFile = func(next http.Handler) http.Handler {
 			u.Respond(w, r, resp)
 			return
 		}
-
 		next.ServeHTTP(w, r)
-
 	})
 }

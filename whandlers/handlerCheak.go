@@ -6,7 +6,8 @@ import (
 	"net/http"
 )
 
-var FuncAccessCheak = func(w http.ResponseWriter, r *http.Request, act string) (flag bool, resp map[string]interface{}) {
+//FuncAccessCheck проверяет разрешение пользователя для доступа к ресурсу
+var FuncAccessCheck = func(w http.ResponseWriter, r *http.Request, act string) (flag bool, resp map[string]interface{}) {
 	resp = make(map[string]interface{})
 	flag, err := data.RoleCheck(u.ParserInterface(r.Context().Value("info")), act)
 	if err != nil || !flag {

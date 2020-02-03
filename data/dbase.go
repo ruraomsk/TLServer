@@ -61,6 +61,7 @@ func ConnectDB() error {
 	return nil
 }
 
+//GetDB обращение к БД
 func GetDB() *gorm.DB {
 	return db
 }

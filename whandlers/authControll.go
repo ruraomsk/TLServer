@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-//LoginAcc sign in account
+//LoginAcc обработчик входа в систему
 var LoginAcc = func(w http.ResponseWriter, r *http.Request) {
 	account := &data.Account{}
 	err := json.NewDecoder(r.Body).Decode(account)
@@ -25,10 +25,11 @@ var LoginAcc = func(w http.ResponseWriter, r *http.Request) {
 	u.Respond(w, r, resp)
 }
 
+//DisplayAccInfo отображение информации об аккаунтах для администрирования
 var DisplayAccInfo = func(w http.ResponseWriter, r *http.Request) {
 	privilege := &data.Privilege{}
 	mapContx := u.ParserInterface(r.Context().Value("info"))
-	flag, resp := FuncAccessCheak(w, r, "DisplayAccInfo")
+	flag, resp := FuncAccessCheck(w, r, "DisplayAccInfo")
 	if flag {
 		resp = privilege.DisplayInfoForAdmin(mapContx)
 	}
