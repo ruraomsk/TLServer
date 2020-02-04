@@ -47,19 +47,18 @@ type TLSostInfo struct {
 
 //CacheDataUpdate обновление данных из бд, период обновления 1 час
 func CacheDataUpdate() {
-	var err error
 	CacheInfo.mapRoles = make(map[string]Permissions)
 	for {
-		CacheInfo.mux.Lock()
-		CacheInfo.mapRegion, CacheInfo.mapArea, err = getRegionInfo()
-		CacheInfo.mapTLSost, err = getTLSost()
-		err = getRoles()
-
-		CacheInfo.mux.Unlock()
-
-		if err != nil {
-			logger.Error.Println(fmt.Sprintf("|Message: Error reading data cache: %s", err.Error()))
-		}
+		CacheInfoDataUpdate()
+		//CacheInfo.mux.Lock()
+		//CacheInfo.mapRegion, CacheInfo.mapArea, err = getRegionInfo()
+		//CacheInfo.mapTLSost, err = getTLSost()
+		//err = getRoles()
+		//CacheInfo.mux.Unlock()
+		//
+		//if err != nil {
+		//	logger.Error.Println(fmt.Sprintf("|Message: Error reading data cache: %s", err.Error()))
+		//}
 		//создадим суперпользователя если таблица только была создана
 		if FirstCreate {
 			FirstCreate = false
@@ -69,11 +68,22 @@ func CacheDataUpdate() {
 
 		time.Sleep(time.Hour)
 	}
-
 }
 
-//getRegionInfo получить таблицу регионов
-func getRegionInfo() (region map[string]string, area map[string]map[string]string, err error) {
+func CacheInfoDataUpdate() {
+	var err error
+	CacheInfo.mux.Lock()
+	CacheInfo.mapRegion, CacheInfo.mapArea, err = GetRegionInfo()
+	CacheInfo.mapTLSost, err = getTLSost()
+	err = getRoles()
+	CacheInfo.mux.Unlock()
+	if err != nil {
+		logger.Error.Println(fmt.Sprintf("|Message: Error reading data cache: %s", err.Error()))
+	}
+}
+
+//GetRegionInfo получить таблицу регионов
+func GetRegionInfo() (region map[string]string, area map[string]map[string]string, err error) {
 	region = make(map[string]string)
 	area = make(map[string]map[string]string)
 	sqlStr := fmt.Sprintf("select region, nameregion, area, namearea from %s", os.Getenv("region_table"))

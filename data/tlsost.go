@@ -90,6 +90,21 @@ func SelectTL(point0 Point, point1 Point) (tfdata []TrafficLights) {
 	return tfdata
 }
 
+func GetAllTrafficLights() (tfData []TrafficLights) {
+	var dgis string
+	temp := &TrafficLights{}
+	sqlquery := fmt.Sprintf("select region, id, area, dgis, describ from %s", os.Getenv("gis_table"))
+	rows, _ := GetDB().Raw(sqlquery).Rows()
+	for rows.Next() {
+		rows.Scan(&temp.Region.Num, &temp.ID, &temp.Area.Num, &dgis, &temp.Description)
+		temp.Points.StrToFloat(dgis)
+		tfData = append(tfData, *temp)
+	}
+	return
+}
+
+
+
 //ConvertStateStrToStruct разбор данных полученных из БД в нужную структуру
 func ConvertStateStrToStruct(str string) (rState agS_pudge.Cross, err error) {
 	if err := json.Unmarshal([]byte(str), &rState); err != nil {

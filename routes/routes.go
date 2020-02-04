@@ -85,7 +85,11 @@ func StartServer() {
 	subRout.HandleFunc("/{slug}/manage/crossCreator", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "//Fileserver/общая папка/TEMP рабочий/Semyon/lib/js/crossCreator.html")
 	}).Methods("GET")
-	
+	//
+	subRout.HandleFunc("/{slug}/manage/crossCreator", whandlers.MainCrossCreator).Methods("POST")
+	subRout.HandleFunc("/{slug}/manage/crossCreator/checkAllCross", whandlers.CheckAllCross).Methods("POST")
+	subRout.HandleFunc("/{slug}/manage/crossCreator/checkSelected", whandlers.CheckSelectedDirCross).Methods("POST")
+	subRout.HandleFunc("/{slug}/manage/crossCreator/makeSelected", whandlers.MakeSelectedDirCross).Methods("POST")
 
 	//тест просто тест!
 	subRout.HandleFunc("/{slug}/testtoken", whandlers.TestToken).Methods("POST")

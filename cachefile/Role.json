@@ -90,6 +90,11 @@
             "id": 9,
             "command": "DisplayAccInfo",
             "description": "Доступ к странице manage и получение информации об аккаунтах в системе"
+          },
+          {
+            "id": 10,
+            "command": "CrossCreator",
+            "description": "Доступ к странице crossCreator"
           }
         ]
       }
