@@ -103,12 +103,18 @@ func stateMarshal(cross agS_pudge.Cross) (str string, err error) {
 func verifiedState(cross *agS_pudge.Cross) (result stateVerified.StateResult) {
 	resultDay := stateVerified.DaySetsVerified(&cross.Arrays.DaySets)
 	appendResult(&result, resultDay)
-	resultWeek := stateVerified.WeekSetsVerified(cross)
+	resultWeek, empty := stateVerified.WeekSetsVerified(cross)
 	appendResult(&result, resultWeek)
+	resultMouth := stateVerified.MouthSetsVerified(cross, empty)
+	appendResult(&result, resultMouth)
+	resultTimeUse := stateVerified.TimeUseVerified(cross)
+	appendResult(&result, resultTimeUse)
 	return
 }
 
 func appendResult(mainRes *stateVerified.StateResult, addResult stateVerified.StateResult) {
 	mainRes.SumResult = append(mainRes.SumResult, addResult.SumResult...)
-	mainRes.Err = addResult.Err
+	if addResult.Err != nil {
+		mainRes.Err = addResult.Err
+	}
 }

@@ -6,8 +6,13 @@ import (
 	agS_pudge "github.com/ruraomsk/ag-server/pudge"
 )
 
+type IsEmpty struct {
+	Week map[int]bool
+}
+
 // WeekSetsVerified проверка недельных карт
-func WeekSetsVerified(cross *agS_pudge.Cross) (result StateResult) {
+func WeekSetsVerified(cross *agS_pudge.Cross) (result StateResult, Empty IsEmpty) {
+	Empty.Week = make(map[int]bool)
 	weekSets := cross.Arrays.WeekSets
 	daySets := cross.Arrays.DaySets
 	result.SumResult = append(result.SumResult, "Проверка: Недельные карты")
@@ -24,6 +29,17 @@ func WeekSetsVerified(cross *agS_pudge.Cross) (result StateResult) {
 		flagFill := false
 		for numWDay, wDay := range week.Days {
 			//проверка целостности одной недельной карты
+			if numWDay == 0 {
+				if wDay == 0 {
+					for _, zeroDay := range week.Days {
+						if zeroDay != 0 {
+							result.SumResult = append(result.SumResult, fmt.Sprintf("Не верно указано значение карты неделя № (%v): в неделе есть 0 позиция (%v)", week.Number, numWDay+1))
+							result.Err = errors.New("detected")
+							break
+						}
+					}
+				}
+			}
 			if wDay != 0 {
 				flagFill = true
 			}
@@ -49,6 +65,7 @@ func WeekSetsVerified(cross *agS_pudge.Cross) (result StateResult) {
 				}
 			}
 		}
+		Empty.Week[week.Number] = flagFill
 	}
 
 	if result.Err == nil {
