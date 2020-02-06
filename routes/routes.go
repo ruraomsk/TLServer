@@ -56,6 +56,10 @@ func StartServer() {
 	}).Methods("GET")
 	//данные по расширенной странички перекрестков
 	subRout.HandleFunc("/{slug}/cross/control", whandlers.ControlCross).Methods("POST")
+	//обработчик приема данных от пользователя для отправки на устройство
+	subRout.HandleFunc("/{slug}/cross/control/sendButton", whandlers.ControlSendButton).Methods("POST")
+	//обработчик проверки данных
+	subRout.HandleFunc("/{slug}/cross/control/checkButton", whandlers.ControlCheckButton).Methods("POST")
 
 	//обработка создание и редактирования пользователя (страничка)
 	subRout.HandleFunc("/{slug}/manage", func(w http.ResponseWriter, r *http.Request) {

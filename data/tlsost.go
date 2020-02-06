@@ -103,8 +103,6 @@ func GetAllTrafficLights() (tfData []TrafficLights) {
 	return
 }
 
-
-
 //ConvertStateStrToStruct разбор данных полученных из БД в нужную структуру
 func ConvertStateStrToStruct(str string) (rState agS_pudge.Cross, err error) {
 	if err := json.Unmarshal([]byte(str), &rState); err != nil {
@@ -141,39 +139,5 @@ func GetCrossInfo(TLignt TrafficLights) map[string]interface{} {
 	resp := u.Message(true, "Cross information")
 	resp["cross"] = TLignt
 	//resp["state"] = rState
-	return resp
-}
-
-//ControlGetCrossInfo сбор информации для пользователя в расширенном варианте
-func ControlGetCrossInfo(TLignt TrafficLights) map[string]interface{} {
-	var (
-		dgis     string
-		sqlStr   string
-		StateStr string
-	)
-	sqlStr = fmt.Sprintf("select area, subarea, idevice, dgis, describ, state from %v where region = %v and id = %v and area = %v", os.Getenv("gis_table"), TLignt.Region.Num, TLignt.ID, TLignt.Area.Num)
-	rowsTL := GetDB().Raw(sqlStr).Row()
-	err := rowsTL.Scan(&TLignt.Area.Num, &TLignt.Subarea, &TLignt.Idevice, &dgis, &TLignt.Description, &StateStr)
-	if err != nil {
-		logger.Error.Println("|Message: No result at these points", err.Error())
-		return u.Message(false, "No result at these points")
-	}
-	TLignt.Points.StrToFloat(dgis)
-	TLignt.Region.NameRegion = CacheInfo.mapRegion[TLignt.Region.Num]
-	TLignt.Area.NameArea = CacheInfo.mapArea[TLignt.Region.NameRegion][TLignt.Area.Num]
-	//Состояние светофора!
-	rState, err := ConvertStateStrToStruct(StateStr)
-	if err != nil {
-		logger.Error.Println("|Message: Failed to parse cross information", err.Error())
-		return u.Message(false, "Failed to parse cross information")
-	}
-	TLignt.Sost.Num = rState.StatusDevice
-	TLignt.Sost.Description = CacheInfo.mapTLSost[TLignt.Sost.Num]
-	resp := u.Message(true, "Cross information")
-	resp["cross"] = TLignt
-	resp["state"] = rState
-
-	resp["areaMap"] = CacheInfo.mapArea[TLignt.Region.NameRegion]
-
 	return resp
 }

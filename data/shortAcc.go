@@ -1,12 +1,12 @@
 package data
 
 import (
+	"../logger"
 	u "../utils"
 	"encoding/json"
 	"fmt"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
-	"github.com/ruraomsk/ag-server/logger"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"regexp"

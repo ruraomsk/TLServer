@@ -1,14 +1,13 @@
 package main
 
 import (
-	"fmt"
-	"os"
-
 	"./data"
-
 	"./logger"
 	"./routes"
+	"./tcpConnect"
+	"fmt"
 	"github.com/joho/godotenv"
+	"os"
 )
 
 var err error
@@ -41,6 +40,7 @@ func main() {
 
 	//раз в час обновляем данные регионов, и состояний
 	go data.CacheDataUpdate()
+	go tcpConnect.TCPClientStart()
 	//----------------------------------------------------------------------
 
 	//запуск сервера

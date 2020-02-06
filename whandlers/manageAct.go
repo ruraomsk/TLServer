@@ -11,9 +11,9 @@ import (
 
 //ActUpdateAccount обработчик запроса обновления (работа с пользователями)
 var ActUpdateAccount = func(w http.ResponseWriter, r *http.Request) {
-	mapContx := u.ParserInterface(r.Context().Value("info"))
 	flag, resp := FuncAccessCheck(w, r, "ManageAccount")
 	if flag {
+		mapContx := u.ParserInterface(r.Context().Value("info"))
 		var shortAcc = &data.ShortAccount{}
 		err := shortAcc.DecodeRequest(w, r)
 		if err != nil {
@@ -34,9 +34,9 @@ var ActUpdateAccount = func(w http.ResponseWriter, r *http.Request) {
 
 //ActDeleteAccount обработчик запроса удаления (работа с пользователями)
 var ActDeleteAccount = func(w http.ResponseWriter, r *http.Request) {
-	mapContx := u.ParserInterface(r.Context().Value("info"))
 	flag, resp := FuncAccessCheck(w, r, "ManageAccount")
 	if flag {
+		mapContx := u.ParserInterface(r.Context().Value("info"))
 		var shortAcc = &data.ShortAccount{}
 		err := shortAcc.DecodeRequest(w, r)
 		if err != nil {
@@ -56,9 +56,9 @@ var ActDeleteAccount = func(w http.ResponseWriter, r *http.Request) {
 
 //ActAddAccount обработчик запроса добавления (работа с пользователями)
 var ActAddAccount = func(w http.ResponseWriter, r *http.Request) {
-	mapContx := u.ParserInterface(r.Context().Value("info"))
 	flag, resp := FuncAccessCheck(w, r, "ManageAccount")
 	if flag {
+		mapContx := u.ParserInterface(r.Context().Value("info"))
 		var shortAcc = &data.ShortAccount{}
 		err := shortAcc.DecodeRequest(w, r)
 		if err != nil {
@@ -71,7 +71,6 @@ var ActAddAccount = func(w http.ResponseWriter, r *http.Request) {
 			u.Respond(w, r, u.Message(false, fmt.Sprintf("Incorrectly filled data: %s", err.Error())))
 			return
 		}
-
 		account, privilege := shortAcc.ConvertShortToAcc()
 		resp = account.Create(privilege)
 	}
@@ -80,9 +79,9 @@ var ActAddAccount = func(w http.ResponseWriter, r *http.Request) {
 
 //ActChangePw обработчик запроса смены пароля для пользователя
 var ActChangePw = func(w http.ResponseWriter, r *http.Request) {
-	mapContx := u.ParserInterface(r.Context().Value("info"))
 	flag, resp := FuncAccessCheck(w, r, "ActChangePw")
 	if flag {
+		mapContx := u.ParserInterface(r.Context().Value("info"))
 		var passChange = &data.PassChange{}
 		err := json.NewDecoder(r.Body).Decode(passChange)
 		if err != nil {

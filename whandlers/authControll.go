@@ -27,10 +27,10 @@ var LoginAcc = func(w http.ResponseWriter, r *http.Request) {
 
 //DisplayAccInfo отображение информации об аккаунтах для администрирования
 var DisplayAccInfo = func(w http.ResponseWriter, r *http.Request) {
-	privilege := &data.Privilege{}
-	mapContx := u.ParserInterface(r.Context().Value("info"))
 	flag, resp := FuncAccessCheck(w, r, "DisplayAccInfo")
 	if flag {
+		privilege := &data.Privilege{}
+		mapContx := u.ParserInterface(r.Context().Value("info"))
 		resp = privilege.DisplayInfoForAdmin(mapContx)
 	}
 	u.Respond(w, r, resp)

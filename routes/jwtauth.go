@@ -1,16 +1,15 @@
 package routes
 
 import (
+	"../data"
+	u "../utils"
 	"context"
 	"fmt"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	"net/http"
 	"os"
 	"strings"
-
-	"../data"
-	u "../utils"
-	"github.com/dgrijalva/jwt-go"
 )
 
 //JwtAuth контроль токена для всех прошедших регистрацию и обрашающихся к ресурсу

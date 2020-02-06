@@ -1,44 +1,76 @@
 package whandlers
 
 import (
-	"github.com/pkg/errors"
-	"net/http"
-	"strconv"
-
 	"../data"
 	u "../utils"
+	"encoding/json"
+	"github.com/pkg/errors"
+	agS_pudge "github.com/ruraomsk/ag-server/pudge"
+	"net/http"
+	"strconv"
 )
 
 //BuildCross собираем данные для отображения прекрестка
 var BuildCross = func(w http.ResponseWriter, r *http.Request) {
-	var err error
-	TLight := &data.TrafficLights{}
-
-	TLight.Region.Num, TLight.Area.Num, TLight.ID, err = queryParser(w, r)
-	if err != nil {
-		return
-	}
-
 	flag, resp := FuncAccessCheck(w, r, "BuildCross")
 	if flag {
+		var err error
+		TLight := &data.TrafficLights{}
+		TLight.Region.Num, TLight.Area.Num, TLight.ID, err = queryParser(w, r)
+		if err != nil {
+			return
+		}
 		resp = data.GetCrossInfo(*TLight)
+		mapContx := u.ParserInterface(r.Context().Value("info"))
+		resp["controlCrossFlag"], _ = data.RoleCheck(mapContx, "ControlCross")
 	}
-	mapContx := u.ParserInterface(r.Context().Value("info"))
-	resp["controlCrossFlag"], _ = data.RoleCheck(mapContx, "ControlCross")
 	u.Respond(w, r, resp)
 }
 
 //ControlCross данные для заполнения таблиц управления
 var ControlCross = func(w http.ResponseWriter, r *http.Request) {
-	var err error
-	TLight := &data.TrafficLights{}
-	TLight.Region.Num, TLight.Area.Num, TLight.ID, err = queryParser(w, r)
-	if err != nil {
-		return
-	}
 	flag, resp := FuncAccessCheck(w, r, "ControlCross")
 	if flag {
+		var err error
+		TLight := &data.TrafficLights{}
+		TLight.Region.Num, TLight.Area.Num, TLight.ID, err = queryParser(w, r)
+		if err != nil {
+			return
+		}
 		resp = data.ControlGetCrossInfo(*TLight)
+	}
+	u.Respond(w, r, resp)
+}
+
+//ControlSendButton обработчик данных для отправки на устройства(сервер)
+var ControlSendButton = func(w http.ResponseWriter, r *http.Request) {
+	flag, resp := FuncAccessCheck(w, r, "ControlCross")
+	if flag {
+		var stateData agS_pudge.Cross
+		err := json.NewDecoder(r.Body).Decode(&stateData)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			u.Respond(w, r, u.Message(false, "Invalid request"))
+			return
+		}
+		mapContx := u.ParserInterface(r.Context().Value("info"))
+		resp = data.SendCrossData(stateData, mapContx)
+	}
+	u.Respond(w, r, resp)
+}
+
+//ControlCheckButton обработчик данных для их проверка
+var ControlCheckButton = func(w http.ResponseWriter, r *http.Request) {
+	flag, resp := FuncAccessCheck(w, r, "ControlCross")
+	if flag {
+		var stateData agS_pudge.Cross
+		err := json.NewDecoder(r.Body).Decode(&stateData)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			u.Respond(w, r, u.Message(false, "Invalid request"))
+			return
+		}
+		resp = data.CheckCrossData(stateData)
 	}
 	u.Respond(w, r, resp)
 }

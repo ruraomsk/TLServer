@@ -1,10 +1,11 @@
 package whandlers
 
 import (
-	"../data"
-	u "../utils"
 	"encoding/json"
 	"net/http"
+
+	"../data"
+	u "../utils"
 )
 
 //MainCrossCreator сборка информации для странички создания каталогов перекрестков
@@ -27,15 +28,15 @@ var CheckAllCross = func(w http.ResponseWriter, r *http.Request) {
 
 //CheckSelectedDirCross обработчик проверки регионов/районов/перекрестков выбратнных пользователем
 var CheckSelectedDirCross = func(w http.ResponseWriter, r *http.Request) {
-	var selectedData data.SelectedData
-	err := json.NewDecoder(r.Body).Decode(&selectedData)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		u.Respond(w, r, u.Message(false, "Invalid request"))
-		return
-	}
 	flag, resp := FuncAccessCheck(w, r, "CrossCreator")
 	if flag {
+		var selectedData data.SelectedData
+		err := json.NewDecoder(r.Body).Decode(&selectedData)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			u.Respond(w, r, u.Message(false, "Invalid request"))
+			return
+		}
 		resp = data.CheckCrossFileSelected(selectedData.SelectedData)
 	}
 	u.Respond(w, r, resp)
@@ -43,16 +44,15 @@ var CheckSelectedDirCross = func(w http.ResponseWriter, r *http.Request) {
 
 //MakeSelectedDirCross обработчик проверки регионов/районов/перекрестков выбратнных пользователем
 var MakeSelectedDirCross = func(w http.ResponseWriter, r *http.Request) {
-	var selectedData data.SelectedData
-	err := json.NewDecoder(r.Body).Decode(&selectedData)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		u.Respond(w, r, u.Message(false, "Invalid request"))
-		return
-	}
-
 	flag, resp := FuncAccessCheck(w, r, "CrossCreator")
 	if flag {
+		var selectedData data.SelectedData
+		err := json.NewDecoder(r.Body).Decode(&selectedData)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			u.Respond(w, r, u.Message(false, "Invalid request"))
+			return
+		}
 		resp = data.MakeSelectedDir(selectedData)
 	}
 	u.Respond(w, r, resp)
