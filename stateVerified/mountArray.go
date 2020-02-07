@@ -20,7 +20,7 @@ func MouthSetsVerified(cross *agS_pudge.Cross, empty IsEmpty) (result StateResul
 	for _, mouth := range mouthSets.MonthSets {
 
 		if mouth.Number > 12 || mouth.Number < 0 {
-			result.SumResult = append(result.SumResult, fmt.Sprintf("Не верно указано значение карты месяц № (%v): № недельной карты должен быть от 1 до 12", mouth.Number))
+			result.SumResult = append(result.SumResult, fmt.Sprintf("Карта № (%v): № недельной карты должен быть от 1 до 12", mouth.Number))
 			result.Err = errors.New("detected")
 		}
 		flagFill := false
@@ -31,7 +31,7 @@ func MouthSetsVerified(cross *agS_pudge.Cross, empty IsEmpty) (result StateResul
 				if mDay == 0 {
 					for _, zeroDay := range mouth.Days {
 						if zeroDay != 0 {
-							result.SumResult = append(result.SumResult, fmt.Sprintf("Не верно указано значение карты месяц № (%v): есть 0 позиция (%v)", mouth.Number, numMDay+1))
+							result.SumResult = append(result.SumResult, fmt.Sprintf("Карта № (%v): есть 0 позиция (%v)", mouth.Number, numMDay+1))
 							result.Err = errors.New("detected")
 							break
 						}
@@ -43,20 +43,20 @@ func MouthSetsVerified(cross *agS_pudge.Cross, empty IsEmpty) (result StateResul
 			}
 			if flagFill {
 				if mDay == 0 {
-					result.SumResult = append(result.SumResult, fmt.Sprintf("Не верно указано значение карты месяц № (%v): есть 0 позиция (%v)", mouth.Number, numMDay+1))
+					result.SumResult = append(result.SumResult, fmt.Sprintf("Карта № (%v): есть 0 позиция (%v)", mouth.Number, numMDay+1))
 					result.Err = errors.New("detected")
 				}
 				for numWeek, week := range weekSets.WeekSets {
 					if week.Number == mDay {
 						if !empty.Week[numWeek+1] {
-							result.SumResult = append(result.SumResult, fmt.Sprintf("Не верно указано значение карты месяц № (%v) позиция (%v): недельная карта %v не заполнена", mouth.Number, numMDay+1, week.Number))
+							result.SumResult = append(result.SumResult, fmt.Sprintf("Карта № (%v) позиция (%v): недельная карта %v не заполнена", mouth.Number, numMDay+1, week.Number))
 							result.Err = errors.New("detected")
 						}
 						break
 					}
 					if numWeek+1 == len(weekSets.WeekSets) {
 						if mDay != 0 {
-							result.SumResult = append(result.SumResult, fmt.Sprintf("Не верно указано значение карты месяц № (%v) позиция (%v): значение (%v) в недельных картах не найдено", mouth.Number, numMDay+1, mDay))
+							result.SumResult = append(result.SumResult, fmt.Sprintf("Карта № (%v) позиция (%v): значение (%v) в недельных картах не найдено", mouth.Number, numMDay+1, mDay))
 							result.Err = errors.New("detected")
 						}
 					}

@@ -23,7 +23,7 @@ func WeekSetsVerified(cross *agS_pudge.Cross) (result StateResult, Empty IsEmpty
 	}
 	for _, week := range weekSets.WeekSets {
 		if week.Number > 12 || week.Number < 0 {
-			result.SumResult = append(result.SumResult, fmt.Sprintf("Не верно указано значение карты неделя № (%v): № недельной карты должен быть от 1 до 12", week.Number))
+			result.SumResult = append(result.SumResult, fmt.Sprintf("Карта № (%v): № недельной карты должен быть от 1 до 12", week.Number))
 			result.Err = errors.New("detected")
 		}
 		flagFill := false
@@ -33,7 +33,7 @@ func WeekSetsVerified(cross *agS_pudge.Cross) (result StateResult, Empty IsEmpty
 				if wDay == 0 {
 					for _, zeroDay := range week.Days {
 						if zeroDay != 0 {
-							result.SumResult = append(result.SumResult, fmt.Sprintf("Не верно указано значение карты неделя № (%v): в неделе есть 0 позиция (%v)", week.Number, numWDay+1))
+							result.SumResult = append(result.SumResult, fmt.Sprintf("Карта № (%v): в неделе есть 0 позиция (%v)", week.Number, numWDay+1))
 							result.Err = errors.New("detected")
 							break
 						}
@@ -45,20 +45,20 @@ func WeekSetsVerified(cross *agS_pudge.Cross) (result StateResult, Empty IsEmpty
 			}
 			if flagFill {
 				if wDay == 0 {
-					result.SumResult = append(result.SumResult, fmt.Sprintf("Не верно указано значение карты неделя № (%v): в неделе есть 0 позиция (%v)", week.Number, numWDay+1))
+					result.SumResult = append(result.SumResult, fmt.Sprintf("Карта № (%v): в неделе есть 0 позиция (%v)", week.Number, numWDay+1))
 					result.Err = errors.New("detected")
 				}
 				for numDay, day := range daySets.DaySets {
 					if day.Number == wDay {
 						if day.Count == 0 {
-							result.SumResult = append(result.SumResult, fmt.Sprintf("Не верно указано значение карты неделя № (%v) позиция (%v): дневная карта %v не заполнена", week.Number, numWDay+1, day.Number))
+							result.SumResult = append(result.SumResult, fmt.Sprintf("Карта № (%v) позиция (%v): дневная карта %v не заполнена", week.Number, numWDay+1, day.Number))
 							result.Err = errors.New("detected")
 						}
 						break
 					}
 					if numDay+1 == len(daySets.DaySets) {
 						if wDay != 0 {
-							result.SumResult = append(result.SumResult, fmt.Sprintf("Не верно указано значение карты неделя № (%v) позиция (%v): значение (%v) в дневных картах не найдено", week.Number, numWDay+1, wDay))
+							result.SumResult = append(result.SumResult, fmt.Sprintf("Карта № (%v) позиция (%v): значение (%v) в дневных картах не найдено", week.Number, numWDay+1, wDay))
 							result.Err = errors.New("detected")
 						}
 					}

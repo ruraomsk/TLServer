@@ -40,7 +40,7 @@ func main() {
 
 	//раз в час обновляем данные регионов, и состояний
 	go data.CacheDataUpdate()
-	go tcpConnect.TCPClientStart()
+	tcpConnect.TCPClientStart()
 	//----------------------------------------------------------------------
 
 	//запуск сервера

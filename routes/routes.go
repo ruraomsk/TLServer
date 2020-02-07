@@ -49,6 +49,8 @@ func StartServer() {
 	}).Methods("GET")
 	//отправка информации с состояниями перекреста видна всем основная информация
 	subRout.HandleFunc("/{slug}/cross", whandlers.BuildCross).Methods("POST")
+	//обработчик диспетчерского управления
+	subRout.HandleFunc("/{slug}/cross/DispatchControlButtons", whandlers.DispatchControlButtons).Methods("POST")
 
 	//расширеная страничка настройки перекрестка (страничка)
 	subRout.HandleFunc("/{slug}/cross/control", func(w http.ResponseWriter, r *http.Request) {
