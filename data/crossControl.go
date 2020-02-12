@@ -90,6 +90,32 @@ func CheckCrossData(state agS_pudge.Cross) map[string]interface{} {
 	return resp
 }
 
+//DeleteCrossData удаление перекрестка на сервере
+func DeleteCrossData(state agS_pudge.Cross, mapContx map[string]string) map[string]interface{} {
+	var (
+		stateMessage tcpConnect.StateMessage
+		err          error
+	)
+	state.IDevice = -1
+	stateMessage.StateStr, err = stateMarshal(state)
+	if err != nil {
+		logger.Error.Println("|Message: Failed to Marshal state information: ", err.Error())
+		return u.Message(false, "Failed to Marshal state information")
+	}
+	stateMessage.User = mapContx["login"]
+	tcpConnect.StateChan <- stateMessage
+	for {
+		chanRespond := <-tcpConnect.StateChan
+		if strings.Contains(chanRespond.User, mapContx["login"]) {
+			if chanRespond.Message == "ok" {
+				return u.Message(true, "Cross data deleted")
+			} else {
+				return u.Message(false, "TCP Server not responding")
+			}
+		}
+	}
+}
+
 //stateMarshal преобразовать структуру в строку
 func stateMarshal(cross agS_pudge.Cross) (str string, err error) {
 	newByte, err := json.Marshal(cross)

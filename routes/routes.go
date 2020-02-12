@@ -40,6 +40,8 @@ func StartServer() {
 	}).Methods("GET")
 	//запрос информации для заполнения странички с картой
 	subRout.HandleFunc("/{slug}", whandlers.BuildMapPage).Methods("POST")
+	//обработчик выхода из системы
+	subRout.HandleFunc("/{slug}/logOut", whandlers.LoginAccOut).Methods("GET")
 	//обновление странички с данными которые попали в область пользователя
 	subRout.HandleFunc("/{slug}/update", whandlers.UpdateMapPage).Methods("POST")
 
@@ -62,6 +64,8 @@ func StartServer() {
 	subRout.HandleFunc("/{slug}/cross/control/sendButton", whandlers.ControlSendButton).Methods("POST")
 	//обработчик проверки данных
 	subRout.HandleFunc("/{slug}/cross/control/checkButton", whandlers.ControlCheckButton).Methods("POST")
+	//обработчик обработчик удаления перекрсетка
+	subRout.HandleFunc("/{slug}/cross/control/deleteButton", whandlers.ControlDeleteButton).Methods("POST")
 
 	//обработка создание и редактирования пользователя (страничка)
 	subRout.HandleFunc("/{slug}/manage", func(w http.ResponseWriter, r *http.Request) {

@@ -12,7 +12,7 @@ import (
 func TimeUseVerified(cross *agS_pudge.Cross) (result StateResult) {
 	timeUse := cross.Arrays.SetTimeUse
 	result.SumResult = append(result.SumResult, "Проверка: Внешние выходы")
-	for _, uses := range timeUse.Uses {
+	for numUses, uses := range timeUse.Uses {
 		if uses.Type > 1 || uses.Type < 0 {
 			result.SumResult = append(result.SumResult, fmt.Sprintf("Поле (%v): тип стат. должен быть 0 или 1", uses.Name))
 			result.Err = errors.New("detected")
@@ -45,10 +45,16 @@ func TimeUseVerified(cross *agS_pudge.Cross) (result StateResult) {
 			}
 		}
 		if uses.Dk == 1 {
-			if uses.Long <= 0 {
-				result.SumResult = append(result.SumResult, fmt.Sprintf("Поле (%v): Интервал должен быть больше нуля", uses.Name))
+			if uses.Long < 0 {
+				result.SumResult = append(result.SumResult, fmt.Sprintf("Поле (%v): Интервал должен быть ноль или больше", uses.Name))
 				result.Err = errors.New("detected")
+			} else if uses.Long == 0 {
+				if numUses > 1 {
+					result.SumResult = append(result.SumResult, fmt.Sprintf("Поле (%v): Интервал должен быть больше нуля", uses.Name))
+					result.Err = errors.New("detected")
+				}
 			}
+
 			tempFazes := strings.Split(uses.Fazes, ",")
 			for _, faze := range tempFazes {
 				faze = strings.TrimSpace(faze)

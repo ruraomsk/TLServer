@@ -3,7 +3,11 @@ package data
 import (
 	u "../utils"
 	"fmt"
+	"github.com/ruraomsk/ag-server/logger"
+	"io"
+	"net/http"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -121,7 +125,9 @@ func CheckCrossFileSelected(selectedData map[string]map[string][]CheckData) map[
 
 //MakeSelectedDir создание каталогов и файлов png + svg у выбранных
 func MakeSelectedDir(selData SelectedData) map[string]interface{} {
-	if selData.PngSettings.SizeX == "" || selData.PngSettings.SizeY == "" || selData.PngSettings.Z == "" {
+	sizeX, _ := strconv.Atoi(selData.PngSettings.SizeX)
+	sizeY, _ := strconv.Atoi(selData.PngSettings.SizeY)
+	if selData.PngSettings.SizeX == "" || selData.PngSettings.SizeY == "" || selData.PngSettings.Z == "" || sizeX > 450 || sizeX < 0 || sizeY < 0 || sizeY > 450 {
 		selData.PngSettings.stockData()
 	}
 	path := os.Getenv("views_path") + "//cross"
@@ -134,11 +140,21 @@ func MakeSelectedDir(selData SelectedData) map[string]interface{} {
 					continue
 				}
 				if !selData.SelectedData[numFirst][numSecond][numCheck].PngStatus {
-					fmt.Println("png")
+					point, err := TakePointFromBD(numFirst, numSecond, check.ID)
+					if err != nil {
+						logger.Error.Println("|Message: No result at these points")
+						continue
+					}
+					err = createPng(numFirst, numSecond, check.ID, selData.PngSettings, point)
+					if err != nil {
+						logger.Error.Println("|Message: Can't create map.png")
+						continue
+					}
+					selData.SelectedData[numFirst][numSecond][numCheck].PngStatus = true
 				}
-				if !selData.SelectedData[numFirst][numSecond][numCheck].SvgStatus {
-					fmt.Println("svg")
-				}
+				//if !selData.SelectedData[numFirst][numSecond][numCheck].SvgStatus {
+				//	fmt.Println("svg")
+				//}
 			}
 		}
 	}
@@ -163,12 +179,37 @@ var (
  			</svg>`
 )
 
-func createPng(path string) (err error) {
-	//url := fmt.Sprintf("https://static-maps.yandex.ru/1.x/?ll=%3.15f,%3.15f&z=19&l=map&size=450,450", TL.Points.Y, TL.Points.X)
-	return err
+func createPng(numReg, numArea, id string, settings PngSettings, point Point) (err error) {
+	url := fmt.Sprintf("https://static-maps.yandex.ru/1.x/?ll=%3.15f,%3.15f&z=%v&l=map&size=%v,%v", point.X, point.Y, settings.Z, settings.SizeX, settings.SizeY)
+	response, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+	filePath := os.Getenv("views_path") + "//cross" + "//" + numReg + "//" + numArea + "//" + id + "//"
+	//open a file for writing
+	file, err := os.Create(filePath + "map.png")
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	// Use io.Copy to just dump the response body to the file. This supports huge files
+	_, err = io.Copy(file, response.Body)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func createSvg(path string) (err error) {
+
+	//file1, err := os.Create(filepath + "cross.svg")
+	//if err != nil {
+	//	return err
+	//}
+	//defer file1.Close()
+	//str3 := fmt.Sprintf("%s", TL.Description)
+	//fmt.Fprintln(file1, str1, str3, str2)
 
 	return err
 }

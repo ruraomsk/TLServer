@@ -22,7 +22,13 @@ var BuildCross = func(w http.ResponseWriter, r *http.Request) {
 		}
 		resp = data.GetCrossInfo(*TLight)
 		mapContx := u.ParserInterface(r.Context().Value("info"))
-		resp["controlCrossFlag"], _ = data.RoleCheck(mapContx, "ControlCross")
+
+		controlCrossFlag, _ := data.RoleCheck(mapContx, "ControlCross")
+		if (TLight.Region.Num == mapContx["region"]) || (mapContx["region"] == "*") {
+			resp["controlCrossFlag"] = controlCrossFlag
+		} else {
+			resp["controlCrossFlag"] = false
+		}
 	}
 	u.Respond(w, r, resp)
 }
@@ -71,6 +77,23 @@ var ControlCheckButton = func(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		resp = data.CheckCrossData(stateData)
+	}
+	u.Respond(w, r, resp)
+}
+
+//ControlDeleteButton обработчик данных для удаления перекрестка
+var ControlDeleteButton = func(w http.ResponseWriter, r *http.Request) {
+	flag, resp := FuncAccessCheck(w, r, "ControlCross")
+	if flag {
+		var stateData agS_pudge.Cross
+		err := json.NewDecoder(r.Body).Decode(&stateData)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			u.Respond(w, r, u.Message(false, "Invalid request"))
+			return
+		}
+		mapContx := u.ParserInterface(r.Context().Value("info"))
+		resp = data.DeleteCrossData(stateData, mapContx)
 	}
 	u.Respond(w, r, resp)
 }

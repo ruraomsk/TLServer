@@ -1,6 +1,8 @@
 package data
 
 import (
+	"fmt"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -38,4 +40,16 @@ func (points *Point) StrToFloat(str string) {
 	temp := strings.Split(str, ",")
 	points.Y, _ = strconv.ParseFloat(temp[0], 64)
 	points.X, _ = strconv.ParseFloat(temp[1], 64)
+}
+
+func TakePointFromBD(numRegion, numArea, numID string) (point Point, err error) {
+	var dgis string
+	sqlStr := fmt.Sprintf("select dgis from %s where region = %v and area = %v and id = %v", os.Getenv("gis_table"), numRegion, numArea, numID)
+	rowsTL := GetDB().Raw(sqlStr).Row()
+	err = rowsTL.Scan(&dgis)
+	if err != nil {
+		return point, err
+	}
+	point.StrToFloat(dgis)
+	return point, nil
 }

@@ -1,17 +1,17 @@
 package data
 
 import (
+	u "../utils"
 	"encoding/json"
 	"fmt"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
+	"golang.org/x/crypto/bcrypt"
 	"os"
 	"regexp"
 	"strings"
 	"time"
-	u "../utils"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/jinzhu/gorm"
-	"golang.org/x/crypto/bcrypt"
 )
 
 //Token JWT claims struct
@@ -84,6 +84,15 @@ func Login(login, password, ip string) map[string]interface{} {
 	//resp["role"] = privilege.Role
 	resp["login"] = account.Login
 	resp["token"] = tokenString
+	return resp
+}
+
+func LogOut(mapContx map[string]string) map[string]interface{} {
+	err := GetDB().Exec("update public.accounts set token = ? where login = ?", "", mapContx["login"]).Error
+	if err != nil {
+		return u.Message(false, "Connection to DB error. Please try again")
+	}
+	resp := u.Message(true, "Log out")
 	return resp
 }
 
@@ -287,6 +296,20 @@ func SuperCreate() (err error) {
 	account.Login = "All"
 	//Отдаем ключ для yandex map
 	account.YaMapKey = os.Getenv("ya_key")
+	account.WTime = 1000
+	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
+	privilege = Privilege{}
+	privilege.Role = "Admin"
+	privilege.Region = "*"
+	privilege.Area = append(privilege.Area, "*")
+	GetDB().Table("accounts").Create(account)
+	////Записываю координаты в базу!!!
+	GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
+
+	account = &Account{}
+	account.Login = "Rura"
+	//Отдаем ключ для yandex map
+	account.YaMapKey = os.Getenv("ya_key")
 	account.WTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = Privilege{}
@@ -301,7 +324,7 @@ func SuperCreate() (err error) {
 	account.Login = "MMM"
 	//Отдаем ключ для yandex map
 	account.YaMapKey = os.Getenv("ya_key")
-	account.WTime = 12
+	account.WTime = 10000
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = Privilege{}
 	privilege.Role = "Admin"
@@ -315,7 +338,7 @@ func SuperCreate() (err error) {
 	account.Login = "Admin"
 	//Отдаем ключ для yandex map
 	account.YaMapKey = os.Getenv("ya_key")
-	account.WTime = 12
+	account.WTime = 10000
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = Privilege{}
 	privilege.Role = "Admin"
@@ -334,7 +357,7 @@ func SuperCreate() (err error) {
 	privilege = Privilege{}
 	privilege.Role = "RegAdmin"
 	privilege.Region = "1"
-	privilege.Area = append(privilege.Area, "1","2","3")
+	privilege.Area = append(privilege.Area, "1", "2", "3")
 	GetDB().Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
 	GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))

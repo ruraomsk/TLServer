@@ -26,7 +26,7 @@ type State struct {
 	Ck     int    `json:"ck",sql:"ck"`
 	Nk     int    `json:"nk",sql:"nk"`
 	Pk     int    `json:"pk",sql:"pk"`
-	Fone   string `json:"fone",sql:"fone"`
+	Phone  string `json:"phone",sql:"phone"`
 	Status int    `json:"status",sql:"status"`
 }
 
@@ -138,6 +138,6 @@ func GetCrossInfo(TLignt TrafficLights) map[string]interface{} {
 	TLignt.Sost.Description = CacheInfo.mapTLSost[TLignt.Sost.Num]
 	resp := u.Message(true, "Cross information")
 	resp["cross"] = TLignt
-	//resp["state"] = rState
+	resp["state"] = rState
 	return resp
 }
