@@ -14,15 +14,16 @@ var err error
 
 //StartServer запуск сервера
 func StartServer() {
+	resourcePath := os.Getenv("resourcePath")
 	// Создаем новый ServeMux для HTTPS соединений
 	router := mux.NewRouter()
 	//основной обработчик
 	//начальная страница
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "//Fileserver/общая папка/TEMP рабочий/Semyon/lib/js/screen.html")
+		http.ServeFile(w, r, resourcePath+"/screen.html")
 	})
 	//путь к скриптам они открыты
-	router.PathPrefix("/static/").Handler(http.Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("//Fileserver/общая папка/TEMP рабочий/Semyon/lib/js"))))).Methods("GET")
+	router.PathPrefix("/static/").Handler(http.Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(resourcePath))))).Methods("GET")
 
 	//запрос на вход в систему
 	router.HandleFunc("/login", whandlers.LoginAcc).Methods("POST")
@@ -36,7 +37,7 @@ func StartServer() {
 
 	//работа с основной страничкой карты
 	subRout.HandleFunc("/{slug}", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "//Fileserver/общая папка/TEMP рабочий/Semyon/lib/js/workplace.html")
+		http.ServeFile(w, r, resourcePath+"/workplace.html")
 	}).Methods("GET")
 	//запрос информации для заполнения странички с картой
 	subRout.HandleFunc("/{slug}", whandlers.BuildMapPage).Methods("POST")
@@ -47,7 +48,7 @@ func StartServer() {
 
 	//работа со странички перекрестков (страничка)
 	subRout.HandleFunc("/{slug}/cross", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "//Fileserver/общая папка/TEMP рабочий/Semyon/lib/js/cross.html")
+		http.ServeFile(w, r, resourcePath+"/cross.html")
 	}).Methods("GET")
 	//отправка информации с состояниями перекреста видна всем основная информация
 	subRout.HandleFunc("/{slug}/cross", whandlers.BuildCross).Methods("POST")
@@ -56,7 +57,7 @@ func StartServer() {
 
 	//расширеная страничка настройки перекрестка (страничка)
 	subRout.HandleFunc("/{slug}/cross/control", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "//Fileserver/общая папка/TEMP рабочий/Semyon/lib/js/crossControl.html")
+		http.ServeFile(w, r, resourcePath+"/crossControl.html")
 	}).Methods("GET")
 	//данные по расширенной странички перекрестков
 	subRout.HandleFunc("/{slug}/cross/control", whandlers.ControlCross).Methods("POST")
@@ -69,7 +70,7 @@ func StartServer() {
 
 	//обработка создание и редактирования пользователя (страничка)
 	subRout.HandleFunc("/{slug}/manage", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "//Fileserver/общая папка/TEMP рабочий/Semyon/lib/js/manage.html")
+		http.ServeFile(w, r, resourcePath+"/manage.html")
 	}).Methods("GET")
 	//обработчик запроса лог файлов
 	subRout.HandleFunc("/{slug}/manage", whandlers.DisplayAccInfo).Methods("POST")
@@ -84,7 +85,7 @@ func StartServer() {
 
 	//обработка лог файлов (страничка)
 	subRout.HandleFunc("/{slug}/manage/log", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "//Fileserver/общая папка/TEMP рабочий/Semyon/lib/js/log.html")
+		http.ServeFile(w, r, resourcePath+"/log.html")
 	}).Methods("GET")
 	//обработчик по выгрузке лог файлов
 	subRout.HandleFunc("/{slug}/manage/log", whandlers.DisplayLogFile).Methods("POST")
@@ -93,7 +94,7 @@ func StartServer() {
 
 	//обработка создания каталога карты перекрестков (страничка)
 	subRout.HandleFunc("/{slug}/manage/crossCreator", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "//Fileserver/общая папка/TEMP рабочий/Semyon/lib/js/crossCreator.html")
+		http.ServeFile(w, r, resourcePath+"/crossCreator.html")
 	}).Methods("GET")
 	//
 	subRout.HandleFunc("/{slug}/manage/crossCreator", whandlers.MainCrossCreator).Methods("POST")
