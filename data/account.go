@@ -87,6 +87,7 @@ func Login(login, password, ip string) map[string]interface{} {
 	return resp
 }
 
+//LogOut выход из учетной записи
 func LogOut(mapContx map[string]string) map[string]interface{} {
 	err := GetDB().Exec("update public.accounts set token = ? where login = ?", "", mapContx["login"]).Error
 	if err != nil {

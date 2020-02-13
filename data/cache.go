@@ -50,15 +50,6 @@ func CacheDataUpdate() {
 	CacheInfo.mapRoles = make(map[string]Permissions)
 	for {
 		CacheInfoDataUpdate()
-		//CacheInfo.mux.Lock()
-		//CacheInfo.mapRegion, CacheInfo.mapArea, err = getRegionInfo()
-		//CacheInfo.mapTLSost, err = getTLSost()
-		//err = getRoles()
-		//CacheInfo.mux.Unlock()
-		//
-		//if err != nil {
-		//	logger.Error.Println(fmt.Sprintf("|Message: Error reading data cache: %s", err.Error()))
-		//}
 		//создадим суперпользователя если таблица только была создана
 		if FirstCreate {
 			FirstCreate = false
@@ -70,6 +61,7 @@ func CacheDataUpdate() {
 	}
 }
 
+//CacheInfoDataUpdate заполнение структуры cacheInfo
 func CacheInfoDataUpdate() {
 	var err error
 	CacheInfo.mux.Lock()

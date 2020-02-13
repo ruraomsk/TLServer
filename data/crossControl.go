@@ -54,7 +54,7 @@ func SendCrossData(state agS_pudge.Cross, mapContx map[string]string) map[string
 	)
 	verif := verifiedState(&state)
 	if verif.Err != nil {
-		resp := u.Message(false, "Data didn't pass verification")
+		resp := u.Message(false, fmt.Sprintf("Data didn't pass verification. IDevice: %v", state.IDevice))
 		resp["result"] = verif.SumResult
 		return resp
 	}
@@ -69,7 +69,7 @@ func SendCrossData(state agS_pudge.Cross, mapContx map[string]string) map[string
 		chanRespond := <-tcpConnect.StateChan
 		if strings.Contains(chanRespond.User, mapContx["login"]) {
 			if chanRespond.Message == "ok" {
-				return u.Message(true, "Cross data send to server")
+				return u.Message(true, fmt.Sprintf("Cross data send to server. IDevice: %v", state.IDevice))
 			} else {
 				return u.Message(false, "TCP Server not responding")
 			}
@@ -81,7 +81,7 @@ func SendCrossData(state agS_pudge.Cross, mapContx map[string]string) map[string
 func CheckCrossData(state agS_pudge.Cross) map[string]interface{} {
 	verif := verifiedState(&state)
 	if verif.Err != nil {
-		resp := u.Message(false, "Data didn't pass verification")
+		resp := u.Message(false, fmt.Sprintf("Data didn't pass verification. IDevice: %v", state.IDevice))
 		resp["result"] = verif.SumResult
 		return resp
 	}
@@ -96,6 +96,7 @@ func DeleteCrossData(state agS_pudge.Cross, mapContx map[string]string) map[stri
 		stateMessage tcpConnect.StateMessage
 		err          error
 	)
+	stateMessage.Info = fmt.Sprintf("idevice: %v, position : %v//%v//%v", state.IDevice, state.Region, state.Area, state.ID)
 	state.IDevice = -1
 	stateMessage.StateStr, err = stateMarshal(state)
 	if err != nil {
@@ -108,7 +109,7 @@ func DeleteCrossData(state agS_pudge.Cross, mapContx map[string]string) map[stri
 		chanRespond := <-tcpConnect.StateChan
 		if strings.Contains(chanRespond.User, mapContx["login"]) {
 			if chanRespond.Message == "ok" {
-				return u.Message(true, "Cross data deleted")
+				return u.Message(true, fmt.Sprintf("Cross data deleted. Info (%v)", chanRespond.Info))
 			} else {
 				return u.Message(false, "TCP Server not responding")
 			}
@@ -138,6 +139,7 @@ func verifiedState(cross *agS_pudge.Cross) (result stateVerified.StateResult) {
 	return
 }
 
+//appendResult накапливание результатов верификации
 func appendResult(mainRes *stateVerified.StateResult, addResult stateVerified.StateResult) {
 	mainRes.SumResult = append(mainRes.SumResult, addResult.SumResult...)
 	if addResult.Err != nil {

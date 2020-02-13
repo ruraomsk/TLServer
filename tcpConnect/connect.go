@@ -11,6 +11,7 @@ import (
 //StateMessage
 type StateMessage struct {
 	User     string
+	Info     string
 	StateStr string
 	Message  string
 }

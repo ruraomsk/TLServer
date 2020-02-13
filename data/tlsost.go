@@ -90,6 +90,7 @@ func SelectTL(point0 Point, point1 Point) (tfdata []TrafficLights) {
 	return tfdata
 }
 
+//GetAllTrafficLights запрос информации об всех сфетофорах из БД
 func GetAllTrafficLights() (tfData []TrafficLights) {
 	var dgis string
 	temp := &TrafficLights{}

@@ -1,9 +1,9 @@
 package data
 
 import (
+	"../logger"
 	u "../utils"
 	"fmt"
-	"github.com/ruraomsk/ag-server/logger"
 	"io"
 	"net/http"
 	"os"
@@ -125,6 +125,10 @@ func CheckCrossFileSelected(selectedData map[string]map[string][]CheckData) map[
 
 //MakeSelectedDir создание каталогов и файлов png + svg у выбранных
 func MakeSelectedDir(selData SelectedData) map[string]interface{} {
+	var (
+		message []string
+		count   = 0
+	)
 	sizeX, _ := strconv.Atoi(selData.PngSettings.SizeX)
 	sizeY, _ := strconv.Atoi(selData.PngSettings.SizeY)
 	if selData.PngSettings.SizeX == "" || selData.PngSettings.SizeY == "" || selData.PngSettings.Z == "" || sizeX > 450 || sizeX < 0 || sizeY < 0 || sizeY > 450 {
@@ -142,7 +146,12 @@ func MakeSelectedDir(selData SelectedData) map[string]interface{} {
 				if !selData.SelectedData[numFirst][numSecond][numCheck].PngStatus {
 					point, err := TakePointFromBD(numFirst, numSecond, check.ID)
 					if err != nil {
-						logger.Error.Println("|Message: No result at these points")
+						logger.Error.Println(fmt.Sprintf("|Message: No result at point: (%v//%v//%v)", numFirst, numSecond, check.ID))
+						if count == 0 {
+							message = append(message, "Не созданны")
+						}
+						count++
+						message = append(message, fmt.Sprintf("%v: (%v//%v//%v)", count, numFirst, numSecond, check.ID))
 						continue
 					}
 					err = createPng(numFirst, numSecond, check.ID, selData.PngSettings, point)
@@ -152,13 +161,16 @@ func MakeSelectedDir(selData SelectedData) map[string]interface{} {
 					}
 					selData.SelectedData[numFirst][numSecond][numCheck].PngStatus = true
 				}
-				//if !selData.SelectedData[numFirst][numSecond][numCheck].SvgStatus {
-				//	fmt.Println("svg")
-				//}
 			}
 		}
 	}
 	resp := make(map[string]interface{})
+	if len(message) == 0 {
+		resp = u.Message(true, "Everything was created")
+	} else {
+		resp = u.Message(false, "There are not created")
+		resp["notCreated"] = message
+	}
 	resp["makeData"] = selData
 	return resp
 }
@@ -179,6 +191,7 @@ var (
  			</svg>`
 )
 
+//createPng создание png файла
 func createPng(numReg, numArea, id string, settings PngSettings, point Point) (err error) {
 	url := fmt.Sprintf("https://static-maps.yandex.ru/1.x/?ll=%3.15f,%3.15f&z=%v&l=map&size=%v,%v", point.X, point.Y, settings.Z, settings.SizeX, settings.SizeY)
 	response, err := http.Get(url)

@@ -10,6 +10,7 @@ import (
 	"strings"
 )
 
+//DispatchControl отправка команды на устройство
 func DispatchControl(arm comm.CommandARM, mapContx map[string]string) map[string]interface{} {
 	var (
 		err        error
@@ -27,7 +28,7 @@ func DispatchControl(arm comm.CommandARM, mapContx map[string]string) map[string
 		chanRespond := <-tcpConnect.ArmCommandChan
 		if strings.Contains(armMessage.User, mapContx["login"]) {
 			if chanRespond.Message == "ok" {
-				return u.Message(true, "ArmCommand send to server")
+				return u.Message(true, fmt.Sprintf("ArmCommand %v send to server", armMessage.CommandStr))
 			} else {
 				return u.Message(false, "TCP Server not responding")
 			}

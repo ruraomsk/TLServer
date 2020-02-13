@@ -33,7 +33,7 @@ func (points *Point) SetPoint(y, x float64) {
 // 	return fmt.Sprintf("update %s set %s = '(%f,%f)' where login = '%s'", table, column, points.Y, points.X, login)
 // }
 
-//StrToFloat преобразует строку полученную из бз в структуру Point
+//StrToFloat преобразует строку полученную из БД в структуру Point
 func (points *Point) StrToFloat(str string) {
 	str = strings.TrimPrefix(str, "(")
 	str = strings.TrimSuffix(str, ")")
@@ -42,6 +42,7 @@ func (points *Point) StrToFloat(str string) {
 	points.X, _ = strconv.ParseFloat(temp[1], 64)
 }
 
+//TakePointFromBD запрос координат перекрестка из БД
 func TakePointFromBD(numRegion, numArea, numID string) (point Point, err error) {
 	var dgis string
 	sqlStr := fmt.Sprintf("select dgis from %s where region = %v and area = %v and id = %v", os.Getenv("gis_table"), numRegion, numArea, numID)
