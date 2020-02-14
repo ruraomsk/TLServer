@@ -45,6 +45,8 @@ func StartServer() {
 	subRout.HandleFunc("/{slug}/logOut", whandlers.LoginAccOut).Methods("GET")
 	//обновление странички с данными которые попали в область пользователя
 	subRout.HandleFunc("/{slug}/update", whandlers.UpdateMapPage).Methods("POST")
+	//обработчик для формирования новых координат отображения карты
+	subRout.HandleFunc("/{slug}/locationButton", whandlers.LocationButtonMapPage).Methods("POST")
 
 	//работа со странички перекрестков (страничка)
 	subRout.HandleFunc("/{slug}/cross", func(w http.ResponseWriter, r *http.Request) {

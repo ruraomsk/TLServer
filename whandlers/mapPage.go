@@ -40,7 +40,32 @@ var UpdateMapPage = func(w http.ResponseWriter, r *http.Request) {
 		}
 		tflight := data.GetLightsFromBD(*box)
 		resp = u.Message(true, "Update map data")
+		resp["DontWrite"] = "true"
 		resp["tflight"] = tflight
 	}
+	u.Respond(w, r, resp)
+}
+
+var LocationButtonMapPage = func(w http.ResponseWriter, r *http.Request) {
+	flag, resp := FuncAccessCheck(w, r, "UpdateMapPage")
+	if flag {
+		location := &data.Locations{}
+		err := json.NewDecoder(r.Body).Decode(location)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			u.Respond(w, r, u.Message(false, "Invalid request"))
+			return
+		}
+		boxPoint, err := location.MakeBoxPoint()
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			u.Respond(w, r, u.Message(false, "Invalid request"))
+			return
+		}
+		resp = u.Message(true, "Jump to Location!")
+		resp["DontWrite"] = "true"
+		resp["boxPoint"] = boxPoint
+	}
+
 	u.Respond(w, r, resp)
 }

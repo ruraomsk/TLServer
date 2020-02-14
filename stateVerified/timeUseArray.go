@@ -17,8 +17,8 @@ func TimeUseVerified(cross *agS_pudge.Cross) (result StateResult) {
 			result.SumResult = append(result.SumResult, fmt.Sprintf("Поле (%v): тип стат. должен быть 0 или 1", uses.Name))
 			result.Err = errors.New("detected")
 		}
-		if uses.Tvps > 4 || uses.Tvps < 0 {
-			result.SumResult = append(result.SumResult, fmt.Sprintf("Поле (%v): ТВП1,2, МГР, ВПУ должен быть от 0 до 4", uses.Name))
+		if uses.Tvps > 6 || uses.Tvps < 0 {
+			result.SumResult = append(result.SumResult, fmt.Sprintf("Поле (%v): ТВП1,2, МГР, ВПУ должен быть от 0 до 6", uses.Name))
 			result.Err = errors.New("detected")
 		}
 		if uses.Dk > 1 || uses.Dk < 0 {

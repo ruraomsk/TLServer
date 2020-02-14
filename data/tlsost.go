@@ -4,6 +4,7 @@ import (
 	"../logger"
 	u "../utils"
 	"encoding/json"
+	"errors"
 	"fmt"
 	agS_pudge "github.com/ruraomsk/ag-server/pudge"
 	"os"
@@ -30,6 +31,11 @@ type State struct {
 	Status int    `json:"status",sql:"status"`
 }
 
+type Locations struct {
+	Region string   `json:"region"`
+	Area   []string `json:"area"`
+}
+
 //GetLightsFromBD определяем правильную область для светофоров
 func GetLightsFromBD(box BoxPoint) (tfdata []TrafficLights) {
 	var tflight = []TrafficLights{}
@@ -42,22 +48,24 @@ func GetLightsFromBD(box BoxPoint) (tfdata []TrafficLights) {
 		point0 = box.Point0
 		point1.Y = box.Point1.Y
 		point1.X = 179.9999999999
-		tflight = SelectTL(point0, point1)
+		tflight = SelectTL(point0, point1, false)
 		//для второй области
 		point0.Y = box.Point0.Y
 		point0.X = -179.9999999999
 		point1 = box.Point1
-		tempTF := SelectTL(point0, point1)
+		tempTF := SelectTL(point0, point1, false)
 		tflight = append(tflight, tempTF...)
 
+	} else if int(box.Point0.X) == int(box.Point1.X) {
+		tflight = SelectTL(box.Point0, box.Point1, true)
 	} else {
-		tflight = SelectTL(box.Point0, box.Point1)
+		tflight = SelectTL(box.Point0, box.Point1, false)
 	}
 	return tflight
 }
 
 //SelectTL возвращает массив в котором содержатся светофоры, которые попали в указанную область
-func SelectTL(point0 Point, point1 Point) (tfdata []TrafficLights) {
+func SelectTL(point0 Point, point1 Point, equalPoint bool) (tfdata []TrafficLights) {
 	var (
 		dgis     string
 		sqlStr   string
@@ -65,7 +73,11 @@ func SelectTL(point0 Point, point1 Point) (tfdata []TrafficLights) {
 	)
 
 	temp := &TrafficLights{}
-	sqlStr = fmt.Sprintf("select region, area, subarea, id, idevice, dgis, describ, state from %s where box '((%3.15f,%3.15f),(%3.15f,%3.15f))'@> dgis", os.Getenv("gis_table"), point0.Y, point0.X, point1.Y, point1.X)
+	if equalPoint {
+		sqlStr = fmt.Sprintf("select region, area, subarea, id, idevice, dgis, describ, state from %s", os.Getenv("gis_table"))
+	} else {
+		sqlStr = fmt.Sprintf("select region, area, subarea, id, idevice, dgis, describ, state from %s where box '((%3.15f,%3.15f),(%3.15f,%3.15f))'@> dgis", os.Getenv("gis_table"), point0.Y, point0.X, point1.Y, point1.X)
+	}
 	rowsTL, _ := GetDB().Raw(sqlStr).Rows()
 	for rowsTL.Next() {
 		err := rowsTL.Scan(&temp.Region.Num, &temp.Area.Num, &temp.Subarea, &temp.ID, &temp.Idevice, &dgis, &temp.Description, &StateStr)
@@ -138,7 +150,59 @@ func GetCrossInfo(TLignt TrafficLights) map[string]interface{} {
 	TLignt.Sost.Num = rState.StatusDevice
 	TLignt.Sost.Description = CacheInfo.mapTLSost[TLignt.Sost.Num]
 	resp := u.Message(true, "Cross information")
+	resp["DontWrite"] = "true"
 	resp["cross"] = TLignt
 	resp["state"] = rState
+	return resp
+}
+
+func (location *Locations) MakeBoxPoint() (box BoxPoint, err error) {
+	var sqlStr = `SELECT Min(dgis[0]) as "Y0", Min(convTo360(dgis[1])) as "X0", Max(dgis[0]) as "Y1", Max(convTo360(dgis[1])) as "X1"  FROM public."cross"`
+	tempStr := " where "
+	tempStr += fmt.Sprintf("region = %v and area in (", location.Region)
+	for numArea, area := range location.Area {
+		if numArea == 0 {
+			tempStr += fmt.Sprintf("%v", area)
+		} else {
+			tempStr += fmt.Sprintf(",%v", area)
+		}
+	}
+	tempStr += ")"
+	sqlStr += tempStr
+	row := GetDB().Raw(sqlStr).Row()
+	err = row.Scan(&box.Point0.Y, &box.Point0.X, &box.Point1.Y, &box.Point1.X)
+	if err != nil {
+		return box, errors.New(fmt.Sprintf("ParserPoints. Request error: %s", err.Error()))
+	}
+	if box.Point0.X > 180 {
+		box.Point0.X -= 360
+	}
+	if box.Point1.X > 180 {
+		box.Point1.X -= 360
+	}
+	return
+}
+
+func AAAAA(location Locations) map[string]interface{} {
+	//var sqlStr = `SELECT Min(dgis[0]) as "Y0", Min(convTo360(dgis[1])) as "X0", Max(dgis[0]) as "Y1", Max(convTo360(dgis[1])) as "X1"  FROM public."cross"`
+	//if !strings.EqualFold(privilege.Region, "*") {
+	//	sqlString = sqlString + fmt.Sprintf(" where region = %s;", privilege.Region)
+	//}
+	//row := GetDB().Raw(sqlString).Row()
+	//err = row.Scan(&boxpoint.Point0.Y, &boxpoint.Point0.X, &boxpoint.Point1.Y, &boxpoint.Point1.X)
+	//if err != nil {
+	//	return errors.New(fmt.Sprintf("ParserPoints. Request error: %s", err.Error()))
+	//}
+	//if boxpoint.Point0.X > 180 {
+	//	boxpoint.Point0.X -= 360
+	//}
+	//if boxpoint.Point1.X > 180 {
+	//	boxpoint.Point1.X -= 360
+	//}
+	//
+	//account.BoxPoint = boxpoint
+
+	var resp = make(map[string]interface{})
+	resp["aaaa"] = location
 	return resp
 }

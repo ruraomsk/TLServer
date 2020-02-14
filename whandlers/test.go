@@ -1,10 +1,11 @@
 package whandlers
 
 import (
-	"../data"
-	u "../utils"
 	"encoding/json"
 	"net/http"
+
+	"../data"
+	u "../utils"
 )
 
 var TestHello = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -17,27 +18,30 @@ var TestHello = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 })
 
 var TestToken = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	//resp := make(map[string]interface{})
-	//num, err := strconv.Atoi(r.URL.Query().Get("Num"))
-	//var flag bool
-	//if num == 1 {
-	//	flag, err = data.RoleCheck(data.ParserInterface(r.Context().Value("info")), "MakeTest")
-	//
-	//}
-	//if num == 2 {
-	//	flag, err = data.RoleCheck(data.ParserInterface(r.Context().Value("info")), "akeTest")
-	//
-	//}
-	//if err != nil {
-	//	resp["Test"] = err.Error()
-	//	u.Respond(w, r, resp)
-	//	return
-	//}
-
 	flag, resp := FuncAccessCheck(w, r, "MakeTest")
 	if flag {
+		location := &data.Locations{}
+		_ = json.NewDecoder(r.Body).Decode(location)
 		resp["Test"] = "OK!"
+		boxPoint, _ := location.MakeBoxPoint()
+		resp["boxPoint"] = boxPoint
 	}
-
 	u.Respond(w, r, resp)
 })
+
+////getRegionAreaPoints создание мапы регионов с точками в облость
+//func getRegionAreaPoints() (regPoint map[string]map[string]Point) {
+//	regPoint = make(map[string]map[string]Point)
+//	for _, nameReg := range CacheInfo.mapRegion {
+//		if nameReg == "Все регионы" {
+//			continue
+//		}
+//		for _, nameArea := range CacheInfo.mapArea[nameReg] {
+//			if _, ok := regPoint[nameReg]; !ok {
+//				regPoint[nameReg] = make(map[string]Point)
+//			}
+//			regPoint[nameReg][nameArea] = Point{2, 3}
+//		}
+//	}
+//	return
+//}

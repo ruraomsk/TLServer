@@ -37,12 +37,10 @@ func ControlGetCrossInfo(TLignt TrafficLights) map[string]interface{} {
 	}
 	TLignt.Sost.Num = rState.StatusDevice
 	TLignt.Sost.Description = CacheInfo.mapTLSost[TLignt.Sost.Num]
-	resp := u.Message(true, "Cross information")
+	resp := u.Message(true, "Cross control information")
 	resp["cross"] = TLignt
 	resp["state"] = rState
-
 	resp["areaMap"] = CacheInfo.mapArea[TLignt.Region.NameRegion]
-
 	return resp
 }
 
@@ -136,6 +134,8 @@ func verifiedState(cross *agS_pudge.Cross) (result stateVerified.StateResult) {
 	appendResult(&result, resultMouth)
 	resultTimeUse := stateVerified.TimeUseVerified(cross)
 	appendResult(&result, resultTimeUse)
+	resultCtrl := stateVerified.CtrlVerified(cross)
+	appendResult(&result, resultCtrl)
 	return
 }
 

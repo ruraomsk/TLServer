@@ -114,6 +114,8 @@ func GetRegionInfo() (region map[string]string, area map[string]map[string]strin
 	return region, area, err
 }
 
+
+
 //getTLSost получить данные о состоянии светофоров
 func getTLSost() (TLsost map[int]string, err error) {
 	TLsost = make(map[int]string)

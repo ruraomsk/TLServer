@@ -25,6 +25,7 @@ var LoginAcc = func(w http.ResponseWriter, r *http.Request) {
 	u.Respond(w, r, resp)
 }
 
+//LoginAccOut обработчик выхода из системы
 var LoginAccOut = func(w http.ResponseWriter, r *http.Request) {
 	mapContx := u.ParserInterface(r.Context().Value("info"))
 	resp := data.LogOut(mapContx)
