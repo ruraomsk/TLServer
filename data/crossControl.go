@@ -1,15 +1,17 @@
 package data
 
 import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"os"
+	"strings"
+
 	"../logger"
 	"../stateVerified"
 	"../tcpConnect"
 	u "../utils"
-	"encoding/json"
-	"fmt"
 	agS_pudge "github.com/ruraomsk/ag-server/pudge"
-	"os"
-	"strings"
 )
 
 //ControlGetCrossInfo сбор информации для пользователя в расширенном варианте
@@ -49,8 +51,9 @@ func SendCrossData(state agS_pudge.Cross, mapContx map[string]string) map[string
 	var (
 		stateMessage tcpConnect.StateMessage
 		err          error
+		verif        stateVerified.StateResult
 	)
-	verif := verifiedState(&state)
+	verifiedState(&state, &verif)
 	if verif.Err != nil {
 		resp := u.Message(false, fmt.Sprintf("Data didn't pass verification. IDevice: %v", state.IDevice))
 		resp["result"] = verif.SumResult
@@ -62,22 +65,17 @@ func SendCrossData(state agS_pudge.Cross, mapContx map[string]string) map[string
 		return u.Message(false, "Failed to Marshal state information")
 	}
 	stateMessage.User = mapContx["login"]
-	tcpConnect.StateChan <- stateMessage
-	for {
-		chanRespond := <-tcpConnect.StateChan
-		if strings.Contains(chanRespond.User, mapContx["login"]) {
-			if chanRespond.Message == "ok" {
-				return u.Message(true, fmt.Sprintf("Cross data send to server. IDevice: %v", state.IDevice))
-			} else {
-				return u.Message(false, "TCP Server not responding")
-			}
-		}
+	if sendToUDPServer(stateMessage) {
+		return u.Message(true, "Cross send to server")
+	} else {
+		return u.Message(false, "TCP Server not responding")
 	}
 }
 
 //CheckCrossData проверка полученных данных
 func CheckCrossData(state agS_pudge.Cross) map[string]interface{} {
-	verif := verifiedState(&state)
+	var verif stateVerified.StateResult
+	verifiedState(&state, &verif)
 	if verif.Err != nil {
 		resp := u.Message(false, fmt.Sprintf("Data didn't pass verification. IDevice: %v", state.IDevice))
 		resp["result"] = verif.SumResult
@@ -86,6 +84,54 @@ func CheckCrossData(state agS_pudge.Cross) map[string]interface{} {
 	resp := u.Message(true, "Data is correct")
 	resp["result"] = verif.SumResult
 	return resp
+}
+
+//CreateCrossData добавление нового перекрестка
+func CreateCrossData(state agS_pudge.Cross, mapContx map[string]string) map[string]interface{} {
+	var (
+		stateMessage tcpConnect.StateMessage
+		verif        stateVerified.StateResult
+		err          error
+		stateSql     string
+	)
+	sqlStr := fmt.Sprintf(`SELECT state FROM public."cross" where state::jsonb @> '{"idevice":%v}'::jsonb or (region = %v and area = %v and id = %v)`, state.IDevice, state.Region, state.Area, state.ID)
+	rows, err := GetDB().Raw(sqlStr).Rows()
+	if err != nil {
+		resp := u.Message(false, "Server not respond")
+		return resp
+	}
+	for rows.Next() {
+		rows.Scan(&stateSql)
+		if strings.Contains(stateSql, fmt.Sprintf(`"idevice": %v`, state.IDevice)) {
+			verif.SumResult = append(verif.SumResult, fmt.Sprintf("№ %v модема уже используется в системе", state.IDevice))
+			verif.Err = errors.New("detected")
+		}
+		if strings.Contains(stateSql, fmt.Sprintf(`"id": %v`, state.ID)) {
+			verif.SumResult = append(verif.SumResult, fmt.Sprintf("Данный ID = %v уже занят в регионе: %v районе: %v", state.ID, state.Region, state.Area))
+			verif.Err = errors.New("detected")
+		}
+	}
+	verifiedState(&state, &verif)
+	if verif.Err != nil {
+		resp := u.Message(false, fmt.Sprintf("Data didn't pass verification. IDevice: %v", state.IDevice))
+		resp["result"] = verif.SumResult
+		return resp
+	}
+	stateMessage.StateStr, err = stateMarshal(state)
+	if err != nil {
+		logger.Error.Println("|Message: Failed to Marshal state information: ", err.Error())
+		return u.Message(false, "Failed to Marshal state information")
+	}
+	stateMessage.User = mapContx["login"]
+	if sendToUDPServer(stateMessage) {
+		if ShortCreateDirPng(state.Region, state.Area, state.ID, state.Dgis) {
+			return u.Message(true, "Cross created")
+		} else {
+			return u.Message(true, "Cross created without Map.png - contact admin")
+		}
+	} else {
+		return u.Message(false, "TCP Server not responding")
+	}
 }
 
 //DeleteCrossData удаление перекрестка на сервере
@@ -102,14 +148,22 @@ func DeleteCrossData(state agS_pudge.Cross, mapContx map[string]string) map[stri
 		return u.Message(false, "Failed to Marshal state information")
 	}
 	stateMessage.User = mapContx["login"]
-	tcpConnect.StateChan <- stateMessage
+	if sendToUDPServer(stateMessage) {
+		return u.Message(true, fmt.Sprintf("Cross data deleted. Info (%v)", stateMessage.Info))
+	} else {
+		return u.Message(false, "TCP Server not responding")
+	}
+}
+
+func sendToUDPServer(message tcpConnect.StateMessage) bool {
+	tcpConnect.StateChan <- message
 	for {
 		chanRespond := <-tcpConnect.StateChan
-		if strings.Contains(chanRespond.User, mapContx["login"]) {
+		if strings.Contains(chanRespond.User, message.User) {
 			if chanRespond.Message == "ok" {
-				return u.Message(true, fmt.Sprintf("Cross data deleted. Info (%v)", chanRespond.Info))
+				return true
 			} else {
-				return u.Message(false, "TCP Server not responding")
+				return false
 			}
 		}
 	}
@@ -125,17 +179,17 @@ func stateMarshal(cross agS_pudge.Cross) (str string, err error) {
 }
 
 //verifiedState набор проверкок для стейта
-func verifiedState(cross *agS_pudge.Cross) (result stateVerified.StateResult) {
+func verifiedState(cross *agS_pudge.Cross, result *stateVerified.StateResult) () {
 	resultDay := stateVerified.DaySetsVerified(&cross.Arrays.DaySets)
-	appendResult(&result, resultDay)
+	appendResult(result, resultDay)
 	resultWeek, empty := stateVerified.WeekSetsVerified(cross)
-	appendResult(&result, resultWeek)
+	appendResult(result, resultWeek)
 	resultMouth := stateVerified.MouthSetsVerified(cross, empty)
-	appendResult(&result, resultMouth)
+	appendResult(result, resultMouth)
 	resultTimeUse := stateVerified.TimeUseVerified(cross)
-	appendResult(&result, resultTimeUse)
+	appendResult(result, resultTimeUse)
 	resultCtrl := stateVerified.CtrlVerified(cross)
-	appendResult(&result, resultCtrl)
+	appendResult(result, resultCtrl)
 	return
 }
 

@@ -2,6 +2,7 @@ package whandlers
 
 import (
 	"encoding/json"
+	agS_pudge "github.com/ruraomsk/ag-server/pudge"
 	"net/http"
 
 	"../data"
@@ -20,11 +21,15 @@ var TestHello = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 var TestToken = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	flag, resp := FuncAccessCheck(w, r, "MakeTest")
 	if flag {
-		location := &data.Locations{}
-		_ = json.NewDecoder(r.Body).Decode(location)
-		resp["Test"] = "OK!"
-		boxPoint, _ := location.MakeBoxPoint()
-		resp["boxPoint"] = boxPoint
+		var stateData agS_pudge.Cross
+		err := json.NewDecoder(r.Body).Decode(&stateData)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			u.Respond(w, r, u.Message(false, "Invalid request"))
+			return
+		}
+		mapContx := u.ParserInterface(r.Context().Value("info"))
+		resp["AAA"] = data.CreateCrossData(stateData, mapContx)
 	}
 	u.Respond(w, r, resp)
 })

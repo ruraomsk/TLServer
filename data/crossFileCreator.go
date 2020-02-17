@@ -156,7 +156,7 @@ func MakeSelectedDir(selData SelectedData) map[string]interface{} {
 					}
 					err = createPng(numFirst, numSecond, check.ID, selData.PngSettings, point)
 					if err != nil {
-						logger.Error.Println("|Message: Can't create map.png")
+						logger.Error.Println(fmt.Sprintf("|Message: Can't create map.png path = %v//%v//%v", numFirst, numSecond, check.ID))
 						continue
 					}
 					selData.SelectedData[numFirst][numSecond][numCheck].PngStatus = true
@@ -173,6 +173,35 @@ func MakeSelectedDir(selData SelectedData) map[string]interface{} {
 	}
 	resp["makeData"] = selData
 	return resp
+}
+
+func ShortCreateDirPng(region, area, id int, pointStr string) bool {
+	var (
+		pngSettings PngSettings
+		point       Point
+	)
+	pngSettings.stockData()
+	point.StrToFloat(pointStr)
+	path := os.Getenv("views_path") + "//cross"
+	_ = os.MkdirAll(path+fmt.Sprintf("//%v//%v//%v", region, area, id), os.ModePerm)
+	err := createPng(strconv.Itoa(region), strconv.Itoa(area), strconv.Itoa(id), pngSettings, point)
+	if err != nil {
+		logger.Error.Println(fmt.Sprintf("|Message: Can't create map.png path = %v//%v//%v", region, area, id))
+		return false
+	}
+	_, err = os.Stat(path + fmt.Sprintf("//%v//%v//%v//cross.svg", region, area, id))
+	if os.IsNotExist(err) {
+		file1, err := os.Create(path + fmt.Sprintf("//%v//%v//%v//cross.svg", region, area, id))
+		if err != nil {
+			return false
+		}
+		defer file1.Close()
+		_, err = fmt.Fprintln(file1, str1, str2)
+		if err != nil {
+			return false
+		}
+	}
+	return true
 }
 
 var (

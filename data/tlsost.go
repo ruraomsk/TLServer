@@ -182,27 +182,3 @@ func (location *Locations) MakeBoxPoint() (box BoxPoint, err error) {
 	}
 	return
 }
-
-func AAAAA(location Locations) map[string]interface{} {
-	//var sqlStr = `SELECT Min(dgis[0]) as "Y0", Min(convTo360(dgis[1])) as "X0", Max(dgis[0]) as "Y1", Max(convTo360(dgis[1])) as "X1"  FROM public."cross"`
-	//if !strings.EqualFold(privilege.Region, "*") {
-	//	sqlString = sqlString + fmt.Sprintf(" where region = %s;", privilege.Region)
-	//}
-	//row := GetDB().Raw(sqlString).Row()
-	//err = row.Scan(&boxpoint.Point0.Y, &boxpoint.Point0.X, &boxpoint.Point1.Y, &boxpoint.Point1.X)
-	//if err != nil {
-	//	return errors.New(fmt.Sprintf("ParserPoints. Request error: %s", err.Error()))
-	//}
-	//if boxpoint.Point0.X > 180 {
-	//	boxpoint.Point0.X -= 360
-	//}
-	//if boxpoint.Point1.X > 180 {
-	//	boxpoint.Point1.X -= 360
-	//}
-	//
-	//account.BoxPoint = boxpoint
-
-	var resp = make(map[string]interface{})
-	resp["aaaa"] = location
-	return resp
-}

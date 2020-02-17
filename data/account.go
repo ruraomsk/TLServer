@@ -46,7 +46,6 @@ func Login(login, password, ip string) map[string]interface{} {
 			//logger.Warning.Println("IP: " + ip + " Login: " + login + " Message: " + "Login not found")
 			return u.Message(false, fmt.Sprintf("Login: %s not found", login))
 		}
-		// logger.Error.Println("IP: " + ip + " Login: " + "-" + " Message: " + "Connection to DB err")
 		return u.Message(false, "Connection to DB error. Please try again")
 	}
 
@@ -61,7 +60,6 @@ func Login(login, password, ip string) map[string]interface{} {
 	//Сравниваю хэши полученного пароля и пароля взятого из БД
 	err = bcrypt.CompareHashAndPassword([]byte(account.Password), []byte(password))
 	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
-		//logger.Warning.Println("IP: " + ip + " Login: " + login + " Message: " + "Invalid login credentials")
 		return u.Message(false, fmt.Sprintf("Invalid login credentials. Login(%s)", account.Login))
 	}
 	//Залогинились, создаем токен

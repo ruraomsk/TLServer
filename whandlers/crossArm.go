@@ -65,6 +65,23 @@ var ControlSendButton = func(w http.ResponseWriter, r *http.Request) {
 	u.Respond(w, r, resp)
 }
 
+//ControlCreateButton обработчик данных для отправки на устройства(сервер)
+var ControlCreateButton = func(w http.ResponseWriter, r *http.Request) {
+	flag, resp := FuncAccessCheck(w, r, "ControlCross")
+	if flag {
+		var stateData agS_pudge.Cross
+		err := json.NewDecoder(r.Body).Decode(&stateData)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			u.Respond(w, r, u.Message(false, "Invalid request"))
+			return
+		}
+		mapContx := u.ParserInterface(r.Context().Value("info"))
+		resp = data.CreateCrossData(stateData, mapContx)
+	}
+	u.Respond(w, r, resp)
+}
+
 //ControlCheckButton обработчик данных для их проверка
 var ControlCheckButton = func(w http.ResponseWriter, r *http.Request) {
 	flag, resp := FuncAccessCheck(w, r, "ControlCross")

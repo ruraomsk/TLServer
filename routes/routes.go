@@ -67,6 +67,8 @@ func StartServer() {
 	subRout.HandleFunc("/{slug}/cross/control/sendButton", whandlers.ControlSendButton).Methods("POST")
 	//обработчик проверки данных
 	subRout.HandleFunc("/{slug}/cross/control/checkButton", whandlers.ControlCheckButton).Methods("POST")
+	//обработчик создания перекрестка
+	subRout.HandleFunc("/{slug}/cross/control/createButton", whandlers.ControlCreateButton).Methods("POST")
 	//обработчик обработчик удаления перекрсетка
 	subRout.HandleFunc("/{slug}/cross/control/deleteButton", whandlers.ControlDeleteButton).Methods("POST")
 
