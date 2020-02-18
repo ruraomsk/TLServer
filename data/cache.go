@@ -20,7 +20,11 @@ type CacheData struct {
 	mapArea   map[string]map[string]string
 	mapTLSost map[int]string
 	mapRoles  map[string]Permissions
+	//mapBusyArm map[string]
 }
+
+//type
+
 
 //RegionInfo расшифровка региона
 type RegionInfo struct {

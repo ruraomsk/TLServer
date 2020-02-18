@@ -63,6 +63,8 @@ func StartServer() {
 	}).Methods("GET")
 	//данные по расширенной странички перекрестков
 	subRout.HandleFunc("/{slug}/cross/control", whandlers.ControlCross).Methods("POST")
+	//обработчик закрытия перекрестка
+	subRout.HandleFunc("/{slug}/cross/control/close", whandlers.ControlCloseCross).Methods("GET")
 	//обработчик приема данных от пользователя для отправки на устройство
 	subRout.HandleFunc("/{slug}/cross/control/sendButton", whandlers.ControlSendButton).Methods("POST")
 	//обработчик проверки данных

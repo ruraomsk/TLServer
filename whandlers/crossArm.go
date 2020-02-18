@@ -48,6 +48,21 @@ var ControlCross = func(w http.ResponseWriter, r *http.Request) {
 	u.Respond(w, r, resp)
 }
 
+//ControlCloseCross обработчик закрытия перекрестка
+var ControlCloseCross = func(w http.ResponseWriter, r *http.Request) {
+	flag, resp := FuncAccessCheck(w, r, "ControlCross")
+	if flag {
+		var err error
+		TLight := &data.TrafficLights{}
+		TLight.Region.Num, TLight.Area.Num, TLight.ID, err = queryParser(w, r)
+		if err != nil {
+			return
+		}
+		resp = data.ControlGetCrossInfo(*TLight)
+	}
+	u.Respond(w, r, resp)
+}
+
 //ControlSendButton обработчик данных для отправки на устройства(сервер)
 var ControlSendButton = func(w http.ResponseWriter, r *http.Request) {
 	flag, resp := FuncAccessCheck(w, r, "ControlCross")
