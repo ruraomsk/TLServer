@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"../logger"
 	"../stateVerified"
@@ -15,7 +16,7 @@ import (
 )
 
 //ControlGetCrossInfo сбор информации для пользователя в расширенном варианте
-func ControlGetCrossInfo(TLignt TrafficLights) map[string]interface{} {
+func ControlGetCrossInfo(TLignt TrafficLights, mapContx map[string]string) map[string]interface{} {
 	var (
 		dgis     string
 		sqlStr   string
@@ -43,6 +44,36 @@ func ControlGetCrossInfo(TLignt TrafficLights) map[string]interface{} {
 	resp["cross"] = TLignt
 	resp["state"] = rState
 	resp["areaMap"] = CacheInfo.mapArea[TLignt.Region.NameRegion]
+	return resp
+}
+
+//ControlEditableCheck проверка редактируется ли данный перекресток
+func ControlEditableCheck(arm BusyArm, mapContx map[string]string) map[string]interface{} {
+	var EditInfo EditCrossInfo
+	if _, ok := CacheInfo.mapBusyArm[arm]; !ok {
+		EditInfo.Login = mapContx["login"]
+		EditInfo.EditFlag = true
+		EditInfo.time = time.Now()
+		CacheInfo.mapBusyArm[arm] = EditInfo
+	} else {
+		EditInfo.Login = CacheInfo.mapBusyArm[arm].Login
+		if CacheInfo.mapBusyArm[arm].Login == mapContx["login"] {
+			EditInfo.EditFlag = true
+			EditInfo.time = time.Now()
+			CacheInfo.mapBusyArm[arm] = EditInfo
+		} else {
+			EditInfo.EditFlag = false
+		}
+		if CacheInfo.mapBusyArm[arm].time.Add(time.Second * 7).Before(time.Now()) {
+			EditInfo.Login = mapContx["login"]
+			EditInfo.EditFlag = true
+			EditInfo.time = time.Now()
+			CacheInfo.mapBusyArm[arm] = EditInfo
+		}
+	}
+	resp := u.Message(true, "Editable flag")
+	resp["DontWrite"] = "true"
+	resp["editInfo"] = EditInfo
 	return resp
 }
 

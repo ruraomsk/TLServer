@@ -15,16 +15,27 @@ var CacheInfo CacheData
 
 //CacheData Данные для обновления в определенный период
 type CacheData struct {
-	mux       sync.Mutex
-	mapRegion map[string]string
-	mapArea   map[string]map[string]string
-	mapTLSost map[int]string
-	mapRoles  map[string]Permissions
-	//mapBusyArm map[string]
+	mux        sync.Mutex
+	mapRegion  map[string]string
+	mapArea    map[string]map[string]string
+	mapTLSost  map[int]string
+	mapRoles   map[string]Permissions
+	mapBusyArm map[BusyArm]EditCrossInfo
 }
 
-//type
+type BusyArm struct {
+	Region string `json:"region"`
+	Area   string `json:"area"`
+	ID     int    `json:"ID"`
+}
 
+//EditCrossInfo информация о пользователе занявшем перекресток на изменение
+type EditCrossInfo struct {
+	Login    string `json:"login"`
+	EditFlag bool   `json:"editFlag"`
+	Kick     bool   `json:"kick"`
+	time     time.Time
+}
 
 //RegionInfo расшифровка региона
 type RegionInfo struct {
@@ -52,6 +63,19 @@ type TLSostInfo struct {
 //CacheDataUpdate обновление данных из бд, период обновления 1 час
 func CacheDataUpdate() {
 	CacheInfo.mapRoles = make(map[string]Permissions)
+	CacheInfo.mapBusyArm = make(map[BusyArm]EditCrossInfo)
+	go func() {
+		for {
+			fmt.Println(CacheInfo.mapBusyArm)
+			time.Sleep(time.Second * 5)
+		}
+	}()
+	go func() {
+		for {
+			CleanMapBusyArm()
+			time.Sleep(time.Second * 20)
+		}
+	}()
 	for {
 		CacheInfoDataUpdate()
 		//создадим суперпользователя если таблица только была создана
@@ -76,6 +100,21 @@ func CacheInfoDataUpdate() {
 	if err != nil {
 		logger.Error.Println(fmt.Sprintf("|Message: Error reading data cache: %s", err.Error()))
 	}
+}
+
+func CleanMapBusyArm() {
+	for busyArm, editCross := range CacheInfo.mapBusyArm {
+		if editCross.time.Add(time.Second * 10).Before(time.Now()) {
+			delete(CacheInfo.mapBusyArm, busyArm)
+		}
+	}
+}
+
+func BusyArmDelete(arm BusyArm) map[string]interface{} {
+	resp := make(map[string]interface{})
+	delete(CacheInfo.mapBusyArm, arm)
+	resp["ArmDelete"] = arm
+	return resp
 }
 
 //GetRegionInfo получить таблицу регионов
@@ -117,8 +156,6 @@ func GetRegionInfo() (region map[string]string, area map[string]map[string]strin
 
 	return region, area, err
 }
-
-
 
 //getTLSost получить данные о состоянии светофоров
 func getTLSost() (TLsost map[int]string, err error) {

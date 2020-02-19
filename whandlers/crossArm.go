@@ -43,7 +43,31 @@ var ControlCross = func(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			return
 		}
-		resp = data.ControlGetCrossInfo(*TLight)
+		mapContx := u.ParserInterface(r.Context().Value("info"))
+
+		controlCrossFlag, _ := data.RoleCheck(mapContx, "ControlCross")
+		if (TLight.Region.Num == mapContx["region"]) || (mapContx["region"] == "*") {
+			resp = data.ControlGetCrossInfo(*TLight, mapContx)
+			resp["controlCrossFlag"] = controlCrossFlag
+		} else {
+			resp["controlCrossFlag"] = false
+		}
+	}
+	u.Respond(w, r, resp)
+}
+
+//ControlEditableCross обработчик проверки редактирования перекрестка
+var ControlEditableCross = func(w http.ResponseWriter, r *http.Request) {
+	flag, resp := FuncAccessCheck(w, r, "ControlCross")
+	if flag {
+		var err error
+		arm := &data.BusyArm{}
+		arm.Region, arm.Area, arm.ID, err = queryParser(w, r)
+		if err != nil {
+			return
+		}
+		mapContx := u.ParserInterface(r.Context().Value("info"))
+		resp = data.ControlEditableCheck(*arm, mapContx)
 	}
 	u.Respond(w, r, resp)
 }
@@ -53,12 +77,12 @@ var ControlCloseCross = func(w http.ResponseWriter, r *http.Request) {
 	flag, resp := FuncAccessCheck(w, r, "ControlCross")
 	if flag {
 		var err error
-		TLight := &data.TrafficLights{}
-		TLight.Region.Num, TLight.Area.Num, TLight.ID, err = queryParser(w, r)
+		arm := &data.BusyArm{}
+		arm.Region, arm.Area, arm.ID, err = queryParser(w, r)
 		if err != nil {
 			return
 		}
-		resp = data.ControlGetCrossInfo(*TLight)
+		resp = data.BusyArmDelete(*arm)
 	}
 	u.Respond(w, r, resp)
 }
