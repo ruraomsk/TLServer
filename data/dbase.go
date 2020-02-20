@@ -1,12 +1,13 @@
 package data
 
 import (
-	"../logger"
 	"fmt"
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"os"
 	"strconv"
+
+	"../logger"
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
 var (
@@ -17,7 +18,7 @@ var (
 //ConnectDB connecting to DB
 func ConnectDB() error {
 	var (
-		CreateFuncSql = `Create or replace function convTo360(x double precision) returns double precision as $$
+		CreateFuncSQL = `Create or replace function convTo360(x double precision) returns double precision as $$
 		begin
 		if x < 0 then
 		return x + 360;
@@ -50,7 +51,7 @@ func ConnectDB() error {
 		if err = db.Table("accounts").AutoMigrate(Account{}).Error; err != nil {
 			return err
 		}
-		if err = db.Exec(CreateFuncSql).Error; err != nil {
+		if err = db.Exec(CreateFuncSQL).Error; err != nil {
 			return err
 		}
 		if err = db.Table("accounts").Exec("alter table accounts add privilege jsonb").Error; err != nil {

@@ -1,17 +1,18 @@
 package data
 
 import (
-	"../logger"
-	u "../utils"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
+
+	"../logger"
+	u "../utils"
 )
 
-//SelectedData
+//SelectedData общая струкрута для обмена
 type SelectedData struct {
 	SelectedData map[string]map[string][]CheckData `json:"selected"`
 	PngSettings  PngSettings                       `json:"pngSettings"`
@@ -103,7 +104,7 @@ func CheckCrossDirFromBD() map[string]interface{} {
 	return resp
 }
 
-//CheckCrossDirSelected проверяет региона/районы/перекрестки которые запросил пользователь
+//CheckCrossFileSelected проверяет региона/районы/перекрестки которые запросил пользователь
 func CheckCrossFileSelected(selectedData map[string]map[string][]CheckData) map[string]interface{} {
 	path := os.Getenv("views_path") + "//cross"
 	for numFirst, firstMap := range selectedData {
@@ -177,6 +178,7 @@ func MakeSelectedDir(selData SelectedData) map[string]interface{} {
 	return resp
 }
 
+//ShortCreateDirPng создание директории по одной
 func ShortCreateDirPng(region, area, id int, pointStr string) bool {
 	var (
 		pngSettings PngSettings

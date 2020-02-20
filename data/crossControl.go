@@ -1,17 +1,18 @@
 package data
 
 import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"os"
+	"strings"
+	"time"
+
 	"../logger"
 	"../stateVerified"
 	"../tcpConnect"
 	u "../utils"
-	"encoding/json"
-	"errors"
-	"fmt"
 	agS_pudge "github.com/ruraomsk/ag-server/pudge"
-	"os"
-	"strings"
-	"time"
 )
 
 //ControlGetCrossInfo сбор информации для пользователя в расширенном варианте
@@ -56,22 +57,29 @@ func ControlEditableCheck(arm BusyArm, mapContx map[string]string) map[string]in
 	if _, ok := BusyArmInfo.mapBusyArm[arm]; !ok {
 		EditInfo.Login = mapContx["login"]
 		EditInfo.EditFlag = true
+		EditInfo.Kick = false
 		EditInfo.time = time.Now()
 		BusyArmInfo.mapBusyArm[arm] = EditInfo
 	} else {
-		EditInfo.Login = BusyArmInfo.mapBusyArm[arm].Login
-		if BusyArmInfo.mapBusyArm[arm].Login == mapContx["login"] {
-			EditInfo.EditFlag = true
-			EditInfo.time = time.Now()
-			BusyArmInfo.mapBusyArm[arm] = EditInfo
+		EditInfo = BusyArmInfo.mapBusyArm[arm]
+		if EditInfo.Kick {
+			delete(BusyArmInfo.mapBusyArm, arm)
 		} else {
-			EditInfo.EditFlag = false
-		}
-		if BusyArmInfo.mapBusyArm[arm].time.Add(time.Second * 7).Before(time.Now()) {
-			EditInfo.Login = mapContx["login"]
-			EditInfo.EditFlag = true
-			EditInfo.time = time.Now()
-			BusyArmInfo.mapBusyArm[arm] = EditInfo
+			if BusyArmInfo.mapBusyArm[arm].Login == mapContx["login"] {
+				EditInfo.EditFlag = true
+				EditInfo.time = time.Now()
+				BusyArmInfo.mapBusyArm[arm] = EditInfo
+			} else {
+				EditInfo.EditFlag = false
+				EditInfo.Kick = false
+			}
+			if BusyArmInfo.mapBusyArm[arm].time.Add(time.Second * 7).Before(time.Now()) {
+				EditInfo.Login = mapContx["login"]
+				EditInfo.EditFlag = true
+				EditInfo.Kick = false
+				EditInfo.time = time.Now()
+				BusyArmInfo.mapBusyArm[arm] = EditInfo
+			}
 		}
 	}
 	resp := u.Message(true, "Editable flag")
@@ -213,7 +221,7 @@ func stateMarshal(cross agS_pudge.Cross) (str string, err error) {
 }
 
 //verifiedState набор проверкок для стейта
-func verifiedState(cross *agS_pudge.Cross, result *stateVerified.StateResult) () {
+func verifiedState(cross *agS_pudge.Cross, result *stateVerified.StateResult) {
 	resultDay := stateVerified.DaySetsVerified(&cross.Arrays.DaySets)
 	appendResult(result, resultDay)
 	resultWeek, empty := stateVerified.WeekSetsVerified(cross)

@@ -1,13 +1,14 @@
 package data
 
 import (
+	"encoding/json"
+	"fmt"
+	"strings"
+
 	"../logger"
 	"../tcpConnect"
 	u "../utils"
-	"encoding/json"
-	"fmt"
 	"github.com/ruraomsk/ag-server/comm"
-	"strings"
 )
 
 //DispatchControl отправка команды на устройство

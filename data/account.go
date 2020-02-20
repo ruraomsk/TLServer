@@ -230,6 +230,7 @@ func (account *Account) GetInfoForUser() map[string]interface{} {
 
 	//собираю в кучу регионы для отображения
 	chosenRegion := make(map[string]string)
+	CacheInfo.mux.Lock()
 	for first, second := range CacheInfo.mapRegion {
 		chosenRegion[first] = second
 	}
@@ -243,6 +244,7 @@ func (account *Account) GetInfoForUser() map[string]interface{} {
 		chosenArea[first] = second
 	}
 	delete(chosenArea, "Все регионы")
+	CacheInfo.mux.Unlock()
 	resp["areaInfo"] = chosenArea
 
 	return resp

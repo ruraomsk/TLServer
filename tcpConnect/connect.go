@@ -23,9 +23,13 @@ type ArmCommandMessage struct {
 	Message    string
 }
 
+//StateChan канал для передачи информации связанных со state
 var StateChan = make(chan StateMessage)
+
+//ArmCommandChan канал для передачи информации связанных с командами арма
 var ArmCommandChan = make(chan ArmCommandMessage)
 
+//TCPClientStart запуск соединений
 func TCPClientStart() {
 	go TCPForState(os.Getenv("tcpServerAddress") + os.Getenv("portState"))
 	go TCPForARM(os.Getenv("tcpServerAddress") + os.Getenv("portArmCommand"))

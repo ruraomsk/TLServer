@@ -1,13 +1,14 @@
 package data
 
 import (
-	"../logger"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"sync"
 	"time"
+
+	"../logger"
 )
 
 //CacheInfo глобальная переменная для обращения к данным
@@ -34,12 +35,12 @@ type AreaInfo struct {
 	NameArea string `json:"nameArea"` //расшифровка номера
 }
 
-//TLSostInfo состояние
+//InfoTL состояние
 type InfoTL struct {
 	Sost []TLSostInfo `json:"sost"`
 }
 
-//InfoTL информация о состояния светофоров
+//TLSostInfo информация о состояния светофоров
 type TLSostInfo struct {
 	Num         int    `json:"num"`
 	Description string `json:"description"`
@@ -49,12 +50,15 @@ type TLSostInfo struct {
 func CacheDataUpdate() {
 	CacheInfo.mapRoles = make(map[string]Permissions)
 	BusyArmInfo.mapBusyArm = make(map[BusyArm]EditCrossInfo)
-	go func() {
-		for {
-			fmt.Println(BusyArmInfo.mapBusyArm)
-			time.Sleep(time.Second * 5)
-		}
-	}()
+	//go func() {
+	//	for {
+	//		for a, b := range BusyArmInfo.mapBusyArm {
+	//			fmt.Printf("%v  ----  %v \n", b, a)
+	//		}
+	//		fmt.Println()
+	//		time.Sleep(time.Second * 1)
+	//	}
+	//}()
 	for {
 		CacheInfoDataUpdate()
 		//создадим суперпользователя если таблица только была создана
