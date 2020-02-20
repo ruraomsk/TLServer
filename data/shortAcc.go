@@ -60,6 +60,8 @@ func (shortAcc *ShortAccount) DecodeRequest(w http.ResponseWriter, r *http.Reque
 
 //ValidCreate проверка данных полученных от пользователя на создание нового пользователя
 func (shortAcc *ShortAccount) ValidCreate(role string, region string) (err error) {
+	CacheInfo.mux.Lock()
+	defer CacheInfo.mux.Unlock()
 	//проверка полученной роли
 	if _, ok := CacheInfo.mapRoles[shortAcc.Role]; !ok || shortAcc.Role == "Super" {
 		return errors.New("Role not found")

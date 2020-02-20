@@ -53,6 +53,8 @@ func MainCrossCreator() map[string]interface{} {
 	//CacheInfoDataUpdate()
 	tfData := GetAllTrafficLights()
 	mapRegAreaCross := make(map[string]map[string][]TrafficLights)
+	CacheInfo.mux.Lock()
+	defer CacheInfo.mux.Unlock()
 	for numReg, nameReg := range CacheInfo.mapRegion {
 		if strings.Contains(numReg, "*") {
 			continue

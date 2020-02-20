@@ -15,26 +15,11 @@ var CacheInfo CacheData
 
 //CacheData Данные для обновления в определенный период
 type CacheData struct {
-	mux        sync.Mutex
-	mapRegion  map[string]string
-	mapArea    map[string]map[string]string
-	mapTLSost  map[int]string
-	mapRoles   map[string]Permissions
-	mapBusyArm map[BusyArm]EditCrossInfo
-}
-
-type BusyArm struct {
-	Region string `json:"region"`
-	Area   string `json:"area"`
-	ID     int    `json:"ID"`
-}
-
-//EditCrossInfo информация о пользователе занявшем перекресток на изменение
-type EditCrossInfo struct {
-	Login    string `json:"login"`
-	EditFlag bool   `json:"editFlag"`
-	Kick     bool   `json:"kick"`
-	time     time.Time
+	mux       sync.Mutex
+	mapRegion map[string]string
+	mapArea   map[string]map[string]string
+	mapTLSost map[int]string
+	mapRoles  map[string]Permissions
 }
 
 //RegionInfo расшифровка региона
@@ -63,17 +48,11 @@ type TLSostInfo struct {
 //CacheDataUpdate обновление данных из бд, период обновления 1 час
 func CacheDataUpdate() {
 	CacheInfo.mapRoles = make(map[string]Permissions)
-	CacheInfo.mapBusyArm = make(map[BusyArm]EditCrossInfo)
+	BusyArmInfo.mapBusyArm = make(map[BusyArm]EditCrossInfo)
 	go func() {
 		for {
-			fmt.Println(CacheInfo.mapBusyArm)
+			fmt.Println(BusyArmInfo.mapBusyArm)
 			time.Sleep(time.Second * 5)
-		}
-	}()
-	go func() {
-		for {
-			CleanMapBusyArm()
-			time.Sleep(time.Second * 20)
 		}
 	}()
 	for {
@@ -93,6 +72,7 @@ func CacheDataUpdate() {
 func CacheInfoDataUpdate() {
 	var err error
 	CacheInfo.mux.Lock()
+	CleanMapBusyArm()
 	CacheInfo.mapRegion, CacheInfo.mapArea, err = GetRegionInfo()
 	CacheInfo.mapTLSost, err = getTLSost()
 	err = getRoles()
@@ -100,21 +80,6 @@ func CacheInfoDataUpdate() {
 	if err != nil {
 		logger.Error.Println(fmt.Sprintf("|Message: Error reading data cache: %s", err.Error()))
 	}
-}
-
-func CleanMapBusyArm() {
-	for busyArm, editCross := range CacheInfo.mapBusyArm {
-		if editCross.time.Add(time.Second * 10).Before(time.Now()) {
-			delete(CacheInfo.mapBusyArm, busyArm)
-		}
-	}
-}
-
-func BusyArmDelete(arm BusyArm) map[string]interface{} {
-	resp := make(map[string]interface{})
-	delete(CacheInfo.mapBusyArm, arm)
-	resp["ArmDelete"] = arm
-	return resp
 }
 
 //GetRegionInfo получить таблицу регионов
@@ -194,11 +159,15 @@ func getRoles() (err error) {
 //SetRegionInfo установить в структуру номер и имя региона по номеру
 func (region *RegionInfo) SetRegionInfo(num string) {
 	region.Num = num
+	CacheInfo.mux.Lock()
 	region.NameRegion = CacheInfo.mapRegion[num]
+	CacheInfo.mux.Unlock()
 }
 
 //SetAreaInfo установить в структуру номер и имя района по номеру района и региона
 func (area *AreaInfo) SetAreaInfo(numReg, numArea string) {
 	area.Num = numArea
+	CacheInfo.mux.Lock()
 	area.NameArea = CacheInfo.mapArea[CacheInfo.mapRegion[numReg]][numArea]
+	CacheInfo.mux.Unlock()
 }

@@ -99,6 +99,8 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) map[
 
 	//собираем в кучу роли
 	var roles []string
+	CacheInfo.mux.Lock()
+	defer CacheInfo.mux.Unlock()
 	if mapContx["role"] == "Super" {
 		roles = append(roles, "Admin")
 	} else {
@@ -160,6 +162,8 @@ func RoleCheck(mapContx map[string]string, act string) (accept bool, err error) 
 		return false, err
 	}
 
+	CacheInfo.mux.Lock()
+	defer CacheInfo.mux.Unlock()
 	//Проверяю можно ли делать этой роле данное действие
 	for _, perm := range CacheInfo.mapRoles[mapContx["role"]].Permissions {
 		if perm.Command == act {

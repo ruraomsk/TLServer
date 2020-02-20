@@ -91,6 +91,14 @@ func StartServer() {
 	//обработчик для редактирования данных аккаунта
 	subRout.HandleFunc("/{slug}/manage/update", whandlers.ActUpdateAccount).Methods("POST")
 
+	//обработчик по управлению занятых перекрестков (страничка)
+	subRout.HandleFunc("/{slug}/manage/crossEditControl", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, resourcePath+"/crossEditControl.html")
+	}).Methods("GET")
+	//обработчик по управлению занятых перекрестков
+	subRout.HandleFunc("/{slug}/manage/crossEditControl", whandlers.CrossEditInfo).Methods("POST")
+	subRout.HandleFunc("/{slug}/manage/crossEditControl/free", whandlers.CrossEditFree).Methods("POST")
+
 	//обработка лог файлов (страничка)
 	subRout.HandleFunc("/{slug}/manage/log", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, resourcePath+"/log.html")

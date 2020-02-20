@@ -1,18 +1,17 @@
 package data
 
 import (
-	"encoding/json"
-	"errors"
-	"fmt"
-	"os"
-	"strings"
-	"time"
-
 	"../logger"
 	"../stateVerified"
 	"../tcpConnect"
 	u "../utils"
+	"encoding/json"
+	"errors"
+	"fmt"
 	agS_pudge "github.com/ruraomsk/ag-server/pudge"
+	"os"
+	"strings"
+	"time"
 )
 
 //ControlGetCrossInfo сбор информации для пользователя в расширенном варианте
@@ -29,46 +28,50 @@ func ControlGetCrossInfo(TLignt TrafficLights, mapContx map[string]string) map[s
 		logger.Error.Println("|Message: No result at these points", err.Error())
 		return u.Message(false, "No result at these points")
 	}
-	TLignt.Points.StrToFloat(dgis)
-	TLignt.Region.NameRegion = CacheInfo.mapRegion[TLignt.Region.Num]
-	TLignt.Area.NameArea = CacheInfo.mapArea[TLignt.Region.NameRegion][TLignt.Area.Num]
 	//Состояние светофора!
 	rState, err := ConvertStateStrToStruct(StateStr)
 	if err != nil {
 		logger.Error.Println("|Message: Failed to parse cross information: ", err.Error())
 		return u.Message(false, "Failed to parse cross information")
 	}
-	TLignt.Sost.Num = rState.StatusDevice
-	TLignt.Sost.Description = CacheInfo.mapTLSost[TLignt.Sost.Num]
+	TLignt.Points.StrToFloat(dgis)
 	resp := u.Message(true, "Cross control information")
+	TLignt.Sost.Num = rState.StatusDevice
+	CacheInfo.mux.Lock()
+	TLignt.Region.NameRegion = CacheInfo.mapRegion[TLignt.Region.Num]
+	TLignt.Area.NameArea = CacheInfo.mapArea[TLignt.Region.NameRegion][TLignt.Area.Num]
+	TLignt.Sost.Description = CacheInfo.mapTLSost[TLignt.Sost.Num]
+	resp["areaMap"] = CacheInfo.mapArea[TLignt.Region.NameRegion]
+	CacheInfo.mux.Unlock()
 	resp["cross"] = TLignt
 	resp["state"] = rState
-	resp["areaMap"] = CacheInfo.mapArea[TLignt.Region.NameRegion]
 	return resp
 }
 
 //ControlEditableCheck проверка редактируется ли данный перекресток
 func ControlEditableCheck(arm BusyArm, mapContx map[string]string) map[string]interface{} {
 	var EditInfo EditCrossInfo
-	if _, ok := CacheInfo.mapBusyArm[arm]; !ok {
+	BusyArmInfo.mux.Lock()
+	defer BusyArmInfo.mux.Unlock()
+	if _, ok := BusyArmInfo.mapBusyArm[arm]; !ok {
 		EditInfo.Login = mapContx["login"]
 		EditInfo.EditFlag = true
 		EditInfo.time = time.Now()
-		CacheInfo.mapBusyArm[arm] = EditInfo
+		BusyArmInfo.mapBusyArm[arm] = EditInfo
 	} else {
-		EditInfo.Login = CacheInfo.mapBusyArm[arm].Login
-		if CacheInfo.mapBusyArm[arm].Login == mapContx["login"] {
+		EditInfo.Login = BusyArmInfo.mapBusyArm[arm].Login
+		if BusyArmInfo.mapBusyArm[arm].Login == mapContx["login"] {
 			EditInfo.EditFlag = true
 			EditInfo.time = time.Now()
-			CacheInfo.mapBusyArm[arm] = EditInfo
+			BusyArmInfo.mapBusyArm[arm] = EditInfo
 		} else {
 			EditInfo.EditFlag = false
 		}
-		if CacheInfo.mapBusyArm[arm].time.Add(time.Second * 7).Before(time.Now()) {
+		if BusyArmInfo.mapBusyArm[arm].time.Add(time.Second * 7).Before(time.Now()) {
 			EditInfo.Login = mapContx["login"]
 			EditInfo.EditFlag = true
 			EditInfo.time = time.Now()
-			CacheInfo.mapBusyArm[arm] = EditInfo
+			BusyArmInfo.mapBusyArm[arm] = EditInfo
 		}
 	}
 	resp := u.Message(true, "Editable flag")
@@ -132,7 +135,7 @@ func CreateCrossData(state agS_pudge.Cross, mapContx map[string]string) map[stri
 		return resp
 	}
 	for rows.Next() {
-		rows.Scan(&stateSql)
+		_ = rows.Scan(&stateSql)
 		if strings.Contains(stateSql, fmt.Sprintf(`"idevice": %v`, state.IDevice)) {
 			verif.SumResult = append(verif.SumResult, fmt.Sprintf("№ %v модема уже используется в системе", state.IDevice))
 			verif.Err = errors.New("detected")

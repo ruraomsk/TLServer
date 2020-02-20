@@ -86,16 +86,18 @@ func SelectTL(point0 Point, point1 Point, equalPoint bool) (tfdata []TrafficLigh
 			return nil
 		}
 		temp.Points.StrToFloat(dgis)
-		temp.Region.NameRegion = CacheInfo.mapRegion[temp.Region.Num]
-		temp.Area.NameArea = CacheInfo.mapArea[temp.Region.NameRegion][temp.Area.Num]
 		//Состояние светофора!
 		rState, err := ConvertStateStrToStruct(StateStr)
 		if err != nil {
 			logger.Error.Println("|Message: Failed to parse cross information", err.Error())
 			return nil
 		}
-		temp.Sost.Num = rState.StatusDevice
+		CacheInfo.mux.Lock()
+		temp.Region.NameRegion = CacheInfo.mapRegion[temp.Region.Num]
+		temp.Area.NameArea = CacheInfo.mapArea[temp.Region.NameRegion][temp.Area.Num]
 		temp.Sost.Description = CacheInfo.mapTLSost[temp.Sost.Num]
+		CacheInfo.mux.Unlock()
+		temp.Sost.Num = rState.StatusDevice
 		tfdata = append(tfdata, *temp)
 	}
 
@@ -139,16 +141,18 @@ func GetCrossInfo(TLignt TrafficLights) map[string]interface{} {
 		return u.Message(false, "No result at these points")
 	}
 	TLignt.Points.StrToFloat(dgis)
-	TLignt.Region.NameRegion = CacheInfo.mapRegion[TLignt.Region.Num]
-	TLignt.Area.NameArea = CacheInfo.mapArea[TLignt.Region.NameRegion][TLignt.Area.Num]
 	//Состояние светофора!
 	rState, err := ConvertStateStrToStruct(StateStr)
 	if err != nil {
 		logger.Error.Println("|Message: Failed to parse cross information", err.Error())
 		return u.Message(false, "Failed to parse cross information")
 	}
+	CacheInfo.mux.Lock()
+	TLignt.Region.NameRegion = CacheInfo.mapRegion[TLignt.Region.Num]
+	TLignt.Area.NameArea = CacheInfo.mapArea[TLignt.Region.NameRegion][TLignt.Area.Num]
 	TLignt.Sost.Num = rState.StatusDevice
 	TLignt.Sost.Description = CacheInfo.mapTLSost[TLignt.Sost.Num]
+	CacheInfo.mux.Unlock()
 	resp := u.Message(true, "Cross information")
 	resp["DontWrite"] = "true"
 	resp["cross"] = TLignt
