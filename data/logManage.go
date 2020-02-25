@@ -1,9 +1,9 @@
 package data
 
 import (
-	"../logger"
-	u "../utils"
 	"fmt"
+	"github.com/JanFant/TLServer/logger"
+	u "github.com/JanFant/TLServer/utils"
 	"io/ioutil"
 	"os"
 	"strings"

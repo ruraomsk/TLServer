@@ -1,9 +1,9 @@
 package routes
 
 import (
-	"../logger"
-	"../whandlers"
 	"fmt"
+	"github.com/JanFant/TLServer/logger"
+	"github.com/JanFant/TLServer/whandlers"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"net/http"

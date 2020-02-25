@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"../logger"
+	"github.com/JanFant/TLServer/logger"
 	"fmt"
 )
 

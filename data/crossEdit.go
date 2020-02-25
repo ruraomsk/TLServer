@@ -1,8 +1,8 @@
 package data
 
 import (
-	u "../utils"
 	"fmt"
+	u "github.com/JanFant/TLServer/utils"
 	"os"
 	"sync"
 	"time"

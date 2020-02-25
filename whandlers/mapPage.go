@@ -1,9 +1,9 @@
 package whandlers
 
 import (
-	"../data"
-	u "../utils"
 	"encoding/json"
+	"github.com/JanFant/TLServer/data"
+	u "github.com/JanFant/TLServer/utils"
 	"net/http"
 )
 

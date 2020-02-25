@@ -1,10 +1,10 @@
 package data
 
 import (
-	"../logger"
-	u "../utils"
 	"encoding/json"
 	"fmt"
+	"github.com/JanFant/TLServer/logger"
+	u "github.com/JanFant/TLServer/utils"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"

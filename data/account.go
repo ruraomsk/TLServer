@@ -1,9 +1,9 @@
 package data
 
 import (
-	u "../utils"
 	"encoding/json"
 	"fmt"
+	u "github.com/JanFant/TLServer/utils"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"

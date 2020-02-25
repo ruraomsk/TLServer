@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"../logger"
+	"github.com/JanFant/TLServer/logger"
 )
 
 //StateMessage state информация для отправки на сервер

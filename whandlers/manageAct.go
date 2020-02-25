@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"../data"
-	u "../utils"
+	"github.com/JanFant/TLServer/data"
+	u "github.com/JanFant/TLServer/utils"
 )
 
 //ActUpdateAccount обработчик запроса обновления (работа с пользователями)

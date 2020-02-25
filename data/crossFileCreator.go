@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	"../logger"
-	u "../utils"
+	"github.com/JanFant/TLServer/logger"
+	u "github.com/JanFant/TLServer/utils"
 )
 
 //SelectedData общая струкрута для обмена

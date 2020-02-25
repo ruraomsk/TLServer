@@ -1,10 +1,10 @@
 package routes
 
 import (
-	"../data"
-	u "../utils"
 	"context"
 	"fmt"
+	"github.com/JanFant/TLServer/data"
+	u "github.com/JanFant/TLServer/utils"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	"net/http"

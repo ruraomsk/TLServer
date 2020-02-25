@@ -1,11 +1,11 @@
 package data
 
 import (
-	"../logger"
-	u "../utils"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/JanFant/TLServer/logger"
+	u "github.com/JanFant/TLServer/utils"
 	agS_pudge "github.com/ruraomsk/ag-server/pudge"
 	"os"
 )

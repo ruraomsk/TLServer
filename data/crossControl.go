@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"../logger"
-	"../stateVerified"
-	"../tcpConnect"
-	u "../utils"
+	"github.com/JanFant/TLServer/logger"
+	"github.com/JanFant/TLServer/stateVerified"
+	"github.com/JanFant/TLServer/tcpConnect"
+	u "github.com/JanFant/TLServer/utils"
 	agS_pudge "github.com/ruraomsk/ag-server/pudge"
 )
 

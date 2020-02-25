@@ -5,8 +5,8 @@ import (
 	agS_pudge "github.com/ruraomsk/ag-server/pudge"
 	"net/http"
 
-	"../data"
-	u "../utils"
+	"github.com/JanFant/TLServer/data"
+	u "github.com/JanFant/TLServer/utils"
 )
 
 var TestHello = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

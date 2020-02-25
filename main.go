@@ -1,11 +1,11 @@
 package main
 
 import (
-	"./data"
-	"./logger"
-	"./routes"
-	"./tcpConnect"
 	"fmt"
+	"github.com/JanFant/TLServer/data"
+	"github.com/JanFant/TLServer/logger"
+	"github.com/JanFant/TLServer/routes"
+	"github.com/JanFant/TLServer/tcpConnect"
 	"github.com/joho/godotenv"
 	"os"
 )

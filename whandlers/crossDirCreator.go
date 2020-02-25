@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"../data"
-	u "../utils"
+	"github.com/JanFant/TLServer/data"
+	u "github.com/JanFant/TLServer/utils"
 )
 
 //MainCrossCreator сборка информации для странички создания каталогов перекрестков

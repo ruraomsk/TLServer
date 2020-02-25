@@ -5,7 +5,7 @@ import (
 	"os"
 	"strconv"
 
-	"../logger"
+	"github.com/JanFant/TLServer/logger"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 )

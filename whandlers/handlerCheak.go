@@ -1,8 +1,8 @@
 package whandlers
 
 import (
-	"../data"
-	u "../utils"
+	"github.com/JanFant/TLServer/data"
+	u "github.com/JanFant/TLServer/utils"
 	"net/http"
 )
 

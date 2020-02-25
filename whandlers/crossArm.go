@@ -1,9 +1,9 @@
 package whandlers
 
 import (
-	"../data"
-	u "../utils"
 	"encoding/json"
+	"github.com/JanFant/TLServer/data"
+	u "github.com/JanFant/TLServer/utils"
 	"github.com/pkg/errors"
 	agS_pudge "github.com/ruraomsk/ag-server/pudge"
 	"net/http"

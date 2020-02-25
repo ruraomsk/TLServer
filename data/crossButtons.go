@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"../logger"
-	"../tcpConnect"
-	u "../utils"
+	"github.com/JanFant/TLServer/logger"
+	"github.com/JanFant/TLServer/tcpConnect"
+	u "github.com/JanFant/TLServer/utils"
 	"github.com/ruraomsk/ag-server/comm"
 )
 

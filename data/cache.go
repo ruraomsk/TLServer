@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"../logger"
+	"github.com/JanFant/TLServer/logger"
 )
 
 //CacheInfo глобальная переменная для обращения к данным
