@@ -8,19 +8,19 @@ import (
 	"../logger"
 )
 
-//StateMessage State
+//StateMessage state информация для отправки на сервер
 type StateMessage struct {
-	User     string
-	Info     string
-	StateStr string
-	Message  string
+	User     string //пользователь отправляющий данные (логин)
+	Info     string //короткая информация о state
+	StateStr string //данные подготовленные к отправке
+	Message  string //информация о результате передачи данных
 }
 
-//ArmCommandMessage ARM
+//ArmCommandMessage ARM информация для отправки на сервер
 type ArmCommandMessage struct {
-	User       string
-	CommandStr string
-	Message    string
+	User       string //пользователь отправляющий данные (логин)
+	CommandStr string //данные подготовленные к отправке
+	Message    string //информация о результате передачи данных
 }
 
 //StateChan канал для передачи информации связанных со state
@@ -35,7 +35,7 @@ func TCPClientStart() {
 	go TCPForARM(os.Getenv("tcpServerAddress") + os.Getenv("portArmCommand"))
 }
 
-//TCPForState для обмена с сервером State
+//TCPForState для обмена с сервером данные State
 func TCPForState(IP string) {
 	var (
 		conn     net.Conn

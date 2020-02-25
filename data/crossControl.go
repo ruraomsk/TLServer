@@ -197,6 +197,7 @@ func DeleteCrossData(state agS_pudge.Cross, mapContx map[string]string) map[stri
 	}
 }
 
+//sendToUDPServer отправление данных в канал
 func sendToUDPServer(message tcpConnect.StateMessage) bool {
 	tcpConnect.StateChan <- message
 	for {

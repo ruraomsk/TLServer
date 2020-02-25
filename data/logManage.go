@@ -11,13 +11,12 @@ import (
 
 //LogInfo данные для хранения информации лог файлов
 type LogInfo struct {
-	Type string `json:"type"`
-	//Time     time.Duration `json:"time"`
-	Time     string `json:"time"`
-	IP       string `json:"IP"`
-	Login    string `json:"login"`
-	Resource string `json:"resource"`
-	Message  string `json:"message"`
+	Type     string `json:"type"`     //тип лог сообщения
+	Time     string `json:"time"`     //врямя когда произошло событие
+	IP       string `json:"IP"`       //IP с которого делали запрос
+	Login    string `json:"login"`    //логин пользователя который делал запрос
+	Resource string `json:"resource"` //путь к ресурсу на котором произошло событие
+	Message  string `json:"message"`  //расшифровка действия пользователя
 }
 
 var logFileSuffix = ".log"
@@ -39,7 +38,7 @@ func DisplayLogFiles() map[string]interface{} {
 	return resp
 }
 
-//DisplayFileLog получение мапы данных из заданного файла
+//DisplayFileLog получение данных из заданного файла
 func DisplayFileLog(fileName string, mapContex map[string]string) map[string]interface{} {
 	path := os.Getenv("logger_path") + "//" + fileName + logFileSuffix
 	byteFile, err := ioutil.ReadFile(path)

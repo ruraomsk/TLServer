@@ -27,13 +27,11 @@ var UpdateMapPage = func(w http.ResponseWriter, r *http.Request) {
 		box := &data.BoxPoint{}
 		err := json.NewDecoder(r.Body).Decode(box)
 		if box.Point0 == box.Point1 {
-			//logger.Info.Println("mapPage: Impossible coordinates ", r.RemoteAddr)
 			w.WriteHeader(http.StatusBadRequest)
 			u.Respond(w, r, u.Message(false, "Impossible coordinates"))
 			return
 		}
 		if err != nil {
-			//logger.Info.Println("Invalid request ", r.RemoteAddr)
 			w.WriteHeader(http.StatusBadRequest)
 			u.Respond(w, r, u.Message(false, "Invalid request"))
 			return
@@ -46,6 +44,7 @@ var UpdateMapPage = func(w http.ResponseWriter, r *http.Request) {
 	u.Respond(w, r, resp)
 }
 
+//LocationButtonMapPage обработка запроса на получение новых координат отрисовки рабочей области
 var LocationButtonMapPage = func(w http.ResponseWriter, r *http.Request) {
 	flag, resp := FuncAccessCheck(w, r, "UpdateMapPage")
 	if flag {

@@ -17,10 +17,10 @@ var CacheInfo CacheData
 //CacheData Данные для обновления в определенный период
 type CacheData struct {
 	mux       sync.Mutex
-	mapRegion map[string]string
-	mapArea   map[string]map[string]string
-	mapTLSost map[int]string
-	mapRoles  map[string]Permissions
+	mapRegion map[string]string            //регионы
+	mapArea   map[string]map[string]string //районы
+	mapTLSost map[int]string               //светофоры
+	mapRoles  map[string]Permissions       //роли
 }
 
 //RegionInfo расшифровка региона
@@ -29,13 +29,13 @@ type RegionInfo struct {
 	NameRegion string `json:"nameRegion"` //расшифровка номера
 }
 
-//AreaInfo расшифровка раона
+//AreaInfo расшифровка района
 type AreaInfo struct {
 	Num      string `json:"num"`      //уникальный номер зоны
 	NameArea string `json:"nameArea"` //расшифровка номера
 }
 
-//InfoTL состояние
+//InfoTL массив для приема пользовательского запроса
 type InfoTL struct {
 	Sost []TLSostInfo `json:"sost"`
 }
@@ -50,15 +50,6 @@ type TLSostInfo struct {
 func CacheDataUpdate() {
 	CacheInfo.mapRoles = make(map[string]Permissions)
 	BusyArmInfo.mapBusyArm = make(map[BusyArm]EditCrossInfo)
-	//go func() {
-	//	for {
-	//		for a, b := range BusyArmInfo.mapBusyArm {
-	//			fmt.Printf("%v  ----  %v \n", b, a)
-	//		}
-	//		fmt.Println()
-	//		time.Sleep(time.Second * 1)
-	//	}
-	//}()
 	for {
 		CacheInfoDataUpdate()
 		//создадим суперпользователя если таблица только была создана

@@ -25,6 +25,11 @@ func StartServer() {
 	//путь к скриптам они открыты
 	router.PathPrefix("/static/").Handler(http.Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(resourcePath))))).Methods("GET")
 
+	//заглушка странички 404
+	router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, resourcePath+"/notFound.html")
+	})
+
 	//запрос на вход в систему
 	router.HandleFunc("/login", whandlers.LoginAcc).Methods("POST")
 	router.HandleFunc("/test", whandlers.TestHello).Methods("POST")
@@ -32,7 +37,7 @@ func StartServer() {
 	//------------------------------------------------------------------------------------------------------------------
 	//обязательный общий путь
 	subRout := router.PathPrefix("/user").Subrouter()
-	//добавление к роутеру контроля токена
+	//добавление к роутеру контроль токена
 	subRout.Use(JwtAuth)
 
 	//работа с основной страничкой карты
@@ -97,6 +102,7 @@ func StartServer() {
 	}).Methods("GET")
 	//обработчик по управлению занятых перекрестков
 	subRout.HandleFunc("/{slug}/manage/crossEditControl", whandlers.CrossEditInfo).Methods("POST")
+	//обработчик по управлению освобождению перекрестка
 	subRout.HandleFunc("/{slug}/manage/crossEditControl/free", whandlers.CrossEditFree).Methods("POST")
 
 	//обработка лог файлов (страничка)

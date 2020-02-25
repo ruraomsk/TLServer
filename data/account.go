@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-//Token JWT claims struct
+//Token (JWT) структура токена доступа
 type Token struct {
 	UserID uint   //Уникальный ID пользователя
 	Login  string //Уникальный логин пользователя
@@ -24,7 +24,7 @@ type Token struct {
 	jwt.StandardClaims
 }
 
-//Account struct to user account
+//Account структура для аккаунтов пользователя
 type Account struct {
 	gorm.Model
 	Login    string        `json:"login",sql:"login"` //Имя пользователя
@@ -35,7 +35,7 @@ type Account struct {
 	Token    string        `json:"token",sql:"-"`     //Токен пользователя
 }
 
-//Login in system
+//Login обработчик авторизации пользователя в системе
 func Login(login, password, ip string) map[string]interface{} {
 	ipSplit := strings.Split(ip, ":")
 	account := &Account{}
@@ -95,7 +95,7 @@ func LogOut(mapContx map[string]string) map[string]interface{} {
 	return resp
 }
 
-//Validate checking for an account in the database
+//Validate проверка аккаунда в базе данных
 func (account *Account) Validate() (map[string]interface{}, bool) {
 	if account.Login != regexp.QuoteMeta(account.Login) {
 		return u.Message(false, "Login contains invalid characters"), false
@@ -106,9 +106,8 @@ func (account *Account) Validate() (map[string]interface{}, bool) {
 	if len(account.Password) < 6 {
 		return u.Message(false, "Password is required"), false
 	}
-	//login mast be unique
+	//логин аккаунта должен быть уникальным
 	temp := &Account{}
-	//check for error and duplicate login
 	err := GetDB().Table("accounts").Where("login = ?", account.Login).First(temp).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return u.Message(false, "Connection error, please try again"), false

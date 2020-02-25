@@ -16,19 +16,19 @@ import (
 
 //ShortAccount удобная структура аккаунта для обмена с пользователем
 type ShortAccount struct {
-	Login     string     `json:"login"`
-	Wtime     int        `json:"wtime"`
-	Password  string     `json:"password"`
-	Role      string     `json:"role"`
-	Privilege string     `json:"-"`
-	Region    RegionInfo `json:"region"`
-	Area      []AreaInfo `json:"area"`
+	Login     string     `json:"login"`    //логин пользователя
+	Wtime     int        `json:"wtime"`    //время сеанса пользователя
+	Password  string     `json:"password"` //пароль пользователя
+	Role      string     `json:"role"`     //роль пользователя
+	Privilege string     `json:"-"`        //привелегии (не уходят на верх)
+	Region    RegionInfo `json:"region"`   //регион работы пользователя
+	Area      []AreaInfo `json:"area"`     //районы работы пользователя
 }
 
 //PassChange структура для изменения пароля
 type PassChange struct {
-	OldPW string `json:"oldPW"`
-	NewPW string `json:"newPW"`
+	OldPW string `json:"oldPW"` //старый пароль
+	NewPW string `json:"newPW"` //новый пароль
 }
 
 //ConvertShortToAcc преобразование 2х структур информации об аккаунте в одну целую
@@ -50,7 +50,6 @@ func (shortAcc *ShortAccount) ConvertShortToAcc() (account Account, privilege Pr
 func (shortAcc *ShortAccount) DecodeRequest(w http.ResponseWriter, r *http.Request) error {
 	err := json.NewDecoder(r.Body).Decode(shortAcc)
 	if err != nil {
-		//logger.Info.Println("ActParser, Add: Incorrectly filled data ", r.RemoteAddr)
 		w.WriteHeader(http.StatusBadRequest)
 		u.Respond(w, r, u.Message(false, "Incorrectly filled data"))
 		return err

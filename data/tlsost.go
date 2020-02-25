@@ -22,21 +22,13 @@ type TrafficLights struct {
 	Points      Point      `json:"points"`      //Координата где находится светофор
 }
 
-//State короткий стейт который расшифрован из большого json
-type State struct {
-	Ck     int    `json:"ck",sql:"ck"`
-	Nk     int    `json:"nk",sql:"nk"`
-	Pk     int    `json:"pk",sql:"pk"`
-	Phone  string `json:"phone",sql:"phone"`
-	Status int    `json:"status",sql:"status"`
-}
-
+//Locations информация о запрашиваемом регионе и районе карты
 type Locations struct {
-	Region string   `json:"region"`
-	Area   []string `json:"area"`
+	Region string   `json:"region"` //регион
+	Area   []string `json:"area"`   //районы
 }
 
-//GetLightsFromBD определяем правильную область для светофоров
+//GetLightsFromBD определяем область отображения светофоров
 func GetLightsFromBD(box BoxPoint) (tfdata []TrafficLights) {
 	var tflight = []TrafficLights{}
 	if (box.Point1.X > -180 && box.Point1.X < 0) && (box.Point0.X > 0 && box.Point0.X < 180) {
@@ -160,6 +152,7 @@ func GetCrossInfo(TLignt TrafficLights) map[string]interface{} {
 	return resp
 }
 
+//MakeBoxPoint расчет координат для перемешения по карте
 func (location *Locations) MakeBoxPoint() (box BoxPoint, err error) {
 	var sqlStr = `SELECT Min(dgis[0]) as "Y0", Min(convTo360(dgis[1])) as "X0", Max(dgis[0]) as "Y1", Max(convTo360(dgis[1])) as "X1"  FROM public."cross"`
 	tempStr := " where "

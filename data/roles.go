@@ -9,34 +9,34 @@ import (
 	"strings"
 )
 
-//Roles срез ролей
+//Roles массив ролей
 type Roles struct {
 	Roles []Role `json:"roles"`
 }
 
-//Role структура содержащая имя роли и ее привелегии
+//Role структура содержащая называние роли и ее привелегии
 type Role struct {
-	Name string      `json:"name"`
-	Perm Permissions `json:"permission"`
+	Name string      `json:"name"`       //название роли
+	Perm Permissions `json:"permission"` //массив полномочий
 }
 
-//Permissions срез полномочий
+//Permissions массив полномочий
 type Permissions struct {
 	Permissions []Permission `json:"permissions"`
 }
 
 //Permission структура полномойчий содержит ID, команду и описание команды
 type Permission struct {
-	ID          int    `json:"id"`
-	Command     string `json:"command"`
-	Description string `json:"description"`
+	ID          int    `json:"id"`          //ID порядковый номер
+	Command     string `json:"command"`     //название команды
+	Description string `json:"description"` //описание команды
 }
 
 //Privilege структура привилегий содержит роль, регион, и массив районов
 type Privilege struct {
-	Role   string   `json:"role"`
-	Region string   `json:"region"`
-	Area   []string `json:"area"`
+	Role   string   `json:"role"`   //роль пользователя
+	Region string   `json:"region"` //регион пользователя
+	Area   []string `json:"area"`   //массив районов пользователя
 }
 
 //func (roles *Roles) CreateRole() (err error) {

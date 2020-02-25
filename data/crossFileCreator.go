@@ -14,29 +14,31 @@ import (
 
 //SelectedData общая струкрута для обмена
 type SelectedData struct {
-	SelectedData map[string]map[string][]CheckData `json:"selected"`
-	PngSettings  PngSettings                       `json:"pngSettings"`
+	SelectedData map[string]map[string][]CheckData `json:"selected"`    //хранилище перекрестков которые были выбраны
+	PngSettings  PngSettings                       `json:"pngSettings"` //настройки для создания map.png
 }
 
 //CheckData структура проверки для перекрестков
 type CheckData struct {
-	ID        string `json:"ID"`
-	PngStatus bool   `json:"pngStatus"`
-	SvgStatus bool   `json:"svgStatus"`
+	ID        string `json:"ID"`        //ID устройства
+	PngStatus bool   `json:"pngStatus"` //флаг наличия map.png
+	SvgStatus bool   `json:"svgStatus"` //флаг наличия cross.svg
 }
 
 //PngSettings настройки размеров создаваемой map.png
 type PngSettings struct {
-	SizeX string `json:"sizeX"`
-	SizeY string `json:"sizeY"`
-	Z     string `json:"z"`
+	SizeX string `json:"sizeX"` //размер картинки по координате X
+	SizeY string `json:"sizeY"` //размер картинки по координате Y
+	Z     string `json:"z"`     //величина отдаление
 }
 
+//setStatusTrue установить значение в True
 func (checkData *CheckData) setStatusTrue() {
 	checkData.SvgStatus = true
 	checkData.PngStatus = true
 }
 
+//setStatusFalse установить значение в False
 func (checkData *CheckData) setStatusFalse() {
 	checkData.SvgStatus = false
 	checkData.PngStatus = false
@@ -245,17 +247,4 @@ func createPng(numReg, numArea, id string, settings PngSettings, point Point) (e
 		return err
 	}
 	return nil
-}
-
-func createSvg(path string) (err error) {
-
-	//file1, err := os.Create(filepath + "cross.svg")
-	//if err != nil {
-	//	return err
-	//}
-	//defer file1.Close()
-	//str3 := fmt.Sprintf("%s", TL.Description)
-	//fmt.Fprintln(file1, str1, str3, str2)
-
-	return err
 }

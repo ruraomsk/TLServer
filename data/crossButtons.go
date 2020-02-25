@@ -23,7 +23,6 @@ func DispatchControl(arm comm.CommandARM, mapContx map[string]string) map[string
 		return u.Message(false, "Failed to Marshal ArmControlData information")
 	}
 	armMessage.User = mapContx["login"]
-	fmt.Println(armMessage)
 	tcpConnect.ArmCommandChan <- armMessage
 	for {
 		chanRespond := <-tcpConnect.ArmCommandChan

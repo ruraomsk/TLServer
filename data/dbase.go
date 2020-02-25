@@ -15,7 +15,7 @@ var (
 	FirstCreate bool
 )
 
-//ConnectDB connecting to DB
+//ConnectDB подключение к БД
 func ConnectDB() error {
 	var (
 		CreateFuncSQL = `Create or replace function convTo360(x double precision) returns double precision as $$

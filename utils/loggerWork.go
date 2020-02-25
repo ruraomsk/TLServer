@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-//WriteLogMessage обработчик u.message преобразует для записи в лог файл
+//WriteLogMessage обработчик u.message преобразует сообщение для записи в лог файл
 func WriteLogMessage(ip string, url string, data map[string]interface{}, info interface{}) {
 	mapContx := ParserInterface(info)
 	login := mapContx["login"]

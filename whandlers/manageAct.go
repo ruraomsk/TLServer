@@ -21,7 +21,6 @@ var ActUpdateAccount = func(w http.ResponseWriter, r *http.Request) {
 		}
 		err = shortAcc.ValidCreate(mapContx["role"], mapContx["region"])
 		if err != nil {
-			//logger.Info.Println("ActParser, Add: Incorrectly filled data: ", err.Error(), "  ", r.RemoteAddr)
 			w.WriteHeader(http.StatusBadRequest)
 			u.Respond(w, r, u.Message(false, fmt.Sprintf("Incorrectly filled data: %s", err.Error())))
 			return
@@ -44,7 +43,6 @@ var ActDeleteAccount = func(w http.ResponseWriter, r *http.Request) {
 		}
 		account, err := shortAcc.ValidDelete(mapContx["role"], mapContx["region"])
 		if err != nil {
-			//logger.Info.Println("ActParser, Add: Incorrectly filled data: ", err.Error(), "  ", r.RemoteAddr)
 			w.WriteHeader(http.StatusBadRequest)
 			u.Respond(w, r, u.Message(false, fmt.Sprintf("Incorrectly filled data: %s", err.Error())))
 			return
@@ -66,7 +64,6 @@ var ActAddAccount = func(w http.ResponseWriter, r *http.Request) {
 		}
 		err = shortAcc.ValidCreate(mapContx["role"], mapContx["region"])
 		if err != nil {
-			//logger.Info.Println("ActParser, Add: Incorrectly filled data: ", err.Error(), "  ", r.RemoteAddr)
 			w.WriteHeader(http.StatusBadRequest)
 			u.Respond(w, r, u.Message(false, fmt.Sprintf("Incorrectly filled data: %s", err.Error())))
 			return
@@ -85,14 +82,12 @@ var ActChangePw = func(w http.ResponseWriter, r *http.Request) {
 		var passChange = &data.PassChange{}
 		err := json.NewDecoder(r.Body).Decode(passChange)
 		if err != nil {
-			//logger.Info.Println("ActParser, Add: Incorrectly filled data: ", err.Error(), "  ", r.RemoteAddr)
 			w.WriteHeader(http.StatusBadRequest)
 			u.Respond(w, r, u.Message(false, fmt.Sprintf("Incorrectly filled data: %s", err.Error())))
 			return
 		}
 		account, err := passChange.ValidOldNewPW(mapContx["login"])
 		if err != nil {
-			// logger.Info.Println("|Message: Incorrectly filled data: ", err.Error(), "  ", r.RemoteAddr)
 			w.WriteHeader(http.StatusBadRequest)
 			u.Respond(w, r, u.Message(false, err.Error()))
 			return

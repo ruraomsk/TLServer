@@ -87,7 +87,7 @@ var ControlCloseCross = func(w http.ResponseWriter, r *http.Request) {
 	u.Respond(w, r, resp)
 }
 
-//ControlSendButton обработчик данных для отправки на устройства(сервер)
+//ControlSendButton обработчик данных для отправки на устройство(сервер)
 var ControlSendButton = func(w http.ResponseWriter, r *http.Request) {
 	flag, resp := FuncAccessCheck(w, r, "ControlCross")
 	if flag {
@@ -104,7 +104,7 @@ var ControlSendButton = func(w http.ResponseWriter, r *http.Request) {
 	u.Respond(w, r, resp)
 }
 
-//ControlCreateButton обработчик данных для отправки на устройства(сервер)
+//ControlCreateButton обработчик данных для создания перекрестка и отправка на устройство(сервер)
 var ControlCreateButton = func(w http.ResponseWriter, r *http.Request) {
 	flag, resp := FuncAccessCheck(w, r, "ControlCross")
 	if flag {

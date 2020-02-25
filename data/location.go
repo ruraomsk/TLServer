@@ -14,8 +14,8 @@ type Point struct {
 
 //BoxPoint координаты для отрисовки квадрата
 type BoxPoint struct {
-	Point0 Point `json:"point0"`
-	Point1 Point `json:"point1"`
+	Point0 Point `json:"point0"` //левая нижняя точка на карте
+	Point1 Point `json:"point1"` //правая верхняя точка на карте
 }
 
 //GetPoint возврашает значение координат

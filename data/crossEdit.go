@@ -14,7 +14,7 @@ var BusyArmInfo mainBusyArm
 //mainBusyArm общее хранилище информации для мапы
 type mainBusyArm struct {
 	mux        sync.Mutex
-	mapBusyArm map[BusyArm]EditCrossInfo
+	mapBusyArm map[BusyArm]EditCrossInfo //занятые рабочие станции
 }
 
 //BusyArms массив занятых перекрестков (обмен)
@@ -24,17 +24,17 @@ type BusyArms struct {
 
 //BusyArm информация о занятом перекрестке
 type BusyArm struct {
-	Region      string `json:"region"`
-	Area        string `json:"area"`
-	ID          int    `json:"ID"`
-	Description string `json:"description"`
+	Region      string `json:"region"`      //регион устройства
+	Area        string `json:"area"`        //район устройства
+	ID          int    `json:"ID"`          //ID устройства
+	Description string `json:"description"` //описание устройства
 }
 
 //EditCrossInfo информация о пользователе занявшем перекресток на изменение
 type EditCrossInfo struct {
-	Login    string `json:"login"`
-	EditFlag bool   `json:"editFlag"`
-	Kick     bool   `json:"kick"`
+	Login    string `json:"login"`    //логин пользователя
+	EditFlag bool   `json:"editFlag"` //флаг разрешения на редактирование перекрестка
+	Kick     bool   `json:"kick"`     //флаг закрытия арма у данного пользователя
 	time     time.Time
 }
 
