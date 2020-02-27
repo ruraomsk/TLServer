@@ -59,7 +59,7 @@ func DaySetsVerified(sets *binding.DaySets) (result StateResult) {
 					}
 				} else {
 					if sets.DaySets[numDay].Lines[numLine].Hour != 24 && sets.DaySets[numDay].Lines[numLine].Min != 0 {
-						result.SumResult = append(result.SumResult, fmt.Sprintf("Карта № (%v) стр. № (%v): текущее значение последнего премени должно быть 24:00", numDay+1, numLine+1))
+						result.SumResult = append(result.SumResult, fmt.Sprintf("Карта № (%v) стр. № (%v): текущее значение последнего времени должно быть 24:00", numDay+1, numLine+1))
 						result.Err = errors.New("detected")
 					}
 				}

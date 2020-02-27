@@ -103,7 +103,7 @@ func GetAllTrafficLights() (tfData []TrafficLights) {
 	sqlquery := fmt.Sprintf("select region, id, area, dgis, describ from %s", os.Getenv("gis_table"))
 	rows, _ := GetDB().Raw(sqlquery).Rows()
 	for rows.Next() {
-		rows.Scan(&temp.Region.Num, &temp.ID, &temp.Area.Num, &dgis, &temp.Description)
+		_ = rows.Scan(&temp.Region.Num, &temp.ID, &temp.Area.Num, &dgis, &temp.Description)
 		temp.Points.StrToFloat(dgis)
 		tfData = append(tfData, *temp)
 	}
@@ -118,34 +118,62 @@ func ConvertStateStrToStruct(str string) (rState agS_pudge.Cross, err error) {
 	return rState, nil
 }
 
+//ConvertDevStrToStruct разбор данных полученных из БД в нужную структуру
+func ConvertDevStrToStruct(str string) (controller agS_pudge.Controller, err error) {
+	if err := json.Unmarshal([]byte(str), &controller); err != nil {
+		return controller, err
+	}
+	return controller, nil
+}
+
 //GetCrossInfo сбор информации для пользователя и выбранном перекрестке
 func GetCrossInfo(TLignt TrafficLights) map[string]interface{} {
 	var (
 		dgis     string
 		sqlStr   string
-		StateStr string
+		stateStr string
+		devStr   string
 	)
+
 	sqlStr = fmt.Sprintf("select area, subarea, idevice, dgis, describ, state from %v where region = %v and id = %v and area = %v", os.Getenv("gis_table"), TLignt.Region.Num, TLignt.ID, TLignt.Area.Num)
 	rowsTL := GetDB().Raw(sqlStr).Row()
-	err := rowsTL.Scan(&TLignt.Area.Num, &TLignt.Subarea, &TLignt.Idevice, &dgis, &TLignt.Description, &StateStr)
+	err := rowsTL.Scan(&TLignt.Area.Num, &TLignt.Subarea, &TLignt.Idevice, &dgis, &TLignt.Description, &stateStr)
 	if err != nil {
-		logger.Error.Println("|Message: No result at these points", err.Error())
+		logger.Error.Println("|Message: No result at these points, table cross", err.Error())
 		return u.Message(false, "No result at these points")
 	}
 	TLignt.Points.StrToFloat(dgis)
 	//Состояние светофора!
-	rState, err := ConvertStateStrToStruct(StateStr)
+	rState, err := ConvertStateStrToStruct(stateStr)
 	if err != nil {
 		logger.Error.Println("|Message: Failed to parse cross information", err.Error())
 		return u.Message(false, "Failed to parse cross information")
 	}
+
+	resp := u.Message(true, "Cross information")
+
+	sqlStr = fmt.Sprintf("select device from %v where id = %v", os.Getenv("devices_table"), TLignt.Idevice)
+	rowDev := GetDB().Raw(sqlStr).Row()
+	err = rowDev.Scan(&devStr)
+	if err != nil {
+		logger.Error.Println("|Message: No result at these points, table device", err.Error())
+		resp["message"] = "No device at these points"
+		//return u.Message(false, "No result at these points")
+	} else {
+		device, err := ConvertDevStrToStruct(devStr)
+		if err != nil {
+			logger.Error.Println("|Message: Failed to parse cross information", err.Error())
+			return u.Message(false, "Failed to parse cross information")
+		}
+		resp["device"] = device
+	}
+
 	CacheInfo.mux.Lock()
 	TLignt.Region.NameRegion = CacheInfo.mapRegion[TLignt.Region.Num]
 	TLignt.Area.NameArea = CacheInfo.mapArea[TLignt.Region.NameRegion][TLignt.Area.Num]
 	TLignt.Sost.Num = rState.StatusDevice
 	TLignt.Sost.Description = CacheInfo.mapTLSost[TLignt.Sost.Num]
 	CacheInfo.mux.Unlock()
-	resp := u.Message(true, "Cross information")
 	resp["DontWrite"] = "true"
 	resp["cross"] = TLignt
 	resp["state"] = rState
