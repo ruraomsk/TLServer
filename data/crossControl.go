@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -136,7 +137,7 @@ func CreateCrossData(state agS_pudge.Cross, mapContx map[string]string) map[stri
 		err          error
 		stateSql     string
 	)
-	sqlStr := fmt.Sprintf(`SELECT state FROM public."cross" where state::jsonb @> '{"idevice":%v}'::jsonb or (region = %v and area = %v and id = %v)`, state.IDevice, state.Region, state.Area, state.ID)
+	sqlStr := fmt.Sprintf(`SELECT state FROM %v where state::jsonb @> '{"idevice":%v}'::jsonb or (region = %v and area = %v and id = %v)`, os.Getenv("gis_table"), state.IDevice, state.Region, state.Area, state.ID)
 	rows, err := GetDB().Raw(sqlStr).Rows()
 	if err != nil {
 		resp := u.Message(false, "Server not respond")
@@ -197,6 +198,40 @@ func DeleteCrossData(state agS_pudge.Cross, mapContx map[string]string) map[stri
 	}
 }
 
+func TestCrossStateData(mapContx map[string]string) map[string]interface{} {
+	var (
+		stateSql  string
+		verif     stateVerified.StateResult
+		stateInfo []BusyArm
+		state     BusyArm
+	)
+	sqlStr := fmt.Sprintf(`SELECT state FROM %v`, os.Getenv("gis_table"))
+	rows, err := GetDB().Raw(sqlStr).Rows()
+	if err != nil {
+		resp := u.Message(false, "Server not respond")
+		return resp
+	}
+	for rows.Next() {
+		_ = rows.Scan(&stateSql)
+		testState, err := ConvertStateStrToStruct(stateSql)
+		if err != nil {
+			logger.Error.Println("|Message: Failed to parse cross information: ", err.Error())
+			return u.Message(false, "Failed to parse cross information")
+		}
+		verifiedState(&testState, &verif)
+		if verif.Err != nil {
+			state.ID = testState.ID
+			state.Region = strconv.Itoa(testState.Region)
+			state.Area = strconv.Itoa(testState.Area)
+			state.Description = testState.Name
+			stateInfo = append(stateInfo, state)
+		}
+	}
+	resp := u.Message(true, "State data")
+	resp["arms"] = stateInfo
+	return resp
+}
+
 //sendToUDPServer отправление данных в канал
 func sendToUDPServer(message tcpConnect.StateMessage) bool {
 	tcpConnect.StateChan <- message
@@ -223,7 +258,7 @@ func stateMarshal(cross agS_pudge.Cross) (str string, err error) {
 
 //verifiedState набор проверкок для стейта
 func verifiedState(cross *agS_pudge.Cross, result *stateVerified.StateResult) {
-	resultDay := stateVerified.DaySetsVerified(&cross.Arrays.DaySets)
+	resultDay := stateVerified.DaySetsVerified(cross)
 	appendResult(result, resultDay)
 	resultWeek, empty := stateVerified.WeekSetsVerified(cross)
 	appendResult(result, resultWeek)

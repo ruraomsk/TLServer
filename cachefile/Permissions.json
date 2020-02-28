@@ -54,6 +54,11 @@
       "id": 11,
       "command": "CrossEditControl",
       "description": "Доступ к странице CrossEditControl управление занятыми перекрестками"
+    },
+    {
+      "id": 12,
+      "command": "ControlTestState",
+      "description": "Проверка State по всей базе"
     }
   ]
 }

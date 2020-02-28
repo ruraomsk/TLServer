@@ -20,7 +20,7 @@ type BoxPoint struct {
 
 //GetPoint возврашает значение координат
 func (points *Point) GetPoint() (y, x float64) {
-	return points.X, points.Y
+	return points.Y, points.X
 }
 
 //SetPoint задать значение координат
@@ -38,6 +38,13 @@ func (points *Point) StrToFloat(str string) {
 	str = strings.TrimPrefix(str, "(")
 	str = strings.TrimSuffix(str, ")")
 	temp := strings.Split(str, ",")
+	if len(temp) != 2 {
+		points.Y, points.X = 0, 0
+		return
+	}
+	for num, part := range temp {
+		temp[num] = strings.TrimSpace(part)
+	}
 	points.Y, _ = strconv.ParseFloat(temp[0], 64)
 	points.X, _ = strconv.ParseFloat(temp[1], 64)
 }

@@ -17,34 +17,32 @@ func TimeUseVerified(cross *agS_pudge.Cross) (result StateResult) {
 			result.SumResult = append(result.SumResult, fmt.Sprintf("Поле (%v): тип стат. должен быть 0 или 1", uses.Name))
 			result.Err = errors.New("detected")
 		}
-		if uses.Tvps > 6 || uses.Tvps < 0 {
-			result.SumResult = append(result.SumResult, fmt.Sprintf("Поле (%v): ТВП1,2, МГР, ВПУ должен быть от 0 до 6", uses.Name))
+		if uses.Tvps > 9 || uses.Tvps < 0 {
+			result.SumResult = append(result.SumResult, fmt.Sprintf("Поле (%v): ТВП1,2, МГР, ВПУ должен быть от 0 до 9", uses.Name))
 			result.Err = errors.New("detected")
 		}
 		if uses.Dk > 1 || uses.Dk < 0 {
 			result.SumResult = append(result.SumResult, fmt.Sprintf("Поле (%v): № ДК должен быть 0 или 1", uses.Name))
 			result.Err = errors.New("detected")
 		}
-		if uses.Dk == 0 {
+
+		if uses.Tvps == 0 {
 			if uses.Type != 0 {
-				result.SumResult = append(result.SumResult, fmt.Sprintf("Поле (%v): Если № ДК = 0 поле тип стат. должно быть 0", uses.Name))
-				result.Err = errors.New("detected")
-			}
-			if uses.Type != 0 {
-				result.SumResult = append(result.SumResult, fmt.Sprintf("Поле (%v): Если № ДК = 0 ТВП1,2, МГР, ВПУ должно быть 0", uses.Name))
+				result.SumResult = append(result.SumResult, fmt.Sprintf("Поле (%v): Если № ТВП = 0 поле тип стат. должно быть 0", uses.Name))
 				result.Err = errors.New("detected")
 			}
 			if uses.Long != 0 {
-				result.SumResult = append(result.SumResult, fmt.Sprintf("Поле (%v):Если № ДК = 0 интервала должен быть 0", uses.Name))
+				result.SumResult = append(result.SumResult, fmt.Sprintf("Поле (%v):Если № ТВП = 0 интервала должен быть 0", uses.Name))
 				result.Err = errors.New("detected")
 			}
 			uses.Fazes = strings.TrimSpace(uses.Fazes)
 			if uses.Fazes != "" {
-				result.SumResult = append(result.SumResult, fmt.Sprintf("Поле (%v): Если № ДК = 0 значение фазы должна быть пустая строка", uses.Name))
+				result.SumResult = append(result.SumResult, fmt.Sprintf("Поле (%v): Если № ТВП = 0 значение фазы должна быть пустая строка", uses.Name))
 				result.Err = errors.New("detected")
 			}
 		}
-		if uses.Dk == 1 {
+
+		if uses.Tvps > 0 {
 			if uses.Long < 0 {
 				result.SumResult = append(result.SumResult, fmt.Sprintf("Поле (%v): Интервал должен быть ноль или больше", uses.Name))
 				result.Err = errors.New("detected")

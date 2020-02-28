@@ -154,6 +154,15 @@ var ControlDeleteButton = func(w http.ResponseWriter, r *http.Request) {
 	u.Respond(w, r, resp)
 }
 
+var ControlTestState = func(w http.ResponseWriter, r *http.Request) {
+	flag, resp := FuncAccessCheck(w, r, "ControlTestState")
+	if flag {
+		mapContx := u.ParserInterface(r.Context().Value("info"))
+		resp = data.TestCrossStateData(mapContx)
+	}
+	u.Respond(w, r, resp)
+}
+
 //queryParser разбор URL строки
 func queryParser(w http.ResponseWriter, r *http.Request) (region, area string, ID int, err error) {
 	if len(r.URL.RawQuery) <= 0 {
