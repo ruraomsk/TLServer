@@ -94,8 +94,7 @@ func StartServer() {
 
 	//------------------------------------------------------------------------------------------------------------------
 	// Запуск HTTP сервера
-	// if err = http.ListenAndServe(os.Getenv("server_ip"), handlers.LoggingHandler(os.Stdout, router)); err != nil {
-	if err = http.ListenAndServeTLS(os.Getenv("server_ip"), "domain.crt", "domain.key", handlers.LoggingHandler(os.Stdout, router)); err != nil {
+	if err = http.ListenAndServeTLS(os.Getenv("server_ip1"), "domain.crt", "domain.key", handlers.LoggingHandler(os.Stdout, router)); err != nil {
 		logger.Error.Println("|Message: Server can't started: ", err.Error())
 		fmt.Println("Server can't started ", err.Error())
 	}

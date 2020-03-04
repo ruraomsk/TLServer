@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Рабочее место</title>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+    <link href="https://unpkg.com/bootstrap-table@1.15.5/dist/bootstrap-table.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.0.4/popper.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://code.jquery.com/jquery-migrate-3.1.0.js"></script>
+    <!--            <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>-->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+    <script src="https://unpkg.com/bootstrap-table@1.15.5/dist/bootstrap-table.min.js"></script>
+    <script src="/static/log.js" type="text/javascript"></script>
+    <link rel="icon" type="image/svg" href="/static/trafficlight.svg">
+</head>
+
+<body>
+<div class="container-fluid mt-2">
+    <div class="row" id="logs">
+    </div>
+    <div class="row w-100">
+        <div class="col-md-11" id="logsTable">
+            <table class="table table-bordered"
+                   id="table"
+                   data-show-columns="true"
+                   data-search="true"
+                   data-show-jump-to="true"
+                   data-toggle="table"
+                   data-height="900">
+                <thead>
+                <tr>
+                    <th data-field="type" data-sortable="true">Тип</th>
+                    <th data-field="time" data-sortable="true">Время</th>
+                    <th data-field="IP" data-sortable="true">IP</th>
+                    <th data-field="login" data-sortable="true">Логин</th>
+                    <th data-field="resource" data-sortable="true">Ресурс</th>
+                    <th data-field="message" data-sortable="true">Сообщение</th>
+                </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+        <div class="col-md-1">
+        </div>
+    </div>
+</div>
+</body>
+
+</html>
