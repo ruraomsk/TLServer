@@ -11,4 +11,4 @@ domain.*
 domain.crt
 domain.csr
 domain.key
-frontend
+frontend/*
