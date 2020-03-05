@@ -2,12 +2,11 @@ package data
 
 import (
 	"fmt"
-	"os"
-	"strconv"
-
 	"github.com/JanFant/TLServer/logger"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"os"
+	"strconv"
 )
 
 var (

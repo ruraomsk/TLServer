@@ -200,11 +200,15 @@ func DeleteCrossData(state agS_pudge.Cross, mapContx map[string]string) map[stri
 
 func TestCrossStateData(mapContx map[string]string) map[string]interface{} {
 	var (
-		stateSql string
+		stateSql  string
 		stateInfo []BusyArm
 		state     BusyArm
 	)
-	sqlStr := fmt.Sprintf(`SELECT state FROM %v`, os.Getenv("gis_table"))
+	sqlStr := fmt.Sprintf(`SELECT state FROM %v `, os.Getenv("gis_table"))
+	if mapContx["region"] != "*" {
+		sqlStr += fmt.Sprintf(`where region = %v `, mapContx["region"])
+	}
+	sqlStr += "order by describ"
 	rows, err := GetDB().Raw(sqlStr).Rows()
 	if err != nil {
 		resp := u.Message(false, "Server not respond")
