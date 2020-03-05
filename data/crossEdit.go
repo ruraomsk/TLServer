@@ -2,10 +2,11 @@ package data
 
 import (
 	"fmt"
-	u "github.com/JanFant/TLServer/utils"
 	"os"
 	"sync"
 	"time"
+
+	u "github.com/JanFant/TLServer/utils"
 )
 
 //BusyArmInfo глобальная переменная для управления
@@ -80,7 +81,7 @@ func FreeCrossEdit(busyArm BusyArms) map[string]interface{} {
 		edit.Kick = true
 		BusyArmInfo.mapBusyArm[arm] = edit
 	}
-	resp := u.Message(true, "Release task were sent")
+	resp := u.Message(true, "Release task was sent")
 	return resp
 }
 

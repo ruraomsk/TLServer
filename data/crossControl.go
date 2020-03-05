@@ -200,8 +200,7 @@ func DeleteCrossData(state agS_pudge.Cross, mapContx map[string]string) map[stri
 
 func TestCrossStateData(mapContx map[string]string) map[string]interface{} {
 	var (
-		stateSql  string
-		verif     stateVerified.StateResult
+		stateSql string
 		stateInfo []BusyArm
 		state     BusyArm
 	)
@@ -218,6 +217,7 @@ func TestCrossStateData(mapContx map[string]string) map[string]interface{} {
 			logger.Error.Println("|Message: Failed to parse cross information: ", err.Error())
 			return u.Message(false, "Failed to parse cross information")
 		}
+		var verif stateVerified.StateResult
 		verifiedState(&testState, &verif)
 		if verif.Err != nil {
 			state.ID = testState.ID

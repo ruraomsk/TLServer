@@ -53,7 +53,6 @@ func StartServer() {
 	subRout.HandleFunc("/{slug}/cross/control/checkButton", whandlers.ControlCheckButton).Methods("POST")   //обработчик проверки данных
 	subRout.HandleFunc("/{slug}/cross/control/createButton", whandlers.ControlCreateButton).Methods("POST") //обработчик создания перекрестка
 	subRout.HandleFunc("/{slug}/cross/control/deleteButton", whandlers.ControlDeleteButton).Methods("POST") //обработчик обработчик удаления перекрсетка
-	subRout.HandleFunc("/{slug}/cross/control/stateTest", whandlers.ControlTestState).Methods("POST")       //обработчик проверки всего State
 
 	subRout.HandleFunc("/{slug}/manage", func(w http.ResponseWriter, r *http.Request) { //обработка создание и редактирования пользователя (страничка)
 		http.ServeFile(w, r, resourcePath+"/manage.html")
@@ -68,6 +67,12 @@ func StartServer() {
 	}).Methods("GET")
 	subRout.HandleFunc("/{slug}/manage/crossEditControl", whandlers.CrossEditInfo).Methods("POST")      //обработчик по управлению занятых перекрестков
 	subRout.HandleFunc("/{slug}/manage/crossEditControl/free", whandlers.CrossEditFree).Methods("POST") //обработчик по управлению освобождению перекрестка
+
+	subRout.HandleFunc("/{slug}/manage/stateTest", func(w http.ResponseWriter, r *http.Request) { //обработчик проверки всего State (страничка)
+		http.ServeFile(w, r, resourcePath+"/stateTest.html")
+	}).Methods("GET")
+	subRout.HandleFunc("/{slug}/manage/stateTest", whandlers.ControlTestState).Methods("POST") //обработчик проверки всего State
+
 	subRout.HandleFunc("/{slug}/manage/log", func(w http.ResponseWriter, r *http.Request) { //обработка лог файлов (страничка)
 		http.ServeFile(w, r, resourcePath+"/log.html")
 	}).Methods("GET")
