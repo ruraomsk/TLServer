@@ -1,0 +1,36 @@
+#TOML doc :D
+
+title = "config"
+logger_path = "D://Space//logger"
+views_path = "C://Users//Ivan//go//src//github.com//JanFant//TLServer//views"
+resourcePath = "C://Users//Ivan//go//src//github.com//JanFant//TLServer//frontend"
+server_ip = "192.168.1.2:8082"
+server_ip1 = ":8082"
+tcpServerAddress = "192.168.1.1"
+portState = ":2002"
+portArmCommand = ":2001"
+
+
+ya_key = "65162f5f-2d15-41d1-a881-6c1acf34cfa1"
+token_password = "123456789"
+
+#настройки для постгреса
+[database]
+db_name = "agserv"
+db_password = "162747"
+db_user = "postgres"
+db_type = "postgres"
+db_host = "192.168.1.1"
+db_port = "5432"
+db_SetMaxOpenConst = 50
+db_SetMaxIdleConst = 10
+
+gis_table = "public.cross"
+region_table = "public.region"
+devices_table = "public.devices"
+
+#настройки для работы с каталогами перекрестков
+[picture]
+png_sizeX = 450
+png_sizeY = 450
+png_Z = 19

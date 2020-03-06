@@ -2,6 +2,7 @@
 *.pem
 .rnd
 .env
+config.toml
 *debug_bin
 views/TLsost.js
 views/*
