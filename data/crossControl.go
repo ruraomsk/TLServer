@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -23,7 +22,7 @@ func ControlGetCrossInfo(TLignt TrafficLights, mapContx map[string]string) map[s
 		sqlStr   string
 		StateStr string
 	)
-	sqlStr = fmt.Sprintf("select area, subarea, idevice, dgis, describ, state from %v where region = %v and id = %v and area = %v", os.Getenv("gis_table"), TLignt.Region.Num, TLignt.ID, TLignt.Area.Num)
+	sqlStr = fmt.Sprintf("select area, subarea, idevice, dgis, describ, state from %v where region = %v and id = %v and area = %v", GlobalConfig.DBConfig.GisTable, TLignt.Region.Num, TLignt.ID, TLignt.Area.Num)
 	rowsTL := GetDB().Raw(sqlStr).Row()
 	err := rowsTL.Scan(&TLignt.Area.Num, &TLignt.Subarea, &TLignt.Idevice, &dgis, &TLignt.Description, &StateStr)
 	if err != nil {
@@ -137,7 +136,7 @@ func CreateCrossData(state agS_pudge.Cross, mapContx map[string]string) map[stri
 		err          error
 		stateSql     string
 	)
-	sqlStr := fmt.Sprintf(`SELECT state FROM %v where state::jsonb @> '{"idevice":%v}'::jsonb or (region = %v and area = %v and id = %v)`, os.Getenv("gis_table"), state.IDevice, state.Region, state.Area, state.ID)
+	sqlStr := fmt.Sprintf(`SELECT state FROM %v where state::jsonb @> '{"idevice":%v}'::jsonb or (region = %v and area = %v and id = %v)`, GlobalConfig.DBConfig.GisTable, state.IDevice, state.Region, state.Area, state.ID)
 	rows, err := GetDB().Raw(sqlStr).Rows()
 	if err != nil {
 		resp := u.Message(false, "Server not respond")
@@ -204,7 +203,7 @@ func TestCrossStateData(mapContx map[string]string) map[string]interface{} {
 		stateInfo []BusyArm
 		state     BusyArm
 	)
-	sqlStr := fmt.Sprintf(`SELECT state FROM %v `, os.Getenv("gis_table"))
+	sqlStr := fmt.Sprintf(`SELECT state FROM %v `, GlobalConfig.DBConfig.GisTable)
 	if mapContx["region"] != "*" {
 		sqlStr += fmt.Sprintf(`where region = %v `, mapContx["region"])
 	}

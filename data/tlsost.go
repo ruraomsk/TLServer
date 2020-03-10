@@ -7,7 +7,6 @@ import (
 	"github.com/JanFant/TLServer/logger"
 	u "github.com/JanFant/TLServer/utils"
 	agS_pudge "github.com/ruraomsk/ag-server/pudge"
-	"os"
 )
 
 //TrafficLights информация о светофоре
@@ -66,9 +65,9 @@ func SelectTL(point0 Point, point1 Point, equalPoint bool) (tfdata []TrafficLigh
 
 	temp := &TrafficLights{}
 	if equalPoint {
-		sqlStr = fmt.Sprintf("select region, area, subarea, id, idevice, dgis, describ, state from %s", os.Getenv("gis_table"))
+		sqlStr = fmt.Sprintf("select region, area, subarea, id, idevice, dgis, describ, state from %s", GlobalConfig.DBConfig.GisTable)
 	} else {
-		sqlStr = fmt.Sprintf("select region, area, subarea, id, idevice, dgis, describ, state from %s where box '((%3.15f,%3.15f),(%3.15f,%3.15f))'@> dgis", os.Getenv("gis_table"), point0.Y, point0.X, point1.Y, point1.X)
+		sqlStr = fmt.Sprintf("select region, area, subarea, id, idevice, dgis, describ, state from %s where box '((%3.15f,%3.15f),(%3.15f,%3.15f))'@> dgis", GlobalConfig.DBConfig.GisTable, point0.Y, point0.X, point1.Y, point1.X)
 	}
 	rowsTL, _ := GetDB().Raw(sqlStr).Rows()
 	for rowsTL.Next() {
@@ -100,7 +99,7 @@ func SelectTL(point0 Point, point1 Point, equalPoint bool) (tfdata []TrafficLigh
 func GetAllTrafficLights() (tfData []TrafficLights) {
 	var dgis string
 	temp := &TrafficLights{}
-	sqlquery := fmt.Sprintf("select region, id, area, dgis, describ from %s", os.Getenv("gis_table"))
+	sqlquery := fmt.Sprintf("select region, id, area, dgis, describ from %s", GlobalConfig.DBConfig.GisTable)
 	rows, _ := GetDB().Raw(sqlquery).Rows()
 	for rows.Next() {
 		_ = rows.Scan(&temp.Region.Num, &temp.ID, &temp.Area.Num, &dgis, &temp.Description)
@@ -135,7 +134,7 @@ func GetCrossInfo(TLignt TrafficLights) map[string]interface{} {
 		devStr   string
 	)
 
-	sqlStr = fmt.Sprintf("select area, subarea, idevice, dgis, describ, state from %v where region = %v and id = %v and area = %v", os.Getenv("gis_table"), TLignt.Region.Num, TLignt.ID, TLignt.Area.Num)
+	sqlStr = fmt.Sprintf("select area, subarea, idevice, dgis, describ, state from %v where region = %v and id = %v and area = %v", GlobalConfig.DBConfig.GisTable, TLignt.Region.Num, TLignt.ID, TLignt.Area.Num)
 	rowsTL := GetDB().Raw(sqlStr).Row()
 	err := rowsTL.Scan(&TLignt.Area.Num, &TLignt.Subarea, &TLignt.Idevice, &dgis, &TLignt.Description, &stateStr)
 	if err != nil {
@@ -152,7 +151,7 @@ func GetCrossInfo(TLignt TrafficLights) map[string]interface{} {
 
 	resp := u.Message(true, "Cross information")
 
-	sqlStr = fmt.Sprintf("select device from %v where id = %v", os.Getenv("devices_table"), TLignt.Idevice)
+	sqlStr = fmt.Sprintf("select device from %v where id = %v", GlobalConfig.DBConfig.DevicesTable, TLignt.Idevice)
 	rowDev := GetDB().Raw(sqlStr).Row()
 	err = rowDev.Scan(&devStr)
 	if err != nil {

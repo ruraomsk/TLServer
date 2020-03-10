@@ -5,7 +5,6 @@ import (
 	"github.com/JanFant/TLServer/logger"
 	u "github.com/JanFant/TLServer/utils"
 	"io/ioutil"
-	"os"
 	"strings"
 )
 
@@ -23,7 +22,7 @@ var logFileSuffix = ".log"
 
 //DisplayLogFiles отображения всех лог файлов в каталоге
 func DisplayLogFiles() map[string]interface{} {
-	files, err := ioutil.ReadDir(os.Getenv("logger_path"))
+	files, err := ioutil.ReadDir(GlobalConfig.LoggerPath)
 	if err != nil {
 		logger.Error.Println("|Message: Error reading directory with log files")
 		resp := u.Message(false, "Log dir can't open")
@@ -40,7 +39,7 @@ func DisplayLogFiles() map[string]interface{} {
 
 //DisplayFileLog получение данных из заданного файла
 func DisplayFileLog(fileName string, mapContex map[string]string) map[string]interface{} {
-	path := os.Getenv("logger_path") + "//" + fileName + logFileSuffix
+	path := GlobalConfig.LoggerPath + "//" + fileName + logFileSuffix
 	byteFile, err := ioutil.ReadFile(path)
 	if err != nil {
 		logger.Error.Println("|Message: Error reading directory with log files")

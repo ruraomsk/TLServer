@@ -2,7 +2,6 @@ package data
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 )
@@ -52,7 +51,7 @@ func (points *Point) StrToFloat(str string) {
 //TakePointFromBD запрос координат перекрестка из БД
 func TakePointFromBD(numRegion, numArea, numID string) (point Point, err error) {
 	var dgis string
-	sqlStr := fmt.Sprintf("select dgis from %s where region = %v and area = %v and id = %v", os.Getenv("gis_table"), numRegion, numArea, numID)
+	sqlStr := fmt.Sprintf("select dgis from %s where region = %v and area = %v and id = %v", GlobalConfig.DBConfig.GisTable, numRegion, numArea, numID)
 	rowsTL := GetDB().Raw(sqlStr).Row()
 	err = rowsTL.Scan(&dgis)
 	if err != nil {

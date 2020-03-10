@@ -8,7 +8,6 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
-	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -71,8 +70,7 @@ func Login(login, password, ip string) map[string]interface{} {
 	tk.ExpiresAt = time.Now().Add(time.Hour * account.WTime).Unix()
 
 	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tk)
-
-	tokenString, _ := token.SignedString([]byte(os.Getenv("token_password")))
+	tokenString, _ := token.SignedString([]byte(GlobalConfig.TokenPassword))
 	account.Token = tokenString
 	//сохраняем токен в БД чтобы точно знать что дейтвителен только 1 токен
 	GetDB().Exec("update public.accounts set token = ? where login = ?", account.Token, account.Login)
@@ -124,7 +122,7 @@ func (account *Account) Create(privilege Privilege) map[string]interface{} {
 		return resp
 	}
 	//Отдаем ключ для yandex map
-	account.YaMapKey = os.Getenv("ya_key")
+	account.YaMapKey = GlobalConfig.YaKey
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(account.Password), bcrypt.DefaultCost)
 	account.Password = string(hashedPassword)
 	GetDB().Table("accounts").Create(account)
@@ -254,7 +252,7 @@ func SuperCreate() (err error) {
 	account := &Account{}
 	account.Login = "Super"
 	//Отдаем ключ для yandex map
-	account.YaMapKey = os.Getenv("ya_key")
+	account.YaMapKey = GlobalConfig.YaKey
 	account.WTime = 24
 	account.Password = "$2a$10$ZCWyIEfEVF3KGj6OUtIeSOQ3WexMjuAZ43VSO6T.QqOndn4HN1J6C"
 	privilege := Privilege{}
@@ -269,7 +267,7 @@ func SuperCreate() (err error) {
 	account = &Account{}
 	account.Login = "Moscow"
 	//Отдаем ключ для yandex map
-	account.YaMapKey = os.Getenv("ya_key")
+	account.YaMapKey = GlobalConfig.YaKey
 	account.WTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = Privilege{}
@@ -283,7 +281,7 @@ func SuperCreate() (err error) {
 	account = &Account{}
 	account.Login = "Sachalin"
 	//Отдаем ключ для yandex map
-	account.YaMapKey = os.Getenv("ya_key")
+	account.YaMapKey = GlobalConfig.YaKey
 	account.WTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = Privilege{}
@@ -297,7 +295,7 @@ func SuperCreate() (err error) {
 	account = &Account{}
 	account.Login = "Cykotka"
 	//Отдаем ключ для yandex map
-	account.YaMapKey = os.Getenv("ya_key")
+	account.YaMapKey = GlobalConfig.YaKey
 	account.WTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = Privilege{}
@@ -311,7 +309,7 @@ func SuperCreate() (err error) {
 	account = &Account{}
 	account.Login = "All"
 	//Отдаем ключ для yandex map
-	account.YaMapKey = os.Getenv("ya_key")
+	account.YaMapKey = GlobalConfig.YaKey
 	account.WTime = 1000
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = Privilege{}
@@ -325,7 +323,7 @@ func SuperCreate() (err error) {
 	account = &Account{}
 	account.Login = "Rura"
 	//Отдаем ключ для yandex map
-	account.YaMapKey = os.Getenv("ya_key")
+	account.YaMapKey = GlobalConfig.YaKey
 	account.WTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = Privilege{}
@@ -339,7 +337,7 @@ func SuperCreate() (err error) {
 	account = &Account{}
 	account.Login = "MMM"
 	//Отдаем ключ для yandex map
-	account.YaMapKey = os.Getenv("ya_key")
+	account.YaMapKey = GlobalConfig.YaKey
 	account.WTime = 10000
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = Privilege{}
@@ -353,7 +351,7 @@ func SuperCreate() (err error) {
 	account = &Account{}
 	account.Login = "Admin"
 	//Отдаем ключ для yandex map
-	account.YaMapKey = os.Getenv("ya_key")
+	account.YaMapKey = GlobalConfig.YaKey
 	account.WTime = 10000
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = Privilege{}
@@ -367,7 +365,7 @@ func SuperCreate() (err error) {
 	account = &Account{}
 	account.Login = "RegAdmin"
 	//Отдаем ключ для yandex map
-	account.YaMapKey = os.Getenv("ya_key")
+	account.YaMapKey = GlobalConfig.YaKey
 	account.WTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = Privilege{}
@@ -381,7 +379,7 @@ func SuperCreate() (err error) {
 	account = &Account{}
 	account.Login = "User"
 	//Отдаем ключ для yandex map
-	account.YaMapKey = os.Getenv("ya_key")
+	account.YaMapKey = GlobalConfig.YaKey
 	account.WTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = Privilege{}
@@ -395,7 +393,7 @@ func SuperCreate() (err error) {
 	account = &Account{}
 	account.Login = "Viewer"
 	//Отдаем ключ для yandex map
-	account.YaMapKey = os.Getenv("ya_key")
+	account.YaMapKey = GlobalConfig.YaKey
 	account.WTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = Privilege{}

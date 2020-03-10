@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"sync"
 	"time"
 
@@ -81,7 +80,7 @@ func CacheInfoDataUpdate() {
 func GetRegionInfo() (region map[string]string, area map[string]map[string]string, err error) {
 	region = make(map[string]string)
 	area = make(map[string]map[string]string)
-	sqlStr := fmt.Sprintf("select region, nameregion, area, namearea from %s", os.Getenv("region_table"))
+	sqlStr := fmt.Sprintf("select region, nameregion, area, namearea from %s", GlobalConfig.DBConfig.RegionTable)
 	rows, err := GetDB().Raw(sqlStr).Rows()
 	if err != nil {
 		return CacheInfo.mapRegion, CacheInfo.mapArea, err

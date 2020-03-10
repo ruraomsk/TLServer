@@ -2,6 +2,7 @@ package routes
 
 import (
 	"fmt"
+	"github.com/JanFant/TLServer/data"
 	"github.com/JanFant/TLServer/logger"
 	"github.com/JanFant/TLServer/whandlers"
 	"github.com/gorilla/handlers"
@@ -14,7 +15,7 @@ var err error
 
 //StartServer запуск сервера
 func StartServer() {
-	resourcePath := os.Getenv("resourcePath")
+	resourcePath := data.GlobalConfig.ResourcePath
 	// Создаем новый ServeMux для HTTPS соединений
 	router := mux.NewRouter()
 	//основной обработчик
@@ -99,7 +100,7 @@ func StartServer() {
 
 	//------------------------------------------------------------------------------------------------------------------
 	// Запуск HTTP сервера
-	if err = http.ListenAndServeTLS(os.Getenv("server_ip1"), "domain.crt", "domain.key", handlers.LoggingHandler(os.Stdout, router)); err != nil {
+	if err = http.ListenAndServeTLS(data.GlobalConfig.ServerIP, "domain.crt", "domain.key", handlers.LoggingHandler(os.Stdout, router)); err != nil {
 		logger.Error.Println("|Message: Server can't started: ", err.Error())
 		fmt.Println("Server can't started ", err.Error())
 	}

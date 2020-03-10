@@ -27,9 +27,9 @@ type CheckData struct {
 
 //PngSettings настройки размеров создаваемой map.png
 type PngSettings struct {
-	SizeX string `json:"sizeX"` //размер картинки по координате X
-	SizeY string `json:"sizeY"` //размер картинки по координате Y
-	Z     string `json:"z"`     //величина отдаление
+	SizeX int `json:"sizeX",toml:"png_sizeX"` //размер картинки по координате X
+	SizeY int `json:"sizeY",toml:"png_sizeY"` //размер картинки по координате Y
+	Z     int `json:"z",toml:"png_Z"`         //величина отдаление
 }
 
 //setStatusTrue установить значение в True
@@ -46,9 +46,9 @@ func (checkData *CheckData) setStatusFalse() {
 
 //stockData заполняет поля из env файла
 func (set *PngSettings) stockData() {
-	set.SizeX = os.Getenv("png_sizeX")
-	set.SizeY = os.Getenv("png_sizeY")
-	set.Z = os.Getenv("png_Z")
+	set.SizeX = GlobalConfig.PngSettings.SizeX
+	set.SizeY = GlobalConfig.PngSettings.SizeY
+	set.Z = GlobalConfig.PngSettings.Z
 }
 
 //MainCrossCreator формираю необходимые данные для начальной странички с деревом
@@ -92,7 +92,7 @@ func MainCrossCreator() map[string]interface{} {
 func CheckCrossDirFromBD() map[string]interface{} {
 	//CacheInfoDataUpdate()
 	tfData := GetAllTrafficLights()
-	path := os.Getenv("views_path") + "//cross"
+	path := GlobalConfig.ViewsPath + "//cross"
 	var tempTF []TrafficLights
 	for _, tfLight := range tfData {
 		_, err1 := os.Stat(path + fmt.Sprintf("//%v//%v//%v//map.png", tfLight.Region.Num, tfLight.Area.Num, tfLight.ID))
@@ -108,7 +108,7 @@ func CheckCrossDirFromBD() map[string]interface{} {
 
 //CheckCrossFileSelected проверяет региона/районы/перекрестки которые запросил пользователь
 func CheckCrossFileSelected(selectedData map[string]map[string][]CheckData) map[string]interface{} {
-	path := os.Getenv("views_path") + "//cross"
+	path := GlobalConfig.ViewsPath + "//cross"
 	for numFirst, firstMap := range selectedData {
 		for numSecond, secondMap := range firstMap {
 			for numCheck, check := range secondMap {
@@ -134,12 +134,12 @@ func MakeSelectedDir(selData SelectedData) map[string]interface{} {
 		message []string
 		count   = 0
 	)
-	sizeX, _ := strconv.Atoi(selData.PngSettings.SizeX)
-	sizeY, _ := strconv.Atoi(selData.PngSettings.SizeY)
-	if selData.PngSettings.SizeX == "" || selData.PngSettings.SizeY == "" || selData.PngSettings.Z == "" || sizeX > 450 || sizeX < 0 || sizeY < 0 || sizeY > 450 {
+	sizeX := selData.PngSettings.SizeX
+	sizeY := selData.PngSettings.SizeY
+	if selData.PngSettings.SizeX == 0 || selData.PngSettings.SizeY == 0 || selData.PngSettings.Z == 0 || sizeX > 450 || sizeX < 0 || sizeY < 0 || sizeY > 450 {
 		selData.PngSettings.stockData()
 	}
-	path := os.Getenv("views_path") + "//cross"
+	path := GlobalConfig.ViewsPath + "//cross"
 	for numFirst, firstMap := range selData.SelectedData {
 		for numSecond, secondMap := range firstMap {
 			for numCheck, check := range secondMap {
@@ -188,7 +188,7 @@ func ShortCreateDirPng(region, area, id int, pointStr string) bool {
 	)
 	pngSettings.stockData()
 	point.StrToFloat(pointStr)
-	path := os.Getenv("views_path") + "//cross"
+	path := GlobalConfig.ViewsPath + "//cross"
 	_ = os.MkdirAll(path+fmt.Sprintf("//%v//%v//%v", region, area, id), os.ModePerm)
 	err := createPng(strconv.Itoa(region), strconv.Itoa(area), strconv.Itoa(id), pngSettings, point)
 	if err != nil {
@@ -234,7 +234,7 @@ func createPng(numReg, numArea, id string, settings PngSettings, point Point) (e
 		return err
 	}
 	defer response.Body.Close()
-	filePath := os.Getenv("views_path") + "//cross" + "//" + numReg + "//" + numArea + "//" + id + "//"
+	filePath := GlobalConfig.ViewsPath + "//cross" + "//" + numReg + "//" + numArea + "//" + id + "//"
 	//open a file for writing
 	file, err := os.Create(filePath + "map.png")
 	if err != nil {

@@ -8,7 +8,6 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	"net/http"
-	"os"
 	"strings"
 )
 
@@ -47,7 +46,7 @@ var JwtAuth = func(next http.Handler) http.Handler {
 		tk := &data.Token{}
 
 		token, err := jwt.ParseWithClaims(tokenSTR, tk, func(token *jwt.Token) (interface{}, error) {
-			return []byte(os.Getenv("token_password")), nil
+			return []byte(data.GlobalConfig.TokenPassword), nil
 		})
 
 		//не правильный токен возвращаем ошибку с кодом 403
@@ -152,7 +151,7 @@ var JwtFile = func(next http.Handler) http.Handler {
 		tk := &data.Token{}
 
 		token, err := jwt.ParseWithClaims(tokenSTR, tk, func(token *jwt.Token) (interface{}, error) {
-			return []byte(os.Getenv("token_password")), nil
+			return []byte(data.GlobalConfig.TokenPassword), nil
 		})
 
 		//не правильный токен возвращаем ошибку с кодом 403

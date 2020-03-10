@@ -2,27 +2,27 @@ package main
 
 import (
 	"fmt"
+	"github.com/BurntSushi/toml"
 	"github.com/JanFant/TLServer/data"
 	"github.com/JanFant/TLServer/logger"
 	"github.com/JanFant/TLServer/routes"
 	"github.com/JanFant/TLServer/tcpConnect"
-	"github.com/joho/godotenv"
-	"os"
 )
 
 var err error
 
 func init() {
 	//Начало работы, читаем настроечный фаил
-	if err = godotenv.Load(); err != nil {
-		fmt.Println("Can't load enc file - ", err.Error())
-
+	data.GlobalConfig = data.NewConfig()
+	if _, err := toml.DecodeFile("config.toml", &data.GlobalConfig); err != nil {
+		fmt.Println("Can't load config file - ", err.Error())
 	}
+
 }
 
 func main() {
 	//Загружаем модуль логирования
-	if err = logger.Init(os.Getenv("logger_path")); err != nil {
+	if err = logger.Init(data.GlobalConfig.LoggerPath); err != nil {
 		fmt.Println("Error opening logger subsystem ", err.Error())
 		return
 	}
@@ -40,7 +40,7 @@ func main() {
 
 	//раз в час обновляем данные регионов, и состояний
 	go data.CacheDataUpdate()
-	tcpConnect.TCPClientStart()
+	tcpConnect.TCPClientStart(data.GlobalConfig.TCPConfig)
 	//----------------------------------------------------------------------
 
 	//запуск сервера

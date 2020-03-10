@@ -2,7 +2,6 @@ package tcpConnect
 
 import (
 	"net"
-	"os"
 	"time"
 
 	"github.com/JanFant/TLServer/logger"
@@ -23,6 +22,23 @@ type ArmCommandMessage struct {
 	Message    string //информация о результате передачи данных
 }
 
+//TCPConfig настройки для тсп соединения
+type TCPConfig struct {
+	ServerAddr  string `toml:"tcpServerAddress"`
+	PortState   string `toml:"portState"`
+	PortArmComm string `toml:"portArmCommand"`
+}
+
+//getStateIP возвращает ip+port для State соединения
+func (tcpConfig *TCPConfig) getStateIP() string {
+	return tcpConfig.ServerAddr + tcpConfig.PortState
+}
+
+//getArmIP возвращает ip+port для ArmCommand соединения
+func (tcpConfig *TCPConfig) getArmIP() string {
+	return tcpConfig.ServerAddr + tcpConfig.PortArmComm
+}
+
 //StateChan канал для передачи информации связанных со state
 var StateChan = make(chan StateMessage)
 
@@ -30,9 +46,9 @@ var StateChan = make(chan StateMessage)
 var ArmCommandChan = make(chan ArmCommandMessage)
 
 //TCPClientStart запуск соединений
-func TCPClientStart() {
-	go TCPForState(os.Getenv("tcpServerAddress") + os.Getenv("portState"))
-	go TCPForARM(os.Getenv("tcpServerAddress") + os.Getenv("portArmCommand"))
+func TCPClientStart(tcpConfig TCPConfig) {
+	go TCPForState(tcpConfig.getStateIP())
+	go TCPForARM(tcpConfig.getArmIP())
 }
 
 //TCPForState для обмена с сервером данные State

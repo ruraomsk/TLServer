@@ -2,9 +2,6 @@ package data
 
 import (
 	"fmt"
-	"os"
-	"strconv"
-
 	"github.com/JanFant/TLServer/logger"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
@@ -15,6 +12,25 @@ var (
 	//FirstCreate флаг первого создания базы
 	FirstCreate bool
 )
+
+//DBConfig настройки для работы с базой данных
+type DBConfig struct {
+	Name            string `toml:"db_name"`
+	Password        string `toml:"db_password"`
+	User            string `toml:"db_user"`
+	Type            string `toml:"db_type"`
+	Host            string `toml:"db_host"`
+	Port            string `toml:"db_port"`
+	SetMaxOpenConst int    `toml:"db_SetMaxOpenConst"`
+	SetMaxIdleConst int    `toml:"db_SetMaxIdleConst"`
+	GisTable        string `toml:"gis_table"`
+	RegionTable     string `toml:"region_table"`
+	DevicesTable    string `toml:"devices_table"`
+}
+
+func (dbConfig *DBConfig) getDBurl() string {
+	return fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable password=%s", dbConfig.Host, dbConfig.User, dbConfig.Name, dbConfig.Password)
+}
 
 //ConnectDB подключение к БД
 func ConnectDB() error {
@@ -28,24 +44,16 @@ func ConnectDB() error {
 		end if;
 		end
 		$$ language plpgsql;`
-		username             = os.Getenv("db_user")
-		password             = os.Getenv("db_password")
-		dbName               = os.Getenv("db_name")
-		dbHost               = os.Getenv("db_host")
-		dbType               = os.Getenv("db_type")
-		dbURI                = fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable password=%s", dbHost, username, dbName, password)
-		dbSetMaxOpenConst, _ = strconv.Atoi(os.Getenv("db_SetMaxOpenConst"))
-		dbSetMaxIdleConst, _ = strconv.Atoi(os.Getenv("db_SetMaxIdleConst"))
 	)
 
-	conn, err := gorm.Open(dbType, dbURI)
+	conn, err := gorm.Open(GlobalConfig.DBConfig.Type, GlobalConfig.DBConfig.getDBurl())
 	if err != nil {
 		return err
 	}
 
 	db = conn
-	db.DB().SetMaxOpenConns(dbSetMaxOpenConst)
-	db.DB().SetMaxIdleConns(dbSetMaxIdleConst)
+	db.DB().SetMaxOpenConns(GlobalConfig.DBConfig.SetMaxOpenConst)
+	db.DB().SetMaxIdleConns(GlobalConfig.DBConfig.SetMaxIdleConst)
 	if !db.HasTable(Account{}) {
 		FirstCreate = true
 		logger.Info.Println("|Message: DBase: Didn't find the Accounts table, created it with SuperUser")
