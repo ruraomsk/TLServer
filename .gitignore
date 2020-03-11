@@ -2,6 +2,7 @@
 *.pem
 .rnd
 .env
+TLServer.exe
 config.toml
 *debug_bin
 views/TLsost.js

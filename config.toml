@@ -9,7 +9,7 @@ token_password = "123456789"
 
 #настройка подключения к тсп серверу обемена командами
 [tcpServer]
-tcpServerAddress = "192.168.115.16"
+tcpServerAddress = "192.168.115.115"
 portState = ":2002"
 portArmCommand = ":2001"
 
@@ -19,7 +19,7 @@ db_name = "agserv"
 db_password = "162747"
 db_user = "postgres"
 db_type = "postgres"
-db_host = "192.168.115.16"
+db_host = "192.168.115.115"
 db_port = "5432"
 db_SetMaxOpenConst = 50
 db_SetMaxIdleConst = 10
