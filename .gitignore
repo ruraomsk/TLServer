@@ -2,7 +2,6 @@
 *.pem
 .rnd
 .env
-TLServer.exe
 config.toml
 *debug_bin
 views/TLsost.js
@@ -15,3 +14,6 @@ domain.csr
 domain.key
 frontend/**
 
+TLServer.exe~
+static/
+TLServer.exe

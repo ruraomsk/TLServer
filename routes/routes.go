@@ -27,11 +27,12 @@ func StartServer() {
 		http.ServeFile(w, r, resourcePath+"/notFound.html")
 	})
 	router.HandleFunc("/login", whandlers.LoginAcc).Methods("POST") //запрос на вход в систему
-	router.HandleFunc("/test", whandlers.TestHello).Methods("POST")
+
 	//------------------------------------------------------------------------------------------------------------------
 	//обязательный общий путь
 	subRout := router.PathPrefix("/user").Subrouter()
 	subRout.Use(JwtAuth) //добавление к роутеру контроль токена
+
 	subRout.HandleFunc("/{slug}", func(w http.ResponseWriter, r *http.Request) { //работа с основной страничкой карты
 		http.ServeFile(w, r, resourcePath+"/workplace.html")
 	}).Methods("GET")
@@ -90,6 +91,7 @@ func StartServer() {
 
 	//тест просто тест!
 	subRout.HandleFunc("/{slug}/testtoken", whandlers.TestToken).Methods("POST")
+	subRout.HandleFunc("/{slug}/test", whandlers.TestHello).Methods("POST")
 	//------------------------------------------------------------------------------------------------------------------
 	//роутер для фаил сервера, он закрыт токеном, скачивать могут только авторизированные пользователи
 	fileRout := router.PathPrefix("/file").Subrouter()

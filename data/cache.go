@@ -15,11 +15,12 @@ var CacheInfo CacheData
 
 //CacheData Данные для обновления в определенный период
 type CacheData struct {
-	mux       sync.Mutex
-	mapRegion map[string]string            //регионы
-	mapArea   map[string]map[string]string //районы
-	mapTLSost map[int]string               //светофоры
-	mapRoles  map[string]Permissions       //роли
+	mux          sync.Mutex
+	mapRegion    map[string]string            //регионы
+	mapArea      map[string]map[string]string //районы
+	mapTLSost    map[int]string               //светофоры
+	mapRoles     map[string]Permissions       //роли
+	mapPermisson map[int]Permission           //привелегии
 }
 
 //RegionInfo расшифровка региона
@@ -48,6 +49,7 @@ type TLSostInfo struct {
 //CacheDataUpdate обновление данных из бд, период обновления 1 час
 func CacheDataUpdate() {
 	CacheInfo.mapRoles = make(map[string]Permissions)
+	CacheInfo.mapPermisson = make(map[int]Permission)
 	BusyArmInfo.mapBusyArm = make(map[BusyArm]EditCrossInfo)
 	for {
 		CacheInfoDataUpdate()
@@ -70,6 +72,7 @@ func CacheInfoDataUpdate() {
 	CacheInfo.mapRegion, CacheInfo.mapArea, err = GetRegionInfo()
 	CacheInfo.mapTLSost, err = getTLSost()
 	err = getRoles()
+	err = getPermissions()
 	CacheInfo.mux.Unlock()
 	if err != nil {
 		logger.Error.Println(fmt.Sprintf("|Message: Error reading data cache: %s", err.Error()))
@@ -145,6 +148,21 @@ func getRoles() (err error) {
 	for _, role := range temp.Roles {
 		if _, ok := CacheInfo.mapRoles[role.Name]; !ok {
 			CacheInfo.mapRoles[role.Name] = role.Perm
+		}
+	}
+	return err
+}
+
+//getRoles получать данны о ролях
+func getPermissions() (err error) {
+	var temp = Permissions{}
+	err = temp.ReadPermissionsFile()
+	if err != nil {
+		return err
+	}
+	for _, perm := range temp.Permissions {
+		if _, ok := CacheInfo.mapPermisson[perm.ID]; !ok {
+			CacheInfo.mapPermisson[perm.ID] = perm
 		}
 	}
 	return err

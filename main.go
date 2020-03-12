@@ -6,7 +6,6 @@ import (
 	"github.com/JanFant/TLServer/data"
 	"github.com/JanFant/TLServer/logger"
 	"github.com/JanFant/TLServer/routes"
-	"github.com/JanFant/TLServer/tcpConnect"
 )
 
 var err error
@@ -40,7 +39,7 @@ func main() {
 
 	//раз в час обновляем данные регионов, и состояний
 	go data.CacheDataUpdate()
-	tcpConnect.TCPClientStart(data.GlobalConfig.TCPConfig)
+	//tcpConnect.TCPClientStart(data.GlobalConfig.TCPConfig)
 	//----------------------------------------------------------------------
 
 	//запуск сервера

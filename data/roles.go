@@ -3,11 +3,31 @@ package data
 import (
 	"encoding/json"
 	"fmt"
-	u "github.com/JanFant/TLServer/utils"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"strings"
+
+	u "github.com/JanFant/TLServer/utils"
+	"github.com/pkg/errors"
 )
+
+//RoleAccess информация наборах ролей и полномочий
+type RoleAccess struct {
+	Roles      []NewRole    `json:"roles"`
+	Permission []Permission `json:"permissions"`
+}
+
+//NewRole массив ролей
+type NewRole struct {
+	Name string `json:"name"`        //название роли
+	Perm []int  `json:"permissions"` //массив полномочий
+}
+
+//NewPrivilege brah
+type NewPrivilege struct {
+	NewRole NewRole  `json:"role"`
+	Region  string   `json:"region"` //регион пользователя
+	Area    []string `json:"area"`   //массив районов пользователя
+}
 
 //Roles массив ролей
 type Roles struct {
@@ -238,4 +258,134 @@ func (perm *Permissions) ReadPermissionsFile() (err error) {
 		return err
 	}
 	return err
+}
+
+// ----------------------------------------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------------------------------------------------------------
+
+func (roleAccess *RoleAccess) ReadRoleAccessFile() (err error) {
+	file, err := ioutil.ReadFile(GlobalConfig.CachePath + "//RoleAccess.json")
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(file, roleAccess)
+	if err != nil {
+		return err
+	}
+	return err
+}
+
+//ToSqlStrUpdate запись привелегий в базу
+func (newPrivilege *NewPrivilege) WriteRoleInBD(login string) (err error) {
+	privilegeStr, _ := json.Marshal(newPrivilege)
+	return GetDB().Exec(fmt.Sprintf("update %s set privilege = '%s' where login = '%s'", GlobalConfig.DBConfig.AccountTable, string(privilegeStr), login)).Error
+}
+
+//ReadFromBD прочитать данные из бд и разобрать
+func (newPrivilege *NewPrivilege) ReadFromBD(login string) error {
+	var privilegeStr string
+	sqlStr := fmt.Sprintf("select privilege from %v where login = '%v'", GlobalConfig.DBConfig.AccountTable, login)
+	rowsTL := GetDB().Raw(sqlStr).Row()
+	err := rowsTL.Scan(&privilegeStr)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal([]byte(privilegeStr), newPrivilege)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func NewPrivilegeF(role, region string, area []string) *NewPrivilege {
+	var newPrivilege NewPrivilege
+	if _, ok := CacheInfo.mapRoles[role]; ok {
+		newPrivilege.NewRole.Name = role
+	} else {
+		newPrivilege.NewRole.Name = "Viewer"
+	}
+
+	temp := CacheInfo.mapRoles[newPrivilege.NewRole.Name]
+	for _, permission := range temp.Permissions {
+		newPrivilege.NewRole.Perm = append(newPrivilege.NewRole.Perm, permission.ID)
+	}
+
+	if region == "" {
+		newPrivilege.Region = "0"
+	} else {
+		newPrivilege.Region = region
+	}
+
+	if len(region) == 0 {
+		newPrivilege.Area = []string{"0"}
+	} else {
+		newPrivilege.Area = area
+	}
+
+	return &newPrivilege
+}
+
+func TestNewRoleSystem() (resp map[string]interface{}) {
+	resp = make(map[string]interface{})
+	a := RoleAccess{}
+	_ = a.ReadRoleAccessFile()
+	resp["RoleAccess"] = a
+	GetDB().Exec(fmt.Sprintf("delete from %v where login = 'TestRole'", GlobalConfig.DBConfig.AccountTable))
+
+	account := &Account{}
+	account.Login = "TestRole"
+	//Отдаем ключ для yandex map
+	account.YaMapKey = GlobalConfig.YaKey
+	account.WTime = 69
+	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
+	privilege := NewPrivilegeF("Admin", "*", []string{"*"})
+	GetDB().Table("accounts").Create(account)
+	////Записываю координаты в базу!!!
+	_ = privilege.WriteRoleInBD(account.Login)
+
+	priv2 := NewPrivilegeF("", "", []string{""})
+	_ = priv2.ReadFromBD("TestRole")
+	resp["priv1"] = priv2
+
+	privilege.NewRole.Perm = append(priv2.NewRole.Perm, 21, 22, 25)
+	_ = privilege.WriteRoleInBD("TestRole")
+
+	priv3 := NewPrivilegeF("", "", []string{""})
+	_ = priv3.ReadFromBD("TestRole")
+	resp["priv2"] = priv3
+
+	var mapContx = make(map[string]string)
+	mapContx["login"] = account.Login
+	mapContx["role"] = privilege.NewRole.Name
+
+	resp["1"], _ = NewRoleCheck(mapContx, 22)
+	resp["2"], _ = NewRoleCheck(mapContx, 43)
+	resp["3"], _ = NewRoleCheck(mapContx, 1)
+	mapContx["login"] = "1"
+	resp["4"], _ = NewRoleCheck(mapContx, 1)
+	return
+}
+
+//RoleCheck проверка полученной роли на соответствие заданной и разрешение на выполнение действия
+func NewRoleCheck(mapContx map[string]string, act int) (accept bool, err error) {
+	privilege := NewPrivilege{}
+	//Проверил соответствует ли роль которую мне дали с ролью установленной в БД
+	err = privilege.ReadFromBD(mapContx["login"])
+	if err != nil {
+		return false, err
+	}
+	if privilege.NewRole.Name != mapContx["role"] {
+		err = errors.New("Access denied")
+		return false, err
+	}
+
+	//Проверяю можно ли делать этой роле данное действие
+	for _, perm := range privilege.NewRole.Perm {
+		if perm == act {
+			return true, nil
+		}
+	}
+	err = errors.New("Access denied")
+	return false, err
 }

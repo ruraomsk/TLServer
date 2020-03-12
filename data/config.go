@@ -9,6 +9,7 @@ var GlobalConfig *Config
 type Config struct {
 	LoggerPath    string               `toml:"logger_path"`
 	ViewsPath     string               `toml:"views_path"`
+	CachePath     string               `toml:"cache_path"`
 	ResourcePath  string               `toml:"resourcePath"`
 	ServerIP      string               `toml:"server_ip"`
 	YaKey         string               `toml:"ya_key"`

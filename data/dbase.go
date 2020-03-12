@@ -25,6 +25,7 @@ type DBConfig struct {
 	SetMaxIdleConst int    `toml:"db_SetMaxIdleConst"`
 	GisTable        string `toml:"gis_table"`
 	RegionTable     string `toml:"region_table"`
+	AccountTable    string `toml:"account_table"`
 	DevicesTable    string `toml:"devices_table"`
 }
 
