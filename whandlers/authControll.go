@@ -36,7 +36,7 @@ var LoginAccOut = func(w http.ResponseWriter, r *http.Request) {
 var DisplayAccInfo = func(w http.ResponseWriter, r *http.Request) {
 	flag, resp := FuncAccessCheck(w, r, 9)
 	if flag {
-		privilege := &data.NewPrivilege{}
+		privilege := &data.Privilege{}
 		mapContx := u.ParserInterface(r.Context().Value("info"))
 		resp = privilege.DisplayInfoForAdmin(mapContx)
 	}

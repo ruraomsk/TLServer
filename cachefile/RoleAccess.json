@@ -68,62 +68,86 @@
     {
       "id": 1,
       "command": "ManageAccount",
+      "visible": false,
       "description": "Управление аккаунтами удаление, создание, обновление"
     },
     {
       "id": 2,
       "command": "ActChangePw",
+      "visible": false,
       "description": "Изменение пароля"
     },
     {
       "id": 3,
       "command": "LogInfo",
-      "description": "Проспотр логов"
+      "visible": false,
+      "description": "Просмотр логов"
     },
     {
       "id": 4,
       "command": "BuildCross",
+      "visible": false,
       "description": "Отображение перекрестков"
     },
     {
       "id": 5,
       "command": "ControlCross",
-      "description": "Управление перекрестков"
+      "visible": false,
+      "description": "Управление перекрестками"
     },
     {
       "id": 6,
       "command": "MakeTest",
+      "visible": false,
       "description": "Делать тесты"
     },
     {
       "id": 7,
       "command": "BuildMapPage",
+      "visible": false,
       "description": "Собираем данные для пользователей"
     },
     {
       "id": 8,
       "command": "UpdateMapPage",
+      "visible": false,
       "description": "Обновление информации о светофорах"
     },
     {
       "id": 9,
       "command": "DisplayAccInfo",
+      "visible": false,
       "description": "Доступ к странице manage и получение информации об аккаунтах в системе"
     },
     {
       "id": 10,
       "command": "CrossCreator",
+      "visible": false,
       "description": "Доступ к странице crossCreator"
     },
     {
       "id": 11,
       "command": "CrossEditControl",
+      "visible": false,
       "description": "Доступ к странице CrossEditControl управление занятыми перекрестками"
     },
     {
       "id": 12,
       "command": "ControlTestState",
+      "visible": false,
       "description": "Проверка State по всей базе"
+    },
+    {
+      "id": 13,
+      "command": "Brah",
+      "visible": true,
+      "description": "Visible permission 1"
+    },
+    {
+      "id": 69,
+      "command": "Brah",
+      "visible": true,
+      "description": "Visible permission 2 (brah)"
     }
   ]
 }

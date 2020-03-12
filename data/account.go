@@ -49,7 +49,7 @@ func Login(login, password, ip string) map[string]interface{} {
 	}
 
 	//Авторизировались добираем полномочия
-	privilege := NewPrivilege{}
+	privilege := Privilege{}
 	err = privilege.ReadFromBD(account.Login)
 	if err != nil {
 		// logger.Error.Println("IP: " + ip + " Login: " + login + " Message: " + "Privilege error")
@@ -63,7 +63,7 @@ func Login(login, password, ip string) map[string]interface{} {
 	}
 	//Залогинились, создаем токен
 	account.Password = ""
-	tk := &Token{UserID: account.ID, Login: account.Login, IP: ipSplit[0], Role: privilege.NewRole.Name, Region: privilege.Region}
+	tk := &Token{UserID: account.ID, Login: account.Login, IP: ipSplit[0], Role: privilege.Role.Name, Region: privilege.Region}
 	//врямя выдачи токена
 	tk.IssuedAt = time.Now().Unix()
 	//время когда закончится действие токена
@@ -117,7 +117,7 @@ func (account *Account) Validate() (map[string]interface{}, bool) {
 }
 
 //Create создание аккаунта для пользователей
-func (account *Account) Create(privilege NewPrivilege) map[string]interface{} {
+func (account *Account) Create(privilege Privilege) map[string]interface{} {
 	if resp, ok := account.Validate(); !ok {
 		return resp
 	}
@@ -129,10 +129,12 @@ func (account *Account) Create(privilege NewPrivilege) map[string]interface{} {
 	if account.ID <= 0 {
 		return u.Message(false, "Failed to create account, connection error.")
 	}
+	CacheInfo.mux.Lock()
+	privilege.Role.Perm = append(privilege.Role.Perm, CacheInfo.mapRoles[privilege.Role.Name]...)
+	CacheInfo.mux.Unlock()
 	if err := privilege.WriteRoleInBD(account.Login); err != nil {
 		return u.Message(false, "Connection to DB error. Please try again")
 	}
-	//GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
 	account.Password = ""
 	resp := u.Message(true, "Account has been created")
 	resp["login"] = account.Login
@@ -140,7 +142,10 @@ func (account *Account) Create(privilege NewPrivilege) map[string]interface{} {
 }
 
 //Update обновление данных аккаунты (привелегии, время работы)
-func (account *Account) Update(privilege NewPrivilege) map[string]interface{} {
+func (account *Account) Update(privilege Privilege) map[string]interface{} {
+	CacheInfo.mux.Lock()
+	privilege.Role.Perm = append(privilege.Role.Perm, CacheInfo.mapRoles[privilege.Role.Name]...)
+	CacheInfo.mux.Unlock()
 	privStr, _ := json.Marshal(privilege)
 	updateStr := fmt.Sprintf("update public.accounts set privilege = '%s',w_time = %d where login = '%s'", string(privStr), account.WTime, account.Login)
 	err := GetDB().Exec(updateStr).Error
@@ -182,7 +187,7 @@ func (account *Account) ChangePW() map[string]interface{} {
 func (account *Account) ParserPointsUser() (err error) {
 	var (
 		boxpoint  = BoxPoint{}
-		privilege = NewPrivilege{}
+		privilege = Privilege{}
 	)
 	err = privilege.ReadFromBD(account.Login)
 	if err != nil {

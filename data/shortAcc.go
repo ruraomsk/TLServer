@@ -19,7 +19,7 @@ type ShortAccount struct {
 	Login     string     `json:"login"`    //логин пользователя
 	Wtime     int        `json:"wtime"`    //время сеанса пользователя
 	Password  string     `json:"password"` //пароль пользователя
-	Role      string     `json:"role"`     //роль пользователя
+	Role      Role       `json:"role"`     //роль пользователя
 	Privilege string     `json:"-"`        //привелегии (не уходят на верх)
 	Region    RegionInfo `json:"region"`   //регион работы пользователя
 	Area      []AreaInfo `json:"area"`     //районы работы пользователя
@@ -32,14 +32,14 @@ type PassChange struct {
 }
 
 //ConvertShortToAcc преобразование 2х структур информации об аккаунте в одну целую
-func (shortAcc *ShortAccount) ConvertShortToAcc() (account Account, privilege NewPrivilege) {
+func (shortAcc *ShortAccount) ConvertShortToAcc() (account Account, privilege Privilege) {
 	account = Account{}
-	privilege = NewPrivilege{}
+	privilege = Privilege{}
 	account.Password = shortAcc.Password
 	account.Login = shortAcc.Login
 	account.WTime = time.Duration(shortAcc.Wtime)
 	privilege.Region = shortAcc.Region.Num
-	privilege.NewRole.Name = shortAcc.Role
+	privilege.Role = shortAcc.Role
 	for _, area := range shortAcc.Area {
 		privilege.Area = append(privilege.Area, area.Num)
 	}
@@ -62,12 +62,12 @@ func (shortAcc *ShortAccount) ValidCreate(role string, region string) (err error
 	CacheInfo.mux.Lock()
 	defer CacheInfo.mux.Unlock()
 	//проверка полученной роли
-	if _, ok := CacheInfo.mapRoles[shortAcc.Role]; !ok || shortAcc.Role == "Super" {
+	if _, ok := CacheInfo.mapRoles[shortAcc.Role.Name]; !ok || shortAcc.Role.Name == "Super" {
 		return errors.New("Role not found")
 	}
 	//проверка кто создает
 	if role == "RegAdmin" {
-		if shortAcc.Role == "Admin" || shortAcc.Role == role {
+		if shortAcc.Role.Name == "Admin" || shortAcc.Role.Name == role {
 			return errors.New("This role cannot be created")
 		}
 		if !strings.EqualFold(shortAcc.Region.Num, region) {
@@ -76,7 +76,7 @@ func (shortAcc *ShortAccount) ValidCreate(role string, region string) (err error
 	}
 	//проверка региона
 	//у всех кроме админа регион не равен 0
-	if shortAcc.Role != "Admin" {
+	if shortAcc.Role.Name != "Admin" {
 		if strings.EqualFold(shortAcc.Region.Num, "*") {
 			return errors.New("Region is incorrect")
 		}
@@ -114,7 +114,7 @@ func (shortAcc *ShortAccount) ValidDelete(role string, region string) (account *
 	}
 
 	//Авторизировались добираем полномочия
-	privilege := NewPrivilege{}
+	privilege := Privilege{}
 	err = privilege.ReadFromBD(account.Login)
 	if err != nil {
 		//logger.Info.Println("Account: Bad privilege")
@@ -122,7 +122,7 @@ func (shortAcc *ShortAccount) ValidDelete(role string, region string) (account *
 	}
 
 	if role == "RegAdmin" {
-		if privilege.NewRole.Name == "Admin" || privilege.NewRole.Name == role {
+		if privilege.Role.Name == "Admin" || privilege.Role.Name == role {
 			return nil, errors.New("This role cannot be deleted")
 		}
 		if !strings.EqualFold(privilege.Region, region) {
@@ -148,7 +148,7 @@ func (shortAcc *ShortAccount) ValidChangePW(role string, region string) (account
 	}
 	account.Password = shortAcc.Password
 	//Авторизировались добираем полномочия
-	privilege := NewPrivilege{}
+	privilege := Privilege{}
 	err = privilege.ReadFromBD(account.Login)
 	if err != nil {
 		//logger.Info.Println("Account: Bad privilege")
@@ -156,7 +156,7 @@ func (shortAcc *ShortAccount) ValidChangePW(role string, region string) (account
 	}
 
 	if role == "RegAdmin" {
-		if privilege.NewRole.Name == "Admin" || privilege.NewRole.Name == role {
+		if privilege.Role.Name == "Admin" || privilege.Role.Name == role {
 			return nil, errors.New("Cannot change the password for this user")
 		}
 		if !strings.EqualFold(shortAcc.Region.Num, region) {

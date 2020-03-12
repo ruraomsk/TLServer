@@ -12,70 +12,39 @@ import (
 
 //RoleAccess информация наборах ролей и полномочий
 type RoleAccess struct {
-	Roles      []NewRole    `json:"roles"`
+	Roles      []Role       `json:"roles"`
 	Permission []Permission `json:"permissions"`
 }
 
-//NewRole массив ролей
-type NewRole struct {
+//Role массив ролей
+type Role struct {
 	Name string `json:"name"`        //название роли
 	Perm []int  `json:"permissions"` //массив полномочий
 }
 
-//NewPrivilege brah
-type NewPrivilege struct {
-	NewRole NewRole  `json:"role"`
-	Region  string   `json:"region"` //регион пользователя
-	Area    []string `json:"area"`   //массив районов пользователя
+//Privilege brah
+type Privilege struct {
+	Role   Role     `json:"role"`
+	Region string   `json:"region"` //регион пользователя
+	Area   []string `json:"area"`   //массив районов пользователя
 }
-
-//Roles массив ролей
-//type Roles struct {
-//	Roles []Role `json:"roles"`
-//}
-
-//Role структура содержащая называние роли и ее привелегии
-//type Role struct {
-//	Name string      `json:"name"`       //название роли
-//	Perm Permissions `json:"permission"` //массив полномочий
-//}
-
-//Permissions массив полномочий
-//type Permissions struct {
-//	Permissions []Permission `json:"permissions"`
-//}
 
 //Permission структура полномойчий содержит ID, команду и описание команды
 type Permission struct {
 	ID          int    `json:"id"`          //ID порядковый номер
 	Command     string `json:"command"`     //название команды
+	Visible     bool   `json:"visible"`     //флаг отображения пользователю
 	Description string `json:"description"` //описание команды
 }
 
-//Privilege структура привилегий содержит роль, регион, и массив районов
-//type Privilege struct {
-//	Role   string   `json:"role"`   //роль пользователя
-//	Region string   `json:"region"` //регион пользователя
-//	Area   []string `json:"area"`   //массив районов пользователя
-//}
-
-//func (roles *Roles) CreateRole() (err error) {
-//	var tempRole = new(Role)
-//	var tempPermission = new(Permission)
-//	tempRole.Name = "Super"
-//	tempPermission.ID = 1
-//	tempPermission.Command = "CreateUser"
-//	tempPermission.Description = "Создание пользователя"
-//	tempRole.Perm.Permissions = append(tempRole.Perm.Permissions, *tempPermission)
-//
-//	roles.Roles = append(roles.Roles, *tempRole)
-//	file, _ := json.Marshal(roles)
-//	ioutil.WriteFile("test.json", file, os.ModePerm)
-//	return err
-//}
+//shortPermission структура полномойчий содержит ID, команду и описание команды урезанный вид для отправки пользователю
+type shortPermission struct {
+	ID          int    `json:"id"`          //ID порядковый номер
+	Description string `json:"description"` //описание команды
+}
 
 //DisplayInfoForAdmin отображение информации о пользователях для администраторов
-func (privilege *NewPrivilege) DisplayInfoForAdmin(mapContx map[string]string) map[string]interface{} {
+func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) map[string]interface{} {
 	var (
 		sqlStr   string
 		shortAcc []ShortAccount
@@ -97,20 +66,44 @@ func (privilege *NewPrivilege) DisplayInfoForAdmin(mapContx map[string]string) m
 			//logger.Info.Println("DisplayInfoForAdmin: Что-то не так с запросом", err)
 			return u.Message(false, "Display info: Bad request")
 		}
-		var tempPrivilege = NewPrivilege{}
+		var tempPrivilege = Privilege{}
 		err = tempPrivilege.ConvertToJson(tempSA.Privilege)
 		if err != nil {
 			//logger.Info.Println("DisplayInfoForAdmin: Что-то не так со строкой привилегий", err)
 			return u.Message(false, "Display info: Privilege json error")
 		}
-		tempSA.Role = tempPrivilege.NewRole.Name
+		tempSA.Role.Name = tempPrivilege.Role.Name
+
+		//выбираю привелегии которые не ключены в шаблон роли
+
+		CacheInfo.mux.Lock()
+		for _, val1 := range tempPrivilege.Role.Perm {
+			flag1, flag2 := false, false
+			for _, val2 := range CacheInfo.mapRoles[tempSA.Role.Name] {
+				if val2 == val1 {
+					flag1 = true
+					break
+				}
+			}
+			for _, val3 := range tempSA.Role.Perm {
+				if val3 == val1 {
+					flag2 = true
+					break
+				}
+			}
+			if !flag1 && !flag2 {
+				tempSA.Role.Perm = append(tempSA.Role.Perm, val1)
+			}
+		}
+		CacheInfo.mux.Unlock()
+
 		tempSA.Region.SetRegionInfo(tempPrivilege.Region)
 		for _, num := range tempPrivilege.Area {
 			tempArea := AreaInfo{}
 			tempArea.SetAreaInfo(tempSA.Region.Num, num)
 			tempSA.Area = append(tempSA.Area, tempArea)
 		}
-		if tempSA.Role != "Super" {
+		if tempSA.Role.Name != "Super" {
 			shortAcc = append(shortAcc, tempSA)
 		}
 	}
@@ -156,113 +149,34 @@ func (privilege *NewPrivilege) DisplayInfoForAdmin(mapContx map[string]string) m
 
 	//собираю в кучу районы для отображения
 	chosenArea := make(map[string]map[string]string)
-	for first, second := range CacheInfo.mapArea {
-		chosenArea[first] = make(map[string]string)
-		chosenArea[first] = second
+	for key, value := range CacheInfo.mapArea {
+		chosenArea[key] = make(map[string]string)
+		chosenArea[key] = value
 	}
 	if mapContx["role"] != "Super" {
 		delete(chosenArea, "Все регионы")
 	}
 	resp["areaInfo"] = chosenArea
 
+	//собираю в кучу разрешения без указания команд
+	chosenPermisson := make(map[int]shortPermission)
+	for key, value := range CacheInfo.mapPermisson {
+		if value.Visible {
+			var shValue shortPermission
+			shValue.transform(value)
+			chosenPermisson[key] = shValue
+		}
+	}
+	resp["permInfo"] = chosenPermisson
+
 	resp["accInfo"] = shortAcc
 	return resp
 }
 
-//RoleCheck проверка полученной роли на соответствие заданной и разрешение на выполнение действия
-//func RoleCheck(mapContx map[string]string, act string) (accept bool, err error) {
-//	privilege := Privilege{}
-//	//Проверил соответствует ли роль которую мне дали с ролью установленной в БД
-//	err = privilege.ReadFromBD(mapContx["login"])
-//	if err != nil {
-//		return false, err
-//	}
-//	if privilege.Role != mapContx["role"] {
-//		err = errors.New("Access denied")
-//		return false, err
-//	}
-//
-//	CacheInfo.mux.Lock()
-//	defer CacheInfo.mux.Unlock()
-//	//Проверяю можно ли делать этой роле данное действие
-//	for _, perm := range CacheInfo.mapRoles[mapContx["role"]].Permissions {
-//		if perm.Command == act {
-//			return true, nil
-//		}
-//	}
-//	err = errors.New("Access denied")
-//	return false, err
-//}
-
-////ReadFromBD прочитать данные из бд и разобрать
-//func (privilege *Privilege) ReadFromBD(login string) error {
-//	var privilegestr string
-//	sqlStr := fmt.Sprintf("select privilege from public.accounts where login = '%s'", login)
-//	rowsTL := GetDB().Raw(sqlStr).Row()
-//	err := rowsTL.Scan(&privilegestr)
-//	if err != nil {
-//		return err
-//	}
-//	err = json.Unmarshal([]byte(privilegestr), privilege)
-//	if err != nil {
-//		return err
-//	}
-//	return nil
-//}
-//
-////ConvertToJson преобразуем из строки в структуру
-//func (privilege *Privilege) ConvertToJson(privilegeStr string) (err error) {
-//	err = json.Unmarshal([]byte(privilegeStr), privilege)
-//	if err != nil {
-//		return err
-//	}
-//	return nil
-//}
-
-//AddPrivilege когдато нужно будет редактировать привелегии наверно...
-//func (privilege *Privilege) AddPrivilege(privilegeStr, login string) (err error) {
-//	err = json.Unmarshal([]byte(privilegeStr), privilege)
-//	if err != nil {
-//		return err
-//	}
-//	return nil
-//}
-
-//ToSqlStrUpdate запись привелегий в базу
-//func (privilege *Privilege) ToSqlStrUpdate(table, login string) string {
-//	privilegeStr, _ := json.Marshal(privilege)
-//	return fmt.Sprintf("update %s set privilege = '%s' where login = '%s'", table, string(privilegeStr), login)
-//}
-//
-////ReadRoleFile прочитать файл role.json
-//func (roles *Roles) ReadRoleFile() (err error) {
-//	file, err := ioutil.ReadFile("./cachefile/Role.json")
-//	if err != nil {
-//		return err
-//	}
-//	err = json.Unmarshal(file, roles)
-//	if err != nil {
-//		return err
-//	}
-//	return err
-//}
-//
-////ReadPermissionsFile прочитать файл permissions.json
-//func (perm *Permissions) ReadPermissionsFile() (err error) {
-//	file, err := ioutil.ReadFile("./cachefile/Permissions.json")
-//	if err != nil {
-//		return err
-//	}
-//	err = json.Unmarshal(file, perm)
-//	if err != nil {
-//		return err
-//	}
-//	return err
-//}
-
-// ----------------------------------------------------------------------------------------------------------------------------------------------
-// ----------------------------------------------------------------------------------------------------------------------------------------------
-// ----------------------------------------------------------------------------------------------------------------------------------------------
+func (shPerm *shortPermission) transform(perm Permission) {
+	shPerm.Description = perm.Description
+	shPerm.ID = perm.ID
+}
 
 func (roleAccess *RoleAccess) ReadRoleAccessFile() (err error) {
 	file, err := ioutil.ReadFile(GlobalConfig.CachePath + "//RoleAccess.json")
@@ -277,13 +191,13 @@ func (roleAccess *RoleAccess) ReadRoleAccessFile() (err error) {
 }
 
 //ToSqlStrUpdate запись привелегий в базу
-func (newPrivilege *NewPrivilege) WriteRoleInBD(login string) (err error) {
+func (newPrivilege *Privilege) WriteRoleInBD(login string) (err error) {
 	privilegeStr, _ := json.Marshal(newPrivilege)
 	return GetDB().Exec(fmt.Sprintf("update %s set privilege = '%s' where login = '%s'", GlobalConfig.DBConfig.AccountTable, string(privilegeStr), login)).Error
 }
 
 //ReadFromBD прочитать данные из бд и разобрать
-func (newPrivilege *NewPrivilege) ReadFromBD(login string) error {
+func (newPrivilege *Privilege) ReadFromBD(login string) error {
 	var privilegeStr string
 	sqlStr := fmt.Sprintf("select privilege from %v where login = '%v'", GlobalConfig.DBConfig.AccountTable, login)
 	rowsTL := GetDB().Raw(sqlStr).Row()
@@ -299,7 +213,7 @@ func (newPrivilege *NewPrivilege) ReadFromBD(login string) error {
 }
 
 //ConvertToJson из строки в структуру
-func (newPrivilege *NewPrivilege) ConvertToJson(privilegeStr string) (err error) {
+func (newPrivilege *Privilege) ConvertToJson(privilegeStr string) (err error) {
 	err = json.Unmarshal([]byte(privilegeStr), newPrivilege)
 	if err != nil {
 		return err
@@ -307,16 +221,16 @@ func (newPrivilege *NewPrivilege) ConvertToJson(privilegeStr string) (err error)
 	return nil
 }
 
-func NewPrivilegeF(role, region string, area []string) *NewPrivilege {
-	var newPrivilege NewPrivilege
+func NewPrivilegeF(role, region string, area []string) *Privilege {
+	var newPrivilege Privilege
 	if _, ok := CacheInfo.mapRoles[role]; ok {
-		newPrivilege.NewRole.Name = role
+		newPrivilege.Role.Name = role
 	} else {
-		newPrivilege.NewRole.Name = "Viewer"
+		newPrivilege.Role.Name = "Viewer"
 	}
 
-	for _, permission := range CacheInfo.mapRoles[newPrivilege.NewRole.Name] {
-		newPrivilege.NewRole.Perm = append(newPrivilege.NewRole.Perm, permission)
+	for _, permission := range CacheInfo.mapRoles[newPrivilege.Role.Name] {
+		newPrivilege.Role.Perm = append(newPrivilege.Role.Perm, permission)
 	}
 
 	if region == "" {
@@ -336,19 +250,19 @@ func NewPrivilegeF(role, region string, area []string) *NewPrivilege {
 
 //RoleCheck проверка полученной роли на соответствие заданной и разрешение на выполнение действия
 func NewRoleCheck(mapContx map[string]string, act int) (accept bool, err error) {
-	privilege := NewPrivilege{}
+	privilege := Privilege{}
 	//Проверил соответствует ли роль которую мне дали с ролью установленной в БД
 	err = privilege.ReadFromBD(mapContx["login"])
 	if err != nil {
 		return false, err
 	}
-	if privilege.NewRole.Name != mapContx["role"] {
+	if privilege.Role.Name != mapContx["role"] {
 		err = errors.New("Access denied")
 		return false, err
 	}
 
 	//Проверяю можно ли делать этой роле данное действие
-	for _, perm := range privilege.NewRole.Perm {
+	for _, perm := range privilege.Role.Perm {
 		if perm == act {
 			return true, nil
 		}
@@ -379,7 +293,7 @@ func TestNewRoleSystem() (resp map[string]interface{}) {
 	_ = priv2.ReadFromBD("TestRole")
 	resp["priv1"] = priv2
 
-	privilege.NewRole.Perm = append(priv2.NewRole.Perm, 21, 22, 25)
+	privilege.Role.Perm = append(priv2.Role.Perm, 13, 69)
 	_ = privilege.WriteRoleInBD("TestRole")
 
 	priv3 := NewPrivilegeF("", "", []string{""})
@@ -388,7 +302,7 @@ func TestNewRoleSystem() (resp map[string]interface{}) {
 
 	var mapContx = make(map[string]string)
 	mapContx["login"] = account.Login
-	mapContx["role"] = privilege.NewRole.Name
+	mapContx["role"] = privilege.Role.Name
 
 	resp["1"], _ = NewRoleCheck(mapContx, 22)
 	resp["2"], _ = NewRoleCheck(mapContx, 43)
