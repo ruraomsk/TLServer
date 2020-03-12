@@ -7,9 +7,9 @@ import (
 )
 
 //FuncAccessCheck проверяет разрешение пользователя для доступа к ресурсу
-var FuncAccessCheck = func(w http.ResponseWriter, r *http.Request, act string) (flag bool, resp map[string]interface{}) {
+var FuncAccessCheck = func(w http.ResponseWriter, r *http.Request, act int) (flag bool, resp map[string]interface{}) {
 	resp = make(map[string]interface{})
-	flag, err := data.RoleCheck(u.ParserInterface(r.Context().Value("info")), act)
+	flag, err := data.NewRoleCheck(u.ParserInterface(r.Context().Value("info")), act)
 	if err != nil || !flag {
 		resp = u.Message(false, err.Error())
 		if err != nil {

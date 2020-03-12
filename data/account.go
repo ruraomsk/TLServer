@@ -49,7 +49,7 @@ func Login(login, password, ip string) map[string]interface{} {
 	}
 
 	//Авторизировались добираем полномочия
-	privilege := Privilege{}
+	privilege := NewPrivilege{}
 	err = privilege.ReadFromBD(account.Login)
 	if err != nil {
 		// logger.Error.Println("IP: " + ip + " Login: " + login + " Message: " + "Privilege error")
@@ -63,7 +63,7 @@ func Login(login, password, ip string) map[string]interface{} {
 	}
 	//Залогинились, создаем токен
 	account.Password = ""
-	tk := &Token{UserID: account.ID, Login: account.Login, IP: ipSplit[0], Role: privilege.Role, Region: privilege.Region}
+	tk := &Token{UserID: account.ID, Login: account.Login, IP: ipSplit[0], Role: privilege.NewRole.Name, Region: privilege.Region}
 	//врямя выдачи токена
 	tk.IssuedAt = time.Now().Unix()
 	//время когда закончится действие токена
@@ -117,7 +117,7 @@ func (account *Account) Validate() (map[string]interface{}, bool) {
 }
 
 //Create создание аккаунта для пользователей
-func (account *Account) Create(privilege Privilege) map[string]interface{} {
+func (account *Account) Create(privilege NewPrivilege) map[string]interface{} {
 	if resp, ok := account.Validate(); !ok {
 		return resp
 	}
@@ -129,7 +129,10 @@ func (account *Account) Create(privilege Privilege) map[string]interface{} {
 	if account.ID <= 0 {
 		return u.Message(false, "Failed to create account, connection error.")
 	}
-	GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
+	if err := privilege.WriteRoleInBD(account.Login); err != nil {
+		return u.Message(false, "Connection to DB error. Please try again")
+	}
+	//GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
 	account.Password = ""
 	resp := u.Message(true, "Account has been created")
 	resp["login"] = account.Login
@@ -137,7 +140,7 @@ func (account *Account) Create(privilege Privilege) map[string]interface{} {
 }
 
 //Update обновление данных аккаунты (привелегии, время работы)
-func (account *Account) Update(privilege Privilege) map[string]interface{} {
+func (account *Account) Update(privilege NewPrivilege) map[string]interface{} {
 	privStr, _ := json.Marshal(privilege)
 	updateStr := fmt.Sprintf("update public.accounts set privilege = '%s',w_time = %d where login = '%s'", string(privStr), account.WTime, account.Login)
 	err := GetDB().Exec(updateStr).Error
@@ -179,7 +182,7 @@ func (account *Account) ChangePW() map[string]interface{} {
 func (account *Account) ParserPointsUser() (err error) {
 	var (
 		boxpoint  = BoxPoint{}
-		privilege = Privilege{}
+		privilege = NewPrivilege{}
 	)
 	err = privilege.ReadFromBD(account.Login)
 	if err != nil {
@@ -255,13 +258,12 @@ func SuperCreate() (err error) {
 	account.YaMapKey = GlobalConfig.YaKey
 	account.WTime = 24
 	account.Password = "$2a$10$ZCWyIEfEVF3KGj6OUtIeSOQ3WexMjuAZ43VSO6T.QqOndn4HN1J6C"
-	privilege := Privilege{}
-	privilege.Role = "Super"
-	privilege.Region = "*"
-	privilege.Area = append(privilege.Area, "*")
+	//privilege := Privilege{}
+	privilege := NewPrivilegeF("Super", "*", []string{"*"})
 	GetDB().Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
-	GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
+	_ = privilege.WriteRoleInBD(account.Login)
+	//GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
 
 	//!!!!! Другие пользователи Для ОТЛАДКИ потом УДАЛИТЬ все что ниже
 	account = &Account{}
@@ -270,13 +272,12 @@ func SuperCreate() (err error) {
 	account.YaMapKey = GlobalConfig.YaKey
 	account.WTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
-	privilege = Privilege{}
-	privilege.Role = "RegAdmin"
-	privilege.Region = "1"
-	privilege.Area = append(privilege.Area, "1", "2", "3")
+	//privilege = Privilege{}
+	privilege = NewPrivilegeF("RegAdmin", "1", []string{"1", "2", "3"})
 	GetDB().Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
-	GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
+	_ = privilege.WriteRoleInBD(account.Login)
+	//GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
 
 	account = &Account{}
 	account.Login = "Sachalin"
@@ -284,13 +285,12 @@ func SuperCreate() (err error) {
 	account.YaMapKey = GlobalConfig.YaKey
 	account.WTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
-	privilege = Privilege{}
-	privilege.Role = "RegAdmin"
-	privilege.Region = "3"
-	privilege.Area = append(privilege.Area, "1")
+	//privilege = Privilege{}
+	privilege = NewPrivilegeF("RegAdmin", "3", []string{"1"})
 	GetDB().Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
-	GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
+	_ = privilege.WriteRoleInBD(account.Login)
+	//GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
 
 	account = &Account{}
 	account.Login = "Cykotka"
@@ -298,13 +298,12 @@ func SuperCreate() (err error) {
 	account.YaMapKey = GlobalConfig.YaKey
 	account.WTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
-	privilege = Privilege{}
-	privilege.Role = "RegAdmin"
-	privilege.Region = "2"
-	privilege.Area = append(privilege.Area, "1", "2", "3")
+	//privilege = Privilege{}
+	privilege = NewPrivilegeF("RegAdmin", "2", []string{"1", "2", "3"})
 	GetDB().Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
-	GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
+	_ = privilege.WriteRoleInBD(account.Login)
+	//GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
 
 	account = &Account{}
 	account.Login = "All"
@@ -312,13 +311,12 @@ func SuperCreate() (err error) {
 	account.YaMapKey = GlobalConfig.YaKey
 	account.WTime = 1000
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
-	privilege = Privilege{}
-	privilege.Role = "Admin"
-	privilege.Region = "*"
-	privilege.Area = append(privilege.Area, "*")
+	//privilege = Privilege{}
+	privilege = NewPrivilegeF("Admin", "*", []string{"*"})
 	GetDB().Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
-	GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
+	//GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
+	_ = privilege.WriteRoleInBD(account.Login)
 
 	account = &Account{}
 	account.Login = "Rura"
@@ -326,13 +324,12 @@ func SuperCreate() (err error) {
 	account.YaMapKey = GlobalConfig.YaKey
 	account.WTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
-	privilege = Privilege{}
-	privilege.Role = "Admin"
-	privilege.Region = "*"
-	privilege.Area = append(privilege.Area, "*")
+	//privilege = Privilege{}
+	privilege = NewPrivilegeF("Admin", "*", []string{"*"})
 	GetDB().Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
-	GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
+	//GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
+	_ = privilege.WriteRoleInBD(account.Login)
 
 	account = &Account{}
 	account.Login = "MMM"
@@ -340,13 +337,12 @@ func SuperCreate() (err error) {
 	account.YaMapKey = GlobalConfig.YaKey
 	account.WTime = 10000
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
-	privilege = Privilege{}
-	privilege.Role = "Admin"
-	privilege.Region = "*"
-	privilege.Area = append(privilege.Area, "*")
+	//privilege = Privilege{}
+	privilege = NewPrivilegeF("Admin", "*", []string{"*"})
 	GetDB().Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
-	GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
+	//GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
+	_ = privilege.WriteRoleInBD(account.Login)
 
 	account = &Account{}
 	account.Login = "Admin"
@@ -354,13 +350,12 @@ func SuperCreate() (err error) {
 	account.YaMapKey = GlobalConfig.YaKey
 	account.WTime = 10000
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
-	privilege = Privilege{}
-	privilege.Role = "Admin"
-	privilege.Region = "*"
-	privilege.Area = append(privilege.Area, "*")
+	//privilege = Privilege{}
+	privilege = NewPrivilegeF("Admin", "*", []string{"*"})
 	GetDB().Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
-	GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
+	//GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
+	_ = privilege.WriteRoleInBD(account.Login)
 
 	account = &Account{}
 	account.Login = "RegAdmin"
@@ -368,13 +363,12 @@ func SuperCreate() (err error) {
 	account.YaMapKey = GlobalConfig.YaKey
 	account.WTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
-	privilege = Privilege{}
-	privilege.Role = "RegAdmin"
-	privilege.Region = "1"
-	privilege.Area = append(privilege.Area, "1", "2", "3")
+	//privilege = Privilege{}
+	privilege = NewPrivilegeF("RegAdmin", "1", []string{"1", "2", "3"})
 	GetDB().Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
-	GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
+	//GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
+	_ = privilege.WriteRoleInBD(account.Login)
 
 	account = &Account{}
 	account.Login = "User"
@@ -382,13 +376,12 @@ func SuperCreate() (err error) {
 	account.YaMapKey = GlobalConfig.YaKey
 	account.WTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
-	privilege = Privilege{}
-	privilege.Role = "User"
-	privilege.Region = "2"
-	privilege.Area = append(privilege.Area, "2")
+	//privilege = Privilege{}
+	privilege = NewPrivilegeF("User", "2", []string{"2"})
 	GetDB().Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
-	GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
+	//GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
+	_ = privilege.WriteRoleInBD(account.Login)
 
 	account = &Account{}
 	account.Login = "Viewer"
@@ -396,13 +389,12 @@ func SuperCreate() (err error) {
 	account.YaMapKey = GlobalConfig.YaKey
 	account.WTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
-	privilege = Privilege{}
-	privilege.Role = "Viewer"
-	privilege.Region = "3"
-	privilege.Area = append(privilege.Area, "1")
+	//privilege = Privilege{}
+	privilege = NewPrivilegeF("Viewer", "3", []string{"1"})
 	GetDB().Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
-	GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
+	//GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
+	_ = privilege.WriteRoleInBD(account.Login)
 
 	//!!!!! НЕ забудь удалить все что вышел
 	fmt.Println("Super created!")

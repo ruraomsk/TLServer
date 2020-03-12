@@ -19,7 +19,7 @@ type CacheData struct {
 	mapRegion    map[string]string            //регионы
 	mapArea      map[string]map[string]string //районы
 	mapTLSost    map[int]string               //светофоры
-	mapRoles     map[string]Permissions       //роли
+	mapRoles     map[string][]int             //роли
 	mapPermisson map[int]Permission           //привелегии
 }
 
@@ -48,7 +48,7 @@ type TLSostInfo struct {
 
 //CacheDataUpdate обновление данных из бд, период обновления 1 час
 func CacheDataUpdate() {
-	CacheInfo.mapRoles = make(map[string]Permissions)
+	CacheInfo.mapRoles = make(map[string][]int)
 	CacheInfo.mapPermisson = make(map[int]Permission)
 	BusyArmInfo.mapBusyArm = make(map[BusyArm]EditCrossInfo)
 	for {
@@ -71,8 +71,7 @@ func CacheInfoDataUpdate() {
 	CleanMapBusyArm()
 	CacheInfo.mapRegion, CacheInfo.mapArea, err = GetRegionInfo()
 	CacheInfo.mapTLSost, err = getTLSost()
-	err = getRoles()
-	err = getPermissions()
+	err = getRoleAccess()
 	CacheInfo.mux.Unlock()
 	if err != nil {
 		logger.Error.Println(fmt.Sprintf("|Message: Error reading data cache: %s", err.Error()))
@@ -138,10 +137,40 @@ func getTLSost() (TLsost map[int]string, err error) {
 	return TLsost, err
 }
 
-//getRoles получать данны о ролях
-func getRoles() (err error) {
-	var temp = Roles{}
-	err = temp.ReadRoleFile()
+//
+////getRoles получать данны о ролях
+//func getRoles() (err error) {
+//	var temp = Roles{}
+//	err = temp.ReadRoleFile()
+//	if err != nil {
+//		return err
+//	}
+//	for _, role := range temp.Roles {
+//		if _, ok := CacheInfo.mapRoles[role.Name]; !ok {
+//			CacheInfo.mapRoles[role.Name] = role.Perm
+//		}
+//	}
+//	return err
+//}
+//
+////getRoles получать данны о ролях
+//func getPermissions() (err error) {
+//	var temp = Permissions{}
+//	err = temp.ReadPermissionsFile()
+//	if err != nil {
+//		return err
+//	}
+//	for _, perm := range temp.Permissions {
+//		if _, ok := CacheInfo.mapPermisson[perm.ID]; !ok {
+//			CacheInfo.mapPermisson[perm.ID] = perm
+//		}
+//	}
+//	return err
+//}
+
+func getRoleAccess() (err error) {
+	var temp = RoleAccess{}
+	err = temp.ReadRoleAccessFile()
 	if err != nil {
 		return err
 	}
@@ -150,17 +179,7 @@ func getRoles() (err error) {
 			CacheInfo.mapRoles[role.Name] = role.Perm
 		}
 	}
-	return err
-}
-
-//getRoles получать данны о ролях
-func getPermissions() (err error) {
-	var temp = Permissions{}
-	err = temp.ReadPermissionsFile()
-	if err != nil {
-		return err
-	}
-	for _, perm := range temp.Permissions {
+	for _, perm := range temp.Permission {
 		if _, ok := CacheInfo.mapPermisson[perm.ID]; !ok {
 			CacheInfo.mapPermisson[perm.ID] = perm
 		}

@@ -10,7 +10,7 @@ import (
 
 //DispatchControlButton обработчик кнопок диспетчерского управления
 var DispatchControlButtons = func(w http.ResponseWriter, r *http.Request) {
-	flag, resp := FuncAccessCheck(w, r, "ControlCross")
+	flag, resp := FuncAccessCheck(w, r, 5)
 	if flag {
 		arm := comm.CommandARM{}
 		if err := json.NewDecoder(r.Body).Decode(&arm); err != nil {

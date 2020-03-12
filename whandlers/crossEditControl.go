@@ -9,7 +9,7 @@ import (
 
 //CrossEditInfo сбор информации о занятых перекрестках
 var CrossEditInfo = func(w http.ResponseWriter, r *http.Request) {
-	flag, resp := FuncAccessCheck(w, r, "CrossEditControl")
+	flag, resp := FuncAccessCheck(w, r, 11)
 	if flag {
 		mapContx := u.ParserInterface(r.Context().Value("info"))
 		resp = data.DisplayCrossEditInfo(mapContx)
@@ -19,7 +19,7 @@ var CrossEditInfo = func(w http.ResponseWriter, r *http.Request) {
 
 //CrossEditFree освобождение перекрестков
 var CrossEditFree = func(w http.ResponseWriter, r *http.Request) {
-	flag, resp := FuncAccessCheck(w, r, "CrossEditControl")
+	flag, resp := FuncAccessCheck(w, r, 11)
 	if flag {
 		var busyArms data.BusyArms
 		if err := json.NewDecoder(r.Body).Decode(&busyArms); err != nil {

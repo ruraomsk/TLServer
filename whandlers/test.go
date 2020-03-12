@@ -8,20 +8,20 @@ import (
 )
 
 var TestHello = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	flag, resp := FuncAccessCheck(w, r, "MakeTest")
-	if flag {
+	//flag, resp := FuncAccessCheck(w, r, 6)
+	//if flag {
 
-		resp = data.TestNewRoleSystem()
-		resp["BLIA!!!"] = "Blia!!!"
-	}
+	resp := data.TestNewRoleSystem()
+	resp["BLAA!!!"] = "Blaa!!!"
+	//}
 	u.Respond(w, r, resp)
 })
 
 var TestToken = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	flag, resp := FuncAccessCheck(w, r, "MakeTest")
+	flag, resp := FuncAccessCheck(w, r, 6)
 	if flag {
 
-		resp["BLIA!!!"] = "Blia!!!"
+		resp["BLAA!!!"] = "Blaa!!!"
 	}
 	u.Respond(w, r, resp)
 })

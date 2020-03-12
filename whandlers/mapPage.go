@@ -9,20 +9,20 @@ import (
 
 //BuildMainPage собираем данные для залогиневшегося пользователя
 var BuildMapPage = func(w http.ResponseWriter, r *http.Request) {
-	flag, resp := FuncAccessCheck(w, r, "BuildMapPage")
+	flag, resp := FuncAccessCheck(w, r, 7)
 	if flag {
 		account := &data.Account{}
 		mapContx := u.ParserInterface(r.Context().Value("info"))
 		account.Login = mapContx["login"]
 		resp = account.GetInfoForUser()
-		resp["manageFlag"], _ = data.RoleCheck(mapContx, "ManageAccount")
+		resp["manageFlag"], _ = data.NewRoleCheck(mapContx, 1)
 	}
 	u.Respond(w, r, resp)
 }
 
 //UpdateMapPage обновление информации о попавших в область светофорах
 var UpdateMapPage = func(w http.ResponseWriter, r *http.Request) {
-	flag, resp := FuncAccessCheck(w, r, "UpdateMapPage")
+	flag, resp := FuncAccessCheck(w, r, 8)
 	if flag {
 		box := &data.BoxPoint{}
 		err := json.NewDecoder(r.Body).Decode(box)
@@ -46,7 +46,7 @@ var UpdateMapPage = func(w http.ResponseWriter, r *http.Request) {
 
 //LocationButtonMapPage обработка запроса на получение новых координат отрисовки рабочей области
 var LocationButtonMapPage = func(w http.ResponseWriter, r *http.Request) {
-	flag, resp := FuncAccessCheck(w, r, "UpdateMapPage")
+	flag, resp := FuncAccessCheck(w, r, 8)
 	if flag {
 		location := &data.Locations{}
 		err := json.NewDecoder(r.Body).Decode(location)

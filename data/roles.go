@@ -30,20 +30,20 @@ type NewPrivilege struct {
 }
 
 //Roles массив ролей
-type Roles struct {
-	Roles []Role `json:"roles"`
-}
+//type Roles struct {
+//	Roles []Role `json:"roles"`
+//}
 
 //Role структура содержащая называние роли и ее привелегии
-type Role struct {
-	Name string      `json:"name"`       //название роли
-	Perm Permissions `json:"permission"` //массив полномочий
-}
+//type Role struct {
+//	Name string      `json:"name"`       //название роли
+//	Perm Permissions `json:"permission"` //массив полномочий
+//}
 
 //Permissions массив полномочий
-type Permissions struct {
-	Permissions []Permission `json:"permissions"`
-}
+//type Permissions struct {
+//	Permissions []Permission `json:"permissions"`
+//}
 
 //Permission структура полномойчий содержит ID, команду и описание команды
 type Permission struct {
@@ -53,11 +53,11 @@ type Permission struct {
 }
 
 //Privilege структура привилегий содержит роль, регион, и массив районов
-type Privilege struct {
-	Role   string   `json:"role"`   //роль пользователя
-	Region string   `json:"region"` //регион пользователя
-	Area   []string `json:"area"`   //массив районов пользователя
-}
+//type Privilege struct {
+//	Role   string   `json:"role"`   //роль пользователя
+//	Region string   `json:"region"` //регион пользователя
+//	Area   []string `json:"area"`   //массив районов пользователя
+//}
 
 //func (roles *Roles) CreateRole() (err error) {
 //	var tempRole = new(Role)
@@ -75,7 +75,7 @@ type Privilege struct {
 //}
 
 //DisplayInfoForAdmin отображение информации о пользователях для администраторов
-func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) map[string]interface{} {
+func (privilege *NewPrivilege) DisplayInfoForAdmin(mapContx map[string]string) map[string]interface{} {
 	var (
 		sqlStr   string
 		shortAcc []ShortAccount
@@ -97,13 +97,13 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) map[
 			//logger.Info.Println("DisplayInfoForAdmin: Что-то не так с запросом", err)
 			return u.Message(false, "Display info: Bad request")
 		}
-		var tempPrivilege = Privilege{}
+		var tempPrivilege = NewPrivilege{}
 		err = tempPrivilege.ConvertToJson(tempSA.Privilege)
 		if err != nil {
 			//logger.Info.Println("DisplayInfoForAdmin: Что-то не так со строкой привилегий", err)
 			return u.Message(false, "Display info: Privilege json error")
 		}
-		tempSA.Role = tempPrivilege.Role
+		tempSA.Role = tempPrivilege.NewRole.Name
 		tempSA.Region.SetRegionInfo(tempPrivilege.Region)
 		for _, num := range tempPrivilege.Area {
 			tempArea := AreaInfo{}
@@ -170,95 +170,95 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) map[
 }
 
 //RoleCheck проверка полученной роли на соответствие заданной и разрешение на выполнение действия
-func RoleCheck(mapContx map[string]string, act string) (accept bool, err error) {
-	privilege := Privilege{}
-	//Проверил соответствует ли роль которую мне дали с ролью установленной в БД
-	err = privilege.ReadFromBD(mapContx["login"])
-	if err != nil {
-		return false, err
-	}
-	if privilege.Role != mapContx["role"] {
-		err = errors.New("Access denied")
-		return false, err
-	}
+//func RoleCheck(mapContx map[string]string, act string) (accept bool, err error) {
+//	privilege := Privilege{}
+//	//Проверил соответствует ли роль которую мне дали с ролью установленной в БД
+//	err = privilege.ReadFromBD(mapContx["login"])
+//	if err != nil {
+//		return false, err
+//	}
+//	if privilege.Role != mapContx["role"] {
+//		err = errors.New("Access denied")
+//		return false, err
+//	}
+//
+//	CacheInfo.mux.Lock()
+//	defer CacheInfo.mux.Unlock()
+//	//Проверяю можно ли делать этой роле данное действие
+//	for _, perm := range CacheInfo.mapRoles[mapContx["role"]].Permissions {
+//		if perm.Command == act {
+//			return true, nil
+//		}
+//	}
+//	err = errors.New("Access denied")
+//	return false, err
+//}
 
-	CacheInfo.mux.Lock()
-	defer CacheInfo.mux.Unlock()
-	//Проверяю можно ли делать этой роле данное действие
-	for _, perm := range CacheInfo.mapRoles[mapContx["role"]].Permissions {
-		if perm.Command == act {
-			return true, nil
-		}
-	}
-	err = errors.New("Access denied")
-	return false, err
-}
-
-//ReadFromBD прочитать данные из бд и разобрать
-func (privilege *Privilege) ReadFromBD(login string) error {
-	var privilegestr string
-	sqlStr := fmt.Sprintf("select privilege from public.accounts where login = '%s'", login)
-	rowsTL := GetDB().Raw(sqlStr).Row()
-	err := rowsTL.Scan(&privilegestr)
-	if err != nil {
-		return err
-	}
-	err = json.Unmarshal([]byte(privilegestr), privilege)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-//ConvertToJson преобразуем структуру в строку для записи в БД
-func (privilege *Privilege) ConvertToJson(privilegeStr string) (err error) {
-	err = json.Unmarshal([]byte(privilegeStr), privilege)
-	if err != nil {
-		return err
-	}
-	return nil
-}
+////ReadFromBD прочитать данные из бд и разобрать
+//func (privilege *Privilege) ReadFromBD(login string) error {
+//	var privilegestr string
+//	sqlStr := fmt.Sprintf("select privilege from public.accounts where login = '%s'", login)
+//	rowsTL := GetDB().Raw(sqlStr).Row()
+//	err := rowsTL.Scan(&privilegestr)
+//	if err != nil {
+//		return err
+//	}
+//	err = json.Unmarshal([]byte(privilegestr), privilege)
+//	if err != nil {
+//		return err
+//	}
+//	return nil
+//}
+//
+////ConvertToJson преобразуем из строки в структуру
+//func (privilege *Privilege) ConvertToJson(privilegeStr string) (err error) {
+//	err = json.Unmarshal([]byte(privilegeStr), privilege)
+//	if err != nil {
+//		return err
+//	}
+//	return nil
+//}
 
 //AddPrivilege когдато нужно будет редактировать привелегии наверно...
-func (privilege *Privilege) AddPrivilege(privilegeStr, login string) (err error) {
-	err = json.Unmarshal([]byte(privilegeStr), privilege)
-	if err != nil {
-		return err
-	}
-	return nil
-}
+//func (privilege *Privilege) AddPrivilege(privilegeStr, login string) (err error) {
+//	err = json.Unmarshal([]byte(privilegeStr), privilege)
+//	if err != nil {
+//		return err
+//	}
+//	return nil
+//}
 
 //ToSqlStrUpdate запись привелегий в базу
-func (privilege *Privilege) ToSqlStrUpdate(table, login string) string {
-	privilegeStr, _ := json.Marshal(privilege)
-	return fmt.Sprintf("update %s set privilege = '%s' where login = '%s'", table, string(privilegeStr), login)
-}
-
-//ReadRoleFile прочитать файл role.json
-func (roles *Roles) ReadRoleFile() (err error) {
-	file, err := ioutil.ReadFile("./cachefile/Role.json")
-	if err != nil {
-		return err
-	}
-	err = json.Unmarshal(file, roles)
-	if err != nil {
-		return err
-	}
-	return err
-}
-
-//ReadPermissionsFile прочитать файл permissions.json
-func (perm *Permissions) ReadPermissionsFile() (err error) {
-	file, err := ioutil.ReadFile("./cachefile/Permissions.json")
-	if err != nil {
-		return err
-	}
-	err = json.Unmarshal(file, perm)
-	if err != nil {
-		return err
-	}
-	return err
-}
+//func (privilege *Privilege) ToSqlStrUpdate(table, login string) string {
+//	privilegeStr, _ := json.Marshal(privilege)
+//	return fmt.Sprintf("update %s set privilege = '%s' where login = '%s'", table, string(privilegeStr), login)
+//}
+//
+////ReadRoleFile прочитать файл role.json
+//func (roles *Roles) ReadRoleFile() (err error) {
+//	file, err := ioutil.ReadFile("./cachefile/Role.json")
+//	if err != nil {
+//		return err
+//	}
+//	err = json.Unmarshal(file, roles)
+//	if err != nil {
+//		return err
+//	}
+//	return err
+//}
+//
+////ReadPermissionsFile прочитать файл permissions.json
+//func (perm *Permissions) ReadPermissionsFile() (err error) {
+//	file, err := ioutil.ReadFile("./cachefile/Permissions.json")
+//	if err != nil {
+//		return err
+//	}
+//	err = json.Unmarshal(file, perm)
+//	if err != nil {
+//		return err
+//	}
+//	return err
+//}
 
 // ----------------------------------------------------------------------------------------------------------------------------------------------
 // ----------------------------------------------------------------------------------------------------------------------------------------------
@@ -298,6 +298,15 @@ func (newPrivilege *NewPrivilege) ReadFromBD(login string) error {
 	return nil
 }
 
+//ConvertToJson из строки в структуру
+func (newPrivilege *NewPrivilege) ConvertToJson(privilegeStr string) (err error) {
+	err = json.Unmarshal([]byte(privilegeStr), newPrivilege)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func NewPrivilegeF(role, region string, area []string) *NewPrivilege {
 	var newPrivilege NewPrivilege
 	if _, ok := CacheInfo.mapRoles[role]; ok {
@@ -306,9 +315,8 @@ func NewPrivilegeF(role, region string, area []string) *NewPrivilege {
 		newPrivilege.NewRole.Name = "Viewer"
 	}
 
-	temp := CacheInfo.mapRoles[newPrivilege.NewRole.Name]
-	for _, permission := range temp.Permissions {
-		newPrivilege.NewRole.Perm = append(newPrivilege.NewRole.Perm, permission.ID)
+	for _, permission := range CacheInfo.mapRoles[newPrivilege.NewRole.Name] {
+		newPrivilege.NewRole.Perm = append(newPrivilege.NewRole.Perm, permission)
 	}
 
 	if region == "" {
@@ -324,6 +332,29 @@ func NewPrivilegeF(role, region string, area []string) *NewPrivilege {
 	}
 
 	return &newPrivilege
+}
+
+//RoleCheck проверка полученной роли на соответствие заданной и разрешение на выполнение действия
+func NewRoleCheck(mapContx map[string]string, act int) (accept bool, err error) {
+	privilege := NewPrivilege{}
+	//Проверил соответствует ли роль которую мне дали с ролью установленной в БД
+	err = privilege.ReadFromBD(mapContx["login"])
+	if err != nil {
+		return false, err
+	}
+	if privilege.NewRole.Name != mapContx["role"] {
+		err = errors.New("Access denied")
+		return false, err
+	}
+
+	//Проверяю можно ли делать этой роле данное действие
+	for _, perm := range privilege.NewRole.Perm {
+		if perm == act {
+			return true, nil
+		}
+	}
+	err = errors.New("Access denied")
+	return false, err
 }
 
 func TestNewRoleSystem() (resp map[string]interface{}) {
@@ -365,27 +396,4 @@ func TestNewRoleSystem() (resp map[string]interface{}) {
 	mapContx["login"] = "1"
 	resp["4"], _ = NewRoleCheck(mapContx, 1)
 	return
-}
-
-//RoleCheck проверка полученной роли на соответствие заданной и разрешение на выполнение действия
-func NewRoleCheck(mapContx map[string]string, act int) (accept bool, err error) {
-	privilege := NewPrivilege{}
-	//Проверил соответствует ли роль которую мне дали с ролью установленной в БД
-	err = privilege.ReadFromBD(mapContx["login"])
-	if err != nil {
-		return false, err
-	}
-	if privilege.NewRole.Name != mapContx["role"] {
-		err = errors.New("Access denied")
-		return false, err
-	}
-
-	//Проверяю можно ли делать этой роле данное действие
-	for _, perm := range privilege.NewRole.Perm {
-		if perm == act {
-			return true, nil
-		}
-	}
-	err = errors.New("Access denied")
-	return false, err
 }

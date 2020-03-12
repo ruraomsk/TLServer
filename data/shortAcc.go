@@ -32,14 +32,14 @@ type PassChange struct {
 }
 
 //ConvertShortToAcc преобразование 2х структур информации об аккаунте в одну целую
-func (shortAcc *ShortAccount) ConvertShortToAcc() (account Account, privilege Privilege) {
+func (shortAcc *ShortAccount) ConvertShortToAcc() (account Account, privilege NewPrivilege) {
 	account = Account{}
-	privilege = Privilege{}
+	privilege = NewPrivilege{}
 	account.Password = shortAcc.Password
 	account.Login = shortAcc.Login
 	account.WTime = time.Duration(shortAcc.Wtime)
 	privilege.Region = shortAcc.Region.Num
-	privilege.Role = shortAcc.Role
+	privilege.NewRole.Name = shortAcc.Role
 	for _, area := range shortAcc.Area {
 		privilege.Area = append(privilege.Area, area.Num)
 	}
@@ -114,7 +114,7 @@ func (shortAcc *ShortAccount) ValidDelete(role string, region string) (account *
 	}
 
 	//Авторизировались добираем полномочия
-	privilege := Privilege{}
+	privilege := NewPrivilege{}
 	err = privilege.ReadFromBD(account.Login)
 	if err != nil {
 		//logger.Info.Println("Account: Bad privilege")
@@ -122,7 +122,7 @@ func (shortAcc *ShortAccount) ValidDelete(role string, region string) (account *
 	}
 
 	if role == "RegAdmin" {
-		if privilege.Role == "Admin" || privilege.Role == role {
+		if privilege.NewRole.Name == "Admin" || privilege.NewRole.Name == role {
 			return nil, errors.New("This role cannot be deleted")
 		}
 		if !strings.EqualFold(privilege.Region, region) {
@@ -148,7 +148,7 @@ func (shortAcc *ShortAccount) ValidChangePW(role string, region string) (account
 	}
 	account.Password = shortAcc.Password
 	//Авторизировались добираем полномочия
-	privilege := Privilege{}
+	privilege := NewPrivilege{}
 	err = privilege.ReadFromBD(account.Login)
 	if err != nil {
 		//logger.Info.Println("Account: Bad privilege")
@@ -156,7 +156,7 @@ func (shortAcc *ShortAccount) ValidChangePW(role string, region string) (account
 	}
 
 	if role == "RegAdmin" {
-		if privilege.Role == "Admin" || privilege.Role == role {
+		if privilege.NewRole.Name == "Admin" || privilege.NewRole.Name == role {
 			return nil, errors.New("Cannot change the password for this user")
 		}
 		if !strings.EqualFold(shortAcc.Region.Num, region) {

@@ -12,7 +12,7 @@ import (
 
 //BuildCross собираем данные для отображения прекрестка
 var BuildCross = func(w http.ResponseWriter, r *http.Request) {
-	flag, resp := FuncAccessCheck(w, r, "BuildCross")
+	flag, resp := FuncAccessCheck(w, r, 4)
 	if flag {
 		var err error
 		TLight := &data.TrafficLights{}
@@ -23,7 +23,7 @@ var BuildCross = func(w http.ResponseWriter, r *http.Request) {
 		resp = data.GetCrossInfo(*TLight)
 		mapContx := u.ParserInterface(r.Context().Value("info"))
 
-		controlCrossFlag, _ := data.RoleCheck(mapContx, "ControlCross")
+		controlCrossFlag, _ := data.NewRoleCheck(mapContx, 5)
 		if (TLight.Region.Num == mapContx["region"]) || (mapContx["region"] == "*") {
 			resp["controlCrossFlag"] = controlCrossFlag
 		} else {
@@ -35,7 +35,7 @@ var BuildCross = func(w http.ResponseWriter, r *http.Request) {
 
 //ControlCross данные для заполнения таблиц управления
 var ControlCross = func(w http.ResponseWriter, r *http.Request) {
-	flag, resp := FuncAccessCheck(w, r, "ControlCross")
+	flag, resp := FuncAccessCheck(w, r, 5)
 	if flag {
 		var err error
 		TLight := &data.TrafficLights{}
@@ -45,7 +45,7 @@ var ControlCross = func(w http.ResponseWriter, r *http.Request) {
 		}
 		mapContx := u.ParserInterface(r.Context().Value("info"))
 
-		controlCrossFlag, _ := data.RoleCheck(mapContx, "ControlCross")
+		controlCrossFlag, _ := data.NewRoleCheck(mapContx, 5)
 		if (TLight.Region.Num == mapContx["region"]) || (mapContx["region"] == "*") {
 			resp = data.ControlGetCrossInfo(*TLight, mapContx)
 			resp["controlCrossFlag"] = controlCrossFlag
@@ -58,7 +58,7 @@ var ControlCross = func(w http.ResponseWriter, r *http.Request) {
 
 //ControlEditableCross обработчик проверки редактирования перекрестка
 var ControlEditableCross = func(w http.ResponseWriter, r *http.Request) {
-	flag, resp := FuncAccessCheck(w, r, "ControlCross")
+	flag, resp := FuncAccessCheck(w, r, 5)
 	if flag {
 		var err error
 		arm := &data.BusyArm{}
@@ -74,7 +74,7 @@ var ControlEditableCross = func(w http.ResponseWriter, r *http.Request) {
 
 //ControlCloseCross обработчик закрытия перекрестка
 var ControlCloseCross = func(w http.ResponseWriter, r *http.Request) {
-	flag, resp := FuncAccessCheck(w, r, "ControlCross")
+	flag, resp := FuncAccessCheck(w, r, 5)
 	if flag {
 		var err error
 		arm := &data.BusyArm{}
@@ -89,7 +89,7 @@ var ControlCloseCross = func(w http.ResponseWriter, r *http.Request) {
 
 //ControlSendButton обработчик данных для отправки на устройство(сервер)
 var ControlSendButton = func(w http.ResponseWriter, r *http.Request) {
-	flag, resp := FuncAccessCheck(w, r, "ControlCross")
+	flag, resp := FuncAccessCheck(w, r, 5)
 	if flag {
 		var stateData agS_pudge.Cross
 		err := json.NewDecoder(r.Body).Decode(&stateData)
@@ -106,7 +106,7 @@ var ControlSendButton = func(w http.ResponseWriter, r *http.Request) {
 
 //ControlCreateButton обработчик данных для создания перекрестка и отправка на устройство(сервер)
 var ControlCreateButton = func(w http.ResponseWriter, r *http.Request) {
-	flag, resp := FuncAccessCheck(w, r, "ControlCross")
+	flag, resp := FuncAccessCheck(w, r, 5)
 	if flag {
 		var stateData agS_pudge.Cross
 		err := json.NewDecoder(r.Body).Decode(&stateData)
@@ -123,7 +123,7 @@ var ControlCreateButton = func(w http.ResponseWriter, r *http.Request) {
 
 //ControlCheckButton обработчик данных для их проверка
 var ControlCheckButton = func(w http.ResponseWriter, r *http.Request) {
-	flag, resp := FuncAccessCheck(w, r, "ControlCross")
+	flag, resp := FuncAccessCheck(w, r, 5)
 	if flag {
 		var stateData agS_pudge.Cross
 		err := json.NewDecoder(r.Body).Decode(&stateData)
@@ -139,7 +139,7 @@ var ControlCheckButton = func(w http.ResponseWriter, r *http.Request) {
 
 //ControlDeleteButton обработчик данных для удаления перекрестка
 var ControlDeleteButton = func(w http.ResponseWriter, r *http.Request) {
-	flag, resp := FuncAccessCheck(w, r, "ControlCross")
+	flag, resp := FuncAccessCheck(w, r, 5)
 	if flag {
 		var stateData agS_pudge.Cross
 		err := json.NewDecoder(r.Body).Decode(&stateData)
@@ -155,7 +155,7 @@ var ControlDeleteButton = func(w http.ResponseWriter, r *http.Request) {
 }
 
 var ControlTestState = func(w http.ResponseWriter, r *http.Request) {
-	flag, resp := FuncAccessCheck(w, r, "ControlTestState")
+	flag, resp := FuncAccessCheck(w, r, 12)
 	if flag {
 		mapContx := u.ParserInterface(r.Context().Value("info"))
 		resp = data.TestCrossStateData(mapContx)

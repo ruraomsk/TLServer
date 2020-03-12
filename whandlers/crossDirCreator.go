@@ -10,7 +10,7 @@ import (
 
 //MainCrossCreator сборка информации для странички создания каталогов перекрестков
 var MainCrossCreator = func(w http.ResponseWriter, r *http.Request) {
-	flag, resp := FuncAccessCheck(w, r, "CrossCreator")
+	flag, resp := FuncAccessCheck(w, r, 10)
 	if flag {
 		resp = data.MainCrossCreator()
 	}
@@ -19,7 +19,7 @@ var MainCrossCreator = func(w http.ResponseWriter, r *http.Request) {
 
 //CheckAllCross обработчик проверки всех перекрестков из БД
 var CheckAllCross = func(w http.ResponseWriter, r *http.Request) {
-	flag, resp := FuncAccessCheck(w, r, "CrossCreator")
+	flag, resp := FuncAccessCheck(w, r, 10)
 	if flag {
 		resp = data.CheckCrossDirFromBD()
 	}
@@ -28,7 +28,7 @@ var CheckAllCross = func(w http.ResponseWriter, r *http.Request) {
 
 //CheckSelectedDirCross обработчик проверки регионов/районов/перекрестков выбратнных пользователем
 var CheckSelectedDirCross = func(w http.ResponseWriter, r *http.Request) {
-	flag, resp := FuncAccessCheck(w, r, "CrossCreator")
+	flag, resp := FuncAccessCheck(w, r, 10)
 	if flag {
 		var selectedData data.SelectedData
 		err := json.NewDecoder(r.Body).Decode(&selectedData)
@@ -44,7 +44,7 @@ var CheckSelectedDirCross = func(w http.ResponseWriter, r *http.Request) {
 
 //MakeSelectedDirCross обработчик проверки регионов/районов/перекрестков выбратнных пользователем
 var MakeSelectedDirCross = func(w http.ResponseWriter, r *http.Request) {
-	flag, resp := FuncAccessCheck(w, r, "CrossCreator")
+	flag, resp := FuncAccessCheck(w, r, 10)
 	if flag {
 		var selectedData data.SelectedData
 		err := json.NewDecoder(r.Body).Decode(&selectedData)
