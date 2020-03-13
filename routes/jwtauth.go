@@ -109,8 +109,11 @@ var JwtAuth = func(next http.Handler) http.Handler {
 		mapCont["login"] = tk.Login
 		mapCont["region"] = tk.Region
 		mapCont["role"] = tk.Role
+		mapCont["perm"] = fmt.Sprint(tk.Permission)
+
 		ctx := context.WithValue(r.Context(), "info", mapCont)
 		r = r.WithContext(ctx)
+
 		next.ServeHTTP(w, r)
 
 	})

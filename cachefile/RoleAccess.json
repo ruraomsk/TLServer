@@ -149,5 +149,142 @@
       "visible": true,
       "description": "Visible permission 2 (brah)"
     }
+  ],
+  "routes": [
+    {
+      "id": 1,
+      "path": "/map",
+      "description": "запрос информации для заполнения странички с картой"
+    },
+    {
+      "id": 2,
+      "path": "/map/logOut",
+      "description": "обработчик выхода из системы"
+    },
+    {
+      "id": 3,
+      "path": "/map/update",
+      "description": "обновление странички с данными которые попали в область пользователя"
+    },
+    {
+      "id": 4,
+      "path": "/map/locationButton",
+      "description": "обработчик для формирования новых координат отображения карты"
+    },
+    {
+      "id": 5,
+      "path": "/cross",
+      "description": "информация о состоянии перекрестка"
+    },
+    {
+      "id": 6,
+      "path": "/cross/DispatchControlButtons",
+      "description": "обработчик диспетчерского управления (отправка команд управления)"
+    },
+    {
+      "id": 7,
+      "path": "/cross/control",
+      "description": "расширеная страничка настройки перекрестка"
+    },
+    {
+      "id": 8,
+      "path": "/cross/control/close",
+      "description": "обработчик закрытия перекрестка"
+    },
+    {
+      "id": 9,
+      "path": "/cross/control/editable",
+      "description": "обработчик контроля управления перекрестка"
+    },
+    {
+      "id": 10,
+      "path": "/cross/control/sendButton",
+      "description": "обработчик приема данных от пользователя для отправки на устройство"
+    },
+    {
+      "id": 11,
+      "path": "/cross/control/checkButton",
+      "description": "обработчик проверки данных"
+    },
+    {
+      "id": 12,
+      "path": "/cross/control/createButton",
+      "description": "обработчик создания перекрестка"
+    },
+    {
+      "id": 13,
+      "path": "/cross/control/deleteButton",
+      "description": "обработчик обработчик удаления перекрсетка"
+    },
+    {
+      "id": 14,
+      "path": "/manage",
+      "description": "обработка создание и редактирования пользователя"
+    },
+    {
+      "id": 15,
+      "path": "/manage/changepw",
+      "description": "обработчик для изменения пароля"
+    },
+    {
+      "id": 16,
+      "path": "/manage/delete",
+      "description": "обработчик для удаления аккаунтов"
+    },
+    {
+      "id": 17,
+      "path": "/manage/add",
+      "description": "обработчик для добавления аккаунтов"
+    },
+    {
+      "id": 18,
+      "path": "/manage/update",
+      "description": "обработчик для редактирования данных аккаунта"
+    },
+    {
+      "id": 19,
+      "path": "/manage/crossEditControl",
+      "description": "обработчик по управлению занятых перекрестков"
+    },
+    {
+      "id": 20,
+      "path": "/manage/crossEditControl/free",
+      "description": "обработчик по управлению освобождению перекрестка"
+    },
+    {
+      "id": 21,
+      "path": "/manage/stateTest",
+      "description": "обработчик проверки структуры State"
+    },
+    {
+      "id": 22,
+      "path": "/manage/log",
+      "description": "обработчик по выгрузке лог файлов"
+    },
+    {
+      "id": 23,
+      "path": "/manage/log/info",
+      "description": "обработчик выбранного лог файла"
+    },
+    {
+      "id": 24,
+      "path": "/manage/crossCreator",
+      "description": "обработка проверки/создания каталога карты перекрестков"
+    },
+    {
+      "id": 25,
+      "path": "/manage/crossCreator/checkAllCross",
+      "description": "обработка проверки наличия всех каталогов и файлов необходимых для построения перекрестков"
+    },
+    {
+      "id": 26,
+      "path": "/manage/crossCreator/checkSelected",
+      "description": "обработка проверки наличия выбранных каталогов и файлов необходимых для построения перекрестков"
+    },
+    {
+      "id": 27,
+      "path": "/manage/crossCreator/makeSelected",
+      "description": "обработка создания каталога карты перекрестков"
+    }
   ]
 }

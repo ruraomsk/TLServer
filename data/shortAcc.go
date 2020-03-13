@@ -59,12 +59,12 @@ func (shortAcc *ShortAccount) DecodeRequest(w http.ResponseWriter, r *http.Reque
 
 //ValidCreate проверка данных полученных от пользователя на создание нового пользователя
 func (shortAcc *ShortAccount) ValidCreate(role string, region string) (err error) {
-	CacheInfo.mux.Lock()
-	defer CacheInfo.mux.Unlock()
 	//проверка полученной роли
-	if _, ok := CacheInfo.mapRoles[shortAcc.Role.Name]; !ok || shortAcc.Role.Name == "Super" {
+	RoleInfo.mux.Lock()
+	if _, ok := RoleInfo.mapRoles[shortAcc.Role.Name]; !ok || shortAcc.Role.Name == "Super" {
 		return errors.New("Role not found")
 	}
+	RoleInfo.mux.Unlock()
 	//проверка кто создает
 	if role == "RegAdmin" {
 		if shortAcc.Role.Name == "Admin" || shortAcc.Role.Name == role {
@@ -82,6 +82,7 @@ func (shortAcc *ShortAccount) ValidCreate(role string, region string) (err error
 		}
 	}
 	//регион должен существовать
+	CacheInfo.mux.Lock()
 	if _, ok := CacheInfo.mapRegion[shortAcc.Region.Num]; !ok {
 		return errors.New("Region not found")
 	}
@@ -91,6 +92,7 @@ func (shortAcc *ShortAccount) ValidCreate(role string, region string) (err error
 			return errors.New("Area not found")
 		}
 	}
+	CacheInfo.mux.Unlock()
 	//проверка времени работы
 	if shortAcc.Wtime < 2 {
 		return errors.New("Working time should be indicated more than 2 hours")

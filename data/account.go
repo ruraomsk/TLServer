@@ -15,11 +15,12 @@ import (
 
 //Token (JWT) структура токена доступа
 type Token struct {
-	UserID uint   //Уникальный ID пользователя
-	Login  string //Уникальный логин пользователя
-	IP     string //IP пользователя
-	Role   string //Роль
-	Region string //Регион пользователя
+	UserID     uint   //Уникальный ID пользователя
+	Login      string //Уникальный логин пользователя
+	IP         string //IP пользователя
+	Role       string //Роль
+	Permission []int  //Привелегии
+	Region     string //Регион пользователя
 	jwt.StandardClaims
 }
 
@@ -63,7 +64,7 @@ func Login(login, password, ip string) map[string]interface{} {
 	}
 	//Залогинились, создаем токен
 	account.Password = ""
-	tk := &Token{UserID: account.ID, Login: account.Login, IP: ipSplit[0], Role: privilege.Role.Name, Region: privilege.Region}
+	tk := &Token{UserID: account.ID, Login: account.Login, IP: ipSplit[0], Role: privilege.Role.Name, Region: privilege.Region, Permission: privilege.Role.Perm}
 	//врямя выдачи токена
 	tk.IssuedAt = time.Now().Unix()
 	//время когда закончится действие токена
@@ -129,9 +130,9 @@ func (account *Account) Create(privilege Privilege) map[string]interface{} {
 	if account.ID <= 0 {
 		return u.Message(false, "Failed to create account, connection error.")
 	}
-	CacheInfo.mux.Lock()
-	privilege.Role.Perm = append(privilege.Role.Perm, CacheInfo.mapRoles[privilege.Role.Name]...)
-	CacheInfo.mux.Unlock()
+	RoleInfo.mux.Lock()
+	privilege.Role.Perm = append(privilege.Role.Perm, RoleInfo.mapRoles[privilege.Role.Name]...)
+	RoleInfo.mux.Unlock()
 	if err := privilege.WriteRoleInBD(account.Login); err != nil {
 		return u.Message(false, "Connection to DB error. Please try again")
 	}
@@ -143,9 +144,9 @@ func (account *Account) Create(privilege Privilege) map[string]interface{} {
 
 //Update обновление данных аккаунты (привелегии, время работы)
 func (account *Account) Update(privilege Privilege) map[string]interface{} {
-	CacheInfo.mux.Lock()
-	privilege.Role.Perm = append(privilege.Role.Perm, CacheInfo.mapRoles[privilege.Role.Name]...)
-	CacheInfo.mux.Unlock()
+	RoleInfo.mux.Lock()
+	privilege.Role.Perm = append(privilege.Role.Perm, RoleInfo.mapRoles[privilege.Role.Name]...)
+	RoleInfo.mux.Unlock()
 	privStr, _ := json.Marshal(privilege)
 	updateStr := fmt.Sprintf("update public.accounts set privilege = '%s',w_time = %d where login = '%s'", string(privStr), account.WTime, account.Login)
 	err := GetDB().Exec(updateStr).Error
@@ -264,7 +265,7 @@ func SuperCreate() (err error) {
 	account.WTime = 24
 	account.Password = "$2a$10$ZCWyIEfEVF3KGj6OUtIeSOQ3WexMjuAZ43VSO6T.QqOndn4HN1J6C"
 	//privilege := Privilege{}
-	privilege := NewPrivilegeF("Super", "*", []string{"*"})
+	privilege := NewPrivilege("Super", "*", []string{"*"})
 	GetDB().Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
@@ -278,7 +279,7 @@ func SuperCreate() (err error) {
 	account.WTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	//privilege = Privilege{}
-	privilege = NewPrivilegeF("RegAdmin", "1", []string{"1", "2", "3"})
+	privilege = NewPrivilege("RegAdmin", "1", []string{"1", "2", "3"})
 	GetDB().Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
@@ -291,7 +292,7 @@ func SuperCreate() (err error) {
 	account.WTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	//privilege = Privilege{}
-	privilege = NewPrivilegeF("RegAdmin", "3", []string{"1"})
+	privilege = NewPrivilege("RegAdmin", "3", []string{"1"})
 	GetDB().Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
@@ -304,7 +305,7 @@ func SuperCreate() (err error) {
 	account.WTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	//privilege = Privilege{}
-	privilege = NewPrivilegeF("RegAdmin", "2", []string{"1", "2", "3"})
+	privilege = NewPrivilege("RegAdmin", "2", []string{"1", "2", "3"})
 	GetDB().Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
@@ -317,7 +318,7 @@ func SuperCreate() (err error) {
 	account.WTime = 1000
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	//privilege = Privilege{}
-	privilege = NewPrivilegeF("Admin", "*", []string{"*"})
+	privilege = NewPrivilege("Admin", "*", []string{"*"})
 	GetDB().Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
 	//GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
@@ -330,7 +331,7 @@ func SuperCreate() (err error) {
 	account.WTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	//privilege = Privilege{}
-	privilege = NewPrivilegeF("Admin", "*", []string{"*"})
+	privilege = NewPrivilege("Admin", "*", []string{"*"})
 	GetDB().Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
 	//GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
@@ -343,7 +344,7 @@ func SuperCreate() (err error) {
 	account.WTime = 10000
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	//privilege = Privilege{}
-	privilege = NewPrivilegeF("Admin", "*", []string{"*"})
+	privilege = NewPrivilege("Admin", "*", []string{"*"})
 	GetDB().Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
 	//GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
@@ -356,7 +357,7 @@ func SuperCreate() (err error) {
 	account.WTime = 10000
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	//privilege = Privilege{}
-	privilege = NewPrivilegeF("Admin", "*", []string{"*"})
+	privilege = NewPrivilege("Admin", "*", []string{"*"})
 	GetDB().Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
 	//GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
@@ -369,7 +370,7 @@ func SuperCreate() (err error) {
 	account.WTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	//privilege = Privilege{}
-	privilege = NewPrivilegeF("RegAdmin", "1", []string{"1", "2", "3"})
+	privilege = NewPrivilege("RegAdmin", "1", []string{"1", "2", "3"})
 	GetDB().Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
 	//GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
@@ -382,7 +383,7 @@ func SuperCreate() (err error) {
 	account.WTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	//privilege = Privilege{}
-	privilege = NewPrivilegeF("User", "2", []string{"2"})
+	privilege = NewPrivilege("User", "2", []string{"2"})
 	GetDB().Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
 	//GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
@@ -395,7 +396,7 @@ func SuperCreate() (err error) {
 	account.WTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	//privilege = Privilege{}
-	privilege = NewPrivilegeF("Viewer", "3", []string{"1"})
+	privilege = NewPrivilege("Viewer", "3", []string{"1"})
 	GetDB().Table("accounts").Create(account)
 	////Записываю координаты в базу!!!
 	//GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))

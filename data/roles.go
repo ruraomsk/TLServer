@@ -5,15 +5,26 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strings"
+	"sync"
 
 	u "github.com/JanFant/TLServer/utils"
 	"github.com/pkg/errors"
 )
 
+var RoleInfo RoleData
+
+type RoleData struct {
+	mux          sync.Mutex
+	mapRoles     map[string][]int     //роли
+	mapPermisson map[int]Permission   //привелегии
+	mapRoutes    map[string]RouteInfo //маршруты
+}
+
 //RoleAccess информация наборах ролей и полномочий
 type RoleAccess struct {
 	Roles      []Role       `json:"roles"`
 	Permission []Permission `json:"permissions"`
+	Routes     []RouteInfo  `json:"routes"`
 }
 
 //Role массив ролей
@@ -24,7 +35,7 @@ type Role struct {
 
 //Privilege brah
 type Privilege struct {
-	Role   Role     `json:"role"`
+	Role   Role     `json:"role"`   //информация о роли пользователя
 	Region string   `json:"region"` //регион пользователя
 	Area   []string `json:"area"`   //массив районов пользователя
 }
@@ -41,6 +52,17 @@ type Permission struct {
 type shortPermission struct {
 	ID          int    `json:"id"`          //ID порядковый номер
 	Description string `json:"description"` //описание команды
+}
+
+//RouteInfo информация о всех расписанных маршрутах
+type RouteInfo struct {
+	ID          int    `json:"id"`
+	Path        string `json:"path"`
+	Description string `json:"description"`
+}
+
+func HasPath(path string) RouteInfo {
+	return RoleInfo.mapRoutes[path]
 }
 
 //DisplayInfoForAdmin отображение информации о пользователях для администраторов
@@ -76,10 +98,10 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) map[
 
 		//выбираю привелегии которые не ключены в шаблон роли
 
-		CacheInfo.mux.Lock()
+		RoleInfo.mux.Lock()
 		for _, val1 := range tempPrivilege.Role.Perm {
 			flag1, flag2 := false, false
-			for _, val2 := range CacheInfo.mapRoles[tempSA.Role.Name] {
+			for _, val2 := range RoleInfo.mapRoles[tempSA.Role.Name] {
 				if val2 == val1 {
 					flag1 = true
 					break
@@ -95,7 +117,7 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) map[
 				tempSA.Role.Perm = append(tempSA.Role.Perm, val1)
 			}
 		}
-		CacheInfo.mux.Unlock()
+		RoleInfo.mux.Unlock()
 
 		tempSA.Region.SetRegionInfo(tempPrivilege.Region)
 		for _, num := range tempPrivilege.Area {
@@ -111,13 +133,12 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) map[
 	resp := u.Message(true, "Display information for Admins")
 
 	//собираем в кучу роли
+	RoleInfo.mux.Lock()
 	var roles []string
-	CacheInfo.mux.Lock()
-	defer CacheInfo.mux.Unlock()
 	if mapContx["role"] == "Super" {
 		roles = append(roles, "Admin")
 	} else {
-		for roleName, _ := range CacheInfo.mapRoles {
+		for roleName, _ := range RoleInfo.mapRoles {
 			if roleName != "Super" {
 				if (mapContx["role"] == "Admin") && (roleName == "Admin") {
 					continue
@@ -131,6 +152,19 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) map[
 	}
 	resp["roles"] = roles
 
+	//собираю в кучу разрешения без указания команд
+	chosenPermisson := make(map[int]shortPermission)
+	for key, value := range RoleInfo.mapPermisson {
+		if value.Visible {
+			var shValue shortPermission
+			shValue.transform(value)
+			chosenPermisson[key] = shValue
+		}
+	}
+	resp["permInfo"] = chosenPermisson
+	RoleInfo.mux.Unlock()
+
+	CacheInfo.mux.Lock()
 	//собираю в кучу регионы для отображения
 	chosenRegion := make(map[string]string)
 	if mapContx["role"] != "Super" {
@@ -156,18 +190,8 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) map[
 	if mapContx["role"] != "Super" {
 		delete(chosenArea, "Все регионы")
 	}
+	CacheInfo.mux.Unlock()
 	resp["areaInfo"] = chosenArea
-
-	//собираю в кучу разрешения без указания команд
-	chosenPermisson := make(map[int]shortPermission)
-	for key, value := range CacheInfo.mapPermisson {
-		if value.Visible {
-			var shValue shortPermission
-			shValue.transform(value)
-			chosenPermisson[key] = shValue
-		}
-	}
-	resp["permInfo"] = chosenPermisson
 
 	resp["accInfo"] = shortAcc
 	return resp
@@ -191,13 +215,13 @@ func (roleAccess *RoleAccess) ReadRoleAccessFile() (err error) {
 }
 
 //ToSqlStrUpdate запись привелегий в базу
-func (newPrivilege *Privilege) WriteRoleInBD(login string) (err error) {
-	privilegeStr, _ := json.Marshal(newPrivilege)
+func (privilege *Privilege) WriteRoleInBD(login string) (err error) {
+	privilegeStr, _ := json.Marshal(privilege)
 	return GetDB().Exec(fmt.Sprintf("update %s set privilege = '%s' where login = '%s'", GlobalConfig.DBConfig.AccountTable, string(privilegeStr), login)).Error
 }
 
 //ReadFromBD прочитать данные из бд и разобрать
-func (newPrivilege *Privilege) ReadFromBD(login string) error {
+func (privilege *Privilege) ReadFromBD(login string) error {
 	var privilegeStr string
 	sqlStr := fmt.Sprintf("select privilege from %v where login = '%v'", GlobalConfig.DBConfig.AccountTable, login)
 	rowsTL := GetDB().Raw(sqlStr).Row()
@@ -205,7 +229,7 @@ func (newPrivilege *Privilege) ReadFromBD(login string) error {
 	if err != nil {
 		return err
 	}
-	err = json.Unmarshal([]byte(privilegeStr), newPrivilege)
+	err = json.Unmarshal([]byte(privilegeStr), privilege)
 	if err != nil {
 		return err
 	}
@@ -213,39 +237,40 @@ func (newPrivilege *Privilege) ReadFromBD(login string) error {
 }
 
 //ConvertToJson из строки в структуру
-func (newPrivilege *Privilege) ConvertToJson(privilegeStr string) (err error) {
-	err = json.Unmarshal([]byte(privilegeStr), newPrivilege)
+func (privilege *Privilege) ConvertToJson(privilegeStr string) (err error) {
+	err = json.Unmarshal([]byte(privilegeStr), privilege)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func NewPrivilegeF(role, region string, area []string) *Privilege {
-	var newPrivilege Privilege
-	if _, ok := CacheInfo.mapRoles[role]; ok {
-		newPrivilege.Role.Name = role
+func NewPrivilege(role, region string, area []string) *Privilege {
+	var privilege Privilege
+	RoleInfo.mux.Lock()
+	if _, ok := RoleInfo.mapRoles[role]; ok {
+		privilege.Role.Name = role
 	} else {
-		newPrivilege.Role.Name = "Viewer"
+		privilege.Role.Name = "Viewer"
 	}
 
-	for _, permission := range CacheInfo.mapRoles[newPrivilege.Role.Name] {
-		newPrivilege.Role.Perm = append(newPrivilege.Role.Perm, permission)
+	for _, permission := range RoleInfo.mapRoles[privilege.Role.Name] {
+		privilege.Role.Perm = append(privilege.Role.Perm, permission)
 	}
-
+	RoleInfo.mux.Unlock()
 	if region == "" {
-		newPrivilege.Region = "0"
+		privilege.Region = "0"
 	} else {
-		newPrivilege.Region = region
+		privilege.Region = region
 	}
 
 	if len(region) == 0 {
-		newPrivilege.Area = []string{"0"}
+		privilege.Area = []string{"0"}
 	} else {
-		newPrivilege.Area = area
+		privilege.Area = area
 	}
 
-	return &newPrivilege
+	return &privilege
 }
 
 //RoleCheck проверка полученной роли на соответствие заданной и разрешение на выполнение действия
@@ -273,41 +298,45 @@ func NewRoleCheck(mapContx map[string]string, act int) (accept bool, err error) 
 
 func TestNewRoleSystem() (resp map[string]interface{}) {
 	resp = make(map[string]interface{})
-	a := RoleAccess{}
-	_ = a.ReadRoleAccessFile()
-	resp["RoleAccess"] = a
-	GetDB().Exec(fmt.Sprintf("delete from %v where login = 'TestRole'", GlobalConfig.DBConfig.AccountTable))
+	resp["1"] = RoleInfo.mapRoles
+	resp["2"] = RoleInfo.mapPermisson
+	resp["3"] = RoleInfo.mapRoutes
 
-	account := &Account{}
-	account.Login = "TestRole"
-	//Отдаем ключ для yandex map
-	account.YaMapKey = GlobalConfig.YaKey
-	account.WTime = 69
-	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
-	privilege := NewPrivilegeF("Admin", "*", []string{"*"})
-	GetDB().Table("accounts").Create(account)
-	////Записываю координаты в базу!!!
-	_ = privilege.WriteRoleInBD(account.Login)
-
-	priv2 := NewPrivilegeF("", "", []string{""})
-	_ = priv2.ReadFromBD("TestRole")
-	resp["priv1"] = priv2
-
-	privilege.Role.Perm = append(priv2.Role.Perm, 13, 69)
-	_ = privilege.WriteRoleInBD("TestRole")
-
-	priv3 := NewPrivilegeF("", "", []string{""})
-	_ = priv3.ReadFromBD("TestRole")
-	resp["priv2"] = priv3
-
-	var mapContx = make(map[string]string)
-	mapContx["login"] = account.Login
-	mapContx["role"] = privilege.Role.Name
-
-	resp["1"], _ = NewRoleCheck(mapContx, 22)
-	resp["2"], _ = NewRoleCheck(mapContx, 43)
-	resp["3"], _ = NewRoleCheck(mapContx, 1)
-	mapContx["login"] = "1"
-	resp["4"], _ = NewRoleCheck(mapContx, 1)
+	//a := RoleAccess{}
+	//_ = a.ReadRoleAccessFile()
+	//resp["RoleAccess"] = a
+	//GetDB().Exec(fmt.Sprintf("delete from %v where login = 'TestRole'", GlobalConfig.DBConfig.AccountTable))
+	//
+	//account := &Account{}
+	//account.Login = "TestRole"
+	////Отдаем ключ для yandex map
+	//account.YaMapKey = GlobalConfig.YaKey
+	//account.WTime = 69
+	//account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
+	//privilege := NewPrivilege("Admin", "*", []string{"*"})
+	//GetDB().Table("accounts").Create(account)
+	//////Записываю координаты в базу!!!
+	//_ = privilege.WriteRoleInBD(account.Login)
+	//
+	//priv2 := NewPrivilege("", "", []string{""})
+	//_ = priv2.ReadFromBD("TestRole")
+	//resp["priv1"] = priv2
+	//
+	//privilege.Role.Perm = append(priv2.Role.Perm, 13, 69)
+	//_ = privilege.WriteRoleInBD("TestRole")
+	//
+	//priv3 := NewPrivilege("", "", []string{""})
+	//_ = priv3.ReadFromBD("TestRole")
+	//resp["priv2"] = priv3
+	//
+	//var mapContx = make(map[string]string)
+	//mapContx["login"] = account.Login
+	//mapContx["role"] = privilege.Role.Name
+	//
+	//resp["1"], _ = NewRoleCheck(mapContx, 22)
+	//resp["2"], _ = NewRoleCheck(mapContx, 43)
+	//resp["3"], _ = NewRoleCheck(mapContx, 1)
+	//mapContx["login"] = "1"
+	//resp["4"], _ = NewRoleCheck(mapContx, 1)
 	return
 }
