@@ -1,6 +1,8 @@
 package logger
 
 import (
+	"github.com/ruraomsk/ag-server/logger"
+	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -61,20 +63,38 @@ func Init(path string) (err error) {
 
 //LogOpen функция
 func logOpen(path string) (log *LogFile, err error) {
+	go logClean(path)
 	log = new(LogFile)
 	log.date = time.Now().Format(time.RFC3339)[0:10]
 	log.path = path
 	path += "/log" + log.date + ".log"
-
 	log.flog, err = os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	return
 }
 
+//logClean проверка и удаление старых лог файлов
+func logClean(path string) {
+	files, err := ioutil.ReadDir(path)
+	if err != nil {
+		logger.Error.Println("|Message: Error reading directory with log files (logClean)")
+	}
+	for {
+		for _, file := range files {
+			if file.ModTime().Add(time.Hour * 24 * 30).Before(time.Now()) {
+				_ = os.Remove(path + "/" + file.Name())
+			}
+		}
+		time.Sleep(time.Hour * 24)
+	}
+}
+
+//Read прочитать лог файл
 func (l *LogFile) Read(p []byte) (n int, err error) {
 	n, err = l.flog.Read(p)
 	return
 }
 
+//Write записать лог файл
 func (l *LogFile) Write(p []byte) (n int, err error) {
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
