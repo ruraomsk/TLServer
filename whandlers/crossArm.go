@@ -33,7 +33,7 @@ var BuildCross = func(w http.ResponseWriter, r *http.Request) {
 	u.Respond(w, r, resp)
 }
 
-//BuildCross собираем данные для отображения прекрестка
+//DevCrossInfo собираем данные для отображения прекрестка (idevice информация)
 var DevCrossInfo = func(w http.ResponseWriter, r *http.Request) {
 	flag, resp := FuncAccessCheck(w, r, 4)
 	if flag {
@@ -52,9 +52,7 @@ var DevCrossInfo = func(w http.ResponseWriter, r *http.Request) {
 		} else {
 			idevice = r.URL.Query().Get("idevice")
 		}
-		if err != nil {
-			return
-		}
+
 		resp = data.GetCrossDevInfo(idevice)
 	}
 	u.Respond(w, r, resp)

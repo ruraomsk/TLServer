@@ -3,12 +3,13 @@ package routes
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"strings"
+
 	"github.com/JanFant/TLServer/data"
 	u "github.com/JanFant/TLServer/utils"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
-	"net/http"
-	"strings"
 )
 
 //JwtAuth контроль токена для всех прошедших регистрацию и обрашающихся к ресурсу
@@ -52,6 +53,7 @@ var JwtAuth = func(next http.Handler) http.Handler {
 		//не правильный токен возвращаем ошибку с кодом 403
 		if err != nil {
 			resp := u.Message(false, "Wrong auth token")
+			resp["logLogin"] = tk.Login
 			w.WriteHeader(http.StatusForbidden)
 			u.Respond(w, r, resp)
 			return

@@ -45,9 +45,9 @@ type TLSostInfo struct {
 
 //CacheDataUpdate обновление данных из бд, период обновления 1 час
 func CacheDataUpdate() {
-	RoleInfo.mapRoles = make(map[string][]int)
-	RoleInfo.mapPermisson = make(map[int]Permission)
-	RoleInfo.mapRoutes = make(map[string]RouteInfo)
+	RoleInfo.MapRoles = make(map[string][]int)
+	RoleInfo.MapPermisson = make(map[int]Permission)
+	RoleInfo.MapRoutes = make(map[string]RouteInfo)
 	BusyArmInfo.mapBusyArm = make(map[BusyArm]EditCrossInfo)
 	for {
 		CacheInfoDataUpdate()
@@ -147,18 +147,18 @@ func getRoleAccess() (err error) {
 	}
 	RoleInfo.mux.Lock()
 	for _, role := range temp.Roles {
-		if _, ok := RoleInfo.mapRoles[role.Name]; !ok {
-			RoleInfo.mapRoles[role.Name] = role.Perm
+		if _, ok := RoleInfo.MapRoles[role.Name]; !ok {
+			RoleInfo.MapRoles[role.Name] = role.Perm
 		}
 	}
 	for _, perm := range temp.Permission {
-		if _, ok := RoleInfo.mapPermisson[perm.ID]; !ok {
-			RoleInfo.mapPermisson[perm.ID] = perm
+		if _, ok := RoleInfo.MapPermisson[perm.ID]; !ok {
+			RoleInfo.MapPermisson[perm.ID] = perm
 		}
 	}
 	for _, route := range temp.Routes {
-		if _, ok := RoleInfo.mapRoutes[route.Path]; !ok {
-			RoleInfo.mapRoutes[route.Path] = route
+		if _, ok := RoleInfo.MapRoutes[route.Path]; !ok {
+			RoleInfo.MapRoutes[route.Path] = route
 		}
 	}
 	RoleInfo.mux.Unlock()

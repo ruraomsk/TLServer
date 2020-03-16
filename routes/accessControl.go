@@ -1,12 +1,12 @@
 package routes
 
 import (
-	"fmt"
-	"github.com/JanFant/TLServer/data"
-	u "github.com/JanFant/TLServer/utils"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/JanFant/TLServer/data"
+	u "github.com/JanFant/TLServer/utils"
 )
 
 var AccessControl = func(next http.Handler) http.Handler {
@@ -26,14 +26,39 @@ var AccessControl = func(next http.Handler) http.Handler {
 		url = strings.TrimPrefix(url, "/user/")
 		url = url[strings.Index(url, "/"):]
 
-		a := data.HasPath(url)
-		fmt.Println(a)
-		fmt.Println("---------------------")
-		fmt.Println(permission)
-		fmt.Println(r.URL.Path)
-		fmt.Println(url)
-		fmt.Println("---------------------")
+		rout, ok := data.RoleInfo.MapRoutes[url]
+		if !ok {
+			next.ServeHTTP(w, r)
+		}
 
+		var permId int
+		for id, perm := range data.RoleInfo.MapPermisson {
+			for _, command := range perm.Commands {
+				if command == rout.ID {
+					permId = id
+				}
+			}
+		}
+
+		access := false
+		for _, perm := range permission {
+			if perm == permId {
+				access = true
+			}
+		}
+
+		if access {
+			flag, err := data.NewRoleCheck(u.ParserInterface(r.Context().Value("info")), permId)
+			if err != nil || !flag {
+				resp = u.Message(false, err.Error())
+				if err != nil {
+					resp = u.Message(false, "Access denied")
+				}
+				w.WriteHeader(http.StatusForbidden)
+			}
+		}else{
+
+		}
 		next.ServeHTTP(w, r)
 	})
 }

@@ -15,9 +15,9 @@ var RoleInfo RoleData
 
 type RoleData struct {
 	mux          sync.Mutex
-	mapRoles     map[string][]int     //роли
-	mapPermisson map[int]Permission   //привелегии
-	mapRoutes    map[string]RouteInfo //маршруты
+	MapRoles     map[string][]int     //роли
+	MapPermisson map[int]Permission   //привелегии
+	MapRoutes    map[string]RouteInfo //маршруты
 }
 
 //RoleAccess информация наборах ролей и полномочий
@@ -43,7 +43,7 @@ type Privilege struct {
 //Permission структура полномойчий содержит ID, команду и описание команды
 type Permission struct {
 	ID          int    `json:"id"`          //ID порядковый номер
-	Command     string `json:"command"`     //название команды
+	Commands    []int  `json:"commands"`    //название команды
 	Visible     bool   `json:"visible"`     //флаг отображения пользователю
 	Description string `json:"description"` //описание команды
 }
@@ -59,10 +59,6 @@ type RouteInfo struct {
 	ID          int    `json:"id"`
 	Path        string `json:"path"`
 	Description string `json:"description"`
-}
-
-func HasPath(path string) RouteInfo {
-	return RoleInfo.mapRoutes[path]
 }
 
 //DisplayInfoForAdmin отображение информации о пользователях для администраторов
@@ -101,7 +97,7 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) map[
 		RoleInfo.mux.Lock()
 		for _, val1 := range tempPrivilege.Role.Perm {
 			flag1, flag2 := false, false
-			for _, val2 := range RoleInfo.mapRoles[tempSA.Role.Name] {
+			for _, val2 := range RoleInfo.MapRoles[tempSA.Role.Name] {
 				if val2 == val1 {
 					flag1 = true
 					break
@@ -138,7 +134,7 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) map[
 	if mapContx["role"] == "Super" {
 		roles = append(roles, "Admin")
 	} else {
-		for roleName, _ := range RoleInfo.mapRoles {
+		for roleName, _ := range RoleInfo.MapRoles {
 			if roleName != "Super" {
 				if (mapContx["role"] == "Admin") && (roleName == "Admin") {
 					continue
@@ -154,7 +150,7 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) map[
 
 	//собираю в кучу разрешения без указания команд
 	chosenPermisson := make(map[int]shortPermission)
-	for key, value := range RoleInfo.mapPermisson {
+	for key, value := range RoleInfo.MapPermisson {
 		if value.Visible {
 			var shValue shortPermission
 			shValue.transform(value)
@@ -248,13 +244,13 @@ func (privilege *Privilege) ConvertToJson(privilegeStr string) (err error) {
 func NewPrivilege(role, region string, area []string) *Privilege {
 	var privilege Privilege
 	RoleInfo.mux.Lock()
-	if _, ok := RoleInfo.mapRoles[role]; ok {
+	if _, ok := RoleInfo.MapRoles[role]; ok {
 		privilege.Role.Name = role
 	} else {
 		privilege.Role.Name = "Viewer"
 	}
 
-	for _, permission := range RoleInfo.mapRoles[privilege.Role.Name] {
+	for _, permission := range RoleInfo.MapRoles[privilege.Role.Name] {
 		privilege.Role.Perm = append(privilege.Role.Perm, permission)
 	}
 	RoleInfo.mux.Unlock()
@@ -298,9 +294,9 @@ func NewRoleCheck(mapContx map[string]string, act int) (accept bool, err error) 
 
 func TestNewRoleSystem() (resp map[string]interface{}) {
 	resp = make(map[string]interface{})
-	resp["1"] = RoleInfo.mapRoles
-	resp["2"] = RoleInfo.mapPermisson
-	resp["3"] = RoleInfo.mapRoutes
+	resp["1"] = RoleInfo.MapRoles
+	resp["2"] = RoleInfo.MapPermisson
+	resp["3"] = RoleInfo.MapRoutes
 
 	//a := RoleAccess{}
 	//_ = a.ReadRoleAccessFile()

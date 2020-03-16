@@ -130,7 +130,7 @@ func (account *Account) Create(privilege Privilege) map[string]interface{} {
 		return u.Message(false, "Failed to create account, connection error.")
 	}
 	RoleInfo.mux.Lock()
-	privilege.Role.Perm = append(privilege.Role.Perm, RoleInfo.mapRoles[privilege.Role.Name]...)
+	privilege.Role.Perm = append(privilege.Role.Perm, RoleInfo.MapRoles[privilege.Role.Name]...)
 	RoleInfo.mux.Unlock()
 	if err := privilege.WriteRoleInBD(account.Login); err != nil {
 		return u.Message(false, "Connection to DB error. Please try again")
@@ -144,7 +144,7 @@ func (account *Account) Create(privilege Privilege) map[string]interface{} {
 //Update обновление данных аккаунты (привелегии, время работы)
 func (account *Account) Update(privilege Privilege) map[string]interface{} {
 	RoleInfo.mux.Lock()
-	privilege.Role.Perm = append(privilege.Role.Perm, RoleInfo.mapRoles[privilege.Role.Name]...)
+	privilege.Role.Perm = append(privilege.Role.Perm, RoleInfo.MapRoles[privilege.Role.Name]...)
 	RoleInfo.mux.Unlock()
 	privStr, _ := json.Marshal(privilege)
 	updateStr := fmt.Sprintf("update public.accounts set privilege = '%s',w_time = %d where login = '%s'", string(privStr), account.WTime, account.Login)

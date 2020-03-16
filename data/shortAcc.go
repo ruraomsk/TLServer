@@ -61,7 +61,7 @@ func (shortAcc *ShortAccount) DecodeRequest(w http.ResponseWriter, r *http.Reque
 func (shortAcc *ShortAccount) ValidCreate(role string, region string) (err error) {
 	//проверка полученной роли
 	RoleInfo.mux.Lock()
-	if _, ok := RoleInfo.mapRoles[shortAcc.Role.Name]; !ok || shortAcc.Role.Name == "Super" {
+	if _, ok := RoleInfo.MapRoles[shortAcc.Role.Name]; !ok || shortAcc.Role.Name == "Super" {
 		return errors.New("Role not found")
 	}
 	RoleInfo.mux.Unlock()

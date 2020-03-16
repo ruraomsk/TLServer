@@ -184,7 +184,7 @@ func GetCrossDevInfo(idevice string) map[string]interface{} {
 		}
 		resp["device"] = device
 	}
-
+	resp["DontWrite"] = "true"
 	return resp
 }
 
