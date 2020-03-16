@@ -24,7 +24,7 @@ func StartServer() {
 		http.ServeFile(w, r, resourcePath+"/screen.html")
 	})
 	router.PathPrefix("/static/").Handler(http.Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(resourcePath))))).Methods("GET") //путь к скриптам они открыты
-	router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {                                                  //заглушка странички 404
+	router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { //заглушка странички 404
 		http.ServeFile(w, r, resourcePath+"/notFound.html")
 	})
 	router.HandleFunc("/login", whandlers.LoginAcc).Methods("POST") //запрос на вход в систему
@@ -47,7 +47,9 @@ func StartServer() {
 	subRout.HandleFunc("/{slug}/cross", func(w http.ResponseWriter, r *http.Request) { //работа со странички перекрестков (страничка)
 		http.ServeFile(w, r, resourcePath+"/cross.html")
 	}).Methods("GET")
-	subRout.HandleFunc("/{slug}/cross", whandlers.BuildCross).Methods("POST")                                    //информация о состоянии перекрестка
+	subRout.HandleFunc("/{slug}/cross", whandlers.BuildCross).Methods("POST")       //информация о состоянии перекрестка
+	subRout.HandleFunc("/{slug}/cross/dev", whandlers.DevCrossInfo).Methods("POST") //информация о состоянии перекрестка (информация о дейвайсе)
+
 	subRout.HandleFunc("/{slug}/cross/DispatchControlButtons", whandlers.DispatchControlButtons).Methods("POST") //обработчик диспетчерского управления (отправка команд управления)
 
 	subRout.HandleFunc("/{slug}/cross/control", func(w http.ResponseWriter, r *http.Request) { //расширеная страничка настройки перекрестка (страничка)

@@ -78,7 +78,6 @@ func Login(login, password, ip string) map[string]interface{} {
 
 	//Формируем ответ
 	resp := u.Message(true, "Logged In")
-	//resp["role"] = privilege.Role
 	resp["login"] = account.Login
 	resp["token"] = tokenString
 	return resp

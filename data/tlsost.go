@@ -131,7 +131,6 @@ func GetCrossInfo(TLignt TrafficLights) map[string]interface{} {
 		dgis     string
 		sqlStr   string
 		stateStr string
-		devStr   string
 	)
 
 	sqlStr = fmt.Sprintf("select area, subarea, idevice, dgis, describ, state from %v where region = %v and id = %v and area = %v", GlobalConfig.DBConfig.GisTable, TLignt.Region.Num, TLignt.ID, TLignt.Area.Num)
@@ -151,22 +150,6 @@ func GetCrossInfo(TLignt TrafficLights) map[string]interface{} {
 
 	resp := u.Message(true, "Cross information")
 
-	sqlStr = fmt.Sprintf("select device from %v where id = %v", GlobalConfig.DBConfig.DevicesTable, TLignt.Idevice)
-	rowDev := GetDB().Raw(sqlStr).Row()
-	err = rowDev.Scan(&devStr)
-	if err != nil {
-		logger.Error.Println("|Message: No result at these points, table device", err.Error())
-		resp["message"] = "No device at these points"
-		//return u.Message(false, "No result at these points")
-	} else {
-		device, err := ConvertDevStrToStruct(devStr)
-		if err != nil {
-			logger.Error.Println("|Message: Failed to parse cross information", err.Error())
-			return u.Message(false, "Failed to parse cross information")
-		}
-		resp["device"] = device
-	}
-
 	CacheInfo.mux.Lock()
 	TLignt.Region.NameRegion = CacheInfo.mapRegion[TLignt.Region.Num]
 	TLignt.Area.NameArea = CacheInfo.mapArea[TLignt.Region.NameRegion][TLignt.Area.Num]
@@ -176,6 +159,32 @@ func GetCrossInfo(TLignt TrafficLights) map[string]interface{} {
 	resp["DontWrite"] = "true"
 	resp["cross"] = TLignt
 	resp["state"] = rState
+	return resp
+}
+
+//GetCrossDevInfo сбор информации для пользователя и выбранном перекрестке (информацию о девайсе)
+func GetCrossDevInfo(idevice string) map[string]interface{} {
+	var (
+		sqlStr string
+		devStr string
+	)
+	resp := u.Message(true, "Cross information")
+	sqlStr = fmt.Sprintf("select device from %v where id = %v", GlobalConfig.DBConfig.DevicesTable, idevice)
+	rowDev := GetDB().Raw(sqlStr).Row()
+	err := rowDev.Scan(&devStr)
+	if err != nil {
+		logger.Error.Println("|Message: No result at these points, table device", err.Error())
+		resp["message"] = "No device at these points"
+		return u.Message(false, "No result at these points")
+	} else {
+		device, err := ConvertDevStrToStruct(devStr)
+		if err != nil {
+			logger.Error.Println("|Message: Failed to parse cross information", err.Error())
+			return u.Message(false, "Failed to parse cross information")
+		}
+		resp["device"] = device
+	}
+
 	return resp
 }
 

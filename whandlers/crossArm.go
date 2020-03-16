@@ -33,6 +33,33 @@ var BuildCross = func(w http.ResponseWriter, r *http.Request) {
 	u.Respond(w, r, resp)
 }
 
+//BuildCross собираем данные для отображения прекрестка
+var DevCrossInfo = func(w http.ResponseWriter, r *http.Request) {
+	flag, resp := FuncAccessCheck(w, r, 4)
+	if flag {
+		var err error
+		var idevice string
+		if len(r.URL.RawQuery) <= 0 {
+			w.WriteHeader(http.StatusBadRequest)
+			u.Respond(w, r, u.Message(false, "Blank field"))
+			err = errors.New("Blank field")
+			return
+		}
+		if _, err = strconv.Atoi(r.URL.Query().Get("idevice")); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			u.Respond(w, r, u.Message(false, "Blank field: idevice"))
+			return
+		} else {
+			idevice = r.URL.Query().Get("idevice")
+		}
+		if err != nil {
+			return
+		}
+		resp = data.GetCrossDevInfo(idevice)
+	}
+	u.Respond(w, r, resp)
+}
+
 //ControlCross данные для заполнения таблиц управления
 var ControlCross = func(w http.ResponseWriter, r *http.Request) {
 	flag, resp := FuncAccessCheck(w, r, 5)

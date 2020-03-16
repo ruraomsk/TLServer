@@ -1,9 +1,7 @@
 package data
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"sync"
 	"time"
 
@@ -121,17 +119,20 @@ func GetRegionInfo() (region map[string]string, area map[string]map[string]strin
 //getTLSost получить данные о состоянии светофоров
 func getTLSost() (TLsost map[int]string, err error) {
 	TLsost = make(map[int]string)
-	file, err := ioutil.ReadFile("./cachefile/TLsost.json")
-	if err != nil {
-		return nil, err
-	}
-	temp := new(InfoTL)
-	if err := json.Unmarshal(file, &temp); err != nil {
-		return nil, err
-	}
-	for _, sost := range temp.Sost {
-		if _, ok := TLsost[sost.Num]; !ok {
-			TLsost[sost.Num] = sost.Description
+	sqlStr := fmt.Sprintf(`Select id, description from %v`, GlobalConfig.DBConfig.StatusTable)
+	statusRow, _ := GetDB().Raw(sqlStr).Rows()
+	for statusRow.Next() {
+		var (
+			id   int
+			desc string
+		)
+		err := statusRow.Scan(&id, &desc)
+		if err != nil {
+			logger.Error.Println("|Message: No result at these points", err.Error())
+			return nil, err
+		}
+		if _, ok := TLsost[id]; !ok {
+			TLsost[id] = desc
 		}
 	}
 	return TLsost, err

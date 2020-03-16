@@ -29,6 +29,7 @@ gis_table = "public.cross"
 account_table = "public.accounts"
 region_table = "public.region"
 devices_table = "public.devices"
+status_table = "public.status"
 
 #настройки для работы с каталогами перекрестков
 [picture]

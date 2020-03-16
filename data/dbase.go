@@ -27,6 +27,7 @@ type DBConfig struct {
 	RegionTable     string `toml:"region_table"`
 	AccountTable    string `toml:"account_table"`
 	DevicesTable    string `toml:"devices_table"`
+	StatusTable     string `toml:"status_table"`
 }
 
 func (dbConfig *DBConfig) getDBurl() string {
