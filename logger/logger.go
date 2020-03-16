@@ -1,7 +1,6 @@
 package logger
 
 import (
-	"github.com/ruraomsk/ag-server/logger"
 	"io/ioutil"
 	"log"
 	"os"
@@ -76,7 +75,7 @@ func logOpen(path string) (log *LogFile, err error) {
 func logClean(path string) {
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
-		logger.Error.Println("|Message: Error reading directory with log files (logClean)")
+		Error.Println("|Message: Error reading directory with log files (logClean)")
 	}
 	for {
 		for _, file := range files {
