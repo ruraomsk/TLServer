@@ -12,179 +12,176 @@ import (
 
 //BuildCross собираем данные для отображения прекрестка
 var BuildCross = func(w http.ResponseWriter, r *http.Request) {
-	flag, resp := FuncAccessCheck(w, r, 4)
-	if flag {
-		var err error
-		TLight := &data.TrafficLights{}
-		TLight.Region.Num, TLight.Area.Num, TLight.ID, err = queryParser(w, r)
-		if err != nil {
-			return
-		}
-		resp = data.GetCrossInfo(*TLight)
-		mapContx := u.ParserInterface(r.Context().Value("info"))
-
-		controlCrossFlag, _ := data.NewRoleCheck(mapContx, 5)
-		if (TLight.Region.Num == mapContx["region"]) || (mapContx["region"] == "*") {
-			resp["controlCrossFlag"] = controlCrossFlag
-		} else {
-			resp["controlCrossFlag"] = false
-		}
+	//flag, resp := FuncAccessCheck(w, r, 4)
+	//if flag {
+	var err error
+	TLight := &data.TrafficLights{}
+	TLight.Region.Num, TLight.Area.Num, TLight.ID, err = queryParser(w, r)
+	if err != nil {
+		return
 	}
+	resp := data.GetCrossInfo(*TLight)
+	mapContx := u.ParserInterface(r.Context().Value("info"))
+
+	controlCrossFlag, _ := data.AccessCheck(mapContx["login"], 5)
+	if (TLight.Region.Num == mapContx["region"]) || (mapContx["region"] == "*") {
+		resp["controlCrossFlag"] = controlCrossFlag
+	} else {
+		resp["controlCrossFlag"] = false
+	}
+	//}
 	u.Respond(w, r, resp)
 }
 
 //DevCrossInfo собираем данные для отображения прекрестка (idevice информация)
 var DevCrossInfo = func(w http.ResponseWriter, r *http.Request) {
-	flag, resp := FuncAccessCheck(w, r, 4)
-	if flag {
-		var err error
-		var idevice string
-		if len(r.URL.RawQuery) <= 0 {
-			w.WriteHeader(http.StatusBadRequest)
-			u.Respond(w, r, u.Message(false, "Blank field"))
-			err = errors.New("Blank field")
-			return
-		}
-		if _, err = strconv.Atoi(r.URL.Query().Get("idevice")); err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			u.Respond(w, r, u.Message(false, "Blank field: idevice"))
-			return
-		} else {
-			idevice = r.URL.Query().Get("idevice")
-		}
-
-		resp = data.GetCrossDevInfo(idevice)
+	//flag, resp := FuncAccessCheck(w, r, 4)
+	//if flag {
+	var err error
+	var idevice string
+	if len(r.URL.RawQuery) <= 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		u.Respond(w, r, u.Message(false, "Blank field"))
+		err = errors.New("Blank field")
+		return
 	}
+	if _, err = strconv.Atoi(r.URL.Query().Get("idevice")); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		u.Respond(w, r, u.Message(false, "Blank field: idevice"))
+		return
+	} else {
+		idevice = r.URL.Query().Get("idevice")
+	}
+
+	resp := data.GetCrossDevInfo(idevice)
+	//}
 	u.Respond(w, r, resp)
 }
 
 //ControlCross данные для заполнения таблиц управления
 var ControlCross = func(w http.ResponseWriter, r *http.Request) {
-	flag, resp := FuncAccessCheck(w, r, 5)
-	if flag {
-		var err error
-		TLight := &data.TrafficLights{}
-		TLight.Region.Num, TLight.Area.Num, TLight.ID, err = queryParser(w, r)
-		if err != nil {
-			return
-		}
-		mapContx := u.ParserInterface(r.Context().Value("info"))
-
-		controlCrossFlag, _ := data.NewRoleCheck(mapContx, 5)
-		if (TLight.Region.Num == mapContx["region"]) || (mapContx["region"] == "*") {
-			resp = data.ControlGetCrossInfo(*TLight, mapContx)
-			resp["controlCrossFlag"] = controlCrossFlag
-		} else {
-			resp["controlCrossFlag"] = false
-		}
+	//flag, resp := FuncAccessCheck(w, r, 5)
+	//if flag {
+	var err error
+	TLight := &data.TrafficLights{}
+	TLight.Region.Num, TLight.Area.Num, TLight.ID, err = queryParser(w, r)
+	if err != nil {
+		return
 	}
+	mapContx := u.ParserInterface(r.Context().Value("info"))
+
+	var resp = make(map[string]interface{})
+	if (TLight.Region.Num == mapContx["region"]) || (mapContx["region"] == "*") {
+		resp = data.ControlGetCrossInfo(*TLight, mapContx)
+	}
+	//}
 	u.Respond(w, r, resp)
 }
 
 //ControlEditableCross обработчик проверки редактирования перекрестка
 var ControlEditableCross = func(w http.ResponseWriter, r *http.Request) {
-	flag, resp := FuncAccessCheck(w, r, 5)
-	if flag {
-		var err error
-		arm := &data.BusyArm{}
-		arm.Region, arm.Area, arm.ID, err = queryParser(w, r)
-		if err != nil {
-			return
-		}
-		mapContx := u.ParserInterface(r.Context().Value("info"))
-		resp = data.ControlEditableCheck(*arm, mapContx)
+	//flag, resp := FuncAccessCheck(w, r, 5)
+	//if flag {
+	var err error
+	arm := &data.BusyArm{}
+	arm.Region, arm.Area, arm.ID, err = queryParser(w, r)
+	if err != nil {
+		return
 	}
+	mapContx := u.ParserInterface(r.Context().Value("info"))
+	resp := data.ControlEditableCheck(*arm, mapContx)
+	//}
 	u.Respond(w, r, resp)
 }
 
 //ControlCloseCross обработчик закрытия перекрестка
 var ControlCloseCross = func(w http.ResponseWriter, r *http.Request) {
-	flag, resp := FuncAccessCheck(w, r, 5)
-	if flag {
-		var err error
-		arm := &data.BusyArm{}
-		arm.Region, arm.Area, arm.ID, err = queryParser(w, r)
-		if err != nil {
-			return
-		}
-		resp = data.BusyArmDelete(*arm)
+	//flag, resp := FuncAccessCheck(w, r, 5)
+	//if flag {
+	var err error
+	arm := &data.BusyArm{}
+	arm.Region, arm.Area, arm.ID, err = queryParser(w, r)
+	if err != nil {
+		return
 	}
+	resp := data.BusyArmDelete(*arm)
+	//}
 	u.Respond(w, r, resp)
 }
 
 //ControlSendButton обработчик данных для отправки на устройство(сервер)
 var ControlSendButton = func(w http.ResponseWriter, r *http.Request) {
-	flag, resp := FuncAccessCheck(w, r, 5)
-	if flag {
-		var stateData agS_pudge.Cross
-		err := json.NewDecoder(r.Body).Decode(&stateData)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			u.Respond(w, r, u.Message(false, "Invalid request"))
-			return
-		}
-		mapContx := u.ParserInterface(r.Context().Value("info"))
-		resp = data.SendCrossData(stateData, mapContx)
+	//flag, resp := FuncAccessCheck(w, r, 5)
+	//if flag {
+	var stateData agS_pudge.Cross
+	err := json.NewDecoder(r.Body).Decode(&stateData)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		u.Respond(w, r, u.Message(false, "Invalid request"))
+		return
 	}
+	mapContx := u.ParserInterface(r.Context().Value("info"))
+	resp := data.SendCrossData(stateData, mapContx)
+	//}
 	u.Respond(w, r, resp)
 }
 
 //ControlCreateButton обработчик данных для создания перекрестка и отправка на устройство(сервер)
 var ControlCreateButton = func(w http.ResponseWriter, r *http.Request) {
-	flag, resp := FuncAccessCheck(w, r, 5)
-	if flag {
-		var stateData agS_pudge.Cross
-		err := json.NewDecoder(r.Body).Decode(&stateData)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			u.Respond(w, r, u.Message(false, "Invalid request"))
-			return
-		}
-		mapContx := u.ParserInterface(r.Context().Value("info"))
-		resp = data.CreateCrossData(stateData, mapContx)
+	//flag, resp := FuncAccessCheck(w, r, 5)
+	//if flag {
+	var stateData agS_pudge.Cross
+	err := json.NewDecoder(r.Body).Decode(&stateData)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		u.Respond(w, r, u.Message(false, "Invalid request"))
+		return
 	}
+	mapContx := u.ParserInterface(r.Context().Value("info"))
+	resp := data.CreateCrossData(stateData, mapContx)
+	//}
 	u.Respond(w, r, resp)
 }
 
 //ControlCheckButton обработчик данных для их проверка
 var ControlCheckButton = func(w http.ResponseWriter, r *http.Request) {
-	flag, resp := FuncAccessCheck(w, r, 5)
-	if flag {
-		var stateData agS_pudge.Cross
-		err := json.NewDecoder(r.Body).Decode(&stateData)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			u.Respond(w, r, u.Message(false, "Invalid request"))
-			return
-		}
-		resp = data.CheckCrossData(stateData)
+	//flag, resp := FuncAccessCheck(w, r, 5)
+	//if flag {
+	var stateData agS_pudge.Cross
+	err := json.NewDecoder(r.Body).Decode(&stateData)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		u.Respond(w, r, u.Message(false, "Invalid request"))
+		return
 	}
+	resp := data.CheckCrossData(stateData)
+	//}
 	u.Respond(w, r, resp)
 }
 
 //ControlDeleteButton обработчик данных для удаления перекрестка
 var ControlDeleteButton = func(w http.ResponseWriter, r *http.Request) {
-	flag, resp := FuncAccessCheck(w, r, 5)
-	if flag {
-		var stateData agS_pudge.Cross
-		err := json.NewDecoder(r.Body).Decode(&stateData)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			u.Respond(w, r, u.Message(false, "Invalid request"))
-			return
-		}
-		mapContx := u.ParserInterface(r.Context().Value("info"))
-		resp = data.DeleteCrossData(stateData, mapContx)
+	//flag, resp := FuncAccessCheck(w, r, 5)
+	//if flag {
+	var stateData agS_pudge.Cross
+	err := json.NewDecoder(r.Body).Decode(&stateData)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		u.Respond(w, r, u.Message(false, "Invalid request"))
+		return
 	}
+	mapContx := u.ParserInterface(r.Context().Value("info"))
+	resp := data.DeleteCrossData(stateData, mapContx)
+	//}
 	u.Respond(w, r, resp)
 }
 
 var ControlTestState = func(w http.ResponseWriter, r *http.Request) {
-	flag, resp := FuncAccessCheck(w, r, 12)
-	if flag {
-		mapContx := u.ParserInterface(r.Context().Value("info"))
-		resp = data.TestCrossStateData(mapContx)
-	}
+	//flag, resp := FuncAccessCheck(w, r, 12)
+	//if flag {
+	mapContx := u.ParserInterface(r.Context().Value("info"))
+	resp := data.TestCrossStateData(mapContx)
+	//}
 	u.Respond(w, r, resp)
 }
 

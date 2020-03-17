@@ -35,15 +35,15 @@ type Role struct {
 
 //Privilege brah
 type Privilege struct {
-	Role   Role     `json:"role"`   //информация о роли пользователя
-	Region string   `json:"region"` //регион пользователя
-	Area   []string `json:"area"`   //массив районов пользователя
+	Role         Role     `json:"role"`   //информация о роли пользователя
+	Region       string   `json:"region"` //регион пользователя
+	Area         []string `json:"area"`   //массив районов пользователя
+	PrivilegeStr string   `json:"-"`      //строка для декодирования
 }
 
 //Permission структура полномойчий содержит ID, команду и описание команды
 type Permission struct {
 	ID          int    `json:"id"`          //ID порядковый номер
-	Commands    []int  `json:"commands"`    //название команды
 	Visible     bool   `json:"visible"`     //флаг отображения пользователю
 	Description string `json:"description"` //описание команды
 }
@@ -57,6 +57,7 @@ type shortPermission struct {
 //RouteInfo информация о всех расписанных маршрутах
 type RouteInfo struct {
 	ID          int    `json:"id"`
+	Permission  int    `json:"permission"`
 	Path        string `json:"path"`
 	Description string `json:"description"`
 }
@@ -85,7 +86,8 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) map[
 			return u.Message(false, "Display info: Bad request")
 		}
 		var tempPrivilege = Privilege{}
-		err = tempPrivilege.ConvertToJson(tempSA.Privilege)
+		tempPrivilege.PrivilegeStr = tempSA.Privilege
+		err = tempPrivilege.ConvertToJson()
 		if err != nil {
 			//logger.Info.Println("DisplayInfoForAdmin: Что-то не так со строкой привилегий", err)
 			return u.Message(false, "Display info: Privilege json error")
@@ -233,8 +235,8 @@ func (privilege *Privilege) ReadFromBD(login string) error {
 }
 
 //ConvertToJson из строки в структуру
-func (privilege *Privilege) ConvertToJson(privilegeStr string) (err error) {
-	err = json.Unmarshal([]byte(privilegeStr), privilege)
+func (privilege *Privilege) ConvertToJson() (err error) {
+	err = json.Unmarshal([]byte(privilege.PrivilegeStr), privilege)
 	if err != nil {
 		return err
 	}
@@ -270,15 +272,11 @@ func NewPrivilege(role, region string, area []string) *Privilege {
 }
 
 //RoleCheck проверка полученной роли на соответствие заданной и разрешение на выполнение действия
-func NewRoleCheck(mapContx map[string]string, act int) (accept bool, err error) {
+func AccessCheck(login string, act int) (accept bool, err error) {
 	privilege := Privilege{}
 	//Проверил соответствует ли роль которую мне дали с ролью установленной в БД
-	err = privilege.ReadFromBD(mapContx["login"])
+	err = privilege.ReadFromBD(login)
 	if err != nil {
-		return false, err
-	}
-	if privilege.Role.Name != mapContx["role"] {
-		err = errors.New("Access denied")
 		return false, err
 	}
 

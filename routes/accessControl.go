@@ -11,7 +11,7 @@ import (
 
 var AccessControl = func(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		//разбираю конетест
+		//разбираю context
 		mapContx := u.ParserInterface(r.Context().Value("info"))
 		var permission []int
 		permStr := mapContx["perm"]
@@ -31,34 +31,23 @@ var AccessControl = func(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 		}
 
-		var permId int
-		for id, perm := range data.RoleInfo.MapPermisson {
-			for _, command := range perm.Commands {
-				if command == rout.ID {
-					permId = id
-				}
-			}
-		}
-
 		access := false
 		for _, perm := range permission {
-			if perm == permId {
+			if perm == rout.Permission {
 				access = true
+				break
 			}
 		}
 
 		if access {
-			flag, err := data.NewRoleCheck(u.ParserInterface(r.Context().Value("info")), permId)
-			if err != nil || !flag {
-				resp = u.Message(false, err.Error())
-				if err != nil {
-					resp = u.Message(false, "Access denied")
-				}
-				w.WriteHeader(http.StatusForbidden)
-			}
-		}else{
-
+			next.ServeHTTP(w, r)
+		} else {
+			resp := u.Message(false, "Access denied")
+			resp["logLogin"] = mapContx["login"]
+			w.WriteHeader(http.StatusForbidden)
+			u.Respond(w, r, resp)
+			return
 		}
-		next.ServeHTTP(w, r)
+
 	})
 }

@@ -60,8 +60,12 @@ var JwtAuth = func(next http.Handler) http.Handler {
 		}
 
 		//Проверка на уникальность токена
-		var tokenStrFromBd string
-		err = data.GetDB().Table("accounts").Select("token").Where("login = ?", tk.Login).Row().Scan(&tokenStrFromBd)
+		var (
+			userPrivilege  data.Privilege
+			tokenStrFromBd string
+		)
+		sqlStr := fmt.Sprintf(`select token, privilege from %v where login = '%v'`, data.GlobalConfig.DBConfig.AccountTable, tk.Login)
+		err = data.GetDB().Raw(sqlStr).Row().Scan(&tokenStrFromBd, &userPrivilege.PrivilegeStr)
 		if err != nil {
 			resp := u.Message(false, fmt.Sprintf("Can't take token from BD: %s", err.Error()))
 			w.WriteHeader(http.StatusForbidden)
@@ -99,15 +103,23 @@ var JwtAuth = func(next http.Handler) http.Handler {
 		vars := mux.Vars(r)
 		var mapCont = make(map[string]string)
 		slug := vars["slug"]
-		if strings.Contains(r.RequestURI, "/manage/") {
-			mapCont["act"] = vars["act"]
-		}
 		if slug != tk.Login {
 			resp := u.Message(false, fmt.Sprintf("Token isn't registered for user: %s", slug))
 			resp["logLogin"] = tk.Login
 			u.Respond(w, r, resp)
 			return
 		}
+
+		//проверка правильности роли для указанного пользователя
+		_ = userPrivilege.ConvertToJson()
+		if userPrivilege.Role.Name != tk.Role {
+			resp := u.Message(false, "Access denied")
+			resp["logLogin"] = tk.Login
+			w.WriteHeader(http.StatusForbidden)
+			u.Respond(w, r, resp)
+			return
+		}
+
 		mapCont["login"] = tk.Login
 		mapCont["region"] = tk.Region
 		mapCont["role"] = tk.Role

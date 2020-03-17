@@ -18,11 +18,11 @@ var TestHello = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 })
 
 var TestToken = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	flag, resp := FuncAccessCheck(w, r, 6)
-	if flag {
-
-		resp["BLAA!!!"] = "Blaa!!!"
-	}
+	//flag, resp := FuncAccessCheck(w, r, 6)
+	//if flag {
+	var resp = make(map[string]interface{})
+	resp["BLAA!!!"] = "Blaa!!!"
+	//}
 	u.Respond(w, r, resp)
 })
 
