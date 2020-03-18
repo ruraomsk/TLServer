@@ -9,9 +9,10 @@ import (
 	u "github.com/JanFant/TLServer/utils"
 )
 
+//AccessControl проверка разрешен ли пользователя доступ к запрашиваемому ресурсу
 var AccessControl = func(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		//разбираю context
+		//достаем разрешенные группы маршрутов из контекста
 		mapContx := u.ParserInterface(r.Context().Value("info"))
 		var permission []int
 		permStr := mapContx["perm"]
@@ -21,16 +22,19 @@ var AccessControl = func(next http.Handler) http.Handler {
 			intVal, _ := strconv.Atoi(value)
 			permission = append(permission, intVal)
 		}
-		//контроль к ресурсу
+
+		//убираем из url лишнее
 		url := r.URL.Path
 		url = strings.TrimPrefix(url, "/user/")
 		url = url[strings.Index(url, "/"):]
 
+		//если маршрут не найдет отправляем дальше, там разберутся (404)
 		rout, ok := data.RoleInfo.MapRoutes[url]
 		if !ok {
-			next.ServeHTTP(w, r)
+			http.ServeFile(w, r, data.GlobalConfig.ResourcePath+"/notFound.html")
 		}
 
+		//смотрим если ли доступ у пользователя к этому машруту
 		access := false
 		for _, perm := range permission {
 			if perm == rout.Permission {
@@ -39,6 +43,7 @@ var AccessControl = func(next http.Handler) http.Handler {
 			}
 		}
 
+		//если все нормально отправляем дальше, или запрещаем доступ
 		if access {
 			next.ServeHTTP(w, r)
 		} else {

@@ -11,8 +11,6 @@ import (
 
 //ActUpdateAccount обработчик запроса обновления (работа с пользователями)
 var ActUpdateAccount = func(w http.ResponseWriter, r *http.Request) {
-	//flag, resp := FuncAccessCheck(w, r, 1)
-	//if flag {
 	mapContx := u.ParserInterface(r.Context().Value("info"))
 	var shortAcc = &data.ShortAccount{}
 	err := shortAcc.DecodeRequest(w, r)
@@ -27,14 +25,11 @@ var ActUpdateAccount = func(w http.ResponseWriter, r *http.Request) {
 	}
 	account, privilege := shortAcc.ConvertShortToAcc()
 	resp := account.Update(privilege)
-	//}
 	u.Respond(w, r, resp)
 }
 
 //ActDeleteAccount обработчик запроса удаления (работа с пользователями)
 var ActDeleteAccount = func(w http.ResponseWriter, r *http.Request) {
-	//flag, resp := FuncAccessCheck(w, r, 1)
-	//if flag {
 	mapContx := u.ParserInterface(r.Context().Value("info"))
 	var shortAcc = &data.ShortAccount{}
 	err := shortAcc.DecodeRequest(w, r)
@@ -48,14 +43,11 @@ var ActDeleteAccount = func(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	resp := account.Delete()
-	//}
 	u.Respond(w, r, resp)
 }
 
 //ActAddAccount обработчик запроса добавления (работа с пользователями)
 var ActAddAccount = func(w http.ResponseWriter, r *http.Request) {
-	//flag, resp := FuncAccessCheck(w, r, 1)
-	//if flag {
 	mapContx := u.ParserInterface(r.Context().Value("info"))
 	var shortAcc = &data.ShortAccount{}
 	err := shortAcc.DecodeRequest(w, r)
@@ -70,14 +62,11 @@ var ActAddAccount = func(w http.ResponseWriter, r *http.Request) {
 	}
 	account, privilege := shortAcc.ConvertShortToAcc()
 	resp := account.Create(privilege)
-	//}
 	u.Respond(w, r, resp)
 }
 
 //ActChangePw обработчик запроса смены пароля для пользователя
 var ActChangePw = func(w http.ResponseWriter, r *http.Request) {
-	//flag, resp := FuncAccessCheck(w, r, 2)
-	//if flag {
 	mapContx := u.ParserInterface(r.Context().Value("info"))
 	var passChange = &data.PassChange{}
 	err := json.NewDecoder(r.Body).Decode(passChange)
@@ -93,6 +82,5 @@ var ActChangePw = func(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	resp := account.ChangePW()
-	//}
 	u.Respond(w, r, resp)
 }

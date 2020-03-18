@@ -34,11 +34,8 @@ var LoginAccOut = func(w http.ResponseWriter, r *http.Request) {
 
 //DisplayAccInfo отображение информации об аккаунтах для администрирования
 var DisplayAccInfo = func(w http.ResponseWriter, r *http.Request) {
-	//flag, resp := FuncAccessCheck(w, r, 9)
-	//if flag {
 	privilege := &data.Privilege{}
 	mapContx := u.ParserInterface(r.Context().Value("info"))
 	resp := privilege.DisplayInfoForAdmin(mapContx)
-	//}
 	u.Respond(w, r, resp)
 }

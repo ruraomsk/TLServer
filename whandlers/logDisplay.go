@@ -8,17 +8,12 @@ import (
 
 //DisplayLogFile обработчик отображения файлов лога
 var DisplayLogFile = func(w http.ResponseWriter, r *http.Request) {
-	//flag, resp := FuncAccessCheck(w, r, 3)
-	//if flag {
 	resp := data.DisplayLogFiles()
-	//}
 	u.Respond(w, r, resp)
 }
 
 //DisplayLogInfo обработчик выгрузки содержимого лог файла
 var DisplayLogInfo = func(w http.ResponseWriter, r *http.Request) {
-	//flag, resp := FuncAccessCheck(w, r, 3)
-	//if flag {
 	if len(r.URL.RawQuery) <= 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		u.Respond(w, r, u.Message(false, "Blank field"))
@@ -32,6 +27,5 @@ var DisplayLogInfo = func(w http.ResponseWriter, r *http.Request) {
 	}
 	mapContx := u.ParserInterface(r.Context().Value("info"))
 	resp := data.DisplayFileLog(fileName, mapContx)
-	//}
 	u.Respond(w, r, resp)
 }

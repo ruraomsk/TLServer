@@ -11,8 +11,6 @@ import (
 
 //DispatchControlButton обработчик кнопок диспетчерского управления
 var DispatchControlButtons = func(w http.ResponseWriter, r *http.Request) {
-	//flag, resp := FuncAccessCheck(w, r, 5)
-	//if flag {
 	arm := comm.CommandARM{}
 	if err := json.NewDecoder(r.Body).Decode(&arm); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -21,6 +19,5 @@ var DispatchControlButtons = func(w http.ResponseWriter, r *http.Request) {
 	}
 	mapContx := u.ParserInterface(r.Context().Value("info"))
 	resp := data.DispatchControl(arm, mapContx)
-	//}
 	u.Respond(w, r, resp)
 }

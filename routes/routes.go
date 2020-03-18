@@ -34,7 +34,7 @@ func StartServer() {
 	subRout := router.PathPrefix("/user").Subrouter()
 	subRout.Use(JwtAuth) //добавление к роутеру контроль токена
 
-	subRout.Use(AccessControl)
+	subRout.Use(AccessControl) //проверка разрешения на доступ к ресурсу
 
 	subRout.HandleFunc("/{slug}/map", func(w http.ResponseWriter, r *http.Request) { //работа с основной страничкой карты
 		http.ServeFile(w, r, resourcePath+"/map.html")
@@ -83,11 +83,11 @@ func StartServer() {
 	}).Methods("GET")
 	subRout.HandleFunc("/{slug}/manage/stateTest", whandlers.ControlTestState).Methods("POST") //обработчик проверки структуры State
 
-	subRout.HandleFunc("/{slug}/manage/log", func(w http.ResponseWriter, r *http.Request) { //обработка лог файлов (страничка)
+	subRout.HandleFunc("/{slug}/manage/serverLog", func(w http.ResponseWriter, r *http.Request) { //обработка лог файлов (страничка)
 		http.ServeFile(w, r, resourcePath+"/log.html")
 	}).Methods("GET")
-	subRout.HandleFunc("/{slug}/manage/log", whandlers.DisplayLogFile).Methods("POST")     //обработчик по выгрузке лог файлов
-	subRout.HandleFunc("/{slug}/manage/log/info", whandlers.DisplayLogInfo).Methods("GET") //обработчик выбранного лог файла
+	subRout.HandleFunc("/{slug}/manage/serverLog", whandlers.DisplayLogFile).Methods("POST")     //обработчик по выгрузке лог файлов
+	subRout.HandleFunc("/{slug}/manage/serverLog/info", whandlers.DisplayLogInfo).Methods("GET") //обработчик выбранного лог файла
 
 	subRout.HandleFunc("/{slug}/manage/crossCreator", func(w http.ResponseWriter, r *http.Request) { //обработка проверки/создания каталога карты перекрестков (страничка)
 		http.ServeFile(w, r, resourcePath+"/crossCreator.html")

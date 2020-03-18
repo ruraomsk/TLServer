@@ -103,6 +103,96 @@
       "id": 10,
       "visible": true,
       "description": "Делать тесты"
+    },
+    {
+      "id": 11,
+      "visible": true,
+      "description": "Напросился"
+    },
+    {
+      "id": 12,
+      "visible": true,
+      "description": "Напросился"
+    },
+    {
+      "id": 13,
+      "visible": true,
+      "description": "Напросился"
+    },
+    {
+      "id": 14,
+      "visible": true,
+      "description": "Напросился"
+    },
+    {
+      "id": 15,
+      "visible": true,
+      "description": "Напросился"
+    },
+    {
+      "id": 16,
+      "visible": true,
+      "description": "Напросился"
+    },
+    {
+      "id": 17,
+      "visible": true,
+      "description": "Напросился"
+    },
+    {
+      "id": 18,
+      "visible": true,
+      "description": "Напросился"
+    },
+    {
+      "id": 19,
+      "visible": true,
+      "description": "Напросился"
+    },
+    {
+      "id": 20,
+      "visible": true,
+      "description": "Напросился"
+    },
+    {
+      "id": 21,
+      "visible": true,
+      "description": "Напросился"
+    },
+    {
+      "id": 22,
+      "visible": true,
+      "description": "Напросился"
+    },
+    {
+      "id": 23,
+      "visible": true,
+      "description": "Напросился"
+    },
+    {
+      "id": 24,
+      "visible": true,
+      "description": "Напросился"
+    },
+    {
+      "id": 25,
+      "visible": true,
+      "description": "Напросился"
+    },
+    {
+      "id": 26,
+      "visible": true,
+      "description": "Напросился"
+    },
+    {
+      "id": 27,
+      "visible": true,
+      "description": "Напросился"
+    },
+    {
+      "id": 28,
+      "visible": true,
+      "description": "Напросился"
     }
   ],
   "routes": [
@@ -115,7 +205,7 @@
     {
       "id": 2,
       "permission": 6,
-      "path": "/map/logOut",
+      "path": "/map/serverLogOut",
       "description": "обработчик выхода из системы"
     },
     {
@@ -241,13 +331,13 @@
     {
       "id": 23,
       "permission": 3,
-      "path": "/manage/log",
+      "path": "/manage/serverLog",
       "description": "обработчик по выгрузке лог файлов"
     },
     {
       "id": 24,
       "permission": 3,
-      "path": "/manage/log/info",
+      "path": "/manage/serverLog/info",
       "description": "обработчик выбранного лог файла"
     },
     {
