@@ -17,7 +17,7 @@ import (
 //ShortAccount удобная структура аккаунта для обмена с пользователем
 type ShortAccount struct {
 	Login     string     `json:"login"`    //логин пользователя
-	Wtime     int        `json:"wtime"`    //время сеанса пользователя
+	WorkTime  int        `json:"workTime"` //время сеанса пользователя
 	Password  string     `json:"password"` //пароль пользователя
 	Role      Role       `json:"role"`     //роль пользователя
 	Privilege string     `json:"-"`        //привелегии (не уходят на верх)
@@ -37,7 +37,7 @@ func (shortAcc *ShortAccount) ConvertShortToAcc() (account Account, privilege Pr
 	privilege = Privilege{}
 	account.Password = shortAcc.Password
 	account.Login = shortAcc.Login
-	account.WTime = time.Duration(shortAcc.Wtime)
+	account.WorkTime = time.Duration(shortAcc.WorkTime)
 	privilege.Region = shortAcc.Region.Num
 	privilege.Role = shortAcc.Role
 	for _, area := range shortAcc.Area {
@@ -94,7 +94,7 @@ func (shortAcc *ShortAccount) ValidCreate(role string, region string) (err error
 	}
 	CacheInfo.mux.Unlock()
 	//проверка времени работы
-	if shortAcc.Wtime < 2 {
+	if shortAcc.WorkTime < 2 {
 		return errors.New("Working time should be indicated more than 2 hours")
 	}
 

@@ -8,8 +8,8 @@ import (
 	"strings"
 )
 
-//LogInfo данные для хранения информации лог файлов
-type LogInfo struct {
+//ServerLogInfo данные для хранения информации лог файлов
+type ServerLogInfo struct {
 	Type     string `json:"type"`     //тип лог сообщения
 	Time     string `json:"time"`     //врямя когда произошло событие
 	IP       string `json:"IP"`       //IP с которого делали запрос
@@ -20,8 +20,8 @@ type LogInfo struct {
 
 var logFileSuffix = ".log"
 
-//DisplayLogFiles отображения всех лог файлов в каталоге
-func DisplayLogFiles() map[string]interface{} {
+//DisplayServerLogFiles отображения всех лог файлов в каталоге
+func DisplayServerLogFiles() map[string]interface{} {
 	files, err := ioutil.ReadDir(GlobalConfig.LoggerPath)
 	if err != nil {
 		logger.Error.Println("|Message: Error reading directory with log files")
@@ -37,8 +37,8 @@ func DisplayLogFiles() map[string]interface{} {
 	return resp
 }
 
-//DisplayFileLog получение данных из заданного файла
-func DisplayFileLog(fileName string, mapContex map[string]string) map[string]interface{} {
+//DisplayServerFileLog получение данных из заданного файла
+func DisplayServerFileLog(fileName string, mapContex map[string]string) map[string]interface{} {
 	path := GlobalConfig.LoggerPath + "//" + fileName + logFileSuffix
 	byteFile, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -67,7 +67,7 @@ func DisplayFileLog(fileName string, mapContex map[string]string) map[string]int
 }
 
 //logParser разборщик лог файла
-func logParser(rawData string, loginNames []string) (logData []LogInfo) {
+func logParser(rawData string, loginNames []string) (logData []ServerLogInfo) {
 	var (
 		Type     = ":"
 		Time     = "TIME:"
@@ -81,7 +81,7 @@ func logParser(rawData string, loginNames []string) (logData []LogInfo) {
 		if line == "" {
 			continue
 		}
-		var tempLogData = LogInfo{}
+		var tempLogData = ServerLogInfo{}
 		splitLines := strings.Split(line, " |")
 		for num, spLine := range splitLines {
 			if num == 0 {

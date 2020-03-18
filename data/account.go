@@ -3,14 +3,15 @@ package data
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
+	"strings"
+	"time"
+
 	u "github.com/JanFant/TLServer/utils"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
-	"regexp"
-	"strings"
-	"time"
 )
 
 //Token (JWT) структура токена доступа
@@ -27,12 +28,12 @@ type Token struct {
 //Account структура для аккаунтов пользователя
 type Account struct {
 	gorm.Model
-	Login    string        `json:"login",sql:"login"` //Имя пользователя
-	Password string        `json:"password"`          //Пароль
-	BoxPoint BoxPoint      `json:"boxpoint",sql:"-"`  //Точки области отображения
-	WTime    time.Duration `json:"wtime",sql:"wtime"` //Время работы пользователя в часах
-	YaMapKey string        `json:"ya_key",sql:"-"`    //Ключ доступа к ндекс карте
-	Token    string        `json:"token",sql:"-"`     //Токен пользователя
+	Login    string        `json:"login",sql:"login"`       //Имя пользователя
+	Password string        `json:"password"`                //Пароль
+	BoxPoint BoxPoint      `json:"boxPoint",sql:"-"`        //Точки области отображения
+	WorkTime time.Duration `json:"workTime",sql:"workTime"` //Время работы пользователя в часах
+	YaMapKey string        `json:"ya_key",sql:"-"`          //Ключ доступа к ндекс карте
+	Token    string        `json:"token",sql:"-"`           //Токен пользователя
 }
 
 //Login обработчик авторизации пользователя в системе
@@ -68,7 +69,7 @@ func Login(login, password, ip string) map[string]interface{} {
 	//врямя выдачи токена
 	tk.IssuedAt = time.Now().Unix()
 	//время когда закончится действие токена
-	tk.ExpiresAt = time.Now().Add(time.Hour * account.WTime).Unix()
+	tk.ExpiresAt = time.Now().Add(time.Hour * account.WorkTime).Unix()
 
 	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tk)
 	tokenString, _ := token.SignedString([]byte(GlobalConfig.TokenPassword))
@@ -147,7 +148,7 @@ func (account *Account) Update(privilege Privilege) map[string]interface{} {
 	privilege.Role.Perm = append(privilege.Role.Perm, RoleInfo.MapRoles[privilege.Role.Name]...)
 	RoleInfo.mux.Unlock()
 	privStr, _ := json.Marshal(privilege)
-	updateStr := fmt.Sprintf("update public.accounts set privilege = '%s',w_time = %d where login = '%s'", string(privStr), account.WTime, account.Login)
+	updateStr := fmt.Sprintf("update public.accounts set privilege = '%s',work_time = %d where login = '%s'", string(privStr), account.WorkTime, account.Login)
 	err := GetDB().Exec(updateStr).Error
 	if err != nil {
 		resp := u.Message(false, fmt.Sprintf("Account update error: %s", err.Error()))
@@ -261,7 +262,7 @@ func SuperCreate() (err error) {
 	account.Login = "Super"
 	//Отдаем ключ для yandex map
 	account.YaMapKey = GlobalConfig.YaKey
-	account.WTime = 24
+	account.WorkTime = 24
 	account.Password = "$2a$10$ZCWyIEfEVF3KGj6OUtIeSOQ3WexMjuAZ43VSO6T.QqOndn4HN1J6C"
 	//privilege := Privilege{}
 	privilege := NewPrivilege("Super", "*", []string{"*"})
@@ -275,7 +276,7 @@ func SuperCreate() (err error) {
 	account.Login = "Moscow"
 	//Отдаем ключ для yandex map
 	account.YaMapKey = GlobalConfig.YaKey
-	account.WTime = 12
+	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	//privilege = Privilege{}
 	privilege = NewPrivilege("RegAdmin", "1", []string{"1", "2", "3"})
@@ -288,7 +289,7 @@ func SuperCreate() (err error) {
 	account.Login = "Sachalin"
 	//Отдаем ключ для yandex map
 	account.YaMapKey = GlobalConfig.YaKey
-	account.WTime = 12
+	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	//privilege = Privilege{}
 	privilege = NewPrivilege("RegAdmin", "3", []string{"1"})
@@ -301,7 +302,7 @@ func SuperCreate() (err error) {
 	account.Login = "Cykotka"
 	//Отдаем ключ для yandex map
 	account.YaMapKey = GlobalConfig.YaKey
-	account.WTime = 12
+	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	//privilege = Privilege{}
 	privilege = NewPrivilege("RegAdmin", "2", []string{"1", "2", "3"})
@@ -314,7 +315,7 @@ func SuperCreate() (err error) {
 	account.Login = "All"
 	//Отдаем ключ для yandex map
 	account.YaMapKey = GlobalConfig.YaKey
-	account.WTime = 1000
+	account.WorkTime = 1000
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	//privilege = Privilege{}
 	privilege = NewPrivilege("Admin", "*", []string{"*"})
@@ -327,7 +328,7 @@ func SuperCreate() (err error) {
 	account.Login = "Rura"
 	//Отдаем ключ для yandex map
 	account.YaMapKey = GlobalConfig.YaKey
-	account.WTime = 12
+	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	//privilege = Privilege{}
 	privilege = NewPrivilege("Admin", "*", []string{"*"})
@@ -340,7 +341,7 @@ func SuperCreate() (err error) {
 	account.Login = "MMM"
 	//Отдаем ключ для yandex map
 	account.YaMapKey = GlobalConfig.YaKey
-	account.WTime = 10000
+	account.WorkTime = 10000
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	//privilege = Privilege{}
 	privilege = NewPrivilege("Admin", "*", []string{"*"})
@@ -353,7 +354,7 @@ func SuperCreate() (err error) {
 	account.Login = "Admin"
 	//Отдаем ключ для yandex map
 	account.YaMapKey = GlobalConfig.YaKey
-	account.WTime = 10000
+	account.WorkTime = 10000
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	//privilege = Privilege{}
 	privilege = NewPrivilege("Admin", "*", []string{"*"})
@@ -366,7 +367,7 @@ func SuperCreate() (err error) {
 	account.Login = "RegAdmin"
 	//Отдаем ключ для yandex map
 	account.YaMapKey = GlobalConfig.YaKey
-	account.WTime = 12
+	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	//privilege = Privilege{}
 	privilege = NewPrivilege("RegAdmin", "1", []string{"1", "2", "3"})
@@ -379,7 +380,7 @@ func SuperCreate() (err error) {
 	account.Login = "User"
 	//Отдаем ключ для yandex map
 	account.YaMapKey = GlobalConfig.YaKey
-	account.WTime = 12
+	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	//privilege = Privilege{}
 	privilege = NewPrivilege("User", "2", []string{"2"})
@@ -392,7 +393,7 @@ func SuperCreate() (err error) {
 	account.Login = "Viewer"
 	//Отдаем ключ для yandex map
 	account.YaMapKey = GlobalConfig.YaKey
-	account.WTime = 12
+	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	//privilege = Privilege{}
 	privilege = NewPrivilege("Viewer", "3", []string{"1"})

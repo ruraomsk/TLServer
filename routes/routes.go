@@ -83,11 +83,11 @@ func StartServer() {
 	}).Methods("GET")
 	subRout.HandleFunc("/{slug}/manage/stateTest", whandlers.ControlTestState).Methods("POST") //обработчик проверки структуры State
 
-	subRout.HandleFunc("/{slug}/manage/serverLog", func(w http.ResponseWriter, r *http.Request) { //обработка лог файлов (страничка)
-		http.ServeFile(w, r, resourcePath+"/log.html")
+	subRout.HandleFunc("/{slug}/manage/serverLog", func(w http.ResponseWriter, r *http.Request) { //обработка лог файлов сервера (страничка)
+		http.ServeFile(w, r, resourcePath+"/serverLog.html")
 	}).Methods("GET")
-	subRout.HandleFunc("/{slug}/manage/serverLog", whandlers.DisplayLogFile).Methods("POST")     //обработчик по выгрузке лог файлов
-	subRout.HandleFunc("/{slug}/manage/serverLog/info", whandlers.DisplayLogInfo).Methods("GET") //обработчик выбранного лог файла
+	subRout.HandleFunc("/{slug}/manage/serverLog", whandlers.DisplayServerLogFile).Methods("POST")     //обработчик по выгрузке лог файлов сервера
+	subRout.HandleFunc("/{slug}/manage/serverLog/info", whandlers.DisplayServerLogInfo).Methods("GET") //обработчик выбранного лог файла сервера
 
 	subRout.HandleFunc("/{slug}/manage/crossCreator", func(w http.ResponseWriter, r *http.Request) { //обработка проверки/создания каталога карты перекрестков (страничка)
 		http.ServeFile(w, r, resourcePath+"/crossCreator.html")
@@ -96,6 +96,11 @@ func StartServer() {
 	subRout.HandleFunc("/{slug}/manage/crossCreator/checkAllCross", whandlers.CheckAllCross).Methods("POST")         //обработка проверки наличия всех каталогов и файлов необходимых для построения перекрестков
 	subRout.HandleFunc("/{slug}/manage/crossCreator/checkSelected", whandlers.CheckSelectedDirCross).Methods("POST") //обработка проверки наличия выбранных каталогов и файлов необходимых для построения перекрестков
 	subRout.HandleFunc("/{slug}/manage/crossCreator/makeSelected", whandlers.MakeSelectedDirCross).Methods("POST")   //обработка создания каталога карты перекрестков
+
+	subRout.HandleFunc("/{slug}/manage/deviceLog", func(w http.ResponseWriter, r *http.Request) { //обработка лога устройства (страничка)
+		http.ServeFile(w, r, resourcePath+"/deviceLog.html")
+	}).Methods("GET")
+	subRout.HandleFunc("/{slug}/manage/deviceLog", whandlers.DisplayDeviceLogFile).Methods("POST") //обработка лога устройства
 
 	//тест просто тест!
 	subRout.HandleFunc("/{slug}/testtoken", whandlers.TestToken).Methods("POST")

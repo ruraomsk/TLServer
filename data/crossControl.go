@@ -94,6 +94,7 @@ func SendCrossData(state agS_pudge.Cross, mapContx map[string]string) map[string
 		stateMessage tcpConnect.StateMessage
 		err          error
 		verif        stateVerified.StateResult
+		userCros     agS_pudge.UserCross
 	)
 	verifiedState(&state, &verif)
 	if verif.Err != nil {
@@ -101,7 +102,9 @@ func SendCrossData(state agS_pudge.Cross, mapContx map[string]string) map[string
 		resp["result"] = verif.SumResult
 		return resp
 	}
-	stateMessage.StateStr, err = stateMarshal(state)
+	userCros.State = state
+	userCros.User = mapContx["login"]
+	stateMessage.StateStr, err = stateMarshal(userCros)
 	if err != nil {
 		logger.Error.Println("|Message: Failed to Marshal state information: ", err.Error())
 		return u.Message(false, "Failed to Marshal state information")
@@ -133,6 +136,7 @@ func CreateCrossData(state agS_pudge.Cross, mapContx map[string]string) map[stri
 	var (
 		stateMessage tcpConnect.StateMessage
 		verif        stateVerified.StateResult
+		userCros     agS_pudge.UserCross
 		err          error
 		stateSql     string
 	)
@@ -159,7 +163,9 @@ func CreateCrossData(state agS_pudge.Cross, mapContx map[string]string) map[stri
 		resp["result"] = verif.SumResult
 		return resp
 	}
-	stateMessage.StateStr, err = stateMarshal(state)
+	userCros.State = state
+	userCros.User = mapContx["login"]
+	stateMessage.StateStr, err = stateMarshal(userCros)
 	if err != nil {
 		logger.Error.Println("|Message: Failed to Marshal state information: ", err.Error())
 		return u.Message(false, "Failed to Marshal state information")
@@ -180,11 +186,14 @@ func CreateCrossData(state agS_pudge.Cross, mapContx map[string]string) map[stri
 func DeleteCrossData(state agS_pudge.Cross, mapContx map[string]string) map[string]interface{} {
 	var (
 		stateMessage tcpConnect.StateMessage
+		userCros     agS_pudge.UserCross
 		err          error
 	)
 	stateMessage.Info = fmt.Sprintf("idevice: %v, position : %v//%v//%v", state.IDevice, state.Region, state.Area, state.ID)
 	state.IDevice = -1
-	stateMessage.StateStr, err = stateMarshal(state)
+	userCros.State = state
+	userCros.User = mapContx["login"]
+	stateMessage.StateStr, err = stateMarshal(userCros)
 	if err != nil {
 		logger.Error.Println("|Message: Failed to Marshal state information: ", err.Error())
 		return u.Message(false, "Failed to Marshal state information")
@@ -251,7 +260,7 @@ func sendToUDPServer(message tcpConnect.StateMessage) bool {
 }
 
 //stateMarshal преобразовать структуру в строку
-func stateMarshal(cross agS_pudge.Cross) (str string, err error) {
+func stateMarshal(cross agS_pudge.UserCross) (str string, err error) {
 	newByte, err := json.Marshal(cross)
 	if err != nil {
 		return "", err

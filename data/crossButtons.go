@@ -17,6 +17,7 @@ func DispatchControl(arm comm.CommandARM, mapContx map[string]string) map[string
 		err        error
 		armMessage tcpConnect.ArmCommandMessage
 	)
+	arm.User = mapContx["login"]
 	armMessage.CommandStr, err = armControlMarshal(arm)
 	if err != nil {
 		logger.Error.Println("|Message: Failed to Marshal ArmControlData information: ", err.Error())

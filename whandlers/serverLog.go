@@ -6,14 +6,14 @@ import (
 	"net/http"
 )
 
-//DisplayLogFile обработчик отображения файлов лога
-var DisplayLogFile = func(w http.ResponseWriter, r *http.Request) {
-	resp := data.DisplayLogFiles()
+//DisplayServerLogFile обработчик отображения файлов лога
+var DisplayServerLogFile = func(w http.ResponseWriter, r *http.Request) {
+	resp := data.DisplayServerLogFiles()
 	u.Respond(w, r, resp)
 }
 
-//DisplayLogInfo обработчик выгрузки содержимого лог файла
-var DisplayLogInfo = func(w http.ResponseWriter, r *http.Request) {
+//DisplayServerLogInfo обработчик выгрузки содержимого лог файла
+var DisplayServerLogInfo = func(w http.ResponseWriter, r *http.Request) {
 	if len(r.URL.RawQuery) <= 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		u.Respond(w, r, u.Message(false, "Blank field"))
@@ -26,6 +26,6 @@ var DisplayLogInfo = func(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	mapContx := u.ParserInterface(r.Context().Value("info"))
-	resp := data.DisplayFileLog(fileName, mapContx)
+	resp := data.DisplayServerFileLog(fileName, mapContx)
 	u.Respond(w, r, resp)
 }

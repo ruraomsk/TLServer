@@ -34,8 +34,11 @@ var AccessControl = func(next http.Handler) http.Handler {
 			http.ServeFile(w, r, data.GlobalConfig.ResourcePath+"/notFound.html")
 		}
 
-		//смотрим если ли доступ у пользователя к этому машруту
 		access := false
+		if mapContx["role"] == "Admin" {
+			access = true
+		}
+		//смотрим если ли доступ у пользователя к этому машруту
 		for _, perm := range permission {
 			if perm == rout.Permission {
 				access = true

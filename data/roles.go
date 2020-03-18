@@ -73,14 +73,14 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) map[
 		//logger.Info.Println("DisplayInfoForAdmin: Не смог считать привилегии пользователя", err)
 		return u.Message(false, "Display info: Privilege error")
 	}
-	sqlStr = fmt.Sprintf("select login, w_time, privilege from public.accounts where login != '%s'", mapContx["login"])
+	sqlStr = fmt.Sprintf("select login, work_time, privilege from public.accounts where login != '%s'", mapContx["login"])
 	if !strings.EqualFold(privilege.Region, "*") {
 		sqlStr += fmt.Sprintf(`and privilege::jsonb @> '{"region":"%s"}'::jsonb`, privilege.Region)
 	}
 	rowsTL, _ := GetDB().Raw(sqlStr).Rows()
 	for rowsTL.Next() {
 		var tempSA = ShortAccount{}
-		err := rowsTL.Scan(&tempSA.Login, &tempSA.Wtime, &tempSA.Privilege)
+		err := rowsTL.Scan(&tempSA.Login, &tempSA.WorkTime, &tempSA.Privilege)
 		if err != nil {
 			//logger.Info.Println("DisplayInfoForAdmin: Что-то не так с запросом", err)
 			return u.Message(false, "Display info: Bad request")
@@ -117,6 +117,9 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) map[
 		}
 		RoleInfo.mux.Unlock()
 
+		if tempSA.Role.Perm == nil {
+			tempSA.Role.Perm = make([]int, 0)
+		}
 		tempSA.Region.SetRegionInfo(tempPrivilege.Region)
 		for _, num := range tempPrivilege.Area {
 			tempArea := AreaInfo{}
@@ -305,7 +308,7 @@ func TestNewRoleSystem() (resp map[string]interface{}) {
 	//account.Login = "TestRole"
 	////Отдаем ключ для yandex map
 	//account.YaMapKey = GlobalConfig.YaKey
-	//account.WTime = 69
+	//account.WorkTime = 69
 	//account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	//privilege := NewPrivilege("Admin", "*", []string{"*"})
 	//GetDB().Table("accounts").Create(account)
