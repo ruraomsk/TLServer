@@ -49,6 +49,7 @@ func CacheDataUpdate() {
 	RoleInfo.MapPermisson = make(map[int]Permission)
 	RoleInfo.MapRoutes = make(map[string]RouteInfo)
 	BusyArmInfo.mapBusyArm = make(map[BusyArm]EditCrossInfo)
+	go FillingDeviceLogTable()
 	for {
 		CacheInfoDataUpdate()
 		//создадим суперпользователя если таблица только была создана

@@ -21,7 +21,7 @@ var BuildCross = func(w http.ResponseWriter, r *http.Request) {
 	resp := data.GetCrossInfo(*TLight)
 	mapContx := u.ParserInterface(r.Context().Value("info"))
 
-	controlCrossFlag, _ := data.AccessCheck(mapContx["login"], 5)
+	controlCrossFlag, _ := data.AccessCheck(mapContx, 5)
 	if (TLight.Region.Num == mapContx["region"]) || (mapContx["region"] == "*") {
 		resp["controlCrossFlag"] = controlCrossFlag
 	} else {

@@ -97,10 +97,10 @@ func StartServer() {
 	subRout.HandleFunc("/{slug}/manage/crossCreator/checkSelected", whandlers.CheckSelectedDirCross).Methods("POST") //обработка проверки наличия выбранных каталогов и файлов необходимых для построения перекрестков
 	subRout.HandleFunc("/{slug}/manage/crossCreator/makeSelected", whandlers.MakeSelectedDirCross).Methods("POST")   //обработка создания каталога карты перекрестков
 
-	subRout.HandleFunc("/{slug}/manage/deviceLog", func(w http.ResponseWriter, r *http.Request) { //обработка лога устройства (страничка)
+	subRout.HandleFunc("/{slug}/map/deviceLog", func(w http.ResponseWriter, r *http.Request) { //обработка лога устройства (страничка)
 		http.ServeFile(w, r, resourcePath+"/deviceLog.html")
 	}).Methods("GET")
-	subRout.HandleFunc("/{slug}/manage/deviceLog", whandlers.DisplayDeviceLogFile).Methods("POST") //обработка лога устройства
+	subRout.HandleFunc("/{slug}/map/deviceLog", whandlers.DisplayDeviceLogFile).Methods("POST") //обработка лога устройства
 
 	//тест просто тест!
 	subRout.HandleFunc("/{slug}/testtoken", whandlers.TestToken).Methods("POST")

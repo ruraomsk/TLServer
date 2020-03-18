@@ -23,11 +23,12 @@ type DBConfig struct {
 	Port            string `toml:"db_port"`
 	SetMaxOpenConst int    `toml:"db_SetMaxOpenConst"`
 	SetMaxIdleConst int    `toml:"db_SetMaxIdleConst"`
-	GisTable        string `toml:"gis_table"`
+	CrossTable      string `toml:"cross_table"`
 	RegionTable     string `toml:"region_table"`
 	AccountTable    string `toml:"account_table"`
 	DevicesTable    string `toml:"devices_table"`
 	StatusTable     string `toml:"status_table"`
+	LogDeviceTable  string `toml:"logDevice_table"`
 }
 
 func (dbConfig *DBConfig) getDBurl() string {

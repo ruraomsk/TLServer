@@ -57,7 +57,7 @@ func DisplayCrossEditInfo(mapContx map[string]string) map[string]interface{} {
 	BusyArmInfo.mux.Unlock()
 	for nameUser, arms := range busyArm {
 		for numArm, arm := range arms {
-			sqlStr := fmt.Sprintf("select describ from %v where region = %v and area = %v and id = %v", GlobalConfig.DBConfig.GisTable, arm.Region, arm.Area, arm.ID)
+			sqlStr := fmt.Sprintf("select describ from %v where region = %v and area = %v and id = %v", GlobalConfig.DBConfig.CrossTable, arm.Region, arm.Area, arm.ID)
 			rowsTL := GetDB().Raw(sqlStr).Row()
 			_ = rowsTL.Scan(&busyArm[nameUser][numArm].Description)
 		}

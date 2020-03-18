@@ -295,7 +295,7 @@
     {
       "id": 31,
       "permission": 11,
-      "path": "/manage/deviceLog",
+      "path": "/map/deviceLog",
       "description": "обработка лога от устройства"
     }
   ]

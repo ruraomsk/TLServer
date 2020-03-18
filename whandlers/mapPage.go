@@ -13,7 +13,8 @@ var BuildMapPage = func(w http.ResponseWriter, r *http.Request) {
 	mapContx := u.ParserInterface(r.Context().Value("info"))
 	account.Login = mapContx["login"]
 	resp := account.GetInfoForUser()
-	resp["manageFlag"], _ = data.AccessCheck(mapContx["login"], 1)
+	resp["manageFlag"], _ = data.AccessCheck(mapContx, 1)
+	resp["logDeviceFlag"], _ = data.AccessCheck(mapContx, 11)
 	u.Respond(w, r, resp)
 }
 

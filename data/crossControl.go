@@ -22,7 +22,7 @@ func ControlGetCrossInfo(TLignt TrafficLights, mapContx map[string]string) map[s
 		sqlStr   string
 		StateStr string
 	)
-	sqlStr = fmt.Sprintf("select area, subarea, idevice, dgis, describ, state from %v where region = %v and id = %v and area = %v", GlobalConfig.DBConfig.GisTable, TLignt.Region.Num, TLignt.ID, TLignt.Area.Num)
+	sqlStr = fmt.Sprintf("select area, subarea, idevice, dgis, describ, state from %v where region = %v and id = %v and area = %v", GlobalConfig.DBConfig.CrossTable, TLignt.Region.Num, TLignt.ID, TLignt.Area.Num)
 	rowsTL := GetDB().Raw(sqlStr).Row()
 	err := rowsTL.Scan(&TLignt.Area.Num, &TLignt.Subarea, &TLignt.Idevice, &dgis, &TLignt.Description, &StateStr)
 	if err != nil {
@@ -94,7 +94,7 @@ func SendCrossData(state agS_pudge.Cross, mapContx map[string]string) map[string
 		stateMessage tcpConnect.StateMessage
 		err          error
 		verif        stateVerified.StateResult
-		userCros     agS_pudge.UserCross
+		userCross    agS_pudge.UserCross
 	)
 	verifiedState(&state, &verif)
 	if verif.Err != nil {
@@ -102,9 +102,9 @@ func SendCrossData(state agS_pudge.Cross, mapContx map[string]string) map[string
 		resp["result"] = verif.SumResult
 		return resp
 	}
-	userCros.State = state
-	userCros.User = mapContx["login"]
-	stateMessage.StateStr, err = stateMarshal(userCros)
+	userCross.State = state
+	userCross.User = mapContx["login"]
+	stateMessage.StateStr, err = stateMarshal(userCross)
 	if err != nil {
 		logger.Error.Println("|Message: Failed to Marshal state information: ", err.Error())
 		return u.Message(false, "Failed to Marshal state information")
@@ -136,11 +136,11 @@ func CreateCrossData(state agS_pudge.Cross, mapContx map[string]string) map[stri
 	var (
 		stateMessage tcpConnect.StateMessage
 		verif        stateVerified.StateResult
-		userCros     agS_pudge.UserCross
+		userCross    agS_pudge.UserCross
 		err          error
 		stateSql     string
 	)
-	sqlStr := fmt.Sprintf(`SELECT state FROM %v where state::jsonb @> '{"idevice":%v}'::jsonb or (region = %v and area = %v and id = %v)`, GlobalConfig.DBConfig.GisTable, state.IDevice, state.Region, state.Area, state.ID)
+	sqlStr := fmt.Sprintf(`SELECT state FROM %v where state::jsonb @> '{"idevice":%v}'::jsonb or (region = %v and area = %v and id = %v)`, GlobalConfig.DBConfig.CrossTable, state.IDevice, state.Region, state.Area, state.ID)
 	rows, err := GetDB().Raw(sqlStr).Rows()
 	if err != nil {
 		resp := u.Message(false, "Server not respond")
@@ -163,9 +163,9 @@ func CreateCrossData(state agS_pudge.Cross, mapContx map[string]string) map[stri
 		resp["result"] = verif.SumResult
 		return resp
 	}
-	userCros.State = state
-	userCros.User = mapContx["login"]
-	stateMessage.StateStr, err = stateMarshal(userCros)
+	userCross.State = state
+	userCross.User = mapContx["login"]
+	stateMessage.StateStr, err = stateMarshal(userCross)
 	if err != nil {
 		logger.Error.Println("|Message: Failed to Marshal state information: ", err.Error())
 		return u.Message(false, "Failed to Marshal state information")
@@ -186,14 +186,14 @@ func CreateCrossData(state agS_pudge.Cross, mapContx map[string]string) map[stri
 func DeleteCrossData(state agS_pudge.Cross, mapContx map[string]string) map[string]interface{} {
 	var (
 		stateMessage tcpConnect.StateMessage
-		userCros     agS_pudge.UserCross
+		userCross    agS_pudge.UserCross
 		err          error
 	)
 	stateMessage.Info = fmt.Sprintf("idevice: %v, position : %v//%v//%v", state.IDevice, state.Region, state.Area, state.ID)
 	state.IDevice = -1
-	userCros.State = state
-	userCros.User = mapContx["login"]
-	stateMessage.StateStr, err = stateMarshal(userCros)
+	userCross.State = state
+	userCross.User = mapContx["login"]
+	stateMessage.StateStr, err = stateMarshal(userCross)
 	if err != nil {
 		logger.Error.Println("|Message: Failed to Marshal state information: ", err.Error())
 		return u.Message(false, "Failed to Marshal state information")
@@ -212,7 +212,7 @@ func TestCrossStateData(mapContx map[string]string) map[string]interface{} {
 		stateInfo []BusyArm
 		state     BusyArm
 	)
-	sqlStr := fmt.Sprintf(`SELECT state FROM %v `, GlobalConfig.DBConfig.GisTable)
+	sqlStr := fmt.Sprintf(`SELECT state FROM %v `, GlobalConfig.DBConfig.CrossTable)
 	if mapContx["region"] != "*" {
 		sqlStr += fmt.Sprintf(`where region = %v `, mapContx["region"])
 	}
