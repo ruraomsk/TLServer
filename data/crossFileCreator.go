@@ -98,6 +98,10 @@ func CheckCrossDirFromBD() map[string]interface{} {
 		_, err1 := os.Stat(path + fmt.Sprintf("//%v//%v//%v//map.png", tfLight.Region.Num, tfLight.Area.Num, tfLight.ID))
 		_, err2 := os.Stat(path + fmt.Sprintf("//%v//%v//%v//cross.svg", tfLight.Region.Num, tfLight.Area.Num, tfLight.ID))
 		if os.IsNotExist(err1) || os.IsNotExist(err2) {
+			CacheInfo.mux.Lock()
+			tfLight.Region.NameRegion = CacheInfo.mapRegion[tfLight.Region.Num]
+			tfLight.Area.NameArea = CacheInfo.mapArea[tfLight.Region.NameRegion][tfLight.Area.Num]
+			CacheInfo.mux.Unlock()
 			tempTF = append(tempTF, tfLight)
 		}
 	}

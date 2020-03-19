@@ -1,6 +1,7 @@
 package data
 
 import (
+	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
@@ -28,6 +29,7 @@ type BusyArm struct {
 	Area        string `json:"area"`        //район устройства
 	ID          int    `json:"ID"`          //ID устройства
 	Description string `json:"description"` //описание устройства
+	structStr   string
 }
 
 //EditCrossInfo информация о пользователе занявшем перекресток на изменение
@@ -36,6 +38,24 @@ type EditCrossInfo struct {
 	EditFlag bool   `json:"editFlag"` //флаг разрешения на редактирование перекрестка
 	Kick     bool   `json:"kick"`     //флаг закрытия арма у данного пользователя
 	time     time.Time
+}
+
+//toStr конвертировать в строку
+func (busyArm *BusyArm) toStr() (str string, err error) {
+	newByte, err := json.Marshal(busyArm)
+	if err != nil {
+		return "", err
+	}
+	return string(newByte), err
+}
+
+//toStr конвертировать в структуру
+func (busyArm *BusyArm) toStruct(str string) (err error) {
+	err = json.Unmarshal([]byte(str), busyArm)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 //DisplayCrossEditInfo сборка информации о занятых перекрестках

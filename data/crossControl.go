@@ -249,7 +249,7 @@ func sendToUDPServer(message tcpConnect.StateMessage) bool {
 	tcpConnect.StateChan <- message
 	for {
 		chanRespond := <-tcpConnect.StateChan
-		if strings.Contains(chanRespond.User, message.User) {
+		if chanRespond.User == message.User {
 			if chanRespond.Message == "ok" {
 				return true
 			} else {

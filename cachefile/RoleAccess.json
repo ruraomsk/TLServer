@@ -18,7 +18,8 @@
         6,
         7,
         8,
-        9
+        9,
+        10
       ]
     },
     {
@@ -297,6 +298,12 @@
       "permission": 11,
       "path": "/map/deviceLog",
       "description": "обработка лога от устройства"
+    },
+    {
+      "id": 32,
+      "permission": 11,
+      "path": "/map/deviceLog/info",
+      "description": "обработка запроса лога устройства"
     }
   ]
 }
