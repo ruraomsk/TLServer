@@ -19,6 +19,7 @@ type Config struct {
 	PngSettings   PngSettings          `toml:"picture"`
 }
 
+//NewConfig создание конфига
 func NewConfig() *Config {
 	return &Config{}
 }

@@ -11,8 +11,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+//RoleInfo глабальная переменная для обращения к мапам
 var RoleInfo RoleData
 
+//RoleData структура включающая всю информацию о ролях, привелегиях, и маршрутах
 type RoleData struct {
 	mux          sync.Mutex
 	MapRoles     map[string][]int     //роли
@@ -33,7 +35,7 @@ type Role struct {
 	Perm []int  `json:"permissions"` //массив полномочий
 }
 
-//Privilege brah
+//Privilege струкрута для запросов к БД
 type Privilege struct {
 	Role         Role     `json:"role"`   //информация о роли пользователя
 	Region       string   `json:"region"` //регион пользователя
@@ -198,11 +200,13 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) map[
 	return resp
 }
 
+//transform преобразование из расшириных разрешений к коротким
 func (shPerm *shortPermission) transform(perm Permission) {
 	shPerm.Description = perm.Description
 	shPerm.ID = perm.ID
 }
 
+//ReadRoleAccessFile чтение RoleAccess файла
 func (roleAccess *RoleAccess) ReadRoleAccessFile() (err error) {
 	file, err := ioutil.ReadFile(GlobalConfig.CachePath + "//RoleAccess.json")
 	if err != nil {
@@ -246,6 +250,7 @@ func (privilege *Privilege) ConvertToJson() (err error) {
 	return nil
 }
 
+//NewPrivilege созданеие привелегии
 func NewPrivilege(role, region string, area []string) *Privilege {
 	var privilege Privilege
 	RoleInfo.mux.Lock()
@@ -294,49 +299,4 @@ func AccessCheck(mapContx map[string]string, act int) (accept bool, err error) {
 	}
 	err = errors.New("Access denied")
 	return false, err
-}
-
-func TestNewRoleSystem() (resp map[string]interface{}) {
-	resp = make(map[string]interface{})
-	resp["1"] = RoleInfo.MapRoles
-	resp["2"] = RoleInfo.MapPermisson
-	resp["3"] = RoleInfo.MapRoutes
-
-	//a := RoleAccess{}
-	//_ = a.ReadRoleAccessFile()
-	//resp["RoleAccess"] = a
-	//GetDB().Exec(fmt.Sprintf("delete from %v where login = 'TestRole'", GlobalConfig.DBConfig.AccountTable))
-	//
-	//account := &Account{}
-	//account.Login = "TestRole"
-	////Отдаем ключ для yandex map
-	//account.YaMapKey = GlobalConfig.YaKey
-	//account.WorkTime = 69
-	//account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
-	//privilege := NewPrivilege("Admin", "*", []string{"*"})
-	//GetDB().Table("accounts").Create(account)
-	//////Записываю координаты в базу!!!
-	//_ = privilege.WriteRoleInBD(account.Login)
-	//
-	//priv2 := NewPrivilege("", "", []string{""})
-	//_ = priv2.ReadFromBD("TestRole")
-	//resp["priv1"] = priv2
-	//
-	//privilege.Role.Perm = append(priv2.Role.Perm, 13, 69)
-	//_ = privilege.WriteRoleInBD("TestRole")
-	//
-	//priv3 := NewPrivilege("", "", []string{""})
-	//_ = priv3.ReadFromBD("TestRole")
-	//resp["priv2"] = priv3
-	//
-	//var mapContx = make(map[string]string)
-	//mapContx["login"] = account.Login
-	//mapContx["role"] = privilege.Role.Name
-	//
-	//resp["1"], _ = NewRoleCheck(mapContx, 22)
-	//resp["2"], _ = NewRoleCheck(mapContx, 43)
-	//resp["3"], _ = NewRoleCheck(mapContx, 1)
-	//mapContx["login"] = "1"
-	//resp["4"], _ = NewRoleCheck(mapContx, 1)
-	return
 }

@@ -39,8 +39,8 @@ type InfoTL struct {
 
 //TLSostInfo информация о состояния светофоров
 type TLSostInfo struct {
-	Num         int    `json:"num"`
-	Description string `json:"description"`
+	Num         int    `json:"num"`         //номер состояния
+	Description string `json:"description"` //описание состояния
 }
 
 //CacheDataUpdate обновление данных из бд, период обновления 1 час
@@ -121,7 +121,11 @@ func GetRegionInfo() (region map[string]string, area map[string]map[string]strin
 func getTLSost() (TLsost map[int]string, err error) {
 	TLsost = make(map[int]string)
 	sqlStr := fmt.Sprintf(`Select id, description from %v`, GlobalConfig.DBConfig.StatusTable)
-	statusRow, _ := GetDB().Raw(sqlStr).Rows()
+	statusRow, err := GetDB().Raw(sqlStr).Rows()
+	if err != nil {
+		logger.Error.Println("|Message: GetTLSost StatusTable error : ", err.Error())
+		return nil, err
+	}
 	for statusRow.Next() {
 		var (
 			id   int
@@ -139,7 +143,7 @@ func getTLSost() (TLsost map[int]string, err error) {
 	return TLsost, err
 }
 
-//getRoleAccess ...
+//getRoleAccess получить информацию о ролях из файла RoleAccess.json
 func getRoleAccess() (err error) {
 	var temp = RoleAccess{}
 	err = temp.ReadRoleAccessFile()

@@ -29,15 +29,15 @@ type BusyArm struct {
 	Area        string `json:"area"`        //район устройства
 	ID          int    `json:"ID"`          //ID устройства
 	Description string `json:"description"` //описание устройства
-	structStr   string
+	structStr   string //строка для запроса в бд
 }
 
 //EditCrossInfo информация о пользователе занявшем перекресток на изменение
 type EditCrossInfo struct {
-	Login    string `json:"login"`    //логин пользователя
-	EditFlag bool   `json:"editFlag"` //флаг разрешения на редактирование перекрестка
-	Kick     bool   `json:"kick"`     //флаг закрытия арма у данного пользователя
-	time     time.Time
+	Login    string    `json:"login"`    //логин пользователя
+	EditFlag bool      `json:"editFlag"` //флаг разрешения на редактирование перекрестка
+	Kick     bool      `json:"kick"`     //флаг закрытия арма у данного пользователя
+	time     time.Time //метка времени
 }
 
 //toStr конвертировать в строку

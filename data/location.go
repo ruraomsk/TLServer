@@ -27,11 +27,6 @@ func (points *Point) SetPoint(y, x float64) {
 	points.X, points.Y = x, y
 }
 
-// //ToSqlString формирует SQL строку для обновления координат в БД
-// func (points *Point) ToSqlString(table, column, login string) string {
-// 	return fmt.Sprintf("update %s set %s = '(%f,%f)' where login = '%s'", table, column, points.Y, points.X, login)
-// }
-
 //StrToFloat преобразует строку полученную из БД в структуру Point
 func (points *Point) StrToFloat(str string) {
 	str = strings.TrimPrefix(str, "(")

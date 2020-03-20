@@ -101,7 +101,7 @@ func StartServer() {
 		http.ServeFile(w, r, resourcePath+"/deviceLog.html")
 	}).Methods("GET")
 	subRout.HandleFunc("/{slug}/map/deviceLog", whandlers.DisplayDeviceLogFile).Methods("POST") //обработка лога устройства
-	subRout.HandleFunc("/{slug}/map/deviceLog/info", whandlers.LogDeviceInfo).Methods("POST")   //обработка лога устройства
+	subRout.HandleFunc("/{slug}/map/deviceLog/info", whandlers.LogDeviceInfo).Methods("POST")   //обработка лога устройства по выбранному интеревалу времени
 
 	//тест просто тест!
 	subRout.HandleFunc("/{slug}/testtoken", whandlers.TestToken).Methods("POST")

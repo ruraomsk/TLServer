@@ -17,6 +17,7 @@ var FillingDeviceChan = make(chan FillingInfo)
 
 //FillingDeviceLogTable заполнение таблины логов устройств
 func FillingDeviceLogTable() {
+	//если не кто не обращался за логами, заполняем таблицу раз в день
 	timeTick := time.Tick(time.Hour * 24)
 	_ = fillingTable()
 	for {

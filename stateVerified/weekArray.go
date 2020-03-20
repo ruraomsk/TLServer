@@ -6,6 +6,7 @@ import (
 	agS_pudge "github.com/ruraomsk/ag-server/pudge"
 )
 
+//IsEmpty инфорация о пустых картах
 type IsEmpty struct {
 	Week map[int]bool
 }

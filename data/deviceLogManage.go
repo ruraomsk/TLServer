@@ -15,6 +15,7 @@ type DeviceLog struct {
 	Text string    `json:"text"`
 }
 
+//DeviceLogInfo струтура запроса пользователя за данными в бд
 type DeviceLogInfo struct {
 	Region      string `json:"region"`      //регион устройства
 	Area        string `json:"area"`        //район устройства
@@ -22,10 +23,10 @@ type DeviceLogInfo struct {
 	Description string `json:"description"` //описание устройства
 	TimeStart   string `json:"timeStart"`   //время начала отсчета
 	TimeEnd     string `json:"timeEnd"`     //время конца отсчета
-	structStr   string
+	structStr   string //строка для запроса в бд
 }
 
-//DisplayDeviceLog формирование начальной информации
+//DisplayDeviceLog формирование начальной информации отображения логов устройства
 func DisplayDeviceLog(mapContx map[string]string) map[string]interface{} {
 	var (
 		devices  []BusyArm
@@ -75,6 +76,7 @@ func DisplayDeviceLog(mapContx map[string]string) map[string]interface{} {
 	return resp
 }
 
+//DisplayDeviceLogInfo обработчик запроса пользователя, выгрузка логов за запрошенный период
 func DisplayDeviceLogInfo(arm DeviceLogInfo, mapContx map[string]string) map[string]interface{} {
 	var (
 		deviceLogs []DeviceLog

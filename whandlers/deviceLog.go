@@ -14,6 +14,7 @@ var DisplayDeviceLogFile = func(w http.ResponseWriter, r *http.Request) {
 	u.Respond(w, r, resp)
 }
 
+//LogDeviceInfo обработчик запроса на выгрузку информации логов устройства за определенный период
 var LogDeviceInfo = func(w http.ResponseWriter, r *http.Request) {
 	arm := &data.DeviceLogInfo{}
 	if err := json.NewDecoder(r.Body).Decode(&arm); err != nil {

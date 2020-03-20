@@ -24,9 +24,9 @@ type ArmCommandMessage struct {
 
 //TCPConfig настройки для тсп соединения
 type TCPConfig struct {
-	ServerAddr  string `toml:"tcpServerAddress"`
-	PortState   string `toml:"portState"`
-	PortArmComm string `toml:"portArmCommand"`
+	ServerAddr  string `toml:"tcpServerAddress"` //адресс сервера
+	PortState   string `toml:"portState"`        //порт для обмена Стате
+	PortArmComm string `toml:"portArmCommand"`   //порт для обмена арм командами
 }
 
 //getStateIP возвращает ip+port для State соединения
