@@ -2,28 +2,27 @@ package data
 
 import (
 	"fmt"
-	"github.com/JanFant/TLServer/logger"
-	u "github.com/JanFant/TLServer/utils"
 	"strings"
 	"time"
+
+	"github.com/JanFant/TLServer/logger"
+	u "github.com/JanFant/TLServer/utils"
 )
 
 //DeviceLog описание БД храняшей лог от устройств
 type DeviceLog struct {
-	Time time.Time `json:"time"`
-	ID   int       `json:"id"`
-	Text string    `json:"text"`
+	Time    time.Time `json:"time"`
+	ID      int       `json:"id"`
+	Text    string    `json:"text"`
+	Devices BusyArm   `json:"devices"` //информация о девайсе
 }
 
 //DeviceLogInfo струтура запроса пользователя за данными в бд
 type DeviceLogInfo struct {
-	Region      string `json:"region"`      //регион устройства
-	Area        string `json:"area"`        //район устройства
-	ID          int    `json:"ID"`          //ID устройства
-	Description string `json:"description"` //описание устройства
-	TimeStart   string `json:"timeStart"`   //время начала отсчета
-	TimeEnd     string `json:"timeEnd"`     //время конца отсчета
-	structStr   string //строка для запроса в бд
+	Devices   []BusyArm `json:"devices"`   //информация о девайсах
+	TimeStart string    `json:"timeStart"` //время начала отсчета
+	TimeEnd   string    `json:"timeEnd"`   //время конца отсчета
+	structStr string    //строка для запроса в бд
 }
 
 //DisplayDeviceLog формирование начальной информации отображения логов устройства
@@ -44,8 +43,12 @@ func DisplayDeviceLog(mapContx map[string]string) map[string]interface{} {
 			}
 		}
 	}
-
-	sqlStr := fmt.Sprintf("SELECT distinct crossinfo FROM %v", GlobalConfig.DBConfig.LogDeviceTable)
+	var sqlStr string
+	if mapContx["region"] == "*" {
+		sqlStr = fmt.Sprintf("SELECT distinct crossinfo FROM %v", GlobalConfig.DBConfig.LogDeviceTable)
+	} else {
+		sqlStr = fmt.Sprintf(`SELECT distinct crossinfo FROM %v where crossinfo::jsonb @> '{"region": "%v"}'::jsonb`, GlobalConfig.DBConfig.LogDeviceTable, mapContx["region"])
+	}
 	rowsDevice, err := GetDB().Raw(sqlStr).Rows()
 	if err != nil {
 		return u.Message(false, "Connection to DB error. Please try again")
@@ -77,7 +80,7 @@ func DisplayDeviceLog(mapContx map[string]string) map[string]interface{} {
 }
 
 //DisplayDeviceLogInfo обработчик запроса пользователя, выгрузка логов за запрошенный период
-func DisplayDeviceLogInfo(arm DeviceLogInfo, mapContx map[string]string) map[string]interface{} {
+func DisplayDeviceLogInfo(arms DeviceLogInfo, mapContx map[string]string) map[string]interface{} {
 	var (
 		deviceLogs []DeviceLog
 		fillInfo   FillingInfo
@@ -94,20 +97,24 @@ func DisplayDeviceLogInfo(arm DeviceLogInfo, mapContx map[string]string) map[str
 			}
 		}
 	}
-	sqlStr := fmt.Sprintf(`SELECT tm, id, txt FROM %v where crossinfo::jsonb @> '{"ID": %v, "area": "%v", "region": "%v"}'::jsonb and tm > '%v' and tm < '%v'`, GlobalConfig.DBConfig.LogDeviceTable, arm.ID, arm.Area, arm.Region, arm.TimeStart, arm.TimeEnd)
-	fmt.Println(sqlStr)
-	rowsDevices, err := GetDB().Raw(sqlStr).Rows()
-	if err != nil {
-		return u.Message(false, "Connection to DB error. Please try again")
-	}
-	for rowsDevices.Next() {
-		var tempDev DeviceLog
-		err := rowsDevices.Scan(&tempDev.Time, &tempDev.ID, &tempDev.Text)
+	arms.TimeStart = "2010-03-19T11:50:31.697736Z"
+	arms.TimeEnd = "2030-03-19T11:50:31.697736Z"
+	for _, arm := range arms.Devices {
+		sqlStr := fmt.Sprintf(`SELECT tm, id, txt FROM %v where crossinfo::jsonb @> '{"ID": %v, "area": "%v", "region": "%v"}'::jsonb and tm > '%v' and tm < '%v'`, GlobalConfig.DBConfig.LogDeviceTable, arm.ID, arm.Area, arm.Region, arms.TimeStart, arms.TimeEnd)
+		rowsDevices, err := GetDB().Raw(sqlStr).Rows()
 		if err != nil {
-			logger.Error.Println("|Message: Incorrect data ", err.Error())
-			return u.Message(false, "Incorrect data. Please report it to Admin")
+			return u.Message(false, "Connection to DB error. Please try again")
 		}
-		deviceLogs = append(deviceLogs, tempDev)
+		for rowsDevices.Next() {
+			var tempDev DeviceLog
+			err := rowsDevices.Scan(&tempDev.Time, &tempDev.ID, &tempDev.Text)
+			if err != nil {
+				logger.Error.Println("|Message: Incorrect data ", err.Error())
+				return u.Message(false, "Incorrect data. Please report it to Admin")
+			}
+			tempDev.Devices = arm
+			deviceLogs = append(deviceLogs, tempDev)
+		}
 	}
 	if deviceLogs == nil {
 		deviceLogs = make([]DeviceLog, 0)
