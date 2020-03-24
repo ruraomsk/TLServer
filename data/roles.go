@@ -24,12 +24,12 @@ type RoleData struct {
 
 //RoleAccess информация наборах ролей и полномочий
 type RoleAccess struct {
-	Roles      []Role       `json:"roles"`
-	Permission []Permission `json:"permissions"`
-	Routes     []RouteInfo  `json:"routes"`
+	Roles      []Role       `json:"roles"`       //массив ролей
+	Permission []Permission `json:"permissions"` //массив разрешений
+	Routes     []RouteInfo  `json:"routes"`      //массив маршрутов
 }
 
-//Role массив ролей
+//Role информация о роли
 type Role struct {
 	Name string `json:"name"`        //название роли
 	Perm []int  `json:"permissions"` //массив полномочий
@@ -58,10 +58,10 @@ type shortPermission struct {
 
 //RouteInfo информация о всех расписанных маршрутах
 type RouteInfo struct {
-	ID          int    `json:"id"`
-	Permission  int    `json:"permission"`
-	Path        string `json:"path"`
-	Description string `json:"description"`
+	ID          int    `json:"id"`          //уникальный номер маршрута
+	Permission  int    `json:"permission"`  //номер разрешения к которому относится этот маршрут
+	Path        string `json:"path"`        //путь (url) обращения к ресурсу
+	Description string `json:"description"` //описание маршрута
 }
 
 //DisplayInfoForAdmin отображение информации о пользователях для администраторов

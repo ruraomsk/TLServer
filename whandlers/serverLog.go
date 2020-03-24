@@ -1,18 +1,19 @@
 package whandlers
 
 import (
+	"net/http"
+
 	"github.com/JanFant/TLServer/data"
 	u "github.com/JanFant/TLServer/utils"
-	"net/http"
 )
 
-//DisplayServerLogFile обработчик отображения файлов лога
+//DisplayServerLogFile обработчик отображения файлов лога сервера
 var DisplayServerLogFile = func(w http.ResponseWriter, r *http.Request) {
 	resp := data.DisplayServerLogFiles()
 	u.Respond(w, r, resp)
 }
 
-//DisplayServerLogInfo обработчик выгрузки содержимого лог файла
+//DisplayServerLogInfo обработчик выгрузки содержимого лог файла сервера
 var DisplayServerLogInfo = func(w http.ResponseWriter, r *http.Request) {
 	if len(r.URL.RawQuery) <= 0 {
 		w.WriteHeader(http.StatusBadRequest)

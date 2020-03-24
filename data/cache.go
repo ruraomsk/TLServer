@@ -26,9 +26,9 @@ type RegionInfo struct {
 	NameRegion string `json:"nameRegion"` //расшифровка номера
 }
 
-//AreaInfo расшифровка района
+//AreaInfo информация о районе
 type AreaInfo struct {
-	Num      string `json:"num"`      //уникальный номер зоны
+	Num      string `json:"num"`      //уникальный номер района
 	NameArea string `json:"nameArea"` //расшифровка номера
 }
 

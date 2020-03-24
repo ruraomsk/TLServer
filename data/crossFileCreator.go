@@ -51,7 +51,7 @@ func (set *PngSettings) stockData() {
 	set.Z = GlobalConfig.PngSettings.Z
 }
 
-//MainCrossCreator формираю необходимые данные для начальной странички с деревом
+//MainCrossCreator формирование необходимых данных для начальной странички с деревом
 func MainCrossCreator() map[string]interface{} {
 	//CacheInfoDataUpdate()
 	tfData := GetAllTrafficLights()
@@ -88,7 +88,7 @@ func MainCrossCreator() map[string]interface{} {
 	return resp
 }
 
-//CheckCrossDirFromBD проверяет ВСЕ перекрестки из БД на наличие каталого для них и заполнения
+//CheckCrossDirFromBD проверяет ВСЕ перекрестки из БД на наличие каталогов для них
 func CheckCrossDirFromBD() map[string]interface{} {
 	//CacheInfoDataUpdate()
 	tfData := GetAllTrafficLights()
@@ -132,7 +132,7 @@ func CheckCrossFileSelected(selectedData map[string]map[string][]CheckData) map[
 	return resp
 }
 
-//MakeSelectedDir создание каталогов и файлов png + svg у выбранных
+//MakeSelectedDir создание каталогов и файлов png + svg у выбранных перекрестков
 func MakeSelectedDir(selData SelectedData) map[string]interface{} {
 	var (
 		message []string
@@ -184,7 +184,7 @@ func MakeSelectedDir(selData SelectedData) map[string]interface{} {
 	return resp
 }
 
-//ShortCreateDirPng создание директории по одной
+//ShortCreateDirPng создание каталога
 func ShortCreateDirPng(region, area, id int, pointStr string) bool {
 	var (
 		pngSettings PngSettings

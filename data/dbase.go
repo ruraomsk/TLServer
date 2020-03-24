@@ -15,20 +15,20 @@ var (
 
 //DBConfig настройки для работы с базой данных
 type DBConfig struct {
-	Name            string `toml:"db_name"`
-	Password        string `toml:"db_password"`
-	User            string `toml:"db_user"`
-	Type            string `toml:"db_type"`
-	Host            string `toml:"db_host"`
-	Port            string `toml:"db_port"`
-	SetMaxOpenConst int    `toml:"db_SetMaxOpenConst"`
-	SetMaxIdleConst int    `toml:"db_SetMaxIdleConst"`
-	CrossTable      string `toml:"cross_table"`
-	RegionTable     string `toml:"region_table"`
-	AccountTable    string `toml:"account_table"`
-	DevicesTable    string `toml:"devices_table"`
-	StatusTable     string `toml:"status_table"`
-	LogDeviceTable  string `toml:"logDevice_table"`
+	Name            string `toml:"db_name"`            //имя БД
+	Password        string `toml:"db_password"`        //пароль доступа к БД
+	User            string `toml:"db_user"`            //пользователя для обращения к бд
+	Type            string `toml:"db_type"`            //тип бд
+	Host            string `toml:"db_host"`            //ip сервера бд
+	Port            string `toml:"db_port"`            //порт для обращения к бд
+	SetMaxOpenConst int    `toml:"db_SetMaxOpenConst"` //максимальное количество пустых соединений с бд
+	SetMaxIdleConst int    `toml:"db_SetMaxIdleConst"` //максимальное количество соединенияй с бд
+	CrossTable      string `toml:"cross_table"`        //название таблицы cross
+	RegionTable     string `toml:"region_table"`       //название таблицы region
+	AccountTable    string `toml:"account_table"`      //название таблицы account
+	DevicesTable    string `toml:"devices_table"`      //название таблицы devices
+	StatusTable     string `toml:"status_table"`       //название таблицы status
+	LogDeviceTable  string `toml:"logDevice_table"`    //название таблицы logDevice
 }
 
 func (dbConfig *DBConfig) getDBurl() string {

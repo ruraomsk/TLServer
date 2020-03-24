@@ -39,10 +39,10 @@ func (tcpConfig *TCPConfig) getArmIP() string {
 	return tcpConfig.ServerAddr + tcpConfig.PortArmComm
 }
 
-//StateChan канал для передачи информации связанных со state
+//StateChan канал для передачи информации связанной со state
 var StateChan = make(chan StateMessage)
 
-//ArmCommandChan канал для передачи информации связанных с командами арма
+//ArmCommandChan канал для передачи информации связанной с командами арма
 var ArmCommandChan = make(chan ArmCommandMessage)
 
 //TCPClientStart запуск соединений
@@ -51,7 +51,7 @@ func TCPClientStart(tcpConfig TCPConfig) {
 	go TCPForARM(tcpConfig.getArmIP())
 }
 
-//TCPForState для обмена с сервером данные State
+//TCPForState обмен с сервером данными State
 func TCPForState(IP string) {
 	var (
 		conn     net.Conn
@@ -111,7 +111,7 @@ func TCPForState(IP string) {
 	}
 }
 
-//TCPForARM для обмена с сервером команды АРМ
+//TCPForARM обмен с сервером командами для АРМ
 func TCPForARM(IP string) {
 	var (
 		conn     net.Conn

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"github.com/JanFant/TLServer/logger"
 	u "github.com/JanFant/TLServer/utils"
 	agS_pudge "github.com/ruraomsk/ag-server/pudge"
@@ -109,7 +110,7 @@ func GetAllTrafficLights() (tfData []TrafficLights) {
 	return
 }
 
-//ConvertStateStrToStruct разбор данных полученных из БД в нужную структуру
+//ConvertStateStrToStruct разбор данных (Cross) полученных из БД в нужную структуру
 func ConvertStateStrToStruct(str string) (rState agS_pudge.Cross, err error) {
 	if err := json.Unmarshal([]byte(str), &rState); err != nil {
 		return rState, err
@@ -117,7 +118,7 @@ func ConvertStateStrToStruct(str string) (rState agS_pudge.Cross, err error) {
 	return rState, nil
 }
 
-//ConvertDevStrToStruct разбор данных полученных из БД в нужную структуру
+//ConvertDevStrToStruct разбор данных (Controller) полученных из БД в нужную структуру
 func ConvertDevStrToStruct(str string) (controller agS_pudge.Controller, err error) {
 	if err := json.Unmarshal([]byte(str), &controller); err != nil {
 		return controller, err
@@ -125,7 +126,7 @@ func ConvertDevStrToStruct(str string) (controller agS_pudge.Controller, err err
 	return controller, nil
 }
 
-//GetCrossInfo сбор информации для пользователя и выбранном перекрестке
+//GetCrossInfo сбор информации для пользователя о выбранном перекрестке
 func GetCrossInfo(TLignt TrafficLights) map[string]interface{} {
 	var (
 		dgis     string
@@ -162,7 +163,7 @@ func GetCrossInfo(TLignt TrafficLights) map[string]interface{} {
 	return resp
 }
 
-//GetCrossDevInfo сбор информации для пользователя и выбранном перекрестке (информацию о девайсе)
+//GetCrossDevInfo сбор информации для пользователя о выбранном перекрестке (информацию о девайсе)
 func GetCrossDevInfo(idevice string) map[string]interface{} {
 	var (
 		sqlStr string

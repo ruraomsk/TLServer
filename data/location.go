@@ -11,18 +11,18 @@ type Point struct {
 	Y, X float64 //Координата Х и Y
 }
 
-//BoxPoint координаты для отрисовки квадрата
+//BoxPoint координаты для отрисовки зоны работы пользователя
 type BoxPoint struct {
 	Point0 Point `json:"point0"` //левая нижняя точка на карте
 	Point1 Point `json:"point1"` //правая верхняя точка на карте
 }
 
-//GetPoint возврашает значение координат
+//GetPoint возврашает значение координаты
 func (points *Point) GetPoint() (y, x float64) {
 	return points.Y, points.X
 }
 
-//SetPoint задать значение координат
+//SetPoint задать значение координаты
 func (points *Point) SetPoint(y, x float64) {
 	points.X, points.Y = x, y
 }

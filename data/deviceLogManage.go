@@ -9,11 +9,11 @@ import (
 	u "github.com/JanFant/TLServer/utils"
 )
 
-//DeviceLog описание БД храняшей лог от устройств
+//DeviceLog описание таблицы храняшей лог от устройств
 type DeviceLog struct {
-	Time    time.Time `json:"time"`
-	ID      int       `json:"id"`
-	Text    string    `json:"text"`
+	Time    time.Time `json:"time"`    //время записи
+	ID      int       `json:"id"`      //id устройства которое прислало информацию
+	Text    string    `json:"text"`    //информация о событие
 	Devices BusyArm   `json:"devices"` //информация о девайсе
 }
 

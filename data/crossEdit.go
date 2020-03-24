@@ -25,10 +25,10 @@ type BusyArms struct {
 
 //BusyArm информация о занятом перекрестке
 type BusyArm struct {
-	Region      string `json:"region"`      //регион устройства
-	Area        string `json:"area"`        //район устройства
-	ID          int    `json:"ID"`          //ID устройства
-	Description string `json:"description"` //описание устройства
+	Region      string `json:"region"`      //регион
+	Area        string `json:"area"`        //район
+	ID          int    `json:"ID"`          //ID
+	Description string `json:"description"` //описание
 	structStr   string //строка для запроса в бд
 }
 
@@ -115,7 +115,7 @@ func CleanMapBusyArm() {
 	}
 }
 
-//BusyArmDelete удаление из хранилища оспобожденного перекрестка
+//BusyArmDelete удаление из хранилища освобожденного перекрестка
 func BusyArmDelete(arm BusyArm) map[string]interface{} {
 	resp := make(map[string]interface{})
 	BusyArmInfo.mux.Lock()

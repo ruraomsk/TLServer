@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-//LogFile функция
+//LogFile информация о лог файле
 type LogFile struct {
 	flog  *os.File
 	mutex sync.Mutex
@@ -17,7 +17,7 @@ type LogFile struct {
 	date  string
 }
 
-//var level int
+//logfile текущий лог файл
 var logfile *LogFile
 var (
 	//Debug send debug message
@@ -32,7 +32,7 @@ var (
 	Error *log.Logger
 )
 
-// Init init subsystem
+//Init запуск системы логирования
 func Init(path string) (err error) {
 	logfile, err = logOpen(path)
 	if err != nil {
@@ -60,7 +60,7 @@ func Init(path string) (err error) {
 	return nil
 }
 
-//LogOpen функция
+//LogOpen открытие/создание файла хранящего лог информацию
 func logOpen(path string) (log *LogFile, err error) {
 	go logClean(path)
 	log = new(LogFile)
@@ -87,13 +87,13 @@ func logClean(path string) {
 	}
 }
 
-//Read прочитать лог файл
+//Read чтение лог файла
 func (l *LogFile) Read(p []byte) (n int, err error) {
 	n, err = l.flog.Read(p)
 	return
 }
 
-//Write записать лог файл
+//Write записать лог файла
 func (l *LogFile) Write(p []byte) (n int, err error) {
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
@@ -112,7 +112,7 @@ func (l *LogFile) Write(p []byte) (n int, err error) {
 	return
 }
 
-//Close закрытие
+//Close закрытие лог файла
 func (l *LogFile) Close() error {
 	err := l.flog.Close()
 	return err

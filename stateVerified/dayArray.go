@@ -7,6 +7,7 @@ import (
 	agS_pudge "github.com/ruraomsk/ag-server/pudge"
 )
 
+//StateResult информация о прорке данных
 type StateResult struct {
 	SumResult []string
 	Err       error

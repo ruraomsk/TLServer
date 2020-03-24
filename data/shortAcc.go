@@ -3,15 +3,16 @@ package data
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"regexp"
+	"strings"
+	"time"
+
 	"github.com/JanFant/TLServer/logger"
 	u "github.com/JanFant/TLServer/utils"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
-	"net/http"
-	"regexp"
-	"strings"
-	"time"
 )
 
 //ShortAccount удобная структура аккаунта для обмена с пользователем
@@ -169,7 +170,7 @@ func (shortAcc *ShortAccount) ValidChangePW(role string, region string) (account
 	return account, nil
 }
 
-//ValidOldNewPW проверка данных полученных от пользователя из изменения своего пароля
+//ValidOldNewPW проверка данных полученных от пользователя для изменения своего пароля
 func (passChange *PassChange) ValidOldNewPW(login string) (account *Account, err error) {
 	account = &Account{}
 	//Забираю из базы запись с подходящей почтой

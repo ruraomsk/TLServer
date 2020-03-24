@@ -32,7 +32,7 @@ type Account struct {
 	Password string        `json:"password"`                //Пароль
 	BoxPoint BoxPoint      `json:"boxPoint",sql:"-"`        //Точки области отображения
 	WorkTime time.Duration `json:"workTime",sql:"workTime"` //Время работы пользователя в часах
-	YaMapKey string        `json:"ya_key",sql:"-"`          //Ключ доступа к ндекс карте
+	YaMapKey string        `json:"ya_key",sql:"-"`          //Ключ доступа к яндекс карте
 	Token    string        `json:"token",sql:"-"`           //Токен пользователя
 }
 
@@ -94,7 +94,7 @@ func LogOut(mapContx map[string]string) map[string]interface{} {
 	return resp
 }
 
-//Validate проверка аккаунда в базе данных
+//Validate проверка аккаунда в бд
 func (account *Account) Validate() (map[string]interface{}, bool) {
 	if account.Login != regexp.QuoteMeta(account.Login) {
 		return u.Message(false, "Login contains invalid characters"), false
@@ -142,7 +142,7 @@ func (account *Account) Create(privilege Privilege) map[string]interface{} {
 	return resp
 }
 
-//Update обновление данных аккаунты (привелегии, время работы)
+//Update обновление данных аккаунта
 func (account *Account) Update(privilege Privilege) map[string]interface{} {
 	RoleInfo.mux.Lock()
 	privilege.Role.Perm = append(privilege.Role.Perm, RoleInfo.MapRoles[privilege.Role.Name]...)
@@ -184,8 +184,8 @@ func (account *Account) ChangePW() map[string]interface{} {
 	return resp
 }
 
-//ParserPointsUser заполняет поля Point в аккаунт
-func (account *Account) ParserPointsUser() (err error) {
+//ParserBoxPointsUser заполняет BoxPoint
+func (account *Account) ParserBoxPointsUser() (err error) {
 	var (
 		boxpoint  = BoxPoint{}
 		privilege = Privilege{}
@@ -224,7 +224,7 @@ func (account *Account) GetInfoForUser() map[string]interface{} {
 		}
 		return u.Message(false, "Connection to DB error. Please log in again")
 	}
-	err = account.ParserPointsUser()
+	err = account.ParserBoxPointsUser()
 	if err != nil {
 		return u.Message(false, err.Error())
 	}

@@ -2,15 +2,16 @@ package whandlers
 
 import (
 	"encoding/json"
+	"net/http"
+	"strconv"
+
 	"github.com/JanFant/TLServer/data"
 	u "github.com/JanFant/TLServer/utils"
 	"github.com/pkg/errors"
 	agS_pudge "github.com/ruraomsk/ag-server/pudge"
-	"net/http"
-	"strconv"
 )
 
-//BuildCross собираем данные для отображения прекрестка
+//BuildCross обработчик собора данных для отображения прекрестка
 var BuildCross = func(w http.ResponseWriter, r *http.Request) {
 	var err error
 	TLight := &data.TrafficLights{}
@@ -30,7 +31,7 @@ var BuildCross = func(w http.ResponseWriter, r *http.Request) {
 	u.Respond(w, r, resp)
 }
 
-//DevCrossInfo собираем данные для отображения прекрестка (idevice информация)
+//DevCrossInfo обработчик собора данных для отображения прекрестка (idevice информация)
 var DevCrossInfo = func(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var idevice string
@@ -51,7 +52,7 @@ var DevCrossInfo = func(w http.ResponseWriter, r *http.Request) {
 	u.Respond(w, r, resp)
 }
 
-//ControlCross данные для заполнения таблиц управления
+//ControlCross обработчик данных для заполнения таблиц управления
 var ControlCross = func(w http.ResponseWriter, r *http.Request) {
 	var err error
 	TLight := &data.TrafficLights{}
