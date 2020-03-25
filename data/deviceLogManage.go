@@ -20,8 +20,8 @@ type DeviceLog struct {
 //DeviceLogInfo струтура запроса пользователя за данными в бд
 type DeviceLogInfo struct {
 	Devices   []BusyArm `json:"devices"`   //информация о девайсах
-	TimeStart string    `json:"timeStart"` //время начала отсчета
-	TimeEnd   string    `json:"timeEnd"`   //время конца отсчета
+	TimeStart time.Time `json:"timeStart"` //время начала отсчета
+	TimeEnd   time.Time `json:"timeEnd"`   //время конца отсчета
 	structStr string    //строка для запроса в бд
 }
 
@@ -85,6 +85,9 @@ func DisplayDeviceLogInfo(arms DeviceLogInfo, mapContx map[string]string) map[st
 		deviceLogs []DeviceLog
 		fillInfo   FillingInfo
 	)
+	if len(arms.Devices) <= 0 {
+		return u.Message(false, "No one devices selected")
+	}
 	fillInfo.User = mapContx["login"]
 	FillingDeviceChan <- fillInfo
 	for {
@@ -97,10 +100,8 @@ func DisplayDeviceLogInfo(arms DeviceLogInfo, mapContx map[string]string) map[st
 			}
 		}
 	}
-	arms.TimeStart = "2010-03-19T11:50:31.697736Z"
-	arms.TimeEnd = "2030-03-19T11:50:31.697736Z"
 	for _, arm := range arms.Devices {
-		sqlStr := fmt.Sprintf(`SELECT tm, id, txt FROM %v where crossinfo::jsonb @> '{"ID": %v, "area": "%v", "region": "%v"}'::jsonb and tm > '%v' and tm < '%v'`, GlobalConfig.DBConfig.LogDeviceTable, arm.ID, arm.Area, arm.Region, arms.TimeStart, arms.TimeEnd)
+		sqlStr := fmt.Sprintf(`SELECT tm, id, txt FROM %v where crossinfo::jsonb @> '{"ID": %v, "area": "%v", "region": "%v"}'::jsonb and tm > '%v' and tm < '%v'`, GlobalConfig.DBConfig.LogDeviceTable, arm.ID, arm.Area, arm.Region, arms.TimeStart.Format("2006-01-02 15:04:05"), arms.TimeEnd.Format("2006-01-02 15:04:05"))
 		rowsDevices, err := GetDB().Raw(sqlStr).Rows()
 		if err != nil {
 			return u.Message(false, "Connection to DB error. Please try again")
