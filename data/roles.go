@@ -14,11 +14,11 @@ import (
 //RoleInfo глабальная переменная для обращения к мапам
 var RoleInfo RoleData
 
-//RoleData структура включающая всю информацию о ролях, привелегиях, и маршрутах
+//RoleData структура, включающая всю информацию о ролях, привелегиях, и маршрутах
 type RoleData struct {
 	mux          sync.Mutex
 	MapRoles     map[string][]int     //роли
-	MapPermisson map[int]Permission   //привелегии
+	MapPermisson map[int]Permission   //привилегии
 	MapRoutes    map[string]RouteInfo //маршруты
 }
 
@@ -35,7 +35,7 @@ type Role struct {
 	Perm []int  `json:"permissions"` //массив полномочий
 }
 
-//Privilege струкрута для запросов к БД
+//Privilege структура  для запросов к БД
 type Privilege struct {
 	Role         Role     `json:"role"`   //информация о роли пользователя
 	Region       string   `json:"region"` //регион пользователя
@@ -43,7 +43,7 @@ type Privilege struct {
 	PrivilegeStr string   `json:"-"`      //строка для декодирования
 }
 
-//Permission структура полномойчий содержит ID, команду и описание команды
+//Permission структура полномочий содержит ID, команду и описание команды
 type Permission struct {
 	ID          int    `json:"id"`          //ID порядковый номер
 	Visible     bool   `json:"visible"`     //флаг отображения пользователю
@@ -219,7 +219,7 @@ func (roleAccess *RoleAccess) ReadRoleAccessFile() (err error) {
 	return err
 }
 
-//ToSqlStrUpdate запись привелегий в базу
+//ToSqlStrUpdate запись привилегий в базу
 func (privilege *Privilege) WriteRoleInBD(login string) (err error) {
 	privilegeStr, _ := json.Marshal(privilege)
 	return GetDB().Exec(fmt.Sprintf("update %s set privilege = '%s' where login = '%s'", GlobalConfig.DBConfig.AccountTable, string(privilegeStr), login)).Error

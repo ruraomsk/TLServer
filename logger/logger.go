@@ -11,10 +11,10 @@ import (
 
 //LogFile информация о лог файле
 type LogFile struct {
-	flog  *os.File
+	flog  *os.File  //дескриптор открытого файла
 	mutex sync.Mutex
-	path  string
-	date  string
+	path  string //путь да текущего файла лога
+	date  string //текущая дата
 }
 
 //logfile текущий лог файл

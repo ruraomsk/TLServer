@@ -12,7 +12,7 @@ import (
 	u "github.com/JanFant/TLServer/utils"
 )
 
-//SelectedData общая струкрута для обмена
+//SelectedData общая структура обмена
 type SelectedData struct {
 	SelectedData map[string]map[string][]CheckData `json:"selected"`    //хранилище перекрестков которые были выбраны
 	PngSettings  PngSettings                       `json:"pngSettings"` //настройки для создания map.png
@@ -27,8 +27,8 @@ type CheckData struct {
 
 //PngSettings настройки размеров создаваемой map.png
 type PngSettings struct {
-	SizeX int `json:"sizeX",toml:"png_sizeX"` //размер картинки по координате X
-	SizeY int `json:"sizeY",toml:"png_sizeY"` //размер картинки по координате Y
+	SizeX int `json:"sizeX",toml:"png_sizeX"` //размер по координате X
+	SizeY int `json:"sizeY",toml:"png_sizeY"` //размер по координате Y
 	Z     int `json:"z",toml:"png_Z"`         //величина отдаление
 }
 

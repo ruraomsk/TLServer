@@ -47,7 +47,7 @@ func StartServer() {
 	subRout.HandleFunc("/{slug}/cross", func(w http.ResponseWriter, r *http.Request) { //работа со странички перекрестков (страничка)
 		http.ServeFile(w, r, resourcePath+"/cross.html")
 	}).Methods("GET")
-	subRout.HandleFunc("/{slug}/cross", whandlers.BuildCross).Methods("POST")       //информация о состоянии перекрестка
+	subRout.HandleFunc("/{slug}/cross", whandlers.BuildCross).Methods("POST")       //информация о состоянии перекрёстка
 	subRout.HandleFunc("/{slug}/cross/dev", whandlers.DevCrossInfo).Methods("POST") //информация о состоянии перекрестка (информация о дейвайсе)
 
 	subRout.HandleFunc("/{slug}/cross/DispatchControlButtons", whandlers.DispatchControlButtons).Methods("POST") //обработчик диспетчерского управления (отправка команд управления)

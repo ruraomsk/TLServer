@@ -25,7 +25,7 @@ type Token struct {
 	jwt.StandardClaims
 }
 
-//Account структура для аккаунтов пользователя
+//Account структура аккаунта пользователя
 type Account struct {
 	gorm.Model
 	Login    string        `json:"login",sql:"login"`       //Имя пользователя
@@ -214,7 +214,7 @@ func (account *Account) ParserBoxPointsUser() (err error) {
 	return nil
 }
 
-//GetInfoForUser собираю информацию для пользователя который только что залогинился
+//GetInfoForUser собор информацию для пользователя, который авторизировался
 func (account *Account) GetInfoForUser() map[string]interface{} {
 	err := GetDB().Table("accounts").Where("login = ?", account.Login).First(account).Error
 	if err != nil {

@@ -32,7 +32,7 @@ type BusyArm struct {
 	structStr   string //строка для запроса в бд
 }
 
-//EditCrossInfo информация о пользователе занявшем перекресток на изменение
+//EditCrossInfo информация о пользователе, занявшем перекресток на изменение
 type EditCrossInfo struct {
 	Login    string    `json:"login"`    //логин пользователя
 	EditFlag bool      `json:"editFlag"` //флаг разрешения на редактирование перекрестка

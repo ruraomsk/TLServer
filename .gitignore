@@ -14,7 +14,7 @@ domain.csr
 domain.key
 frontend/**
 
-*.docx
+~
 TLServer.exe~
 static/
 TLServer.exe

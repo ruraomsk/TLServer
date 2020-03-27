@@ -9,8 +9,8 @@ import (
 
 //StateResult информация о прорке данных
 type StateResult struct {
-	SumResult []string
-	Err       error
+	SumResult []string //накоплении информации о ходе проверки
+	Err       error    //признак ошибки при проверке
 }
 
 //DaySetsVerified проверка суточных карт

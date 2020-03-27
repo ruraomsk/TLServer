@@ -9,7 +9,7 @@ import (
 	"github.com/ruraomsk/ag-server/comm"
 )
 
-//DispatchControlButton обработчик кнопок диспетчерского управления
+//DispatchControlButtons обработчик кнопок диспетчерского управления
 var DispatchControlButtons = func(w http.ResponseWriter, r *http.Request) {
 	arm := comm.CommandARM{}
 	if err := json.NewDecoder(r.Body).Decode(&arm); err != nil {

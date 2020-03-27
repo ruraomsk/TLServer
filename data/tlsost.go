@@ -189,7 +189,7 @@ func GetCrossDevInfo(idevice string) map[string]interface{} {
 	return resp
 }
 
-//MakeBoxPoint расчет координат для перемешения по карте
+//MakeBoxPoint расчет координат для перемещения по карте
 func (location *Locations) MakeBoxPoint() (box BoxPoint, err error) {
 	var sqlStr = `SELECT Min(dgis[0]) as "Y0", Min(convTo360(dgis[1])) as "X0", Max(dgis[0]) as "Y1", Max(convTo360(dgis[1])) as "X1"  FROM public."cross"`
 	tempStr := " where "

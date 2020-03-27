@@ -17,7 +17,7 @@ type BoxPoint struct {
 	Point1 Point `json:"point1"` //правая верхняя точка на карте
 }
 
-//GetPoint возврашает значение координаты
+//GetPoint возвращает значение координаты
 func (points *Point) GetPoint() (y, x float64) {
 	return points.Y, points.X
 }
@@ -27,7 +27,7 @@ func (points *Point) SetPoint(y, x float64) {
 	points.X, points.Y = x, y
 }
 
-//StrToFloat преобразует строку полученную из БД в структуру Point
+//StrToFloat преобразует строку, полученную из БД в структуру Point
 func (points *Point) StrToFloat(str string) {
 	str = strings.TrimPrefix(str, "(")
 	str = strings.TrimSuffix(str, ")")

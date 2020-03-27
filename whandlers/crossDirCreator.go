@@ -20,7 +20,7 @@ var CheckAllCross = func(w http.ResponseWriter, r *http.Request) {
 	u.Respond(w, r, resp)
 }
 
-//CheckSelectedDirCross обработчик проверки регионов/районов/перекрестков выбратнных пользователем
+//CheckSelectedDirCross обработчик проверки регионов, районов и перекрестков, выбранных пользователем
 var CheckSelectedDirCross = func(w http.ResponseWriter, r *http.Request) {
 	var selectedData data.SelectedData
 	err := json.NewDecoder(r.Body).Decode(&selectedData)
@@ -33,7 +33,7 @@ var CheckSelectedDirCross = func(w http.ResponseWriter, r *http.Request) {
 	u.Respond(w, r, resp)
 }
 
-//MakeSelectedDirCross обработчик проверки регионов/районов/перекрестков выбратнных пользователем
+//MakeSelectedDirCross обработчик проверки регионов, районов и перекрестков, выбранных пользователем
 var MakeSelectedDirCross = func(w http.ResponseWriter, r *http.Request) {
 	var selectedData data.SelectedData
 	err := json.NewDecoder(r.Body).Decode(&selectedData)

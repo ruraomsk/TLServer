@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-//BuildMainPage собираем данные для залогиневшегося пользователя
+//BuildMapPage собираем данные для авторизованного пользователя
 var BuildMapPage = func(w http.ResponseWriter, r *http.Request) {
 	account := &data.Account{}
 	mapContx := u.ParserInterface(r.Context().Value("info"))
@@ -39,7 +39,7 @@ var UpdateMapPage = func(w http.ResponseWriter, r *http.Request) {
 	u.Respond(w, r, resp)
 }
 
-//LocationButtonMapPage обработка запроса на получение новых координат отрисовки рабочей области
+//LocationButtonMapPage обработка запроса на получение новых координат рабочей области
 var LocationButtonMapPage = func(w http.ResponseWriter, r *http.Request) {
 	location := &data.Locations{}
 	err := json.NewDecoder(r.Body).Decode(location)

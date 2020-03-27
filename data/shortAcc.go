@@ -32,7 +32,7 @@ type PassChange struct {
 	NewPW string `json:"newPW"` //новый пароль
 }
 
-//ConvertShortToAcc преобразование 2х структур информации об аккаунте в одну целую
+//ConvertShortToAcc преобразование информации об аккаунте
 func (shortAcc *ShortAccount) ConvertShortToAcc() (account Account, privilege Privilege) {
 	account = Account{}
 	privilege = Privilege{}

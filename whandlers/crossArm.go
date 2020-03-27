@@ -11,7 +11,7 @@ import (
 	agS_pudge "github.com/ruraomsk/ag-server/pudge"
 )
 
-//BuildCross обработчик собора данных для отображения прекрестка
+//BuildCross обработчик собора данных для отображения прекрёстка
 var BuildCross = func(w http.ResponseWriter, r *http.Request) {
 	var err error
 	TLight := &data.TrafficLights{}
@@ -31,7 +31,7 @@ var BuildCross = func(w http.ResponseWriter, r *http.Request) {
 	u.Respond(w, r, resp)
 }
 
-//DevCrossInfo обработчик собора данных для отображения прекрестка (idevice информация)
+//DevCrossInfo обработчик собора данных для отображения перекрёстка (idevice информация)
 var DevCrossInfo = func(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var idevice string
@@ -122,7 +122,7 @@ var ControlCreateButton = func(w http.ResponseWriter, r *http.Request) {
 	u.Respond(w, r, resp)
 }
 
-//ControlCheckButton обработчик данных для их проверка
+//ControlCheckButton обработчик данных для их проверки
 var ControlCheckButton = func(w http.ResponseWriter, r *http.Request) {
 	var stateData agS_pudge.Cross
 	err := json.NewDecoder(r.Body).Decode(&stateData)
@@ -149,6 +149,7 @@ var ControlDeleteButton = func(w http.ResponseWriter, r *http.Request) {
 	u.Respond(w, r, resp)
 }
 
+//ControlTestState обработчик проверки State
 var ControlTestState = func(w http.ResponseWriter, r *http.Request) {
 	mapContx := u.ParserInterface(r.Context().Value("info"))
 	resp := data.TestCrossStateData(mapContx)
