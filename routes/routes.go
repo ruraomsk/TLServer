@@ -103,6 +103,12 @@ func StartServer() {
 	subRout.HandleFunc("/{slug}/map/deviceLog", whandlers.DisplayDeviceLogFile).Methods("POST") //обработка лога устройства
 	subRout.HandleFunc("/{slug}/map/deviceLog/info", whandlers.LogDeviceInfo).Methods("POST")   //обработка лога устройства по выбранному интеревалу времени
 
+	subRout.HandleFunc("/{slug}/license", func(w http.ResponseWriter, r *http.Request) { //обработка работы с лицензиями (страничка)
+		http.ServeFile(w, r, resourcePath+"/license.html")
+	}).Methods("GET")
+	subRout.HandleFunc("/{slug}/license", whandlers.LicenseInfo).Methods("POST")               //обработчик сбора начальной информации
+	subRout.HandleFunc("/{slug}/license/create", whandlers.LicenseCreateToken).Methods("POST") //обработка создания лицензий
+
 	//тест просто тест!
 	subRout.HandleFunc("/{slug}/testtoken", whandlers.TestToken).Methods("POST")
 	subRout.HandleFunc("/{slug}/test", whandlers.TestHello).Methods("POST")

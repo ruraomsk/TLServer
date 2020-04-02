@@ -110,6 +110,11 @@
       "id": 11,
       "visible": true,
       "description": "Просмотр логов устройства"
+    },
+    {
+      "id": 12,
+      "visible": true,
+      "description": "Работа с лицензиями программы"
     }
   ],
   "routes": [
@@ -304,6 +309,18 @@
       "permission": 11,
       "path": "/map/deviceLog/info",
       "description": "обработка лога устройства по выбранному интеревалу времени"
+    },
+    {
+      "id": 33,
+      "permission": 12,
+      "path": "/license",
+      "description": "обработчик сбора начальной информации"
+    },
+    {
+      "id": 34,
+      "permission": 12,
+      "path": "/license/create",
+      "description": "обработка создания лицензий"
     }
   ]
 }
