@@ -46,9 +46,9 @@ func (checkData *CheckData) setStatusFalse() {
 
 //stockData заполняет поля из env файла
 func (set *PngSettings) stockData() {
-	set.SizeX = GlobalConfig.PngSettings.SizeX
-	set.SizeY = GlobalConfig.PngSettings.SizeY
-	set.Z = GlobalConfig.PngSettings.Z
+	set.SizeX = 450
+	set.SizeY = 450
+	set.Z = 19
 }
 
 //MainCrossCreator формирование необходимых данных для начальной странички с деревом

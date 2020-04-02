@@ -32,8 +32,3 @@ devices_table = "public.devices"
 status_table = "public.status"
 logDevice_table = "public.logdevice"
 
-#настройки для работы с каталогами перекрестков
-[picture]
-png_sizeX = 450
-png_sizeY = 450
-png_Z = 19

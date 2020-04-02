@@ -16,7 +16,6 @@ type Config struct {
 	TokenPassword string               `toml:"token_password"` //ключ для шифрования токенов доступа
 	TCPConfig     tcpConnect.TCPConfig `toml:"tcpServer"`      //информация о tcp соединении с сервером устройств
 	DBConfig      DBConfig             `toml:"database"`       //информация о соединении с базой данных
-	PngSettings   PngSettings          `toml:"picture"`        //инфомарция о настройках подложки
 }
 
 //NewConfig создание конфига
