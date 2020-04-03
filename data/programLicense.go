@@ -1,6 +1,8 @@
 package data
 
 import (
+	"errors"
+	"fmt"
 	"github.com/JanFant/TLServer/logger"
 	u "github.com/JanFant/TLServer/utils"
 	"github.com/dgrijalva/jwt-go"
@@ -50,25 +52,68 @@ func CreateLicenseToken(license License) map[string]interface{} {
 	resp := u.Message(true, "LicenseToken")
 	resp["token"] = tokenString
 	resp["license"] = license
+	resp["tk"] = tk
 	return resp
 }
 
-func CheckLicenseKey(tokenSTR string) {
+func CheckLicenseKey(tokenSTR string) (*LicenseToken, error) {
 	tk := &LicenseToken{}
 	token, err := jwt.ParseWithClaims(tokenSTR, tk, func(token *jwt.Token) (interface{}, error) {
 		return []byte(GlobalConfig.TokenPassword), nil
 	})
-
 	//не правильный токен
 	if err != nil {
+		return tk, err
 	}
 	//не истек ли токен?
 	if !token.Valid {
-
+		return tk, errors.New("Invalid token")
 	}
+	return tk, nil
 }
 
 func ControlLicenseKey() {
+	var aaa = make(chan bool)
+	timeTick := time.Tick(time.Hour * 1)
+	for {
+		select {
+		case <-aaa:
+			{
+
+			}
+		case <-timeTick:
+			{
+				key, err := readFile()
+				if err != nil {
+					logger.Error.Println("|Message: license.key file don't read: ", err.Error())
+					fmt.Println("license.key file don't read: ", err.Error())
+				}
+				_, err = CheckLicenseKey(key)
+				if err != nil {
+					fmt.Print("Wrong License key")
+					os.Exit(1)
+				}
+			}
+		}
+	}
+}
+
+func LicenseCheck() {
+	key, err := readFile()
+	if err != nil {
+		logger.Error.Println("|Message: license.key file don't read: ", err.Error())
+		fmt.Println("license.key file don't read: ", err.Error())
+	}
+	for {
+		tk, err := CheckLicenseKey(key)
+		if err != nil {
+			fmt.Print("Wrong License key")
+			os.Exit(1)
+		} else {
+			fmt.Printf("Token END time:= %v\n", time.Unix(tk.ExpiresAt, 0))
+			break
+		}
+	}
 }
 
 func readFile() (string, error) {

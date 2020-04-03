@@ -31,4 +31,3 @@ region_table = "public.region"
 devices_table = "public.devices"
 status_table = "public.status"
 logDevice_table = "public.logdevice"
-

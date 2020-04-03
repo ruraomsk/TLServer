@@ -28,6 +28,9 @@ func main() {
 		return
 	}
 
+	//Запуск если есть файл с токеном лицензии license.key
+	data.LicenseCheck()
+
 	//Подключение к базе данных
 	if err = data.ConnectDB(); err != nil {
 		logger.Error.Println("|Message: Error open DB", err.Error())
