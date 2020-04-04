@@ -8,6 +8,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"io/ioutil"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -20,6 +21,17 @@ type LicenseToken struct {
 	Phone     string //телефон фирмы
 	Email     string //почта фирмы
 	jwt.StandardClaims
+}
+
+//LicenseFields обращение к полям токена
+var LicenseFields licenseInfo
+
+//licenseInfo информация о полях лицензии
+type licenseInfo struct {
+	mux       sync.Mutex
+	NumDev    int    //количество устройств
+	Yakey     string //ключ яндекса
+	TokenPass string //пароль для шифрования токена https запросов
 }
 
 //License информация о лицензии клиента (БД?)
@@ -98,6 +110,14 @@ func ControlLicenseKey() {
 	}
 }
 
+func (licInfo *licenseInfo) ParseFields(token *LicenseToken) {
+	licInfo.mux.Lock()
+	defer licInfo.mux.Unlock()
+	licInfo.TokenPass = token.TokenPass
+	licInfo.Yakey = token.YaKey
+	licInfo.NumDev = token.NumDevice
+}
+
 func LicenseCheck() {
 	key, err := readFile()
 	if err != nil {
@@ -110,10 +130,41 @@ func LicenseCheck() {
 			fmt.Print("Wrong License key")
 			os.Exit(1)
 		} else {
+			LicenseFields.ParseFields(tk)
 			fmt.Printf("Token END time:= %v\n", time.Unix(tk.ExpiresAt, 0))
 			break
 		}
 	}
+}
+
+func LicenseInfo() map[string]interface{} {
+	keyStr, err := readFile()
+	if err != nil {
+		logger.Error.Println("|Message: license.key file don't read: ", err.Error())
+		fmt.Println("license.key file don't read: ", err.Error())
+	}
+	tk := &LicenseToken{}
+	_, _ = jwt.ParseWithClaims(keyStr, tk, func(token *jwt.Token) (interface{}, error) {
+		return []byte(GlobalConfig.TokenPassword), nil
+	})
+	resp := u.Message(true, "License Info")
+	resp["tk"] = tk
+	resp["Time END"] = time.Unix(tk.ExpiresAt, 0)
+	return resp
+}
+
+func LicenseNewKey(keyStr string) map[string]interface{} {
+	tk, err := CheckLicenseKey(keyStr)
+	if err != nil {
+		return u.Message(false, "Wrong License key")
+	}
+	err = writeFile(keyStr)
+	if err != nil {
+		return u.Message(false, "Error write license.key file")
+	}
+	LicenseFields.ParseFields(tk)
+	resp := u.Message(true, "New key saved")
+	return resp
 }
 
 func readFile() (string, error) {

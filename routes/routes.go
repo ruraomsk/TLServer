@@ -108,6 +108,7 @@ func StartServer() {
 	}).Methods("GET")
 	subRout.HandleFunc("/{slug}/license", whandlers.LicenseInfo).Methods("POST")               //обработчик сбора начальной информации
 	subRout.HandleFunc("/{slug}/license/create", whandlers.LicenseCreateToken).Methods("POST") //обработка создания лицензий
+	subRout.HandleFunc("/{slug}/license/newToken", whandlers.LicenseNewKey).Methods("POST")      //обработчик сохранения нового токена
 
 	//тест просто тест!
 	subRout.HandleFunc("/{slug}/testtoken", whandlers.TestToken).Methods("POST")

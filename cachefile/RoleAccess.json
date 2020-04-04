@@ -321,6 +321,12 @@
       "permission": 12,
       "path": "/license/create",
       "description": "обработка создания лицензий"
+    },
+    {
+      "id": 35,
+      "permission": 12,
+      "path": "/license/newToken",
+      "description": "обработчик сохранения нового токена"
     }
   ]
 }
