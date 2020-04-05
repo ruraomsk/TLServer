@@ -53,7 +53,7 @@ var key = "asdqweqwe123dzsd12312cxq"
 
 func CreateLicenseToken(license License) map[string]interface{} {
 	//создаем токен
-	tk := &LicenseToken{Name: license.NameClient, YaKey: license.YaKey, Email: license.EmailClient, NumDevice: license.NumDevice, Phone: license.PhoneClient, TokenPass: license.TokenPass}
+	tk := &LicenseToken{Name: license.NameClient, YaKey: license.YaKey, Email: license.EmailClient, NumDevice: license.NumDevice, Phone: license.PhoneClient, TokenPass: license.TokenPass, Id: license.Id}
 	//врямя выдачи токена
 	tk.IssuedAt = time.Now().Unix()
 	//время когда закончится действие токена
