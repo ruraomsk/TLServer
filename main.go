@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-
 	"github.com/BurntSushi/toml"
 	"github.com/JanFant/TLServer/data"
+	"github.com/JanFant/TLServer/license"
 	"github.com/JanFant/TLServer/logger"
 	"github.com/JanFant/TLServer/routes"
 	"github.com/JanFant/TLServer/tcpConnect"
@@ -29,7 +29,7 @@ func main() {
 	}
 
 	//Запуск если есть файл с токеном лицензии license.key
-	data.LicenseCheck()
+	license.LicenseCheck()
 
 	//Подключение к базе данных
 	if err = data.ConnectDB(); err != nil {

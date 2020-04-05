@@ -2,27 +2,26 @@ package whandlers
 
 import (
 	"encoding/json"
-	"net/http"
-
-	"github.com/JanFant/TLServer/data"
+	"github.com/JanFant/TLServer/license"
 	u "github.com/JanFant/TLServer/utils"
+	"net/http"
 )
 
 //LicenseInfo обработчик сборки начальной информации
 var LicenseInfo = func(w http.ResponseWriter, r *http.Request) {
-	resp := data.LicenseInfo()
+	resp := license.LicenseInfo()
 	u.Respond(w, r, resp)
 }
 
 //LicenseCreateToken обработчик создания токена лицензии
 var LicenseCreateToken = func(w http.ResponseWriter, r *http.Request) {
-	license := data.License{}
-	if err := json.NewDecoder(r.Body).Decode(&license); err != nil {
+	licInfo := license.License{}
+	if err := json.NewDecoder(r.Body).Decode(&licInfo); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		u.Respond(w, r, u.Message(false, "Invalid request"))
 		return
 	}
-	resp := data.CreateLicenseToken(license)
+	resp := license.CreateLicenseToken(licInfo)
 	u.Respond(w, r, resp)
 }
 
@@ -37,6 +36,6 @@ var LicenseNewKey = func(w http.ResponseWriter, r *http.Request) {
 		u.Respond(w, r, u.Message(false, "Invalid request"))
 		return
 	}
-	resp := data.LicenseNewKey(key.Key)
+	resp := license.LicenseNewKey(key.Key)
 	u.Respond(w, r, resp)
 }

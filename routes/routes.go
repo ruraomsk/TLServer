@@ -108,7 +108,7 @@ func StartServer() {
 	}).Methods("GET")
 	subRout.HandleFunc("/{slug}/license", whandlers.LicenseInfo).Methods("POST")               //обработчик сбора начальной информации
 	subRout.HandleFunc("/{slug}/license/create", whandlers.LicenseCreateToken).Methods("POST") //обработка создания лицензий
-	subRout.HandleFunc("/{slug}/license/newToken", whandlers.LicenseNewKey).Methods("POST")      //обработчик сохранения нового токена
+	subRout.HandleFunc("/{slug}/license/newToken", whandlers.LicenseNewKey).Methods("POST")    //обработчик сохранения нового токена
 
 	//тест просто тест!
 	subRout.HandleFunc("/{slug}/testtoken", whandlers.TestToken).Methods("POST")
@@ -116,10 +116,11 @@ func StartServer() {
 	//------------------------------------------------------------------------------------------------------------------
 	//роутер для фаил сервера, он закрыт токеном, скачивать могут только авторизированные пользователи
 	fileRout := router.PathPrefix("/file").Subrouter()
-	fileRout.Use(JwtFile)                                                                                                                             //добавление к роутеру контроля токена
-	fileRout.PathPrefix("/cross/").Handler(http.Handler(http.StripPrefix("/file/cross/", http.FileServer(http.Dir("./views/cross"))))).Methods("GET") //описание пути и скриптов для получения файлов для перекрестка
-	fileRout.PathPrefix("/img/").Handler(http.Handler(http.StripPrefix("/file/img/", http.FileServer(http.Dir("./views/img"))))).Methods("GET")       //описание пути и скриптов для получения файлов для основных картинок
-	fileRout.PathPrefix("/icons/").Handler(http.Handler(http.StripPrefix("/file/icons/", http.FileServer(http.Dir("./views/icons"))))).Methods("GET") //описание пути и скриптов для получения файлов для иконок
+	fileRout.Use(JwtFile)                                                                                                                                      //добавление к роутеру контроля токена
+	fileRout.PathPrefix("/cross/").Handler(http.Handler(http.StripPrefix("/file/cross/", http.FileServer(http.Dir("./views/cross"))))).Methods("GET")          //описание пути и скриптов для получения файлов для перекрестка
+	fileRout.PathPrefix("/img/").Handler(http.Handler(http.StripPrefix("/file/img/", http.FileServer(http.Dir("./views/img"))))).Methods("GET")                //описание пути и скриптов для получения файлов для основных картинок
+	fileRout.PathPrefix("/icons/").Handler(http.Handler(http.StripPrefix("/file/icons/", http.FileServer(http.Dir("./views/icons"))))).Methods("GET")          //описание пути и скриптов для получения файлов для иконок
+	fileRout.PathPrefix("/markdown/").Handler(http.Handler(http.StripPrefix("/file/markdown/", http.FileServer(http.Dir("./views/markdown"))))).Methods("GET") //описание пути и скриптов для получения файлов с информацией (markdown)
 
 	//------------------------------------------------------------------------------------------------------------------
 	// Запуск HTTP сервера

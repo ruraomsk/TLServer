@@ -1,4 +1,4 @@
-package data
+package license
 
 import (
 	"errors"
@@ -19,6 +19,7 @@ type LicenseToken struct {
 	TokenPass string //пароль для шифрования токена https запросов
 	Name      string //название фирмы
 	Phone     string //телефон фирмы
+	Id        int    //уникальный номер сервера
 	Email     string //почта фирмы
 	jwt.StandardClaims
 }
@@ -28,15 +29,17 @@ var LicenseFields licenseInfo
 
 //licenseInfo информация о полях лицензии
 type licenseInfo struct {
-	mux       sync.Mutex
+	Mux       sync.Mutex
 	NumDev    int    //количество устройств
-	Yakey     string //ключ яндекса
+	YaKey     string //ключ яндекса
+	Id        int    //уникальный номер сервера
 	TokenPass string //пароль для шифрования токена https запросов
 }
 
 //License информация о лицензии клиента (БД?)
 type License struct {
 	NumDevice     int       `json:"numDev"`    //количество устройств
+	Id            int       `json:"id"`        //уникальный номер сервера
 	NameClient    string    `json:"name"`      //название фирмы
 	AddressClient string    `json:"address"`   //адресс фирмы
 	PhoneClient   string    `json:"phone"`     //телефон фирмы
@@ -45,6 +48,8 @@ type License struct {
 	TokenPass     string    `json:"tokenPass"` //пароль для шифрования токена https запросов
 	EndTime       time.Time `json:"time"`      //время окончания лицензии
 }
+
+var key = "asdqweqwe123dzsd12312cxq"
 
 func CreateLicenseToken(license License) map[string]interface{} {
 	//создаем токен
@@ -55,7 +60,7 @@ func CreateLicenseToken(license License) map[string]interface{} {
 	tk.ExpiresAt = license.EndTime.Unix()
 
 	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tk)
-	tokenString, _ := token.SignedString([]byte(GlobalConfig.TokenPassword))
+	tokenString, _ := token.SignedString([]byte(key))
 
 	//сохраняем токен в БД
 	//GetDB().Exec("update public.accounts set token = ? where login = ?", account.Token, account.Login)
@@ -71,7 +76,7 @@ func CreateLicenseToken(license License) map[string]interface{} {
 func CheckLicenseKey(tokenSTR string) (*LicenseToken, error) {
 	tk := &LicenseToken{}
 	token, err := jwt.ParseWithClaims(tokenSTR, tk, func(token *jwt.Token) (interface{}, error) {
-		return []byte(GlobalConfig.TokenPassword), nil
+		return []byte(key), nil
 	})
 	//не правильный токен
 	if err != nil {
@@ -111,11 +116,12 @@ func ControlLicenseKey() {
 }
 
 func (licInfo *licenseInfo) ParseFields(token *LicenseToken) {
-	licInfo.mux.Lock()
-	defer licInfo.mux.Unlock()
+	licInfo.Mux.Lock()
+	defer licInfo.Mux.Unlock()
 	licInfo.TokenPass = token.TokenPass
-	licInfo.Yakey = token.YaKey
+	licInfo.YaKey = token.YaKey
 	licInfo.NumDev = token.NumDevice
+	licInfo.Id = token.Id
 }
 
 func LicenseCheck() {
@@ -145,7 +151,7 @@ func LicenseInfo() map[string]interface{} {
 	}
 	tk := &LicenseToken{}
 	_, _ = jwt.ParseWithClaims(keyStr, tk, func(token *jwt.Token) (interface{}, error) {
-		return []byte(GlobalConfig.TokenPassword), nil
+		return []byte(key), nil
 	})
 	resp := u.Message(true, "License Info")
 	resp["tk"] = tk
