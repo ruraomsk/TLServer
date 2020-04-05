@@ -35,20 +35,17 @@ type TCPConfig struct {
 
 //MessageInfo информация о устройствах (архив)
 type MessageInfo struct {
-	Id         int    //номер сервера
-	Text       string //информация о запросе
-	MessageStr string //данные подготовленные к отправке
+	Id   int    //номер сервера
+	Text string //информация о запросе (время)
 }
 
 //messageInfoMarshal преобразовать структуру в строку
-func (mInfo *MessageInfo) messageInfoMarshal() (err error) {
+func (mInfo *MessageInfo) messageInfoMarshal() (str string, err error) {
 	newByte, err := json.Marshal(mInfo)
 	if err != nil {
-		mInfo.MessageStr = ""
-		return err
+		return "", err
 	}
-	mInfo.MessageStr = string(newByte)
-	return err
+	return string(newByte), err
 }
 
 //fillInfo Заполнить поле id из ключа
@@ -117,11 +114,11 @@ func TCPForMessage(IP string) {
 					break
 				}
 				message.fillInfo()
-				_ = message.messageInfoMarshal()
-				message.MessageStr += "\n"
-				fmt.Println(message.MessageStr)
+				messageStr, _ := message.messageInfoMarshal()
+				messageStr += "\n"
+				fmt.Println(messageStr)
 				_ = conn.SetWriteDeadline(time.Now().Add(time.Second * 5))
-				_, err := conn.Write([]byte(message.MessageStr))
+				_, err := conn.Write([]byte(messageStr))
 				if err != nil {
 					FlagConnect = false
 					_ = conn.Close()
