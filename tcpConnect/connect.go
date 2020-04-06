@@ -91,7 +91,7 @@ func TCPForMessage(IP string) {
 		message MessageInfo
 		err     error
 	)
-	timeTick := time.Tick(time.Hour)
+	timeTick := time.Tick(time.Second * 5)
 	FlagConnect := false
 	for {
 		select {
@@ -124,6 +124,7 @@ func TCPForMessage(IP string) {
 					_ = conn.Close()
 					break
 				}
+				timeTick = time.Tick(time.Hour * 24)
 			}
 		}
 	}
