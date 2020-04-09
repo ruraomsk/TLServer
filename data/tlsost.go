@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/JanFant/TLServer/license"
 	"github.com/JanFant/TLServer/logger"
 	u "github.com/JanFant/TLServer/utils"
 	agS_pudge "github.com/ruraomsk/ag-server/pudge"
@@ -51,6 +52,12 @@ func GetLightsFromBD(box BoxPoint) (tfdata []TrafficLights) {
 		tflight = SelectTL(box.Point0, box.Point1, true)
 	} else {
 		tflight = SelectTL(box.Point0, box.Point1, false)
+	}
+	license.LicenseFields.Mux.Lock()
+	numDev := license.LicenseFields.NumDev
+	license.LicenseFields.Mux.Unlock()
+	if len(tflight) > numDev {
+		tflight = tflight[:numDev]
 	}
 	return tflight
 }
