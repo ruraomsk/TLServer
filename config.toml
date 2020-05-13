@@ -1,5 +1,7 @@
 #TOML doc :D
 
+# AsudServ@gmail.com - mail  H49qFgUDTzSUQFYmoVwf - pass
+
 logger_path = "D://Space//logger"
 views_path = "C://Users//Ivan//go//src//github.com//JanFant//TLServer//views"
 resourcePath = "C://Users//Ivan//go//src//github.com//JanFant//TLServer//frontend"

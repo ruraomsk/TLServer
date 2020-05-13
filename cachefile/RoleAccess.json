@@ -19,7 +19,10 @@
         7,
         8,
         9,
-        10
+        10,
+        11,
+        12,
+        13
       ]
     },
     {
@@ -34,7 +37,10 @@
         7,
         8,
         9,
-        10
+        10,
+        11,
+        12,
+        13
       ]
     },
     {
@@ -43,7 +49,8 @@
         2,
         4,
         5,
-        6
+        6,
+        13
       ]
     },
     {
@@ -115,6 +122,11 @@
       "id": 12,
       "visible": true,
       "description": "Работа с лицензиями программы"
+    },
+    {
+      "id": 13,
+      "visible": false,
+      "description": "Тех поддержка"
     }
   ],
   "routes": [
@@ -327,6 +339,24 @@
       "permission": 12,
       "path": "/license/newToken",
       "description": "обработчик сохранения нового токена"
+    },
+    {
+      "id": 36,
+      "permission": 6,
+      "path": "/map/chat",
+      "description": "чат на сервере"
+    },
+    {
+      "id": 37,
+      "permission": 13,
+      "path": "/techSupp",
+      "description": "страничка тех поддержки"
+    },
+    {
+      "id": 38,
+      "permission": 13,
+      "path": "/techSupp/send",
+      "description": "отправка сообщения тех поддержке"
     }
   ]
 }

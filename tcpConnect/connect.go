@@ -81,7 +81,7 @@ var ArmCommandChan = make(chan ArmCommandMessage)
 func TCPClientStart(tcpConfig TCPConfig) {
 	go TCPForState(tcpConfig.getStateIP())
 	go TCPForARM(tcpConfig.getArmIP())
-	go TCPForMessage(tcpConfig.getMessageIP())
+	//go TCPForMessage(tcpConfig.getMessageIP())
 }
 
 //TCPForMessage обмен с сервером  о устройствах (архив)

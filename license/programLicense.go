@@ -33,6 +33,7 @@ type licenseInfo struct {
 	NumDev    int    //количество устройств
 	YaKey     string //ключ яндекса
 	Id        int    //уникальный номер сервера
+	Name      string //название фирмы
 	TokenPass string //пароль для шифрования токена https запросов
 }
 
@@ -49,7 +50,7 @@ type License struct {
 	EndTime       time.Time `json:"time"`      //время окончания лицензии
 }
 
-var key = "asdqweqwe123dzsd12312cxq"
+var key = "yreRmn6JKVv1md1Yh1PptBIjtGrL8pRjo8sAp5ZPlR6zK8xjxnzt6mGi6mtjWPJ6lz1HbhgNBxfSReuqP9ijLQ4JiWLQ4ADHefWVgtTzeI35pqB6hsFjOWufdAW8UEdK9ajm3T76uQlucUP2g4rUV8B9gTMoLtkn5Pxk6G83YZrvAIR7ddsd5PreTwGDoLrS6bdsbJ7u"
 
 func CreateLicenseToken(license License) map[string]interface{} {
 	//создаем токен
@@ -122,6 +123,7 @@ func (licInfo *licenseInfo) ParseFields(token *LicenseToken) {
 	licInfo.YaKey = token.YaKey
 	licInfo.NumDev = token.NumDevice
 	licInfo.Id = token.Id
+	licInfo.Name = token.Name
 }
 
 func LicenseCheck() {

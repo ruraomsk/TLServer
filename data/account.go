@@ -338,6 +338,19 @@ func SuperCreate() (err error) {
 	_ = privilege.WriteRoleInBD(account.Login)
 
 	account = &Account{}
+	account.Login = "Alex_B"
+	//Отдаем ключ для yandex map
+	account.YaMapKey = GlobalConfig.YaKey
+	account.WorkTime = 24
+	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
+	//privilege = Privilege{}
+	privilege = NewPrivilege("Admin", "*", []string{"*"})
+	GetDB().Table("accounts").Create(account)
+	////Записываю координаты в базу!!!
+	//GetDB().Exec(privilege.ToSqlStrUpdate("accounts", account.Login))
+	_ = privilege.WriteRoleInBD(account.Login)
+
+	account = &Account{}
 	account.Login = "MMM"
 	//Отдаем ключ для yandex map
 	account.YaMapKey = GlobalConfig.YaKey

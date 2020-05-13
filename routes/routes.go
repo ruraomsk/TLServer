@@ -24,7 +24,7 @@ func StartServer() {
 		http.ServeFile(w, r, resourcePath+"/screen.html")
 	})
 	router.PathPrefix("/static/").Handler(http.Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(resourcePath))))).Methods("GET") //путь к скриптам они открыты
-	router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { //заглушка странички 404
+	router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {                                                  //заглушка странички 404
 		http.ServeFile(w, r, resourcePath+"/notFound.html")
 	})
 	router.HandleFunc("/login", whandlers.LoginAcc).Methods("POST") //запрос на вход в систему
@@ -43,6 +43,12 @@ func StartServer() {
 	subRout.HandleFunc("/{slug}/map/logOut", whandlers.LoginAccOut).Methods("GET")                    //обработчик выхода из системы
 	subRout.HandleFunc("/{slug}/map/update", whandlers.UpdateMapPage).Methods("POST")                 //обновление странички с данными которые попали в область пользователя
 	subRout.HandleFunc("/{slug}/map/locationButton", whandlers.LocationButtonMapPage).Methods("POST") //обработчик для формирования новых координат отображения карты
+	subRout.HandleFunc("/{slug}/map/chat", whandlers.Chat).Methods("GET")                             //обработчик подключения чата
+
+	subRout.HandleFunc("/{slug}/techSupp", func(w http.ResponseWriter, r *http.Request) { //работа со страничкой тех поддержки
+		http.ServeFile(w, r, resourcePath+"/techSupp.html")
+	}).Methods("GET")
+	subRout.HandleFunc("/{slug}/techSupp/send", whandlers.TechSupp).Methods("POST") //обработчик подключения email тех поддержки
 
 	subRout.HandleFunc("/{slug}/cross", func(w http.ResponseWriter, r *http.Request) { //работа со странички перекрестков (страничка)
 		http.ServeFile(w, r, resourcePath+"/cross.html")
