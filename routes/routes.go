@@ -2,11 +2,12 @@ package routes
 
 import (
 	"fmt"
+	"github.com/JanFant/TLServer/logger"
+	"github.com/gorilla/websocket"
 	"net/http"
 	"os"
 
 	"github.com/JanFant/TLServer/data"
-	"github.com/JanFant/TLServer/logger"
 	"github.com/JanFant/TLServer/whandlers"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -16,6 +17,8 @@ var err error
 
 //StartServer запуск сервера
 func StartServer() {
+	whandlers.Connections = make(map[*websocket.Conn]whandlers.Message)
+
 	resourcePath := data.GlobalConfig.ResourcePath
 	// Создаем новый ServeMux для HTTPS соединений
 	router := mux.NewRouter()
@@ -28,6 +31,11 @@ func StartServer() {
 		http.ServeFile(w, r, resourcePath+"/notFound.html")
 	})
 	router.HandleFunc("/login", whandlers.LoginAcc).Methods("POST") //запрос на вход в систему
+
+	router.HandleFunc("/chat", func(w http.ResponseWriter, r *http.Request) { //начальная страница
+		http.ServeFile(w, r, resourcePath+"/brah.html")
+	})
+	router.HandleFunc("/chatW", whandlers.Chat).Methods("GET")
 
 	//------------------------------------------------------------------------------------------------------------------
 	//обязательный общий путь
