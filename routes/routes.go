@@ -17,7 +17,8 @@ var err error
 
 //StartServer запуск сервера
 func StartServer() {
-	whandlers.Connections = make(map[*websocket.Conn]whandlers.Message)
+	data.Connections = make(map[*websocket.Conn]string)
+	data.Names.Users = make(map[string]bool)
 
 	resourcePath := data.GlobalConfig.ResourcePath
 	// Создаем новый ServeMux для HTTPS соединений
@@ -31,11 +32,6 @@ func StartServer() {
 		http.ServeFile(w, r, resourcePath+"/notFound.html")
 	})
 	router.HandleFunc("/login", whandlers.LoginAcc).Methods("POST") //запрос на вход в систему
-
-	router.HandleFunc("/chat", func(w http.ResponseWriter, r *http.Request) { //начальная страница
-		http.ServeFile(w, r, resourcePath+"/brah.html")
-	})
-	router.HandleFunc("/chatW", whandlers.Chat).Methods("GET")
 
 	//------------------------------------------------------------------------------------------------------------------
 	//обязательный общий путь
@@ -51,7 +47,14 @@ func StartServer() {
 	subRout.HandleFunc("/{slug}/map/logOut", whandlers.LoginAccOut).Methods("GET")                    //обработчик выхода из системы
 	subRout.HandleFunc("/{slug}/map/update", whandlers.UpdateMapPage).Methods("POST")                 //обновление странички с данными которые попали в область пользователя
 	subRout.HandleFunc("/{slug}/map/locationButton", whandlers.LocationButtonMapPage).Methods("POST") //обработчик для формирования новых координат отображения карты
-	subRout.HandleFunc("/{slug}/map/chat", whandlers.Chat).Methods("GET")                             //обработчик подключения чата
+
+	subRout.HandleFunc("/{slug}/chat", func(w http.ResponseWriter, r *http.Request) { //начальная страница
+		http.ServeFile(w, r, resourcePath+"/chat.html")
+	})
+	subRout.HandleFunc("/{slug}/chatTest", func(w http.ResponseWriter, r *http.Request) { //начальная страница
+		http.ServeFile(w, r, resourcePath+"/chatTest.html")
+	})
+	subRout.HandleFunc("/{slug}/chatW", whandlers.Chat).Methods("GET")
 
 	subRout.HandleFunc("/{slug}/techSupp", func(w http.ResponseWriter, r *http.Request) { //работа со страничкой тех поддержки
 		http.ServeFile(w, r, resourcePath+"/techSupp.html")
@@ -138,7 +141,7 @@ func StartServer() {
 
 	//------------------------------------------------------------------------------------------------------------------
 	// Запуск HTTP сервера
-	if err = http.ListenAndServeTLS(data.GlobalConfig.ServerIP, "domain.crt", "domain.key", handlers.LoggingHandler(os.Stdout, router)); err != nil {
+	if err = http.ListenAndServeTLS(data.GlobalConfig.ServerIP, "./ssl/domain.crt", "./ssl/domain.key", handlers.LoggingHandler(os.Stdout, router)); err != nil {
 		logger.Error.Println("|Message: Server can't started: ", err.Error())
 		fmt.Println("Server can't started ", err.Error())
 	}

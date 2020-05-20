@@ -35,6 +35,16 @@ func (dbConfig *DBConfig) getDBurl() string {
 	return fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable password=%s", dbConfig.Host, dbConfig.User, dbConfig.Name, dbConfig.Password)
 }
 
+var (
+	ChatTable = `
+	CREATE TABLE chat (
+		time timestamp with time zone PRIMARY KEY,
+		fromU text,
+		toU text,
+		message text	
+	);`
+)
+
 //ConnectDB подключение к БД
 func ConnectDB() error {
 	var (
@@ -71,6 +81,13 @@ func ConnectDB() error {
 		}
 
 	}
+
+	_, err = db.DB().Query(`SELECT * FROM public.chat;`)
+	if err != nil {
+		db.DB().Exec(ChatTable)
+		fmt.Println("создали таблицу для чата")
+	}
+
 	return nil
 }
 

@@ -22,7 +22,8 @@
         10,
         11,
         12,
-        13
+        13,
+        14
       ]
     },
     {
@@ -40,7 +41,8 @@
         10,
         11,
         12,
-        13
+        13,
+        14
       ]
     },
     {
@@ -50,7 +52,8 @@
         4,
         5,
         6,
-        13
+        13,
+        14
       ]
     },
     {
@@ -127,6 +130,11 @@
       "id": 13,
       "visible": false,
       "description": "Тех поддержка"
+    },
+    {
+      "id": 14,
+      "visible": false,
+      "description": "Чат"
     }
   ],
   "routes": [
@@ -342,21 +350,33 @@
     },
     {
       "id": 36,
-      "permission": 6,
-      "path": "/map/chat",
-      "description": "чат на сервере"
-    },
-    {
-      "id": 37,
       "permission": 13,
       "path": "/techSupp",
       "description": "страничка тех поддержки"
     },
     {
-      "id": 38,
+      "id": 37,
       "permission": 13,
       "path": "/techSupp/send",
       "description": "отправка сообщения тех поддержке"
+    },
+    {
+      "id": 38,
+      "permission": 14,
+      "path": "/chat",
+      "description": "чат на сервере"
+    },
+    {
+      "id": 39,
+      "permission": 14,
+      "path": "/chatW",
+      "description": "чат на сервере (вебсокет)"
+    },
+    {
+      "id": 40,
+      "permission": 14,
+      "path": "/chatTest",
+      "description": "чат на сервере (вебсокет)"
     }
   ]
 }
