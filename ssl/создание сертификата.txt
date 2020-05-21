@@ -1,3 +1,0 @@
-openssl genrsa -out domain.key 2048
-openssl req -x509 -new -nodes -key domain.key -sha256 -days 1024 -out domain.pem
-domain.pem -> domain.crt
