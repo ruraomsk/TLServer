@@ -42,8 +42,20 @@ func sendAllUsers(users []int) {
 	}
 }
 
+var (
+	errNoAccessWithDatabase = "no access with database"
+)
+
 func ChatReader(conn *websocket.Conn, mapContx map[string]string) {
 	Connections[conn] = mapContx["login"]
+
+	users, err := getAllUsers()
+	if err != nil {
+		var mess = ErrorMessage{User: mapContx["login"], Error: errNoAccessWithDatabase}
+		_ = conn.WriteJSON(mess)
+	}
+
+	_ = conn.WriteJSON(users)
 
 	fmt.Println(Connections)
 
@@ -100,4 +112,20 @@ func saveMessage(mess Message) error {
 		return err
 	}
 	return nil
+}
+
+func getAllUsers() ([]string, error) {
+	var (
+		tempUser string
+		users    []string
+	)
+	rows, err := db.DB().Query(`SELECT login FROM public.accounts`)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		_ = rows.Scan(&tempUser)
+		users = append(users, tempUser)
+	}
+	return users, nil
 }
