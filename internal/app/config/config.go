@@ -1,4 +1,4 @@
-package data
+package config
 
 import "fmt"
 
@@ -28,7 +28,8 @@ type Config struct {
 	LoggerPath    string `toml:"logger_path"`    //путь до каталога с логами сервера
 	ViewsPath     string `toml:"views_path"`     //путь до каталога views (содержит все ресурсы для отображения перекрестков)
 	CachePath     string `toml:"cache_path"`     //путь до каталога cachefile
-	ResourcePath  string `toml:"resourcePath"`   //путь до каталога frontend
+	ResourcePath  string `toml:"resource_path"`  //путь до каталога frontend
+	SSLPath       string `toml:"ssl_path"`       //путь до каталога ssl
 	ServerIP      string `toml:"server_ip"`      //ip сервера / порт
 	YaKey         string `toml:"ya_key"`         //ключ авторизации для яндекса
 	TokenPassword string `toml:"token_password"` //ключ для шифрования токенов доступа

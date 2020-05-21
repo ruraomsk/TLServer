@@ -4,10 +4,11 @@
 
 logger_path = "logfiles"
 views_path = "C://Users//Ivan//go//src//github.com//JanFant//TLServer//views"
-resourcePath = "C://Users//Ivan//go//src//github.com//JanFant//TLServer//frontend"
+resource_path = "web"
 cache_path = "C://Users//Ivan//go//src//github.com//JanFant//TLServer//cachefile"
-server_ip = ":8082"
-#server_ip = ":8085"
+ssl_path = "ssl"
+#server_ip = ":8082"
+server_ip = ":8085"
 ya_key = "65162f5f-2d15-41d1-a881-6c1acf34cfa1"
 token_password = "123456789"
 

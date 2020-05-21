@@ -1,8 +1,8 @@
-package data
+package db
 
 import (
 	"fmt"
-	myConfig "github.com/JanFant/newTLServer/internal/app/config"
+	"github.com/JanFant/newTLServer/internal/app/config"
 	"github.com/JanFant/newTLServer/internal/model/logger"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/jmoiron/sqlx"
@@ -38,20 +38,20 @@ var (
 
 	db *sqlx.DB
 	//FirstCreate флаг первого создания базы
-	//FirstCreate bool
+	FirstCreate bool
 )
 
 //ConnectDB подключение к БД
 func ConnectDB() (*sqlx.DB, error) {
 
-	conn, err := sqlx.Open(myConfig.GlobalConfig.DBConfig.Type, myConfig.GlobalConfig.DBConfig.GetDBurl())
+	conn, err := sqlx.Open(config.GlobalConfig.DBConfig.Type, config.GlobalConfig.DBConfig.GetDBurl())
 	if err != nil {
 		return nil, err
 	}
 
 	db = conn
-	db.SetMaxOpenConns(myConfig.GlobalConfig.DBConfig.SetMaxOpenConst)
-	db.SetMaxIdleConns(myConfig.GlobalConfig.DBConfig.SetMaxIdleConst)
+	db.SetMaxOpenConns(config.GlobalConfig.DBConfig.SetMaxOpenConst)
+	db.SetMaxIdleConns(config.GlobalConfig.DBConfig.SetMaxIdleConst)
 
 	_, err = db.Query(`SELECT * FROM public.accounts;`)
 	if err != nil {
@@ -59,6 +59,8 @@ func ConnectDB() (*sqlx.DB, error) {
 		logger.Info.Println("|Message: accounts table not found - created")
 		db.MustExec(accountsTable)
 		db.MustExec(createFuncSQL)
+		FirstCreate = true
+
 	}
 
 	_, err = db.Query(`SELECT * FROM public.chat;`)
