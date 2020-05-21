@@ -4,10 +4,4 @@
 logfiles/
 logfiles/**
 .idea/dataSources.local.xml
-cmd/
-configs/
-internal/app/apiserver/
-internal/app/config/
-internal/app/utils/
-internal/model/
-web/
+
