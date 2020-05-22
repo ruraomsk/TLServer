@@ -1,8 +1,8 @@
-package db
+package data
 
 import (
 	"fmt"
-	"github.com/JanFant/newTLServer/internal/app/config"
+	"github.com/JanFant/newTLServer/internal/model/config"
 	"github.com/JanFant/newTLServer/internal/model/logger"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/jmoiron/sqlx"

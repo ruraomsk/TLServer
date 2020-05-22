@@ -21,20 +21,13 @@ portMessageInfo = ":2003"
 
 #настройки для постгреса
 [database]
-#db_name = "agserv"
-db_name = "postgres"
+db_name = "agserv"
+#db_name = "postgres"
 db_password = "162747"
 db_user = "postgres"
 db_type = "postgres"
-#db_host = "192.168.115.115"
-db_host = "localhost"
+db_host = "192.168.115.115"
+#db_host = "localhost"
 db_port = "5432"
 db_SetMaxOpenConst = 50
 db_SetMaxIdleConst = 10
-cross_table = "public.cross"
-account_table = "public.accounts"
-region_table = "public.region"
-devices_table = "public.devices"
-status_table = "public.status"
-logDevice_table = "public.logdevice"
-chat_table = "public.chat"

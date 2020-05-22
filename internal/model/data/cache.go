@@ -1,11 +1,7 @@
-package cache
+package data
 
 import (
 	"fmt"
-	"github.com/JanFant/newTLServer/internal/app/config"
-	"github.com/JanFant/newTLServer/internal/app/db"
-	"github.com/JanFant/newTLServer/internal/model/account"
-	"github.com/JanFant/newTLServer/internal/model/roles"
 	"sync"
 	"time"
 
@@ -49,19 +45,18 @@ type TLSostInfo struct {
 
 //CacheDataUpdate обновление данных из бд, период обновления 1 час
 func CacheDataUpdate() {
-	roles.RoleInfo.MapRoles = make(map[string][]int)
-	roles.RoleInfo.MapPermisson = make(map[int]roles.Permission)
-	roles.RoleInfo.MapRoutes = make(map[string]roles.RouteInfo)
+	RoleInfo.MapRoles = make(map[string][]int)
+	RoleInfo.MapPermisson = make(map[int]Permission)
+	RoleInfo.MapRoutes = make(map[string]RouteInfo)
 	//BusyArmInfo.mapBusyArm = make(map[BusyArm]EditCrossInfo)
 	for {
 		CacheInfoDataUpdate()
 		//создадим суперпользователя если таблица только была создана
-		if db.FirstCreate {
-			db.FirstCreate = false
+		if FirstCreate {
+			FirstCreate = false
 			// Супер пользователь
-			account.SuperCreate()
+			SuperCreate()
 		}
-
 		time.Sleep(time.Hour)
 	}
 }
@@ -84,7 +79,7 @@ func CacheInfoDataUpdate() {
 func GetRegionInfo() (region map[string]string, area map[string]map[string]string, err error) {
 	region = make(map[string]string)
 	area = make(map[string]map[string]string)
-	rows, err := db.GetDB().Query(`SELECT region, nameregion, area, namearea FROM $1`, config.GlobalConfig.DBConfig.RegionTable)
+	rows, err := GetDB().Query(`SELECT region, nameregion, area, namearea FROM public.region`)
 	if err != nil {
 		return CacheInfo.MapRegion, CacheInfo.MapArea, err
 	}
@@ -122,7 +117,7 @@ func GetRegionInfo() (region map[string]string, area map[string]map[string]strin
 //getTLSost получить данные о состоянии светофоров
 func getTLSost() (TLsost map[int]string, err error) {
 	TLsost = make(map[int]string)
-	statusRow, err := db.GetDB().Query(`SELECT id, description FROM $1`, config.GlobalConfig.DBConfig.StatusTable)
+	statusRow, err := GetDB().Query(`SELECT id, description FROM public.status`)
 	if err != nil {
 		logger.Error.Println("|Message: GetTLSost StatusTable error : ", err.Error())
 		return nil, err
@@ -146,28 +141,28 @@ func getTLSost() (TLsost map[int]string, err error) {
 
 //getRoleAccess получить информацию о ролях из файла RoleAccess.json
 func getRoleAccess() (err error) {
-	var temp = roles.RoleAccess{}
+	var temp = RoleAccess{}
 	err = temp.ReadRoleAccessFile()
 	if err != nil {
 		return err
 	}
-	roles.RoleInfo.Mux.Lock()
+	RoleInfo.Mux.Lock()
 	for _, role := range temp.Roles {
-		if _, ok := roles.RoleInfo.MapRoles[role.Name]; !ok {
-			roles.RoleInfo.MapRoles[role.Name] = role.Perm
+		if _, ok := RoleInfo.MapRoles[role.Name]; !ok {
+			RoleInfo.MapRoles[role.Name] = role.Perm
 		}
 	}
 	for _, perm := range temp.Permission {
-		if _, ok := roles.RoleInfo.MapPermisson[perm.ID]; !ok {
-			roles.RoleInfo.MapPermisson[perm.ID] = perm
+		if _, ok := RoleInfo.MapPermisson[perm.ID]; !ok {
+			RoleInfo.MapPermisson[perm.ID] = perm
 		}
 	}
 	for _, route := range temp.Routes {
-		if _, ok := roles.RoleInfo.MapRoutes[route.Path]; !ok {
-			roles.RoleInfo.MapRoutes[route.Path] = route
+		if _, ok := RoleInfo.MapRoutes[route.Path]; !ok {
+			RoleInfo.MapRoutes[route.Path] = route
 		}
 	}
-	roles.RoleInfo.Mux.Unlock()
+	RoleInfo.Mux.Unlock()
 	return err
 }
 

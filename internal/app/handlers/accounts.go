@@ -1,6 +1,7 @@
-package account
+package handlers
 
 import (
+	"github.com/JanFant/newTLServer/internal/model/data"
 	u "github.com/JanFant/newTLServer/internal/utils"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -8,29 +9,29 @@ import (
 
 //LoginAcc обработчик входа в систему
 var LoginAcc = func(c *gin.Context) {
-	account := &Account{}
+	account := &data.Account{}
 	if err := c.ShouldBindJSON(&account); err != nil {
 		resp := u.Message(http.StatusBadRequest, "Invalid request")
 		resp.Obj["logLogin"] = account.Login
 		u.SendRespond(c, resp)
 		return
 	}
-	resp := login(account.Login, account.Password, c.Request.RemoteAddr)
+	resp := data.Login(account.Login, account.Password, c.Request.RemoteAddr)
 	u.SendRespond(c, resp)
 }
 
 ////LoginAcc обработчик входа в систему
 //var LoginAcc = func(w http.ResponseWriter, r *http.Request) {
-//	account := &data.Account{}
-//	err := json.NewDecoder(r.Body).Decode(account)
+//	data := &data.Account{}
+//	err := json.NewDecoder(r.Body).Decode(data)
 //	if err != nil {
 //		w.WriteHeader(http.StatusBadRequest)
 //		resp := u.Message(false, "Invalid request")
-//		resp["logLogin"] = account.login
+//		resp["logLogin"] = data.login
 //		u.Respond(w, r, resp)
 //		return
 //	}
-//	resp := data.login(account.login, account.Password, r.RemoteAddr)
+//	resp := data.login(data.login, data.Password, r.RemoteAddr)
 //	if resp["status"] == false {
 //		w.WriteHeader(http.StatusUnauthorized)
 //	}

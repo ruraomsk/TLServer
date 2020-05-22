@@ -2,7 +2,7 @@ package apiserver
 
 import (
 	"fmt"
-	"github.com/JanFant/newTLServer/internal/model/account"
+	"github.com/JanFant/newTLServer/internal/app/handlers"
 	"github.com/JanFant/newTLServer/internal/model/logger"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -20,11 +20,11 @@ func StartServer(conf *ServerConf) {
 	router := gin.Default()
 	router.Use(cors.Default())
 
-	router.LoadHTMLGlob(conf.ResPath + "/html/**")
+	router.LoadHTMLGlob(conf.ResourcePath + "/html/**")
 
 	//скрипт и иконка которые должны быть доступны всем
-	router.StaticFile("screen/screen.js", conf.ResPath+"/js/screen.js")
-	router.StaticFile("icon/trafficlight.svg", conf.ResPath+"/resources/trafficlight.svg")
+	router.StaticFile("screen/screen.js", conf.ResourcePath+"/js/screen.js")
+	router.StaticFile("icon/trafficlight.svg", conf.ResourcePath+"/resources/trafficlight.svg")
 
 	router.NoRoute(func(c *gin.Context) {
 		c.HTML(http.StatusNotFound, "notFound.html", gin.H{"message": "page not found"})
@@ -33,7 +33,7 @@ func StartServer(conf *ServerConf) {
 	router.GET("/", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "screen.html", gin.H{"message": "login screen"})
 	})
-	router.POST("/login", account.LoginAcc)
+	router.POST("/login", handlers.LoginAcc)
 	//router := mux.NewRouter()
 	//router.HandleFunc("/login", whandlers.LoginAcc).Methods("POST") //запрос на вход в систему
 	//
@@ -151,11 +151,11 @@ func StartServer(conf *ServerConf) {
 	//}
 
 	fileServer := router.Group("/fs")
-	fileServer.StaticFS("/resources", http.Dir(conf.ResPath+"/resources"))
-	fileServer.StaticFS("/js", http.Dir(conf.ResPath+"/js"))
-	fileServer.StaticFS("/css", http.Dir(conf.ResPath+"/css"))
+	fileServer.StaticFS("/resources", http.Dir(conf.ResourcePath+"/resources"))
+	fileServer.StaticFS("/js", http.Dir(conf.ResourcePath+"/js"))
+	fileServer.StaticFS("/css", http.Dir(conf.ResourcePath+"/css"))
 
-	if err := router.RunTLS(conf.Port, conf.SSLPath+"/domain.crt", conf.SSLPath+"/domain.key"); err != nil {
+	if err := router.RunTLS(conf.ServerIP, conf.SSLPath+"/domain.crt", conf.SSLPath+"/domain.key"); err != nil {
 		logger.Error.Println("|Message: Error start server ", err.Error())
 		fmt.Println("Error start server ", err.Error())
 	}

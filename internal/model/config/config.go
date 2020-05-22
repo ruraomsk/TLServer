@@ -14,23 +14,11 @@ type DBConfig struct {
 	Port            string `toml:"db_port"`            //порт для обращения к бд
 	SetMaxOpenConst int    `toml:"db_SetMaxOpenConst"` //максимальное количество пустых соединений с бд
 	SetMaxIdleConst int    `toml:"db_SetMaxIdleConst"` //максимальное количество соединенияй с бд
-	CrossTable      string `toml:"cross_table"`        //название таблицы cross
-	RegionTable     string `toml:"region_table"`       //название таблицы region
-	AccountTable    string `toml:"account_table"`      //название таблицы account
-	DevicesTable    string `toml:"devices_table"`      //название таблицы devices
-	StatusTable     string `toml:"status_table"`       //название таблицы status
-	LogDeviceTable  string `toml:"logDevice_table"`    //название таблицы logDevice
-	ChatTable       string `toml:"chat_table"`         //название таблицы chat
 }
 
 //Config структура с объявлением всех переменных config.toml файла
 type Config struct {
-	LoggerPath    string `toml:"logger_path"`    //путь до каталога с логами сервера
-	ViewsPath     string `toml:"views_path"`     //путь до каталога views (содержит все ресурсы для отображения перекрестков)
 	CachePath     string `toml:"cache_path"`     //путь до каталога cachefile
-	ResourcePath  string `toml:"resource_path"`  //путь до каталога frontend
-	SSLPath       string `toml:"ssl_path"`       //путь до каталога ssl
-	ServerIP      string `toml:"server_ip"`      //ip сервера / порт
 	YaKey         string `toml:"ya_key"`         //ключ авторизации для яндекса
 	TokenPassword string `toml:"token_password"` //ключ для шифрования токенов доступа
 	//TCPConfig     tcpConnect.TCPConfig `toml:"tcpServer"`      //информация о tcp соединении с сервером устройств

@@ -1,9 +1,8 @@
-package roles
+package data
 
 import (
 	"encoding/json"
-	"github.com/JanFant/newTLServer/internal/app/config"
-	"github.com/JanFant/newTLServer/internal/app/db"
+	"github.com/JanFant/newTLServer/internal/model/config"
 	"io/ioutil"
 	"sync"
 
@@ -67,7 +66,7 @@ type RouteInfo struct {
 //func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) map[string]interface{} {
 //	var (
 //		sqlStr   string
-//		shortAcc []account.ShortAccount
+//		shortAcc []data.ShortAccount
 //	)
 //	err := privilege.ReadFromBD(mapContx["login"])
 //	if err != nil {
@@ -221,14 +220,14 @@ func (roleAccess *RoleAccess) ReadRoleAccessFile() (err error) {
 //ToSqlStrUpdate запись привилегий в базу
 func (privilege *Privilege) WriteRoleInBD(login string) (err error) {
 	privilegeStr, _ := json.Marshal(privilege)
-	_, err = db.GetDB().Exec(`UPDATE $1 set privilege = $2 where login = $3`, config.GlobalConfig.DBConfig.AccountTable, string(privilegeStr), login)
+	_, err = GetDB().Exec(`UPDATE public.accounts set privilege = $1 where login = $2`, string(privilegeStr), login)
 	return
 }
 
 //ReadFromBD прочитать данные из бд и разобрать
 func (privilege *Privilege) ReadFromBD(login string) error {
 	var privilegeStr string
-	err := db.GetDB().QueryRow(`SELECT privilege FROM $1 WHERE login = $2`, config.GlobalConfig.DBConfig.AccountTable, login).Scan(&privilegeStr)
+	err := GetDB().QueryRow(`SELECT privilege FROM public.accounts WHERE login = $1`, login).Scan(&privilegeStr)
 	if err != nil {
 		return err
 	}

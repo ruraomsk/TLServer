@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"github.com/BurntSushi/toml"
 	"github.com/JanFant/newTLServer/internal/app/apiserver"
-	"github.com/JanFant/newTLServer/internal/app/config"
-	"github.com/JanFant/newTLServer/internal/app/db"
-	"github.com/JanFant/newTLServer/internal/model/cache"
+	"github.com/JanFant/newTLServer/internal/model/config"
+	"github.com/JanFant/newTLServer/internal/model/data"
 	"github.com/JanFant/newTLServer/internal/model/logger"
 	"os"
 )
@@ -21,16 +20,20 @@ func init() {
 
 	//Начало работы, читаем настроечный фаил
 	config.GlobalConfig = config.NewConfig()
+	apiserver.ServerConfig = apiserver.NewConfig()
+	if _, err := toml.DecodeFile(configPath, &apiserver.ServerConfig); err != nil {
+		fmt.Println("Can't load config file - ", err.Error())
+		os.Exit(1)
+	}
 	if _, err := toml.DecodeFile(configPath, &config.GlobalConfig); err != nil {
 		fmt.Println("Can't load config file - ", err.Error())
 		os.Exit(1)
 	}
-
 }
 
 func main() {
 	//Загружаем модуль логирования
-	if err = logger.Init(config.GlobalConfig.LoggerPath); err != nil {
+	if err = logger.Init(apiserver.ServerConfig.LoggerPath); err != nil {
 		fmt.Println("Error opening logger subsystem ", err.Error())
 		return
 	}
@@ -40,7 +43,7 @@ func main() {
 	//
 
 	////Подключение к базе данных
-	dbConn, err := db.ConnectDB()
+	dbConn, err := data.ConnectDB()
 	if err != nil {
 		logger.Error.Println("|Message: Error open DB", err.Error())
 		fmt.Println("Error open DB", err.Error())
@@ -52,13 +55,12 @@ func main() {
 	fmt.Println("Start work...")
 
 	//раз в час обновляем данные регионов, и состояний
-	go cache.CacheDataUpdate()
+	go data.CacheDataUpdate()
 	//tcpConnect.TCPClientStart(data.GlobalConfig.TCPConfig)
 	////----------------------------------------------------------------------
 	//
 	//запуск сервера
-	var serverConf = apiserver.NewConfig()
-	apiserver.StartServer(serverConf)
+	apiserver.StartServer(apiserver.ServerConfig)
 
 	logger.Info.Println("|Message: Exit working...")
 	fmt.Println("Exit working...")

@@ -1,11 +1,8 @@
-package account
+package data
 
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/JanFant/newTLServer/internal/app/db"
-	"github.com/JanFant/newTLServer/internal/model/cache"
-	"github.com/JanFant/newTLServer/internal/model/roles"
 	"net/http"
 	"regexp"
 	"strings"
@@ -18,13 +15,13 @@ import (
 
 //ShortAccount удобная структура аккаунта для обмена с пользователем
 type ShortAccount struct {
-	Login     string           `json:"login"`    //логин пользователя
-	WorkTime  int              `json:"workTime"` //время сеанса пользователя
-	Password  string           `json:"password"` //пароль пользователя
-	Role      roles.Role       `json:"role"`     //роль пользователя
-	Privilege string           `json:"-"`        //привелегии (не уходят на верх)
-	Region    cache.RegionInfo `json:"region"`   //регион работы пользователя
-	Area      []cache.AreaInfo `json:"area"`     //районы работы пользователя
+	Login     string     `json:"login"`    //логин пользователя
+	WorkTime  int        `json:"workTime"` //время сеанса пользователя
+	Password  string     `json:"password"` //пароль пользователя
+	Role      Role       `json:"role"`     //роль пользователя
+	Privilege string     `json:"-"`        //привелегии (не уходят на верх)
+	Region    RegionInfo `json:"region"`   //регион работы пользователя
+	Area      []AreaInfo `json:"area"`     //районы работы пользователя
 }
 
 //PassChange структура для изменения пароля
@@ -34,9 +31,9 @@ type PassChange struct {
 }
 
 //ConvertShortToAcc преобразование информации об аккаунте
-func (shortAcc *ShortAccount) ConvertShortToAcc() (account Account, privilege roles.Privilege) {
+func (shortAcc *ShortAccount) ConvertShortToAcc() (account Account, privilege Privilege) {
 	account = Account{}
-	privilege = roles.Privilege{}
+	privilege = Privilege{}
 	account.Password = shortAcc.Password
 	account.Login = shortAcc.Login
 	account.WorkTime = time.Duration(shortAcc.WorkTime)
@@ -62,11 +59,11 @@ func (shortAcc *ShortAccount) DecodeRequest(w http.ResponseWriter, r *http.Reque
 //ValidCreate проверка данных полученных от пользователя на создание нового пользователя
 func (shortAcc *ShortAccount) ValidCreate(role string, region string) (err error) {
 	//проверка полученной роли
-	roles.RoleInfo.Mux.Lock()
-	if _, ok := roles.RoleInfo.MapRoles[shortAcc.Role.Name]; !ok || shortAcc.Role.Name == "Super" {
+	RoleInfo.Mux.Lock()
+	if _, ok := RoleInfo.MapRoles[shortAcc.Role.Name]; !ok || shortAcc.Role.Name == "Super" {
 		return errors.New("Role not found")
 	}
-	roles.RoleInfo.Mux.Unlock()
+	RoleInfo.Mux.Unlock()
 	//проверка кто создает
 	if role == "RegAdmin" {
 		if shortAcc.Role.Name == "Admin" || shortAcc.Role.Name == role {
@@ -84,17 +81,17 @@ func (shortAcc *ShortAccount) ValidCreate(role string, region string) (err error
 		}
 	}
 	//регион должен существовать
-	cache.CacheInfo.Mux.Lock()
-	if _, ok := cache.CacheInfo.MapRegion[shortAcc.Region.Num]; !ok {
+	CacheInfo.Mux.Lock()
+	if _, ok := CacheInfo.MapRegion[shortAcc.Region.Num]; !ok {
 		return errors.New("Region not found")
 	}
 	//все области для этого региона должны существовать
 	for _, area := range shortAcc.Area {
-		if _, ok := cache.CacheInfo.MapArea[cache.CacheInfo.MapRegion[shortAcc.Region.Num]][area.Num]; !ok {
+		if _, ok := CacheInfo.MapArea[CacheInfo.MapRegion[shortAcc.Region.Num]][area.Num]; !ok {
 			return errors.New("Area not found")
 		}
 	}
-	cache.CacheInfo.Mux.Unlock()
+	CacheInfo.Mux.Unlock()
 	//проверка времени работы
 	if shortAcc.WorkTime < 2 {
 		return errors.New("Working time should be indicated more than 2 hours")
@@ -104,10 +101,10 @@ func (shortAcc *ShortAccount) ValidCreate(role string, region string) (err error
 }
 
 //ValidDelete проверка данных полученных от пользователя на удаление аккаунта
-func (shortAcc *ShortAccount) ValidDelete(role string, region, table string) (account *Account, err error) {
+func (shortAcc *ShortAccount) ValidDelete(role string, region string) (account *Account, err error) {
 	account = &Account{}
 	//Забираю из базы запись с подходящей почтой
-	rows, err := db.GetDB().Query(`SELECT id, login, password, token, work_time FROM $1 WHERE login=$2`, table, login)
+	rows, err := GetDB().Query(`SELECT id, login, password, token, work_time FROM public.accounts WHERE login=$1`, shortAcc.Login)
 	if rows == nil {
 		return nil, errors.New(fmt.Sprintf("Login: %s, not found", shortAcc.Login))
 	}
@@ -119,7 +116,7 @@ func (shortAcc *ShortAccount) ValidDelete(role string, region, table string) (ac
 	}
 
 	//Авторизировались добираем полномочия
-	privilege := roles.Privilege{}
+	privilege := Privilege{}
 	err = privilege.ReadFromBD(account.Login)
 	if err != nil {
 		//logger.Info.Println("Account: Bad privilege")
@@ -139,10 +136,10 @@ func (shortAcc *ShortAccount) ValidDelete(role string, region, table string) (ac
 }
 
 //ValidChangePW проверка данных полученных от админа для смены паролей пользователя
-func (shortAcc *ShortAccount) ValidChangePW(role string, region, table string) (account *Account, err error) {
+func (shortAcc *ShortAccount) ValidChangePW(role string, region string) (account *Account, err error) {
 	account = &Account{}
 	//Забираю из базы запись с подходящей почтой
-	rows, err := db.GetDB().Query(`SELECT id, login, password, token, work_time FROM $1 WHERE login=$2`, table, login)
+	rows, err := GetDB().Query(`SELECT id, login, password, token, work_time FROM public.accounts WHERE login=$2`, shortAcc.Login)
 	if rows == nil {
 		return nil, errors.New(fmt.Sprintf("Login: %s, not found", shortAcc.Login))
 	}
@@ -154,7 +151,7 @@ func (shortAcc *ShortAccount) ValidChangePW(role string, region, table string) (
 	}
 	account.Password = shortAcc.Password
 	//Авторизировались добираем полномочия
-	privilege := roles.Privilege{}
+	privilege := Privilege{}
 	err = privilege.ReadFromBD(account.Login)
 	if err != nil {
 		//logger.Info.Println("Account: Bad privilege")
@@ -174,10 +171,10 @@ func (shortAcc *ShortAccount) ValidChangePW(role string, region, table string) (
 }
 
 //ValidOldNewPW проверка данных полученных от пользователя для изменения своего пароля
-func (passChange *PassChange) ValidOldNewPW(login, table string) (account *Account, err error) {
+func (passChange *PassChange) ValidOldNewPW(login string) (account *Account, err error) {
 	account = &Account{}
 	//Забираю из базы запись с подходящей почтой
-	rows, err := db.GetDB().Query(`SELECT id, login, password, token, work_time FROM $1 WHERE login=$2`, table, login)
+	rows, err := GetDB().Query(`SELECT id, login, password, token, work_time FROM public.accounts WHERE login=$2`, login)
 	if rows == nil {
 		return nil, errors.New(fmt.Sprintf("Login: %s, not found", login))
 	}
