@@ -2,8 +2,12 @@ package data
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/JanFant/newTLServer/internal/model/config"
+	u "github.com/JanFant/newTLServer/internal/utils"
 	"io/ioutil"
+	"net/http"
+	"strings"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -62,141 +66,140 @@ type RouteInfo struct {
 	Description string `json:"description"` //описание маршрута
 }
 
-////DisplayInfoForAdmin отображение информации о пользователях для администраторов
-//func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) map[string]interface{} {
-//	var (
-//		sqlStr   string
-//		shortAcc []data.ShortAccount
-//	)
-//	err := privilege.ReadFromBD(mapContx["login"])
-//	if err != nil {
-//		//logger.Info.Println("DisplayInfoForAdmin: Не смог считать привилегии пользователя", err)
-//		return u.Message(false, "Display info: Privilege error")
-//	}
-//	sqlStr = fmt.Sprintf("select login, work_time, privilege from public.accounts where login != '%s'", mapContx["login"])
-//	if !strings.EqualFold(privilege.Region, "*") {
-//		sqlStr += fmt.Sprintf(`and privilege::jsonb @> '{"region":"%s"}'::jsonb`, privilege.Region)
-//	}
-//	rowsTL, _ := GetDB().Raw(sqlStr).Rows()
-//	for rowsTL.Next() {
-//		var tempSA = ShortAccount{}
-//		err := rowsTL.Scan(&tempSA.Login, &tempSA.WorkTime, &tempSA.Privilege)
-//		if err != nil {
-//			//logger.Info.Println("DisplayInfoForAdmin: Что-то не так с запросом", err)
-//			return u.Message(false, "Display info: Bad request")
-//		}
-//		var tempPrivilege = Privilege{}
-//		tempPrivilege.PrivilegeStr = tempSA.Privilege
-//		err = tempPrivilege.ConvertToJson()
-//		if err != nil {
-//			//logger.Info.Println("DisplayInfoForAdmin: Что-то не так со строкой привилегий", err)
-//			return u.Message(false, "Display info: Privilege json error")
-//		}
-//		tempSA.Role.Name = tempPrivilege.Role.Name
-//
-//		//выбираю привелегии которые не ключены в шаблон роли
-//
-//		RoleInfo.Mux.Lock()
-//		for _, val1 := range tempPrivilege.Role.Perm {
-//			flag1, flag2 := false, false
-//			for _, val2 := range RoleInfo.MapRoles[tempSA.Role.Name] {
-//				if val2 == val1 {
-//					flag1 = true
-//					break
-//				}
-//			}
-//			for _, val3 := range tempSA.Role.Perm {
-//				if val3 == val1 {
-//					flag2 = true
-//					break
-//				}
-//			}
-//			if !flag1 && !flag2 {
-//				tempSA.Role.Perm = append(tempSA.Role.Perm, val1)
-//			}
-//		}
-//		RoleInfo.Mux.Unlock()
-//
-//		if tempSA.Role.Perm == nil {
-//			tempSA.Role.Perm = make([]int, 0)
-//		}
-//		tempSA.Region.SetRegionInfo(tempPrivilege.Region)
-//		for _, num := range tempPrivilege.Area {
-//			tempArea := AreaInfo{}
-//			tempArea.SetAreaInfo(tempSA.Region.Num, num)
-//			tempSA.Area = append(tempSA.Area, tempArea)
-//		}
-//		if tempSA.Role.Name != "Super" {
-//			shortAcc = append(shortAcc, tempSA)
-//		}
-//	}
-//
-//	resp := u.Message(true, "Display information for Admins")
-//
-//	//собираем в кучу роли
-//	RoleInfo.Mux.Lock()
-//	var roles []string
-//	if mapContx["role"] == "Super" {
-//		roles = append(roles, "Admin")
-//	} else {
-//		for roleName, _ := range RoleInfo.MapRoles {
-//			if roleName != "Super" {
-//				if (mapContx["role"] == "Admin") && (roleName == "Admin") {
-//					continue
-//				}
-//				if (mapContx["role"] == "RegAdmin") && ((roleName == "Admin") || (roleName == "RegAdmin")) {
-//					continue
-//				}
-//				roles = append(roles, roleName)
-//			}
-//		}
-//	}
-//	resp["roles"] = roles
-//
-//	//собираю в кучу разрешения без указания команд
-//	chosenPermisson := make(map[int]shortPermission)
-//	for key, value := range RoleInfo.MapPermisson {
-//		if value.Visible {
-//			var shValue shortPermission
-//			shValue.transform(value)
-//			chosenPermisson[key] = shValue
-//		}
-//	}
-//	resp["permInfo"] = chosenPermisson
-//	RoleInfo.Mux.Unlock()
-//
-//	CacheInfo.Mux.Lock()
-//	//собираю в кучу регионы для отображения
-//	chosenRegion := make(map[string]string)
-//	if mapContx["role"] != "Super" {
-//		if mapContx["role"] != "RegAdmin" {
-//			for first, second := range CacheInfo.mapRegion {
-//				chosenRegion[first] = second
-//			}
-//		} else {
-//			chosenRegion[mapContx["region"]] = CacheInfo.mapRegion[mapContx["region"]]
-//		}
-//		delete(chosenRegion, "*")
-//	} else {
-//		chosenRegion["*"] = CacheInfo.mapRegion["*"]
-//	}
-//	resp["regionInfo"] = chosenRegion
-//
-//	//собираю в кучу районы для отображения
-//	chosenArea := make(map[string]map[string]string)
-//	for key, value := range CacheInfo.mapArea {
-//		chosenArea[key] = make(map[string]string)
-//		chosenArea[key] = value
-//	}
-//	if mapContx["role"] != "Super" {
-//		delete(chosenArea, "Все регионы")
-//	}
-//	CacheInfo.Mux.Unlock()
-//	resp["areaInfo"] = chosenArea
-//
-//	resp["accInfo"] = shortAcc
-//	return resp
-//}
+//DisplayInfoForAdmin отображение информации о пользователях для администраторов
+func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) u.Response {
+	var (
+		sqlStr   string
+		shortAcc []ShortAccount
+	)
+	err := privilege.ReadFromBD(mapContx["login"])
+	if err != nil {
+		return u.Message(http.StatusInternalServerError, "Display info: Privilege error")
+	}
+	sqlStr = fmt.Sprintf("select login, work_time, privilege from public.accounts where login != '%s'", mapContx["login"])
+	if !strings.EqualFold(privilege.Region, "*") {
+		sqlStr += fmt.Sprintf(`and privilege::jsonb @> '{"region":"%s"}'::jsonb`, privilege.Region)
+	}
+	rowsTL, _ := GetDB().Query(sqlStr)
+	for rowsTL.Next() {
+		var tempSA = ShortAccount{}
+		err := rowsTL.Scan(&tempSA.Login, &tempSA.WorkTime, &tempSA.Privilege)
+		if err != nil {
+			//logger.Info.Println("DisplayInfoForAdmin: Что-то не так с запросом", err)
+			return u.Message(http.StatusBadRequest, "Display info: Bad request")
+		}
+		var tempPrivilege = Privilege{}
+		tempPrivilege.PrivilegeStr = tempSA.Privilege
+		err = tempPrivilege.ConvertToJson()
+		if err != nil {
+			//logger.Info.Println("DisplayInfoForAdmin: Что-то не так со строкой привилегий", err)
+			return u.Message(http.StatusInternalServerError, "Display info: Privilege json error")
+		}
+		tempSA.Role.Name = tempPrivilege.Role.Name
+
+		//выбираю привелегии которые не ключены в шаблон роли
+
+		RoleInfo.Mux.Lock()
+		for _, val1 := range tempPrivilege.Role.Perm {
+			flag1, flag2 := false, false
+			for _, val2 := range RoleInfo.MapRoles[tempSA.Role.Name] {
+				if val2 == val1 {
+					flag1 = true
+					break
+				}
+			}
+			for _, val3 := range tempSA.Role.Perm {
+				if val3 == val1 {
+					flag2 = true
+					break
+				}
+			}
+			if !flag1 && !flag2 {
+				tempSA.Role.Perm = append(tempSA.Role.Perm, val1)
+			}
+		}
+		RoleInfo.Mux.Unlock()
+
+		if tempSA.Role.Perm == nil {
+			tempSA.Role.Perm = make([]int, 0)
+		}
+		tempSA.Region.SetRegionInfo(tempPrivilege.Region)
+		for _, num := range tempPrivilege.Area {
+			tempArea := AreaInfo{}
+			tempArea.SetAreaInfo(tempSA.Region.Num, num)
+			tempSA.Area = append(tempSA.Area, tempArea)
+		}
+		if tempSA.Role.Name != "Super" {
+			shortAcc = append(shortAcc, tempSA)
+		}
+	}
+
+	resp := u.Message(http.StatusOK, "display information for Admins")
+
+	//собираем в кучу роли
+	RoleInfo.Mux.Lock()
+	var roles []string
+	if mapContx["role"] == "Super" {
+		roles = append(roles, "Admin")
+	} else {
+		for roleName, _ := range RoleInfo.MapRoles {
+			if roleName != "Super" {
+				if (mapContx["role"] == "Admin") && (roleName == "Admin") {
+					continue
+				}
+				if (mapContx["role"] == "RegAdmin") && ((roleName == "Admin") || (roleName == "RegAdmin")) {
+					continue
+				}
+				roles = append(roles, roleName)
+			}
+		}
+	}
+	resp.Obj["roles"] = roles
+
+	//собираю в кучу разрешения без указания команд
+	chosenPermisson := make(map[int]shortPermission)
+	for key, value := range RoleInfo.MapPermisson {
+		if value.Visible {
+			var shValue shortPermission
+			shValue.transform(value)
+			chosenPermisson[key] = shValue
+		}
+	}
+	resp.Obj["permInfo"] = chosenPermisson
+	RoleInfo.Mux.Unlock()
+
+	CacheInfo.Mux.Lock()
+	//собираю в кучу регионы для отображения
+	chosenRegion := make(map[string]string)
+	if mapContx["role"] != "Super" {
+		if mapContx["role"] != "RegAdmin" {
+			for first, second := range CacheInfo.MapRegion {
+				chosenRegion[first] = second
+			}
+		} else {
+			chosenRegion[mapContx["region"]] = CacheInfo.MapRegion[mapContx["region"]]
+		}
+		delete(chosenRegion, "*")
+	} else {
+		chosenRegion["*"] = CacheInfo.MapRegion["*"]
+	}
+	resp.Obj["regionInfo"] = chosenRegion
+
+	//собираю в кучу районы для отображения
+	chosenArea := make(map[string]map[string]string)
+	for key, value := range CacheInfo.MapArea {
+		chosenArea[key] = make(map[string]string)
+		chosenArea[key] = value
+	}
+	if mapContx["role"] != "Super" {
+		delete(chosenArea, "Все регионы")
+	}
+	CacheInfo.Mux.Unlock()
+	resp.Obj["areaInfo"] = chosenArea
+
+	resp.Obj["accInfo"] = shortAcc
+	return resp
+}
 
 //transform преобразование из расшириных разрешений к коротким
 func (shPerm *shortPermission) transform(perm Permission) {

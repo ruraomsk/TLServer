@@ -1,9 +1,11 @@
 package data
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/JanFant/newTLServer/internal/model/config"
+	"github.com/JanFant/newTLServer/internal/model/locations"
 	u "github.com/JanFant/newTLServer/internal/utils"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-ozzo/ozzo-validation"
@@ -28,13 +30,13 @@ type Token struct {
 
 //Account структура аккаунта пользователя
 type Account struct {
-	ID       int    `json:"id",sql:"id"`       //уникальный номер пользователя
-	Login    string `json:"login",sql:"login"` //Имя пользователя
-	Password string `json:"password"`          //Пароль
-	//BoxPoint roles.BoxPoint `json:"boxPoint",sql:"-"`        //Точки области отображения
-	WorkTime time.Duration `json:"workTime",sql:"workTime"` //Время работы пользователя в часах
-	YaMapKey string        `json:"ya_key",sql:"-"`          //Ключ доступа к яндекс карте
-	Token    string        `json:"token",sql:"-"`           //Токен пользователя
+	ID       int                `json:"id",sql:"id"`             //уникальный номер пользователя
+	Login    string             `json:"login",sql:"login"`       //Имя пользователя
+	Password string             `json:"password"`                //Пароль
+	BoxPoint locations.BoxPoint `json:"boxPoint",sql:"-"`        //Точки области отображения
+	WorkTime time.Duration      `json:"workTime",sql:"workTime"` //Время работы пользователя в часах
+	YaMapKey string             `json:"ya_key",sql:"-"`          //Ключ доступа к яндекс карте
+	Token    string             `json:"token",sql:"-"`           //Токен пользователя
 }
 
 //login обработчик авторизации пользователя в системе
@@ -117,7 +119,7 @@ func (data *Account) Validate1() error {
 		return errors.New("connection error, please try again")
 	}
 	if temp.Login != "" {
-		return errors.New("login already in use by another user.")
+		return errors.New("login already in use by another user")
 	}
 	return nil
 }
@@ -176,121 +178,121 @@ func (data *Account) Create(privilege Privilege) u.Response {
 	return resp
 }
 
-//
-////Update обновление данных аккаунта
-//func (data *Account) Update(privilege roles.Privilege) map[string]interface{} {
-//	roles.RoleInfo.mux.Lock()
-//	privilege.Role.Perm = append(privilege.Role.Perm, roles.RoleInfo.MapRoles[privilege.Role.Name]...)
-//	roles.RoleInfo.mux.Unlock()
-//	privStr, _ := json.Marshal(privilege)
-//	updateStr := fmt.Sprintf("update public.accounts set privilege = '%s',work_time = %d where login = '%s'", string(privStr), data.WorkTime, data.Login)
-//	err := roles.GetDB().Exec(updateStr).Error
-//	if err != nil {
-//		resp := u.Message(false, fmt.Sprintf("Account update error: %s", err.Error()))
-//		return resp
-//	}
-//	resp := u.Message(true, "Account has updated")
-//	return resp
-//}
-//
-////Delete удаление аккаунта из БД
-//func (data *Account) Delete() map[string]interface{} {
-//	sqlStr := fmt.Sprintf("DELETE FROM public.accounts WHERE login = '%s';", data.Login)
-//	err := roles.GetDB().Exec(sqlStr).Error
-//	if err != nil {
-//		resp := u.Message(true, "data deletion error "+err.Error())
-//		return resp
-//	}
-//	resp := u.Message(true, "Account deleted")
-//	return resp
-//}
-//
-////ChangePW изменение пароля пользователя
-//func (data *Account) ChangePW() map[string]interface{} {
-//	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(data.Password), bcrypt.DefaultCost)
-//	data.Password = string(hashedPassword)
-//	sqlStr := fmt.Sprintf("update public.accounts set password = '%s' where login = '%s';UPDATE public.accounts SET token='' WHERE login='%s'", data.Password, data.Login, data.Login)
-//	err := roles.GetDB().Exec(sqlStr).Error
-//	if err != nil {
-//		resp := u.Message(true, "password change error "+err.Error())
-//		return resp
-//	}
-//	resp := u.Message(true, "Password changed")
-//	return resp
-//}
-//
-////ParserBoxPointsUser заполняет BoxPoint
-//func (data *Account) ParserBoxPointsUser() (err error) {
-//	var (
-//		boxpoint  = roles.BoxPoint{}
-//		privilege = roles.Privilege{}
-//	)
-//	err = privilege.ReadFromBD(data.Login)
-//	if err != nil {
-//		return errors.New(fmt.Sprintf("ParserPoints. Privilege error: %s", err.Error()))
-//	}
-//	var sqlString = `SELECT Min(dgis[0]) as "Y0", Min(convTo360(dgis[1])) as "X0", Max(dgis[0]) as "Y1", Max(convTo360(dgis[1])) as "X1"  FROM public."cross"`
-//	if !strings.EqualFold(privilege.Region, "*") {
-//		sqlString = sqlString + fmt.Sprintf(" where region = %s;", privilege.Region)
-//	}
-//	row := roles.GetDB().Raw(sqlString).Row()
-//	err = row.Scan(&boxpoint.Point0.Y, &boxpoint.Point0.X, &boxpoint.Point1.Y, &boxpoint.Point1.X)
-//	if err != nil {
-//		return errors.New(fmt.Sprintf("ParserPoints. Request error: %s", err.Error()))
-//	}
-//	if boxpoint.Point0.X > 180 {
-//		boxpoint.Point0.X -= 360
-//	}
-//	if boxpoint.Point1.X > 180 {
-//		boxpoint.Point1.X -= 360
-//	}
-//
-//	data.BoxPoint = boxpoint
-//	return nil
-//}
-//
-////GetInfoForUser собор информацию для пользователя, который авторизировался
-//func (data *Account) GetInfoForUser() map[string]interface{} {
-//	err := roles.GetDB().Table("accounts").Where("login = ?", data.Login).First(data).Error
-//	if err != nil {
-//		if err == gorm.ErrRecordNotFound {
-//			//logger.Info.Println("Account: Invalid token, log in again, ", data.Login)
-//			return u.Message(false, "Invalid token, log in again")
-//		}
-//		return u.Message(false, "Connection to DB error. Please log in again")
-//	}
-//	err = data.ParserBoxPointsUser()
-//	if err != nil {
-//		return u.Message(false, err.Error())
-//	}
-//	tflight := roles.GetLightsFromBD(data.BoxPoint)
-//	resp := u.Message(true, "Loading content for the main page")
-//	resp["ya_map"] = data.YaMapKey
-//	resp["boxPoint"] = data.BoxPoint
-//	resp["tflight"] = tflight
-//
-//	//собираю в кучу регионы для отображения
-//	chosenRegion := make(map[string]string)
-//	roles.CacheInfo.mux.Lock()
-//	for first, second := range roles.CacheInfo.mapRegion {
-//		chosenRegion[first] = second
-//	}
-//	delete(chosenRegion, "*")
-//	resp["regionInfo"] = chosenRegion
-//
-//	//собираю в кучу районы для отображения
-//	chosenArea := make(map[string]map[string]string)
-//	for first, second := range roles.CacheInfo.mapArea {
-//		chosenArea[first] = make(map[string]string)
-//		chosenArea[first] = second
-//	}
-//	delete(chosenArea, "Все регионы")
-//	roles.CacheInfo.mux.Unlock()
-//	resp["areaInfo"] = chosenArea
-//
-//	return resp
-//}
-//
+//Update обновление данных аккаунта
+func (data *Account) Update(privilege Privilege) u.Response {
+	RoleInfo.Mux.Lock()
+	privilege.Role.Perm = append(privilege.Role.Perm, RoleInfo.MapRoles[privilege.Role.Name]...)
+	RoleInfo.Mux.Unlock()
+	privStr, _ := json.Marshal(privilege)
+	_, err := GetDB().Exec(`UPDATE public.accounts SET privilege = $1, work_time = $2 WHERE login = $3`, string(privStr), data.WorkTime, data.Login)
+	if err != nil {
+		resp := u.Message(http.StatusInternalServerError, fmt.Sprintf("Account update error: %s", err.Error()))
+		return resp
+	}
+	resp := u.Message(http.StatusOK, "Account has updated")
+	return resp
+}
+
+//Delete удаление аккаунта из БД
+func (data *Account) Delete() u.Response {
+	_, err := GetDB().Exec(`DELETE FROM public.accounts WHERE login = $3`, data.Login)
+	if err != nil {
+		resp := u.Message(http.StatusInternalServerError, "data deletion error "+err.Error())
+		return resp
+	}
+	resp := u.Message(http.StatusOK, "account deleted")
+	return resp
+}
+
+//ChangePW изменение пароля пользователя
+func (data *Account) ChangePW() u.Response {
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(data.Password), bcrypt.DefaultCost)
+	data.Password = string(hashedPassword)
+	//sqlStr := fmt.Sprintf("update public.accounts set password = '%s' where login = '%s';UPDATE public.accounts SET token='' WHERE login='%s'", data.Password, data.Login, data.Login)
+	_, err := GetDB().Exec(`UPDATE public.accounts SET password = $1 WHERE login = $2 ; UPDATE public.accounts SET token = '' WHERE login = $3`, data.Password, data.Login, data.Login)
+	if err != nil {
+		resp := u.Message(http.StatusInternalServerError, "password change error "+err.Error())
+		return resp
+	}
+	resp := u.Message(http.StatusOK, "password changed")
+	return resp
+}
+
+//ParserBoxPointsUser заполняет BoxPoint
+func (data *Account) ParserBoxPointsUser() (err error) {
+	var (
+		boxpoint  = locations.BoxPoint{}
+		privilege = Privilege{}
+	)
+	err = privilege.ReadFromBD(data.Login)
+	if err != nil {
+		return errors.New(fmt.Sprintf("ParserPoints. Privilege error: %s", err.Error()))
+	}
+	var sqlString = `SELECT Min(dgis[0]) as "Y0", Min(convTo360(dgis[1])) as "X0", Max(dgis[0]) as "Y1", Max(convTo360(dgis[1])) as "X1"  FROM public."cross"`
+	if !strings.EqualFold(privilege.Region, "*") {
+		sqlString = sqlString + fmt.Sprintf(" where region = %s;", privilege.Region)
+	}
+	row := GetDB().QueryRow(sqlString)
+	err = row.Scan(&boxpoint.Point0.Y, &boxpoint.Point0.X, &boxpoint.Point1.Y, &boxpoint.Point1.X)
+	if err != nil {
+		return errors.New(fmt.Sprintf("ParserPoints. Request error: %s", err.Error()))
+	}
+	if boxpoint.Point0.X > 180 {
+		boxpoint.Point0.X -= 360
+	}
+	if boxpoint.Point1.X > 180 {
+		boxpoint.Point1.X -= 360
+	}
+
+	data.BoxPoint = boxpoint
+	return nil
+}
+
+//GetInfoForUser собор информацию для пользователя, который авторизировался
+func (data *Account) GetInfoForUser() u.Response {
+	rows, err := GetDB().Query(`SELECT id, login, password FROM public.accounts WHERE login=$1`, data.Login)
+	if rows == nil {
+		return u.Message(http.StatusUnauthorized, fmt.Sprintf("login: %s not found", data.Login))
+	}
+	if err != nil {
+		return u.Message(http.StatusInternalServerError, "Connection to DB error. Please try again")
+	}
+	for rows.Next() {
+		_ = rows.Scan(&data.ID, &data.Login, &data.Password)
+	}
+
+	err = data.ParserBoxPointsUser()
+	if err != nil {
+		return u.Message(http.StatusInternalServerError, err.Error())
+	}
+	tflight := GetLightsFromBD(data.BoxPoint)
+	resp := u.Message(http.StatusOK, "loading content for the main page")
+	resp.Obj["ya_map"] = data.YaMapKey
+	resp.Obj["boxPoint"] = data.BoxPoint
+	resp.Obj["tflight"] = tflight
+
+	//собираю в кучу регионы для отображения
+	chosenRegion := make(map[string]string)
+	CacheInfo.Mux.Lock()
+	for first, second := range CacheInfo.MapRegion {
+		chosenRegion[first] = second
+	}
+	delete(chosenRegion, "*")
+	resp.Obj["regionInfo"] = chosenRegion
+
+	//собираю в кучу районы для отображения
+	chosenArea := make(map[string]map[string]string)
+	for first, second := range CacheInfo.MapArea {
+		chosenArea[first] = make(map[string]string)
+		chosenArea[first] = second
+	}
+	delete(chosenArea, "Все регионы")
+	CacheInfo.Mux.Unlock()
+	resp.Obj["areaInfo"] = chosenArea
+
+	return resp
+}
+
 //SuperCreate создание суперпользователя
 func SuperCreate() {
 	account := &Account{}
