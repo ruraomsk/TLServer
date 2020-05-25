@@ -163,16 +163,16 @@ func (data *Account) Create(privilege Privilege) u.Response {
 		return u.Message(http.StatusInternalServerError, err.Error())
 	}
 	if data.ID <= 0 {
-		return u.Message(http.StatusBadRequest, "Failed to create data, connection error.")
+		return u.Message(http.StatusBadRequest, "failed to create data, connection error.")
 	}
 	RoleInfo.Mux.Lock()
 	privilege.Role.Perm = append(privilege.Role.Perm, RoleInfo.MapRoles[privilege.Role.Name]...)
 	RoleInfo.Mux.Unlock()
 	if err := privilege.WriteRoleInBD(data.Login); err != nil {
-		return u.Message(http.StatusBadRequest, "Connection to DB error. Please try again")
+		return u.Message(http.StatusBadRequest, "connection to DB error. Please try again")
 	}
 	data.Password = ""
-	resp := u.Message(http.StatusOK, "Account has been created")
+	resp := u.Message(http.StatusOK, "account has been created")
 	resp.Obj["login"] = data.Login
 	return resp
 }
@@ -194,7 +194,7 @@ func (data *Account) Update(privilege Privilege) u.Response {
 
 //Delete удаление аккаунта из БД
 func (data *Account) Delete() u.Response {
-	_, err := GetDB().Exec(`DELETE FROM public.accounts WHERE login = $3`, data.Login)
+	_, err := GetDB().Exec(`DELETE FROM public.accounts WHERE login = $1`, data.Login)
 	if err != nil {
 		resp := u.Message(http.StatusInternalServerError, "data deletion error "+err.Error())
 		return resp
@@ -207,8 +207,9 @@ func (data *Account) Delete() u.Response {
 func (data *Account) ChangePW() u.Response {
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(data.Password), bcrypt.DefaultCost)
 	data.Password = string(hashedPassword)
-	//sqlStr := fmt.Sprintf("update public.accounts set password = '%s' where login = '%s';UPDATE public.accounts SET token='' WHERE login='%s'", data.Password, data.Login, data.Login)
-	_, err := GetDB().Exec(`UPDATE public.accounts SET password = $1 WHERE login = $2 ; UPDATE public.accounts SET token = '' WHERE login = $3`, data.Password, data.Login, data.Login)
+
+	sqlStr := fmt.Sprintf(`UPDATE public.accounts SET password = '%v' WHERE login = '%v'; UPDATE public.accounts SET token = '' WHERE login = '%v'`, data.Password, data.Login, data.Login)
+	_, err := GetDB().Exec(sqlStr)
 	if err != nil {
 		resp := u.Message(http.StatusInternalServerError, "password change error "+err.Error())
 		return resp
@@ -300,14 +301,11 @@ func SuperCreate() {
 	account.YaMapKey = config.GlobalConfig.YaKey
 	account.WorkTime = 24
 	account.Password = "$2a$10$ZCWyIEfEVF3KGj6OUtIeSOQ3WexMjuAZ43VSO6T.QqOndn4HN1J6C"
-	//privilege := Privilege{}
 	privilege := NewPrivilege("Super", "*", []string{"*"})
 	_, _ = GetDB().Exec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
 		account.Login, account.Password, account.WorkTime, account.YaMapKey)
-	//roles.GetDB().Table("accounts").Create(data)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
-	//GetDB().Exec(privilege.ToSqlStrUpdate("accounts", data.Login))
 
 	//!!!!! Другие пользователи Для ОТЛАДКИ потом УДАЛИТЬ все что ниже
 	account = &Account{}
@@ -316,14 +314,11 @@ func SuperCreate() {
 	account.YaMapKey = config.GlobalConfig.YaKey
 	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
-	//privilege = Privilege{}
 	privilege = NewPrivilege("RegAdmin", "1", []string{"1", "2", "3"})
 	_, _ = GetDB().Exec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
 		account.Login, account.Password, account.WorkTime, account.YaMapKey)
-	//roles.GetDB().Table("accounts").Create(data)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
-	//GetDB().Exec(privilege.ToSqlStrUpdate("accounts", data.Login))
 
 	account = &Account{}
 	account.Login = "Sachalin"
@@ -331,14 +326,11 @@ func SuperCreate() {
 	account.YaMapKey = config.GlobalConfig.YaKey
 	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
-	//privilege = Privilege{}
 	privilege = NewPrivilege("RegAdmin", "3", []string{"1"})
 	_, _ = GetDB().Exec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
 		account.Login, account.Password, account.WorkTime, account.YaMapKey)
-	//roles.GetDB().Table("accounts").Create(data)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
-	//GetDB().Exec(privilege.ToSqlStrUpdate("accounts", data.Login))
 
 	account = &Account{}
 	account.Login = "Cykotka"
@@ -346,14 +338,11 @@ func SuperCreate() {
 	account.YaMapKey = config.GlobalConfig.YaKey
 	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
-	//privilege = Privilege{}
 	privilege = NewPrivilege("RegAdmin", "2", []string{"1", "2", "3"})
 	_, _ = GetDB().Exec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
 		account.Login, account.Password, account.WorkTime, account.YaMapKey)
-	//roles.GetDB().Table("accounts").Create(data)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
-	//GetDB().Exec(privilege.ToSqlStrUpdate("accounts", data.Login))
 
 	account = &Account{}
 	account.Login = "All"
@@ -361,13 +350,10 @@ func SuperCreate() {
 	account.YaMapKey = config.GlobalConfig.YaKey
 	account.WorkTime = 1000
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
-	//privilege = Privilege{}
 	privilege = NewPrivilege("Admin", "*", []string{"*"})
 	_, _ = GetDB().Exec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
 		account.Login, account.Password, account.WorkTime, account.YaMapKey)
-	//roles.GetDB().Table("accounts").Create(data)
 	////Записываю координаты в базу!!!
-	//GetDB().Exec(privilege.ToSqlStrUpdate("accounts", data.Login))
 	_ = privilege.WriteRoleInBD(account.Login)
 
 	account = &Account{}
@@ -376,13 +362,10 @@ func SuperCreate() {
 	account.YaMapKey = config.GlobalConfig.YaKey
 	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
-	//privilege = Privilege{}
 	privilege = NewPrivilege("Admin", "*", []string{"*"})
 	_, _ = GetDB().Exec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
 		account.Login, account.Password, account.WorkTime, account.YaMapKey)
-	//roles.GetDB().Table("accounts").Create(data)
 	////Записываю координаты в базу!!!
-	//GetDB().Exec(privilege.ToSqlStrUpdate("accounts", data.Login))
 	_ = privilege.WriteRoleInBD(account.Login)
 
 	account = &Account{}
@@ -391,13 +374,10 @@ func SuperCreate() {
 	account.YaMapKey = config.GlobalConfig.YaKey
 	account.WorkTime = 24
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
-	//privilege = Privilege{}
 	privilege = NewPrivilege("Admin", "*", []string{"*"})
 	_, _ = GetDB().Exec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
 		account.Login, account.Password, account.WorkTime, account.YaMapKey)
-	//roles.GetDB().Table("accounts").Create(data)
 	////Записываю координаты в базу!!!
-	//GetDB().Exec(privilege.ToSqlStrUpdate("accounts", data.Login))
 	_ = privilege.WriteRoleInBD(account.Login)
 
 	account = &Account{}
@@ -406,13 +386,10 @@ func SuperCreate() {
 	account.YaMapKey = config.GlobalConfig.YaKey
 	account.WorkTime = 10000
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
-	//privilege = Privilege{}
 	privilege = NewPrivilege("Admin", "*", []string{"*"})
 	_, _ = GetDB().Exec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
 		account.Login, account.Password, account.WorkTime, account.YaMapKey)
-	//roles.GetDB().Table("accounts").Create(data)
 	////Записываю координаты в базу!!!
-	//GetDB().Exec(privilege.ToSqlStrUpdate("accounts", data.Login))
 	_ = privilege.WriteRoleInBD(account.Login)
 
 	account = &Account{}
@@ -421,13 +398,10 @@ func SuperCreate() {
 	account.YaMapKey = config.GlobalConfig.YaKey
 	account.WorkTime = 10000
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
-	//privilege = Privilege{}
 	privilege = NewPrivilege("Admin", "*", []string{"*"})
 	_, _ = GetDB().Exec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
 		account.Login, account.Password, account.WorkTime, account.YaMapKey)
-	//roles.GetDB().Table("accounts").Create(data)
 	////Записываю координаты в базу!!!
-	//GetDB().Exec(privilege.ToSqlStrUpdate("accounts", data.Login))
 	_ = privilege.WriteRoleInBD(account.Login)
 
 	account = &Account{}
@@ -436,13 +410,10 @@ func SuperCreate() {
 	account.YaMapKey = config.GlobalConfig.YaKey
 	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
-	//privilege = Privilege{}
 	privilege = NewPrivilege("RegAdmin", "1", []string{"1", "2", "3"})
 	_, _ = GetDB().Exec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
 		account.Login, account.Password, account.WorkTime, account.YaMapKey)
-	//roles.GetDB().Table("accounts").Create(data)
 	////Записываю координаты в базу!!!
-	//GetDB().Exec(privilege.ToSqlStrUpdate("accounts", data.Login))
 	_ = privilege.WriteRoleInBD(account.Login)
 
 	account = &Account{}
@@ -451,13 +422,10 @@ func SuperCreate() {
 	account.YaMapKey = config.GlobalConfig.YaKey
 	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
-	//privilege = Privilege{}
 	privilege = NewPrivilege("User", "2", []string{"2"})
 	_, _ = GetDB().Exec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
 		account.Login, account.Password, account.WorkTime, account.YaMapKey)
-	//roles.GetDB().Table("accounts").Create(data)
 	////Записываю координаты в базу!!!
-	//GetDB().Exec(privilege.ToSqlStrUpdate("accounts", data.Login))
 	_ = privilege.WriteRoleInBD(account.Login)
 
 	account = &Account{}
@@ -466,13 +434,10 @@ func SuperCreate() {
 	account.YaMapKey = config.GlobalConfig.YaKey
 	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
-	//privilege = Privilege{}
 	privilege = NewPrivilege("Viewer", "3", []string{"1"})
-	//roles.GetDB().Table("accounts").Create(data)
 	_, _ = GetDB().Exec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
 		account.Login, account.Password, account.WorkTime, account.YaMapKey)
 	////Записываю координаты в базу!!!
-	//GetDB().Exec(privilege.ToSqlStrUpdate("accounts", data.Login))
 	_ = privilege.WriteRoleInBD(account.Login)
 
 	//!!!!! НЕ забудь удалить все что вышел

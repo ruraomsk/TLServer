@@ -2,6 +2,7 @@ package data
 
 import (
 	"fmt"
+	"github.com/JanFant/newTLServer/internal/model/crossEdit"
 	"sync"
 	"time"
 
@@ -48,7 +49,8 @@ func CacheDataUpdate() {
 	RoleInfo.MapRoles = make(map[string][]int)
 	RoleInfo.MapPermisson = make(map[int]Permission)
 	RoleInfo.MapRoutes = make(map[string]RouteInfo)
-	//BusyArmInfo.mapBusyArm = make(map[BusyArm]EditCrossInfo)
+	crossEdit.BusyArmInfo.MapBusyArm = make(map[crossEdit.BusyArm]crossEdit.EditCrossInfo)
+	go crossEdit.FillingDeviceLogTable(GetDB())
 	for {
 		CacheInfoDataUpdate()
 		//создадим суперпользователя если таблица только была создана
@@ -65,7 +67,7 @@ func CacheDataUpdate() {
 func CacheInfoDataUpdate() {
 	var err error
 	CacheInfo.Mux.Lock()
-	//CleanMapBusyArm()
+	crossEdit.CleanMapBusyArm()
 	CacheInfo.MapRegion, CacheInfo.MapArea, err = GetRegionInfo()
 	CacheInfo.MapTLSost, err = getTLSost()
 	CacheInfo.Mux.Unlock()

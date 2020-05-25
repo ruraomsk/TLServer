@@ -8,20 +8,7 @@ let areaInfo;
 
 //Функция для открытия вкладки
 function openPage(url) {
-	$.ajax({
-		type: 'GET',
-		beforeSend: function (request) {
-			request.setRequestHeader('Authorization', 'Bearer ' + sessionStorage.getItem('token'));
-		},
-		url: window.location.href + url,
-		success: function (data) {
-		    window.open(window.location.href.substring(0, window.location.href.length - 4) + url);
-		},
-		error: function (request) {
-			console.log(request.status + ' ' + request.responseText);
-//			location.href = window.location.origin;
-		}
-	});
+    window.open(window.location.href.substring(0, window.location.href.length - 4) + url);
 }
 
 function sleep (time) {
