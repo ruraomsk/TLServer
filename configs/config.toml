@@ -3,9 +3,8 @@
 # AsudServ@gmail.com - mail  H49qFgUDTzSUQFYmoVwf - pass
 
 logger_path = "logfiles"
-views_path = "C://Users//Ivan//go//src//github.com//JanFant//TLServer//views"
-resource_path = "web"
-cache_path = "C://Users//Ivan//go//src//github.com//JanFant//TLServer//cachefile"
+static_path = "static"
+web_path = "web"
 ssl_path = "ssl"
 #server_ip = ":8082"
 server_ip = ":8085"

@@ -3,6 +3,7 @@ package apiserver
 import (
 	"fmt"
 	"github.com/JanFant/newTLServer/internal/app/handlers"
+	"github.com/JanFant/newTLServer/internal/app/middleWare"
 	"github.com/JanFant/newTLServer/internal/model/logger"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -20,38 +21,38 @@ func StartServer(conf *ServerConf) {
 	router := gin.Default()
 	router.Use(cors.Default())
 
-	router.LoadHTMLGlob(conf.ResourcePath + "/html/**")
+	router.LoadHTMLGlob(conf.WebPath + "/html/**")
 
 	//скрипт и иконка которые должны быть доступны всем
-	router.StaticFile("screen/screen.js", conf.ResourcePath+"/js/screen.js")
-	router.StaticFile("icon/trafficlight.svg", conf.ResourcePath+"/resources/trafficlight.svg")
+	router.StaticFile("screen/screen.js", conf.WebPath+"/js/screen.js")
+	router.StaticFile("icon/trafficlight.svg", conf.WebPath+"/resources/trafficlight.svg")
+	router.StaticFile("/notFound.jpg", conf.WebPath+"/resources/notFound.jpg")
 
+	//заглушка страница 404
 	router.NoRoute(func(c *gin.Context) {
 		c.HTML(http.StatusNotFound, "notFound.html", gin.H{"message": "page not found"})
 	})
 
+	//начальная страница
 	router.GET("/", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "screen.html", gin.H{"message": "login screen"})
 	})
-	router.POST("/login", handlers.LoginAcc)
-	//router := mux.NewRouter()
-	//router.HandleFunc("/login", whandlers.LoginAcc).Methods("POST") //запрос на вход в систему
-	//
-	////------------------------------------------------------------------------------------------------------------------
-	////обязательный общий путь
-	//subRout := router.PathPrefix("/user").Subrouter()
-	//subRout.Use(JwtAuth) //добавление к роутеру контроль токена
-	//
+	router.POST("/login", handlers.LoginAcc) //запрос на вход в систему
+
+	//------------------------------------------------------------------------------------------------------------------
+	//обязательный общий путь
+	mainRouter := router.Group("/user")
+	mainRouter.Use(middleWare.JwtAuth())
 	//subRout.Use(AccessControl) //проверка разрешения на доступ к ресурсу
-	//
-	//subRout.HandleFunc("/{slug}/map", func(w http.ResponseWriter, r *http.Request) { //работа с основной страничкой карты
-	//	http.ServeFile(w, r, resourcePath+"/map.html")
-	//}).Methods("GET")
-	//subRout.HandleFunc("/{slug}/map", whandlers.BuildMapPage).Methods("POST")                         //запрос информации для заполнения странички с картой
-	//subRout.HandleFunc("/{slug}/map/logOut", whandlers.LoginAccOut).Methods("GET")                    //обработчик выхода из системы
-	//subRout.HandleFunc("/{slug}/map/update", whandlers.UpdateMapPage).Methods("POST")                 //обновление странички с данными которые попали в область пользователя
-	//subRout.HandleFunc("/{slug}/map/locationButton", whandlers.LocationButtonMapPage).Methods("POST") //обработчик для формирования новых координат отображения карты
-	//
+
+	mainRouter.GET("/:slug/map", func(c *gin.Context) { //работа с основной страничкой карты
+		c.HTML(http.StatusOK, "map.html", gin.H{"message": "ya map"})
+	})
+	mainRouter.POST("/:slug/map", handlers.BuildMapPage)                         //запрос информации для заполнения странички с картой
+	mainRouter.GET("/:slug/map/logOut", handlers.LoginAccOut)                    //обработчик выхода из системы
+	mainRouter.POST("/:slug/map/update", handlers.UpdateMapPage)                 //обновление странички с данными которые попали в область пользователя
+	mainRouter.POST("/:slug/map/locationButton", handlers.LocationButtonMapPage) //обработчик для формирования новых координат отображения карты
+
 	//subRout.HandleFunc("/{slug}/chat", func(w http.ResponseWriter, r *http.Request) { //начальная страница
 	//	http.ServeFile(w, r, resourcePath+"/chat.html")
 	//})
@@ -150,10 +151,19 @@ func StartServer(conf *ServerConf) {
 	//	fmt.Println("Server can't started ", err.Error())
 	//}
 
-	fileServer := router.Group("/fs")
-	fileServer.StaticFS("/resources", http.Dir(conf.ResourcePath+"/resources"))
-	fileServer.StaticFS("/js", http.Dir(conf.ResourcePath+"/js"))
-	fileServer.StaticFS("/css", http.Dir(conf.ResourcePath+"/css"))
+	fileServer := router.Group("/file")
+	fileServer.Use(middleWare.JwtFile())
+
+	fsStatic := fileServer.Group("/static")
+	fsStatic.StaticFS("/cross", http.Dir(conf.StaticPath+"/cross"))
+	fsStatic.StaticFS("/icons", http.Dir(conf.StaticPath+"/icons"))
+	fsStatic.StaticFS("/img", http.Dir(conf.StaticPath+"/img"))
+	fsStatic.StaticFS("/markdown", http.Dir(conf.StaticPath+"/markdown"))
+
+	fsWeb := fileServer.Group("/web")
+	fsWeb.StaticFS("/resources", http.Dir(conf.WebPath+"/resources"))
+	fsWeb.StaticFS("/js", http.Dir(conf.WebPath+"/js"))
+	fsWeb.StaticFS("/css", http.Dir(conf.WebPath+"/css"))
 
 	if err := router.RunTLS(conf.ServerIP, conf.SSLPath+"/domain.crt", conf.SSLPath+"/domain.key"); err != nil {
 		logger.Error.Println("|Message: Error start server ", err.Error())

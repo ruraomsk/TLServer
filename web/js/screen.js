@@ -35,8 +35,8 @@ function check() {
 		url: window.location.href + 'login',
 		data: JSON.stringify(account),
 		dataType: 'json',
-		success: function (data) {
-		    if (!data.status) return;
+		success: function (data, text, xhr) {
+		    if (xhr.status !== 200) return;
             document.cookie = ('Authorization=Bearer ' + data.token);
             //В случае успешного логина, перенаправление на участок карты данного пользователя
 		    location.href = window.location.href + 'user/' + $('#login').val() + '/map';

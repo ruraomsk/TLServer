@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/JanFant/TLServer/license"
 	"github.com/JanFant/TLServer/logger"
 	u "github.com/JanFant/TLServer/utils"
 	"github.com/JanFant/newTLServer/internal/model/locations"
@@ -54,12 +53,7 @@ func GetLightsFromBD(box locations.BoxPoint) (tfdata []TrafficLights) {
 	} else {
 		tflight = SelectTL(box.Point0, box.Point1, false)
 	}
-	license.LicenseFields.Mux.Lock()
-	numDev := license.LicenseFields.NumDev
-	license.LicenseFields.Mux.Unlock()
-	if len(tflight) > numDev {
-		tflight = tflight[:numDev]
-	}
+
 	return tflight
 }
 
@@ -214,7 +208,7 @@ func (location *Locations) MakeBoxPoint() (box locations.BoxPoint, err error) {
 	row := GetDB().QueryRow(sqlStr)
 	err = row.Scan(&box.Point0.Y, &box.Point0.X, &box.Point1.Y, &box.Point1.X)
 	if err != nil {
-		return box, errors.New(fmt.Sprintf("ParserPoints. Request error: %s", err.Error()))
+		return box, errors.New(fmt.Sprintf("parserPoints. Request error: %s", err.Error()))
 	}
 	if box.Point0.X > 180 {
 		box.Point0.X -= 360

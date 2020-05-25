@@ -3,7 +3,6 @@ package data
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/JanFant/newTLServer/internal/model/config"
 	u "github.com/JanFant/newTLServer/internal/utils"
 	"io/ioutil"
 	"net/http"
@@ -209,7 +208,7 @@ func (shPerm *shortPermission) transform(perm Permission) {
 
 //ReadRoleAccessFile чтение RoleAccess файла
 func (roleAccess *RoleAccess) ReadRoleAccessFile() (err error) {
-	file, err := ioutil.ReadFile(config.GlobalConfig.CachePath + "//RoleAccess.json")
+	file, err := ioutil.ReadFile(`./configs/RoleAccess.json`)
 	if err != nil {
 		return err
 	}

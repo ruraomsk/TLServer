@@ -18,7 +18,6 @@ type DBConfig struct {
 
 //Config структура с объявлением всех переменных config.toml файла
 type Config struct {
-	CachePath     string `toml:"cache_path"`     //путь до каталога cachefile
 	YaKey         string `toml:"ya_key"`         //ключ авторизации для яндекса
 	TokenPassword string `toml:"token_password"` //ключ для шифрования токенов доступа
 	//TCPConfig     tcpConnect.TCPConfig `toml:"tcpServer"`      //информация о tcp соединении с сервером устройств

@@ -44,7 +44,7 @@ func Login(login, password, ip string) u.Response {
 	ipSplit := strings.Split(ip, ":")
 	account := &Account{}
 	//Забираю из базы запись с подходящей почтой
-	rows, err := GetDB().Query(`SELECT id, login, password FROM public.accounts WHERE login=$1`, login)
+	rows, err := GetDB().Query(`SELECT id, login, password, work_time, ya_map_key FROM public.accounts WHERE login=$1`, login)
 	if rows == nil {
 		return u.Message(http.StatusUnauthorized, fmt.Sprintf("login: %s not found", login))
 	}
@@ -52,8 +52,7 @@ func Login(login, password, ip string) u.Response {
 		return u.Message(http.StatusInternalServerError, "Connection to DB error. Please try again")
 	}
 	for rows.Next() {
-		_ = rows.Scan(&account.ID, &account.Login, &account.Password)
-		fmt.Println(account)
+		_ = rows.Scan(&account.ID, &account.Login, &account.Password, &account.WorkTime, &account.YaMapKey)
 	}
 
 	//Авторизировались добираем полномочия
