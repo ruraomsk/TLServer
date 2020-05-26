@@ -302,7 +302,7 @@ func SuperCreate() {
 	account.WorkTime = 24
 	account.Password = "$2a$10$ZCWyIEfEVF3KGj6OUtIeSOQ3WexMjuAZ43VSO6T.QqOndn4HN1J6C"
 	privilege := NewPrivilege("Super", "*", []string{"*"})
-	_, _ = GetDB().Exec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
 		account.Login, account.Password, account.WorkTime, account.YaMapKey)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
@@ -315,7 +315,7 @@ func SuperCreate() {
 	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = NewPrivilege("RegAdmin", "1", []string{"1", "2", "3"})
-	_, _ = GetDB().Exec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
 		account.Login, account.Password, account.WorkTime, account.YaMapKey)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
@@ -327,7 +327,7 @@ func SuperCreate() {
 	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = NewPrivilege("RegAdmin", "3", []string{"1"})
-	_, _ = GetDB().Exec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
 		account.Login, account.Password, account.WorkTime, account.YaMapKey)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
@@ -339,7 +339,7 @@ func SuperCreate() {
 	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = NewPrivilege("RegAdmin", "2", []string{"1", "2", "3"})
-	_, _ = GetDB().Exec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
 		account.Login, account.Password, account.WorkTime, account.YaMapKey)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
@@ -351,7 +351,7 @@ func SuperCreate() {
 	account.WorkTime = 1000
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = NewPrivilege("Admin", "*", []string{"*"})
-	_, _ = GetDB().Exec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
 		account.Login, account.Password, account.WorkTime, account.YaMapKey)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
@@ -363,7 +363,7 @@ func SuperCreate() {
 	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = NewPrivilege("Admin", "*", []string{"*"})
-	_, _ = GetDB().Exec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
 		account.Login, account.Password, account.WorkTime, account.YaMapKey)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
@@ -375,7 +375,7 @@ func SuperCreate() {
 	account.WorkTime = 24
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = NewPrivilege("Admin", "*", []string{"*"})
-	_, _ = GetDB().Exec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
 		account.Login, account.Password, account.WorkTime, account.YaMapKey)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
@@ -387,7 +387,7 @@ func SuperCreate() {
 	account.WorkTime = 10000
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = NewPrivilege("Admin", "*", []string{"*"})
-	_, _ = GetDB().Exec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
 		account.Login, account.Password, account.WorkTime, account.YaMapKey)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
@@ -399,7 +399,7 @@ func SuperCreate() {
 	account.WorkTime = 10000
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = NewPrivilege("Admin", "*", []string{"*"})
-	_, _ = GetDB().Exec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
 		account.Login, account.Password, account.WorkTime, account.YaMapKey)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
@@ -411,7 +411,7 @@ func SuperCreate() {
 	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = NewPrivilege("RegAdmin", "1", []string{"1", "2", "3"})
-	_, _ = GetDB().Exec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
 		account.Login, account.Password, account.WorkTime, account.YaMapKey)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
@@ -423,7 +423,7 @@ func SuperCreate() {
 	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = NewPrivilege("User", "2", []string{"2"})
-	_, _ = GetDB().Exec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
 		account.Login, account.Password, account.WorkTime, account.YaMapKey)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
@@ -435,7 +435,7 @@ func SuperCreate() {
 	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = NewPrivilege("Viewer", "3", []string{"1"})
-	_, _ = GetDB().Exec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
 		account.Login, account.Password, account.WorkTime, account.YaMapKey)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)

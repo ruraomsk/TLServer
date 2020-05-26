@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/JanFant/newTLServer/internal/model/logger"
@@ -30,21 +29,21 @@ type DeviceLogInfo struct {
 //DisplayDeviceLog формирование начальной информации отображения логов устройства
 func DisplayDeviceLog(mapContx map[string]string, db *sqlx.DB) u.Response {
 	var (
-		devices  []BusyArm
-		fillInfo FillingInfo
+		devices []BusyArm
+		//fillInfo FillingInfo
 	)
-	fillInfo.User = mapContx["login"]
-	FillingDeviceChan <- fillInfo
-	for {
-		chanRespond := <-FillingDeviceChan
-		if strings.Contains(chanRespond.User, fillInfo.User) {
-			if chanRespond.Status {
-				break
-			} else {
-				return u.Message(http.StatusBadRequest, "incorrect data in logDevice table. Please report it to Admin")
-			}
-		}
-	}
+	//fillInfo.User = mapContx["login"]
+	//FillingDeviceChan <- fillInfo
+	//for {
+	//	chanRespond := <-FillingDeviceChan
+	//	if strings.Contains(chanRespond.User, fillInfo.User) {
+	//		if chanRespond.Status {
+	//			break
+	//		} else {
+	//			return u.Message(http.StatusBadRequest, "incorrect data in logDevice table. Please report it to Admin")
+	//		}
+	//	}
+	//}
 	var sqlStr string
 	if mapContx["region"] == "*" {
 		sqlStr = fmt.Sprintf("SELECT distinct crossinfo FROM public.logdevice")
@@ -82,23 +81,23 @@ func DisplayDeviceLog(mapContx map[string]string, db *sqlx.DB) u.Response {
 func DisplayDeviceLogInfo(arms DeviceLogInfo, mapContx map[string]string, db *sqlx.DB) u.Response {
 	var (
 		deviceLogs []DeviceLog
-		fillInfo   FillingInfo
+		//fillInfo   FillingInfo
 	)
 	if len(arms.Devices) <= 0 {
 		return u.Message(http.StatusBadRequest, "no one devices selected")
 	}
-	fillInfo.User = mapContx["login"]
-	FillingDeviceChan <- fillInfo
-	for {
-		chanRespond := <-FillingDeviceChan
-		if chanRespond.User == fillInfo.User {
-			if chanRespond.Status {
-				break
-			} else {
-				return u.Message(http.StatusBadRequest, "incorrect data in logDevice table. Please report it to Admin")
-			}
-		}
-	}
+	//fillInfo.User = mapContx["login"]
+	//FillingDeviceChan <- fillInfo
+	//for {
+	//	chanRespond := <-FillingDeviceChan
+	//	if chanRespond.User == fillInfo.User {
+	//		if chanRespond.Status {
+	//			break
+	//		} else {
+	//			return u.Message(http.StatusBadRequest, "incorrect data in logDevice table. Please report it to Admin")
+	//		}
+	//	}
+	//}
 	for _, arm := range arms.Devices {
 		sqlStr := fmt.Sprintf(`SELECT tm, id, txt FROM public.logdevice WHERE crossinfo::jsonb @> '{"ID": %v, "area": "%v", "region": "%v"}'::jsonb and tm > '%v' and tm < '%v'`, arm.ID, arm.Area, arm.Region, arms.TimeStart.Format("2006-01-02 15:04:05"), arms.TimeEnd.Format("2006-01-02 15:04:05"))
 		rowsDevices, err := db.Query(sqlStr)

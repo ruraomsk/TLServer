@@ -71,7 +71,6 @@ func SelectTL(point0 locations.Point, point1 locations.Point, equalPoint bool) (
 	} else {
 		sqlStr = fmt.Sprintf("SELECT region, area, subarea, id, idevice, dgis, describ, state FROM public.cross WHERE box '((%3.15f,%3.15f),(%3.15f,%3.15f))'@> dgis", point0.Y, point0.X, point1.Y, point1.X)
 	}
-	//rowsTL, _ := GetDB().Raw(sqlStr).Rows()
 	rowsTL, _ := GetDB().Query(sqlStr)
 	for rowsTL.Next() {
 		err := rowsTL.Scan(&temp.Region.Num, &temp.Area.Num, &temp.Subarea, &temp.ID, &temp.Idevice, &dgis, &temp.Description, &StateStr)
@@ -173,8 +172,7 @@ func GetCrossDevInfo(idevice string) map[string]interface{} {
 	)
 	resp := u.Message(true, "Cross information")
 	sqlStr = fmt.Sprintf(`SELECT device FROM public.devices WHERE id = %v`, idevice)
-	rowDev := GetDB().QueryRow(sqlStr)
-	err := rowDev.Scan(&devStr)
+	err := GetDB().QueryRow(sqlStr).Scan(&devStr)
 	if err != nil {
 		logger.Error.Println("|Message: No result at these points, table device", err.Error())
 		resp["message"] = "No device at these points"
@@ -194,8 +192,8 @@ func GetCrossDevInfo(idevice string) map[string]interface{} {
 //MakeBoxPoint расчет координат для перемещения по карте
 func (location *Locations) MakeBoxPoint() (box locations.BoxPoint, err error) {
 	var sqlStr = `SELECT Min(dgis[0]) as "Y0", Min(convTo360(dgis[1])) as "X0", Max(dgis[0]) as "Y1", Max(convTo360(dgis[1])) as "X1"  FROM public."cross"`
-	tempStr := " where "
-	tempStr += fmt.Sprintf("region = %v and area in (", location.Region)
+	tempStr := " WHERE "
+	tempStr += fmt.Sprintf("region = %v AND area in (", location.Region)
 	for numArea, area := range location.Area {
 		if numArea == 0 {
 			tempStr += fmt.Sprintf("%v", area)

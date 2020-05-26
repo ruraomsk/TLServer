@@ -50,7 +50,7 @@ func CacheDataUpdate() {
 	RoleInfo.MapPermisson = make(map[int]Permission)
 	RoleInfo.MapRoutes = make(map[string]RouteInfo)
 	crossEdit.BusyArmInfo.MapBusyArm = make(map[crossEdit.BusyArm]crossEdit.EditCrossInfo)
-	go crossEdit.FillingDeviceLogTable(GetDB())
+	//go crossEdit.FillingDeviceLogTable(GetDB())
 	for {
 		CacheInfoDataUpdate()
 		//создадим суперпользователя если таблица только была создана

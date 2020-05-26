@@ -1,7 +1,6 @@
 package locations
 
 import (
-	"fmt"
 	"github.com/jmoiron/sqlx"
 	"strconv"
 	"strings"
@@ -47,8 +46,7 @@ func (points *Point) StrToFloat(str string) {
 //TakePointFromBD запрос координат перекрестка из БД
 func TakePointFromBD(numRegion, numArea, numID string, db *sqlx.DB) (point Point, err error) {
 	var dgis string
-	sqlStr := fmt.Sprintf("SELECT dgis FROM public.cross WHERE region = %v and area = %v and id = %v", numRegion, numArea, numID)
-	rowsTL := db.QueryRow(sqlStr)
+	rowsTL := db.QueryRow(`SELECT dgis FROM public.cross WHERE region = $1 and area = $2 and id = $3`, numRegion, numArea, numID)
 	err = rowsTL.Scan(&dgis)
 	if err != nil {
 		return point, err

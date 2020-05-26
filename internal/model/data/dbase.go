@@ -53,7 +53,7 @@ func ConnectDB() (*sqlx.DB, error) {
 	db.SetMaxOpenConns(config.GlobalConfig.DBConfig.SetMaxOpenConst)
 	db.SetMaxIdleConns(config.GlobalConfig.DBConfig.SetMaxIdleConst)
 
-	_, err = db.Query(`SELECT * FROM public.accounts;`)
+	_, err = db.Exec(`SELECT * FROM public.accounts;`)
 	if err != nil {
 		fmt.Println("accounts table not found - created")
 		logger.Info.Println("|Message: accounts table not found - created")
@@ -63,7 +63,7 @@ func ConnectDB() (*sqlx.DB, error) {
 
 	}
 
-	_, err = db.Query(`SELECT * FROM public.chat;`)
+	_, err = db.Exec(`SELECT * FROM public.chat;`)
 	if err != nil {
 		fmt.Println("chat table not found - created")
 		logger.Info.Println("|Message: chat table not found - created")

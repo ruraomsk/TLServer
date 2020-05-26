@@ -29,11 +29,16 @@ func init() {
 		fmt.Println("Can't load config file - ", err.Error())
 		os.Exit(1)
 	}
+	logger.LogGlobalConf = logger.NewConfig()
+	if _, err := toml.DecodeFile(configPath, &logger.LogGlobalConf); err != nil {
+		fmt.Println("Can't load config file - ", err.Error())
+		os.Exit(1)
+	}
 }
 
 func main() {
 	//Загружаем модуль логирования
-	if err = logger.Init(apiserver.ServerConfig.LoggerPath); err != nil {
+	if err = logger.Init(logger.LogGlobalConf.LogPath); err != nil {
 		fmt.Println("Error opening logger subsystem ", err.Error())
 		return
 	}

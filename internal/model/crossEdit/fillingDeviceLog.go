@@ -53,7 +53,6 @@ func fillingTable(db *sqlx.DB) (status bool) {
 		}
 		//запрос на информацию о девайсах которые не заполнены
 		var TLight BusyArm
-		//sqlCrossStr := fmt.Sprintf(`SELECT region, area, id, describ FROM %v where idevice = %v`, GlobalConfig.DBConfig.CrossTable, tempID)
 		err = db.QueryRow(`SELECT region, area, id, describ FROM public.cross WHERE idevice = $1`, tempID).Scan(&TLight.Region, &TLight.Area, &TLight.ID, &TLight.Description)
 		if err != nil {
 			logger.Error.Println("|Message: LogDevice CrossTable error: ", err.Error())
@@ -65,8 +64,7 @@ func fillingTable(db *sqlx.DB) (status bool) {
 			return false
 		}
 		//запрос на заполнение информацией
-		//sqlLogUpdateStr := fmt.Sprintf(`UPDATE %v SET crossinfo= '%v' WHERE id = %v and crossinfo is null`, GlobalConfig.DBConfig.LogDeviceTable, TLight.structStr, tempID)
-		_, _ = db.Exec(`UPDATE public.logdevice SET  crossinfo = $1 WHERE id = $2 AND crossinfo IS NULL `)
+		db.MustExec(`UPDATE public.logdevice SET  crossinfo = $1 WHERE id = $2 AND crossinfo IS NULL `)
 	}
 	return true
 }

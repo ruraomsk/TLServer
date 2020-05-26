@@ -97,24 +97,23 @@ func StartServer(conf *ServerConf) {
 	mainRouter.POST("/:slug/manage/add", handlers.ActAddAccount)       //обработчик для добавления аккаунтов
 	mainRouter.POST("/:slug/manage/update", handlers.ActUpdateAccount) //обработчик для редактирования данных аккаунта
 
-	//subRout.HandleFunc("/{slug}/manage/crossEditControl", func(w http.ResponseWriter, r *http.Request) { //обработчик по управлению занятых перекрестков (страничка)
-	//	http.ServeFile(w, r, resourcePath+"/crossEditControl.html")
-	//}).Methods("GET")
-	//subRout.HandleFunc("/{slug}/manage/crossEditControl", whandlers.CrossEditInfo).Methods("POST")      //обработчик по управлению занятых перекрестков
-	//subRout.HandleFunc("/{slug}/manage/crossEditControl/free", whandlers.CrossEditFree).Methods("POST") //обработчик по управлению освобождению перекрестка
-	//
+	mainRouter.GET("/:slug/manage/crossEditControl", func(c *gin.Context) { //обработчик по управлению занятых перекрестков (страничка)
+		c.HTML(http.StatusOK, "crossEditControl.html", gin.H{"message": "crossEdit page"})
+	})
+	mainRouter.POST("/:slug/manage/crossEditControl", handlers.CrossEditInfo)      //обработчик по управлению занятых перекрестков
+	mainRouter.POST("/:slug/manage/crossEditControl/free", handlers.CrossEditFree) //обработчик по управлению освобождению перекрестка
+
 	//subRout.HandleFunc("/{slug}/manage/stateTest", func(w http.ResponseWriter, r *http.Request) { //обработчик проверки всего State (страничка)
 	//	http.ServeFile(w, r, resourcePath+"/stateTest.html")
 	//}).Methods("GET")
 	//subRout.HandleFunc("/{slug}/manage/stateTest", whandlers.ControlTestState).Methods("POST") //обработчик проверки структуры State
 	//
 
-	//subRout.HandleFunc("/{slug}/manage/serverLog", func(w http.ResponseWriter, r *http.Request) { //обработка лог файлов сервера (страничка)
-	//	http.ServeFile(w, r, resourcePath+"/serverLog.html")
-	//}).Methods("GET")
-	//subRout.HandleFunc("/{slug}/manage/serverLog", whandlers.DisplayServerLogFile).Methods("POST")     //обработчик по выгрузке лог файлов сервера
-	//subRout.HandleFunc("/{slug}/manage/serverLog/info", whandlers.DisplayServerLogInfo).Methods("GET") //обработчик выбранного лог файла сервера
-	//
+	mainRouter.GET("/:slug/manage/serverLog", func(c *gin.Context) { //обработка лог файлов сервера (страничка)
+		c.HTML(http.StatusOK, "serverLog.html", gin.H{"message": "serverLog page"})
+	})
+	mainRouter.POST("/:slug/manage/serverLog", handlers.DisplayServerLogFile)     //обработчик по выгрузке лог файлов сервера
+	mainRouter.GET("/:slug/manage/serverLog/info", handlers.DisplayServerLogInfo) //обработчик выбранного лог файла сервера
 
 	//subRout.HandleFunc("/{slug}/manage/crossCreator", func(w http.ResponseWriter, r *http.Request) { //обработка проверки/создания каталога карты перекрестков (страничка)
 	//	http.ServeFile(w, r, resourcePath+"/crossCreator.html")
@@ -128,14 +127,8 @@ func StartServer(conf *ServerConf) {
 	mainRouter.GET("/:slug/map/deviceLog", func(c *gin.Context) { //обработка лога устройства (страничка)
 		c.HTML(http.StatusOK, "deviceLog.html", gin.H{"message": "crossEdit page"})
 	})
-	//subRout.HandleFunc("/{slug}/map/deviceLog", func(w http.ResponseWriter, r *http.Request) { //обработка лога устройства (страничка)
-	//	http.ServeFile(w, r, resourcePath+"/crossEdit.html")
-	//}).Methods("GET")
 	mainRouter.POST("/:slug/map/deviceLog", handlers.DisplayDeviceLogFile) //обработка лога устройства
-	//subRout.HandleFunc("/{slug}/map/deviceLog", whandlers.DisplayDeviceLogFile).Methods("POST") //обработка лога устройства
-	mainRouter.POST("/:slug/map/deviceLog/info", handlers.LogDeviceInfo) //обработка лога устройства по выбранному интеревалу времени
-	//subRout.HandleFunc("/{slug}/map/deviceLog/info", whandlers.LogDeviceInfo).Methods("POST")   //обработка лога устройства по выбранному интеревалу времени
-	//
+	mainRouter.POST("/:slug/map/deviceLog/info", handlers.LogDeviceInfo)   //обработка лога устройства по выбранному интеревалу времени
 
 	//subRout.HandleFunc("/{slug}/license", func(w http.ResponseWriter, r *http.Request) { //обработка работы с лицензиями (страничка)
 	//	http.ServeFile(w, r, resourcePath+"/license.html")
