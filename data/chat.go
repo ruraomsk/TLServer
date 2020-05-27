@@ -1,12 +1,14 @@
 package data
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
 	"time"
 )
 
 type Message struct {
+	Type    string    `json:"type"`
 	From    string    `json:"from"`
 	To      string    `json:"to"`
 	Message string    `json:"message"`
@@ -14,23 +16,67 @@ type Message struct {
 }
 
 type ErrorMessage struct {
+	Type  string `json:"type"`
 	User  string `json:"user"`
 	Error string `json:"error"`
+}
+
+type UsersInfo struct {
+	Type  string          `json:"type"`
+	Users map[string]bool `json:"users"`
+}
+
+type StatusUser struct {
+	Type   string `json:"type"`
+	User   string `json:"user"`
+	Status string `json:"status"`
+}
+
+type AllUsers struct {
+	Type  string   `json:"type"`
+	Users []string `json:"users"`
 }
 
 var Connections map[*websocket.Conn]string
 var Names UsersInfo
 
-type UsersInfo struct {
-	Users map[string]bool `json:"Users"`
+var (
+	messageInfo   = "message"
+	errorMessage  = "error"
+	statusInfo    = "status"
+	statusOnline  = "online"
+	statusOffline = "offline"
+	allUsers      = "users"
+
+	errNoAccessWithDatabase = "no access with database"
+)
+
+func (message *Message) toStruct(str []byte) (err error) {
+	err = json.Unmarshal(str, message)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (status *StatusUser) send() {
+	for conn := range Connections {
+		_ = conn.WriteJSON(status)
+	}
 }
 
 func (myUser *UsersInfo) add(newUser string) {
 	myUser.Users[newUser] = true
 }
 
-func (myUser *UsersInfo) delete(delUser string) {
-	delete(myUser.Users, delUser)
+func (myUser *UsersInfo) del(outUser string) {
+	delete(myUser.Users, outUser)
+}
+
+func (myUser *UsersInfo) send() {
+	for conn := range Connections {
+		_ = conn.WriteJSON(myUser)
+	}
 }
 
 func sendAllUsers(users []int) {
@@ -42,20 +88,24 @@ func sendAllUsers(users []int) {
 	}
 }
 
-var (
-	errNoAccessWithDatabase = "no access with database"
-)
-
 func ChatReader(conn *websocket.Conn, mapContx map[string]string) {
 	Connections[conn] = mapContx["login"]
 
+	//все пользователи
 	users, err := getAllUsers()
 	if err != nil {
-		var mess = ErrorMessage{User: mapContx["login"], Error: errNoAccessWithDatabase}
+		var mess = ErrorMessage{User: mapContx["login"], Error: errNoAccessWithDatabase, Type: errorMessage}
 		_ = conn.WriteJSON(mess)
 	}
-
 	_ = conn.WriteJSON(users)
+
+	//пользователи онлайн
+	//Names.add(mapContx["login"])
+	//Names.Type = online
+	//Names.send()
+
+	var userStatus = StatusUser{Status: statusOnline, Type: statusInfo, User: mapContx["login"]}
+	userStatus.send()
 
 	fmt.Println(Connections)
 
@@ -64,39 +114,50 @@ func ChatReader(conn *websocket.Conn, mapContx map[string]string) {
 		_, p, err := conn.ReadMessage()
 		if err != nil {
 			delete(Connections, conn)
+			//Names.del(mapContx["login"])
+			//Names.send()
+			userStatus.Status = statusOffline
+			userStatus.send()
+			fmt.Println(Connections)
 			return
 		}
-
-		var MessageFrom Message
-		MessageFrom.From = Connections[conn]
-		MessageFrom.To = "Global"
-		MessageFrom.Message = string(p)
-		MessageFrom.Time = time.Now()
-
+		var messageFrom Message
+		err = messageFrom.toStruct(p)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
 		// print out that message for clarity
-		fmt.Println(string(p))
-		fmt.Println(len(Connections))
-
 		switch {
-		case MessageFrom.To == "Global":
+		case messageFrom.To == "Global":
 			{
-				if err := saveMessage(MessageFrom); err != nil {
-					var mess = ErrorMessage{User: MessageFrom.From, Error: "Сообщение не доставленно попробуйте еще раз"}
-					_ = conn.WriteJSON(mess)
+				if err := saveMessage(messageFrom); err != nil {
+					var mess = ErrorMessage{User: messageFrom.From, Error: "Сообщение не доставленно попробуйте еще раз", Type: errorMessage}
+					err = conn.WriteJSON(mess)
 				}
 				for connect := range Connections {
-					if err := connect.WriteJSON(MessageFrom); err != nil {
+					if err := connect.WriteJSON(messageFrom); err != nil {
 						delete(Connections, connect)
+						userStatus.Status = statusOffline
+						userStatus.send()
+						//Names.del(mapContx["login"])
+						//Names.send()
+						fmt.Println(Connections)
 						return
 					}
 				}
 			}
-		case MessageFrom.To != "Global":
+		case messageFrom.To != "Global":
 			{
+				if err := saveMessage(messageFrom); err != nil {
+					var mess = ErrorMessage{User: messageFrom.From, Error: "Сообщение не доставленно попробуйте еще раз", Type: errorMessage}
+					err = conn.WriteJSON(mess)
+				}
 				for connect, state := range Connections {
-					if MessageFrom.To == state || MessageFrom.From == mapContx["login"] {
-						if err := connect.WriteJSON(MessageFrom); err != nil {
+					if messageFrom.To == state || messageFrom.From == mapContx["login"] {
+						if err := connect.WriteJSON(messageFrom); err != nil {
 							delete(Connections, connect)
+							userStatus.Status = statusOffline
+							userStatus.send()
 							return
 						}
 					}
@@ -107,25 +168,27 @@ func ChatReader(conn *websocket.Conn, mapContx map[string]string) {
 }
 
 func saveMessage(mess Message) error {
-	_, err := db.DB().Query(`INSERT INTO public.chat (time, fromu, tou, message) VALUES ($1, $2, $3, $4)`, mess.Time, mess.From, mess.To, mess.Message)
+	_, err := db.DB().Exec(`INSERT INTO public.chat (time, fromu, tou, message) VALUES ($1, $2, $3, $4)`, mess.Time, mess.From, mess.To, mess.Message)
+
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func getAllUsers() ([]string, error) {
+func getAllUsers() (AllUsers, error) {
 	var (
 		tempUser string
-		users    []string
+		users    AllUsers
 	)
 	rows, err := db.DB().Query(`SELECT login FROM public.accounts`)
 	if err != nil {
-		return nil, err
+		return users, err
 	}
 	for rows.Next() {
 		_ = rows.Scan(&tempUser)
-		users = append(users, tempUser)
+		users.Users = append(users.Users, tempUser)
 	}
+	users.Type = allUsers
 	return users, nil
 }
