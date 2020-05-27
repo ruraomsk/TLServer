@@ -53,10 +53,7 @@ ymaps.ready(function () {
     //Выход из аккаунта
     $('#logoutButton').on('click', function() {
         $.ajax({
-            type: 'GET',
-            beforeSend: function (request) {
-                request.setRequestHeader('Authorization', 'Bearer ' + sessionStorage.getItem('token'));
-            },
+            type: 'POST',
             url: window.location.href + '/logOut',
             success: function (data) {
                location.href = window.location.origin;

@@ -12,7 +12,7 @@ import (
 
 //DeviceLog описание таблицы, храняшей лог от устройств
 type DeviceLog struct {
-	Time    time.Time `json:"time"`    //время записи
+	Time    time.Time `json:"Time"`    //время записи
 	ID      int       `json:"id"`      //id устройства которое прислало информацию
 	Text    string    `json:"text"`    //информация о событие
 	Devices BusyArm   `json:"devices"` //информация о девайсе

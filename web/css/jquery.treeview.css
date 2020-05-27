@@ -1,0 +1,46 @@
+	.treeview,.treeview *{
+		user-select: none;
+		margin:0px;padding: 0px;box-sizing: border-box;
+	}
+
+
+	.treeview p{
+		padding-left:20px;
+		margin: 0px;
+	}
+	
+
+	.treeview .item{
+		cursor:pointer;
+		display: inline-block;
+		padding: 4px;
+		width: calc(100% - 30px)
+	}
+	.treeview .item:hover{
+		background: #DDD;
+	}
+
+	.treeview .group [fold-button]{
+		display: inline-block;
+		padding: 10px;
+		width: 30px;
+		text-align: center;
+		border-radius: 3px;
+		cursor: pointer;
+	}
+	.treeview .group [fold-button]:hover{
+		background: #AAA;
+	}
+
+	.treeview .item i {
+		margin-right: 10px;
+	}
+	.treeview .item[check-value="2"]{
+		color: #595;
+	}
+	.treeview .item[check-value="1"]{
+		color: #5A5;
+	}
+	.treeview .item[check-value="0"]{
+		color: #333;
+	}

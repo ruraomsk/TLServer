@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"github.com/JanFant/newTLServer/internal/app/handlers"
 	"github.com/JanFant/newTLServer/internal/app/middleWare"
+	"github.com/JanFant/newTLServer/internal/model/chat"
 	"github.com/JanFant/newTLServer/internal/model/logger"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	"net/http"
 )
 
@@ -14,7 +16,7 @@ var err error
 
 //StartServer запуск сервера
 func StartServer(conf *ServerConf) {
-	//data.Connections = make(map[*websocket.Conn]string)
+	chat.Connections = make(map[*websocket.Conn]string)
 	//data.Names.Users = make(map[string]bool)
 
 	// Создаем engine для соединений
@@ -43,50 +45,45 @@ func StartServer(conf *ServerConf) {
 	//обязательный общий путь
 	mainRouter := router.Group("/user")
 	mainRouter.Use(middleWare.JwtAuth())
+	mainRouter.Use(middleWare.AccessControl())
 	//subRout.Use(AccessControl) //проверка разрешения на доступ к ресурсу
 
 	mainRouter.GET("/:slug/map", func(c *gin.Context) { //работа с основной страничкой карты
 		c.HTML(http.StatusOK, "map.html", gin.H{"message": "map page"})
 	})
 	mainRouter.POST("/:slug/map", handlers.BuildMapPage)                         //запрос информации для заполнения странички с картой
-	mainRouter.GET("/:slug/map/logOut", handlers.LoginAccOut)                    //обработчик выхода из системы
+	mainRouter.POST("/:slug/map/logOut", handlers.LoginAccOut)                   //обработчик выхода из системы
 	mainRouter.POST("/:slug/map/update", handlers.UpdateMapPage)                 //обновление странички с данными которые попали в область пользователя
 	mainRouter.POST("/:slug/map/locationButton", handlers.LocationButtonMapPage) //обработчик для формирования новых координат отображения карты
 
-	//subRout.HandleFunc("/{slug}/chat", func(w http.ResponseWriter, r *http.Request) { //начальная страница
-	//	http.ServeFile(w, r, resourcePath+"/chat.html")
-	//})
-	//subRout.HandleFunc("/{slug}/chatTest", func(w http.ResponseWriter, r *http.Request) { //начальная страница
-	//	http.ServeFile(w, r, resourcePath+"/chatTest.html")
-	//})
-	//subRout.HandleFunc("/{slug}/chatW", whandlers.Chat).Methods("GET")
-	//
+	mainRouter.GET("/:slug/chat", func(c *gin.Context) { //работа с основной страничкой чата (страница)
+		c.HTML(http.StatusOK, "chat.html", gin.H{"message": "chat page"})
+	})
+	mainRouter.GET("/:slug/chatW", handlers.ChatEngine) //обработчик веб сокета для чата
 
-	//subRout.HandleFunc("/{slug}/techSupp", func(w http.ResponseWriter, r *http.Request) { //работа со страничкой тех поддержки
-	//	http.ServeFile(w, r, resourcePath+"/techSupp.html")
-	//}).Methods("GET")
-	//subRout.HandleFunc("/{slug}/techSupp/send", whandlers.TechSupp).Methods("POST") //обработчик подключения email тех поддержки
-	//
+	mainRouter.GET("/:slug/techSupp", func(c *gin.Context) { //работа со страничкой тех поддержки
+		c.HTML(http.StatusOK, "techSupp.html", gin.H{"message": "map page"})
+	})
+	mainRouter.POST("/:slug/techSupp/send", handlers.TechSupp) //обработчик подключения email тех поддержки
 
-	//subRout.HandleFunc("/{slug}/cross", func(w http.ResponseWriter, r *http.Request) { //работа со странички перекрестков (страничка)
-	//	http.ServeFile(w, r, resourcePath+"/cross.html")
-	//}).Methods("GET")
-	//subRout.HandleFunc("/{slug}/cross", whandlers.BuildCross).Methods("POST")       //информация о состоянии перекрёстка
-	//subRout.HandleFunc("/{slug}/cross/dev", whandlers.DevCrossInfo).Methods("POST") //информация о состоянии перекрестка (информация о дейвайсе)
-	//
-	//subRout.HandleFunc("/{slug}/cross/DispatchControlButtons", whandlers.DispatchControlButtons).Methods("POST") //обработчик диспетчерского управления (отправка команд управления)
-	//
-	//subRout.HandleFunc("/{slug}/cross/control", func(w http.ResponseWriter, r *http.Request) { //расширеная страничка настройки перекрестка (страничка)
-	//	http.ServeFile(w, r, resourcePath+"/crossControl.html")
-	//}).Methods("GET")
-	//subRout.HandleFunc("/{slug}/cross/control", whandlers.ControlCross).Methods("POST")                     //данные по расширенной странички перекрестков
-	//subRout.HandleFunc("/{slug}/cross/control/close", whandlers.ControlCloseCross).Methods("GET")           //обработчик закрытия перекрестка
-	//subRout.HandleFunc("/{slug}/cross/control/editable", whandlers.ControlEditableCross).Methods("GET")     //обработчик контроля управления перекрестка
-	//subRout.HandleFunc("/{slug}/cross/control/sendButton", whandlers.ControlSendButton).Methods("POST")     //обработчик приема данных от пользователя для отправки на устройство
-	//subRout.HandleFunc("/{slug}/cross/control/checkButton", whandlers.ControlCheckButton).Methods("POST")   //обработчик проверки данных
-	//subRout.HandleFunc("/{slug}/cross/control/createButton", whandlers.ControlCreateButton).Methods("POST") //обработчик создания перекрестка
-	//subRout.HandleFunc("/{slug}/cross/control/deleteButton", whandlers.ControlDeleteButton).Methods("POST") //обработчик обработчик удаления перекрсетка
-	//
+	//---------------------------------------------------------------------------------------------------------------------------------------------------
+	mainRouter.GET("/:slug/cross", func(c *gin.Context) { //работа со странички перекрестков (страничка)
+		c.HTML(http.StatusOK, "cross.html", gin.H{"message": "cross page"})
+	})
+	mainRouter.POST("/:slug/cross", handlers.BuildCross)                                    //информация о состоянии перекрёстка
+	mainRouter.POST("/:slug/cross/dev", handlers.DevCrossInfo)                              //информация о состоянии перекрестка (информация о дейвайсе)
+	mainRouter.POST("/:slug/cross/DispatchControlButtons", handlers.DispatchControlButtons) //обработчик диспетчерского управления (отправка команд управления)
+
+	mainRouter.GET("/:slug/cross/control", func(c *gin.Context) { //расширеная страничка настройки перекрестка (страничка)
+		c.HTML(http.StatusOK, "crossControl.html", gin.H{"message": "crossControl page"})
+	})
+	mainRouter.POST("/:slug/cross/control", handlers.ControlCross)                     //данные по расширенной странички перекрестков
+	mainRouter.GET("/:slug/cross/control/close", handlers.ControlCloseCross)           //обработчик закрытия перекрестка
+	mainRouter.GET("/:slug/cross/control/editable", handlers.ControlEditableCross)     //обработчик контроля управления перекрестка
+	mainRouter.POST("/:slug/cross/control/sendButton", handlers.ControlSendButton)     //обработчик приема данных от пользователя для отправки на устройство
+	mainRouter.POST("/:slug/cross/control/checkButton", handlers.ControlCheckButton)   //обработчик проверки данных
+	mainRouter.POST("/:slug/cross/control/createButton", handlers.ControlCreateButton) //обработчик создания перекрестка
+	mainRouter.POST("/:slug/cross/control/deleteButton", handlers.ControlDeleteButton) //обработчик обработчик удаления перекрсетка
 
 	mainRouter.GET("/:slug/manage", func(c *gin.Context) { //обработка создание и редактирования пользователя (страничка)
 		c.HTML(http.StatusOK, "manage.html", gin.H{"message": "manage page"})
@@ -103,11 +100,10 @@ func StartServer(conf *ServerConf) {
 	mainRouter.POST("/:slug/manage/crossEditControl", handlers.CrossEditInfo)      //обработчик по управлению занятых перекрестков
 	mainRouter.POST("/:slug/manage/crossEditControl/free", handlers.CrossEditFree) //обработчик по управлению освобождению перекрестка
 
-	//subRout.HandleFunc("/{slug}/manage/stateTest", func(w http.ResponseWriter, r *http.Request) { //обработчик проверки всего State (страничка)
-	//	http.ServeFile(w, r, resourcePath+"/stateTest.html")
-	//}).Methods("GET")
-	//subRout.HandleFunc("/{slug}/manage/stateTest", whandlers.ControlTestState).Methods("POST") //обработчик проверки структуры State
-	//
+	mainRouter.GET("/:slug/manage/stateTest", func(c *gin.Context) { //обработчик проверки всего State (страничка)
+		c.HTML(http.StatusOK, "stateTest.html", gin.H{"message": "stateTest page"})
+	})
+	mainRouter.POST("/:slug/manage/stateTest", handlers.ControlTestState) //обработчик проверки структуры State
 
 	mainRouter.GET("/:slug/manage/serverLog", func(c *gin.Context) { //обработка лог файлов сервера (страничка)
 		c.HTML(http.StatusOK, "serverLog.html", gin.H{"message": "serverLog page"})
@@ -115,14 +111,14 @@ func StartServer(conf *ServerConf) {
 	mainRouter.POST("/:slug/manage/serverLog", handlers.DisplayServerLogFile)     //обработчик по выгрузке лог файлов сервера
 	mainRouter.GET("/:slug/manage/serverLog/info", handlers.DisplayServerLogInfo) //обработчик выбранного лог файла сервера
 
-	//subRout.HandleFunc("/{slug}/manage/crossCreator", func(w http.ResponseWriter, r *http.Request) { //обработка проверки/создания каталога карты перекрестков (страничка)
-	//	http.ServeFile(w, r, resourcePath+"/crossCreator.html")
-	//}).Methods("GET")
-	//subRout.HandleFunc("/{slug}/manage/crossCreator", whandlers.MainCrossCreator).Methods("POST")                    //обработка проверки/создания каталога карты перекрестков
-	//subRout.HandleFunc("/{slug}/manage/crossCreator/checkAllCross", whandlers.CheckAllCross).Methods("POST")         //обработка проверки наличия всех каталогов и файлов необходимых для построения перекрестков
-	//subRout.HandleFunc("/{slug}/manage/crossCreator/checkSelected", whandlers.CheckSelectedDirCross).Methods("POST") //обработка проверки наличия выбранных каталогов и файлов необходимых для построения перекрестков
-	//subRout.HandleFunc("/{slug}/manage/crossCreator/makeSelected", whandlers.MakeSelectedDirCross).Methods("POST")   //обработка создания каталога карты перекрестков
-	//
+	mainRouter.GET("/:slug/manage/crossCreator", func(c *gin.Context) { //обработка проверки/создания каталога карты перекрестков (страничка)
+		c.HTML(http.StatusOK, "crossCreator.html", gin.H{"message": "crossCreator page"})
+	})
+
+	mainRouter.POST("/:slug/manage/crossCreator", handlers.MainCrossCreator)                    //обработка проверки/создания каталога карты перекрестков
+	mainRouter.POST("/:slug/manage/crossCreator/checkAllCross", handlers.CheckAllCross)         //обработка проверки наличия всех каталогов и файлов необходимых для построения перекрестков
+	mainRouter.POST("/:slug/manage/crossCreator/checkSelected", handlers.CheckSelectedDirCross) //обработка проверки наличия выбранных каталогов и файлов необходимых для построения перекрестков
+	mainRouter.POST("/:slug/manage/crossCreator/makeSelected", handlers.MakeSelectedDirCross)   //обработка создания каталога карты перекрестков
 
 	mainRouter.GET("/:slug/map/deviceLog", func(c *gin.Context) { //обработка лога устройства (страничка)
 		c.HTML(http.StatusOK, "deviceLog.html", gin.H{"message": "crossEdit page"})
@@ -130,17 +126,11 @@ func StartServer(conf *ServerConf) {
 	mainRouter.POST("/:slug/map/deviceLog", handlers.DisplayDeviceLogFile) //обработка лога устройства
 	mainRouter.POST("/:slug/map/deviceLog/info", handlers.LogDeviceInfo)   //обработка лога устройства по выбранному интеревалу времени
 
-	//subRout.HandleFunc("/{slug}/license", func(w http.ResponseWriter, r *http.Request) { //обработка работы с лицензиями (страничка)
-	//	http.ServeFile(w, r, resourcePath+"/license.html")
-	//}).Methods("GET")
-	//subRout.HandleFunc("/{slug}/license", whandlers.LicenseInfo).Methods("POST")               //обработчик сбора начальной информации
-	//subRout.HandleFunc("/{slug}/license/create", whandlers.LicenseCreateToken).Methods("POST") //обработка создания лицензий
-	//subRout.HandleFunc("/{slug}/license/newToken", whandlers.LicenseNewKey).Methods("POST")    //обработчик сохранения нового токена
-	//
-
-	////тест просто тест!
-	//subRout.HandleFunc("/{slug}/testtoken", whandlers.TestToken).Methods("POST")
-	//subRout.HandleFunc("/{slug}/test", whandlers.TestHello).Methods("POST")
+	mainRouter.GET("/:slug/license", func(c *gin.Context) { //обработка работы с лицензиями (страничка)
+		c.HTML(http.StatusOK, "license.html", gin.H{"message": "license page"})
+	})
+	mainRouter.POST("/:slug/license", handlers.LicenseInfo)            //обработчик сбора начальной информаци
+	mainRouter.POST("/:slug/license/newToken", handlers.LicenseNewKey) //обработчик сохранения нового токена
 
 	//------------------------------------------------------------------------------------------------------------------
 	//роутер для фаил сервера, он закрыт токеном, скачивать могут только авторизированные пользователи

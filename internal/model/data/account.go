@@ -12,7 +12,6 @@ import (
 	"github.com/go-ozzo/ozzo-validation/is"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
-	"regexp"
 	"strings"
 	"time"
 )
@@ -98,12 +97,12 @@ func LogOut(mapContx map[string]string) u.Response {
 	if err != nil {
 		return u.Message(http.StatusInternalServerError, "Connection to DB error. Please try again")
 	}
-	resp := u.Message(http.StatusOK, "Log out")
+	resp := u.Message(http.StatusOK, "log out")
 	return resp
 }
 
 //Validate проверка аккаунда в бд
-func (data *Account) Validate1() error {
+func (data *Account) Validate() error {
 	err := validation.ValidateStruct(data,
 		validation.Field(&data.Login, validation.Required, is.ASCII, validation.Length(4, 100)),
 		validation.Field(&data.Password, validation.Required, is.ASCII, validation.Length(6, 100)),
@@ -123,33 +122,9 @@ func (data *Account) Validate1() error {
 	return nil
 }
 
-//Validate проверка аккаунда в бд
-func (data *Account) Validate() (u.Response, bool) {
-
-	if data.Login != regexp.QuoteMeta(data.Login) {
-		return u.Message(http.StatusBadRequest, "login contains invalid characters"), false
-	}
-	if data.Password != regexp.QuoteMeta(data.Password) {
-		return u.Message(http.StatusBadRequest, "Password contains invalid characters"), false
-	}
-	if len(data.Password) < 6 {
-		return u.Message(http.StatusBadRequest, "Password is required"), false
-	}
-	//логин аккаунта должен быть уникальным
-	temp := &Account{}
-	rows, err := GetDB().Query(`SELECT id, login, password FROM public.accounts WHERE login=$1`, data.Login)
-	if rows != nil && err != nil {
-		return u.Message(http.StatusInternalServerError, "Connection error, please try again"), false
-	}
-	if temp.Login != "" {
-		return u.Message(http.StatusBadRequest, "login already in use by another user."), false
-	}
-	return u.Message(http.StatusOK, "Requirement passed"), true
-}
-
 //Create создание аккаунта для пользователей
 func (data *Account) Create(privilege Privilege) u.Response {
-	if err := data.Validate1(); err != nil {
+	if err := data.Validate(); err != nil {
 		return u.Message(http.StatusBadRequest, err.Error())
 	}
 	//Отдаем ключ для yandex map

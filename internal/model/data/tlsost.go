@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/JanFant/TLServer/logger"
-	u "github.com/JanFant/TLServer/utils"
 	"github.com/JanFant/newTLServer/internal/model/locations"
+	"github.com/JanFant/newTLServer/internal/model/logger"
+	u "github.com/JanFant/newTLServer/internal/utils"
 	agS_pudge "github.com/ruraomsk/ag-server/pudge"
+	"net/http"
 )
 
 //TrafficLights информация о светофоре
@@ -128,7 +129,7 @@ func ConvertDevStrToStruct(str string) (controller agS_pudge.Controller, err err
 }
 
 //GetCrossInfo сбор информации для пользователя о выбранном перекрестке
-func GetCrossInfo(TLignt TrafficLights) map[string]interface{} {
+func GetCrossInfo(TLignt TrafficLights) u.Response {
 	var (
 		dgis     string
 		sqlStr   string
@@ -136,21 +137,21 @@ func GetCrossInfo(TLignt TrafficLights) map[string]interface{} {
 	)
 
 	sqlStr = fmt.Sprintf("SELECT area, subarea, idevice, dgis, describ, state FROM public.cross WHERE region = %v and id = %v and area = %v", TLignt.Region.Num, TLignt.ID, TLignt.Area.Num)
-	rowsTL, _ := GetDB().Query(sqlStr)
+	rowsTL := GetDB().QueryRow(sqlStr)
 	err := rowsTL.Scan(&TLignt.Area.Num, &TLignt.Subarea, &TLignt.Idevice, &dgis, &TLignt.Description, &stateStr)
 	if err != nil {
 		logger.Error.Println("|Message: No result at these points, table cross", err.Error())
-		return u.Message(false, "No result at these points")
+		return u.Message(http.StatusInternalServerError, "no result at these points")
 	}
 	TLignt.Points.StrToFloat(dgis)
 	//Состояние светофора!
 	rState, err := ConvertStateStrToStruct(stateStr)
 	if err != nil {
 		logger.Error.Println("|Message: Failed to parse cross information", err.Error())
-		return u.Message(false, "Failed to parse cross information")
+		return u.Message(http.StatusInternalServerError, "failed to parse cross information")
 	}
 
-	resp := u.Message(true, "Cross information")
+	resp := u.Message(http.StatusOK, "cross information")
 
 	CacheInfo.Mux.Lock()
 	TLignt.Region.NameRegion = CacheInfo.MapRegion[TLignt.Region.Num]
@@ -158,34 +159,33 @@ func GetCrossInfo(TLignt TrafficLights) map[string]interface{} {
 	TLignt.Sost.Num = rState.StatusDevice
 	TLignt.Sost.Description = CacheInfo.MapTLSost[TLignt.Sost.Num]
 	CacheInfo.Mux.Unlock()
-	resp["DontWrite"] = "true"
-	resp["cross"] = TLignt
-	resp["state"] = rState
+	resp.Obj["DontWrite"] = "true"
+	resp.Obj["cross"] = TLignt
+	resp.Obj["state"] = rState
 	return resp
 }
 
 //GetCrossDevInfo сбор информации для пользователя о выбранном перекрестке (информацию о девайсе)
-func GetCrossDevInfo(idevice string) map[string]interface{} {
+func GetCrossDevInfo(idevice string) u.Response {
 	var (
 		sqlStr string
 		devStr string
 	)
-	resp := u.Message(true, "Cross information")
+	resp := u.Message(http.StatusOK, "cross information")
 	sqlStr = fmt.Sprintf(`SELECT device FROM public.devices WHERE id = %v`, idevice)
 	err := GetDB().QueryRow(sqlStr).Scan(&devStr)
 	if err != nil {
 		logger.Error.Println("|Message: No result at these points, table device", err.Error())
-		resp["message"] = "No device at these points"
-		return u.Message(false, "No result at these points")
+		return u.Message(http.StatusBadRequest, "no result at these points")
 	} else {
 		device, err := ConvertDevStrToStruct(devStr)
 		if err != nil {
 			logger.Error.Println("|Message: Failed to parse cross information", err.Error())
-			return u.Message(false, "Failed to parse cross information")
+			return u.Message(http.StatusInternalServerError, "failed to parse cross information")
 		}
-		resp["device"] = device
+		resp.Obj["device"] = device
 	}
-	resp["DontWrite"] = "true"
+	resp.Obj["DontWrite"] = "true"
 	return resp
 }
 

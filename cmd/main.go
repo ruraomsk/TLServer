@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"github.com/BurntSushi/toml"
 	"github.com/JanFant/newTLServer/internal/app/apiserver"
+	"github.com/JanFant/newTLServer/internal/app/tcpConnect"
 	"github.com/JanFant/newTLServer/internal/model/config"
 	"github.com/JanFant/newTLServer/internal/model/data"
+	"github.com/JanFant/newTLServer/internal/model/license"
 	"github.com/JanFant/newTLServer/internal/model/logger"
 	"os"
 )
@@ -44,8 +46,7 @@ func main() {
 	}
 
 	////Запуск если есть файл с токеном лицензии license.key
-	//license.LicenseCheck()
-	//
+	license.LicenseCheck()
 
 	////Подключение к базе данных
 	dbConn, err := data.ConnectDB()
@@ -61,7 +62,7 @@ func main() {
 
 	//раз в час обновляем данные регионов, и состояний
 	go data.CacheDataUpdate()
-	//tcpConnect.TCPClientStart(data.GlobalConfig.TCPConfig)
+	tcpConnect.TCPClientStart(config.GlobalConfig.TCPConfig)
 	////----------------------------------------------------------------------
 	//
 	//запуск сервера

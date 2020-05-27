@@ -38,7 +38,7 @@ type EditCrossInfo struct {
 	Login    string    `json:"login"`    //логин пользователя
 	EditFlag bool      `json:"editFlag"` //флаг разрешения на редактирование перекрестка
 	Kick     bool      `json:"kick"`     //флаг закрытия арма у данного пользователя
-	time     time.Time //метка времени
+	Time     time.Time //метка времени
 }
 
 //toStr конвертировать в строку
@@ -65,7 +65,7 @@ func DisplayCrossEditInfo(mapContx map[string]string, db *sqlx.DB) u.Response {
 	resp := u.Message(http.StatusOK, "display information about changing crosses")
 	BusyArmInfo.Mux.Lock()
 	for busy, edit := range BusyArmInfo.MapBusyArm {
-		if edit.time.Add(time.Second * 10).Before(time.Now()) {
+		if edit.Time.Add(time.Second * 10).Before(time.Now()) {
 			delete(BusyArmInfo.MapBusyArm, busy)
 			continue
 		}
@@ -105,7 +105,7 @@ func CleanMapBusyArm() {
 	BusyArmInfo.Mux.Lock()
 	defer BusyArmInfo.Mux.Unlock()
 	for busyArm, editCross := range BusyArmInfo.MapBusyArm {
-		if editCross.time.Add(time.Second * 10).Before(time.Now()) {
+		if editCross.Time.Add(time.Second * 10).Before(time.Now()) {
 			delete(BusyArmInfo.MapBusyArm, busyArm)
 		}
 	}

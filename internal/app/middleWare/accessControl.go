@@ -1,19 +1,20 @@
 package middleWare
 
 import (
+	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
 	"strings"
 
-	"github.com/JanFant/TLServer/data"
-	u "github.com/JanFant/TLServer/utils"
+	"github.com/JanFant/newTLServer/internal/model/data"
+	u "github.com/JanFant/newTLServer/internal/utils"
 )
 
 //AccessControl проверка разрешен ли пользователя доступ к запрашиваемому ресурсу
-var AccessControl = func(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+var AccessControl = func() gin.HandlerFunc {
+	return func(c *gin.Context) {
 		//достаем разрешенные группы маршрутов из контекста
-		mapContx := u.ParserInterface(r.Context().Value("info"))
+		mapContx := u.ParserInterface(c.Value("info"))
 		var permission []int
 		permStr := mapContx["perm"]
 		permStr = strings.TrimPrefix(permStr, "[")
@@ -24,14 +25,16 @@ var AccessControl = func(next http.Handler) http.Handler {
 		}
 
 		//убираем из url лишнее
-		url := r.URL.Path
+		url := c.Request.URL.Path
 		url = strings.TrimPrefix(url, "/user/")
 		url = url[strings.Index(url, "/"):]
 
 		//если маршрут не найдет отправляем дальше, там разберутся (404)
 		rout, ok := data.RoleInfo.MapRoutes[url]
+
 		if !ok {
-			http.ServeFile(w, r, data.GlobalConfig.ResourcePath+"/notFound.html")
+			c.HTML(http.StatusNotFound, "notFound.html", gin.H{"message": "page not found"})
+			c.Abort()
 		}
 
 		access := false
@@ -48,14 +51,15 @@ var AccessControl = func(next http.Handler) http.Handler {
 
 		//если все нормально отправляем дальше, или запрещаем доступ
 		if access {
-			next.ServeHTTP(w, r)
+			c.Next()
 		} else {
-			resp := u.Message(false, "Access denied")
-			resp["logLogin"] = mapContx["login"]
-			w.WriteHeader(http.StatusForbidden)
-			u.Respond(w, r, resp)
+			resp := u.Message(http.StatusForbidden, "access denied")
+			resp.Obj["logLogin"] = mapContx["login"]
+			c.HTML(http.StatusForbidden, "accessDenied.html", gin.H{"message": "accessDenied"})
+			u.SendRespond(c, resp)
+			c.Abort()
 			return
 		}
 
-	})
+	}
 }

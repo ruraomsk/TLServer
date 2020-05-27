@@ -147,7 +147,7 @@
     {
       "id": 2,
       "permission": 6,
-      "path": "/map/serverLogOut",
+      "path": "/map/logOut",
       "description": "обработчик выхода из системы"
     },
     {
