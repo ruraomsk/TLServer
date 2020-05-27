@@ -1,0 +1,32 @@
+#TOML doc :D
+
+# AsudServ@gmail.com - mail  H49qFgUDTzSUQFYmoVwf - pass
+
+logger_path = "logfiles"
+static_path = "static"
+web_path = "web"
+ssl_path = "ssl"
+#server_ip = ":8082"
+server_ip = ":8085"
+ya_key = "65162f5f-2d15-41d1-a881-6c1acf34cfa1"
+token_password = "123456789"
+
+#настройка подключения к тсп серверу обемена командами
+[tcpServer]
+tcpServerAddress = "192.168.115.115"
+portState = ":2002"
+portArmCommand = ":2001"
+portMessageInfo = ":2003"
+
+#настройки для постгреса
+[database]
+db_name = "agserv"
+#db_name = "postgres"
+db_password = "162747"
+db_user = "postgres"
+db_type = "postgres"
+db_host = "192.168.115.115"
+#db_host = "localhost"
+db_port = "5432"
+db_SetMaxOpenConst = 50
+db_SetMaxIdleConst = 10

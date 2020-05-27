@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Логи устройств</title>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+    <link href="https://unpkg.com/bootstrap-table@1.15.5/dist/bootstrap-table.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.0.4/popper.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://code.jquery.com/jquery-migrate-3.1.0.js"></script>
+    <!--            <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>-->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+    <script src="https://unpkg.com/bootstrap-table@1.15.5/dist/bootstrap-table.min.js"></script>
+    <script src="/file/web/js/deviceLog.js" type="text/javascript"></script>
+    <link rel="icon" type="image/svg" href="/icon/trafficlight.svg">
+</head>
+
+<body>
+<div class="container-fluid mt-2">
+    <div class="row" id="logs">
+    </div>
+    <div class="row w-100">
+        <div class="col-md-6">
+            <table class="table table-bordered"
+                   id="table"
+                   data-show-columns="true"
+                   data-search="true"
+                   data-search-align="left"
+                   data-show-jump-to="true"
+                   data-toggle="table"
+                   data-height="900"
+                   data-click-to-select="true"
+                   data-buttons-align="left">
+                <thead>
+                <tr>
+                    <th class="sorting" data-field="state" data-checkbox="true"></th>
+                    <th data-field="region" data-sortable="true">Регион</th>
+                    <th data-field="area" data-sortable="true">Область</th>
+                    <th data-field="description" data-sortable="true">Описание</th>
+                </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+        <div class="col-md-6">
+            <table class="table table-bordered"
+                   id="logsTable"
+                   data-show-columns="true"
+                   data-search="true"
+                   data-show-jump-to="true"
+                   data-toggle="table"
+                   data-height="900">
+                <thead>
+                <tr>
+                    <th data-field="time" data-sortable="true">Время</th>
+                    <th data-field="cross" data-sortable="true">Перекрёсток</th>
+                    <th data-field="message" data-sortable="true">Событие</th>
+                </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+        <div class="col-md-1">
+        </div>
+    </div>
+</div>
+</body>
+
+</html>

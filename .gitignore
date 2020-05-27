@@ -1,21 +1,8 @@
-.idea
-*.pem
-.rnd
-.env
-config.toml
-*debug_bin
-views/TLsost.js
-views/*
-views/img
-views/cross
-domain.*
-domain.crt
-domain.csr
-domain.key
-frontend/**
+# Created by .ignore support plugin (hsz.mobi)
 
-license.key
-~
-TLServer.exe~
-static/
-TLServer.exe
+
+logfiles/
+logfiles/**
+.idea/dataSources.local.xml
+
+

@@ -1,0 +1,53 @@
+package handlers
+
+import (
+	"github.com/JanFant/newTLServer/internal/model/data"
+	"github.com/JanFant/newTLServer/internal/model/locations"
+	u "github.com/JanFant/newTLServer/internal/utils"
+	"github.com/gin-gonic/gin"
+	"net/http"
+)
+
+//BuildMapPage собираем данные для авторизованного пользователя
+var BuildMapPage = func(c *gin.Context) {
+	account := &data.Account{}
+	mapContx := u.ParserInterface(c.Value("info"))
+	account.Login = mapContx["login"]
+	resp := account.GetInfoForUser()
+	resp.Obj["manageFlag"], _ = data.AccessCheck(mapContx, 1)
+	resp.Obj["logDeviceFlag"], _ = data.AccessCheck(mapContx, 11)
+	u.SendRespond(c, resp)
+}
+
+//UpdateMapPage обновление информации о попавших в область светофорах
+var UpdateMapPage = func(c *gin.Context) {
+	box := &locations.BoxPoint{}
+	if err := c.ShouldBindJSON(&box); err != nil {
+		resp := u.Message(http.StatusBadRequest, "invalid request")
+		u.SendRespond(c, resp)
+		return
+	}
+	tflight := data.GetLightsFromBD(*box)
+	resp := u.Message(http.StatusOK, "Update map data")
+	resp.Obj["DontWrite"] = "true"
+	resp.Obj["tflight"] = tflight
+	u.SendRespond(c, resp)
+}
+
+//LocationButtonMapPage обработка запроса на получение новых координат рабочей области
+var LocationButtonMapPage = func(c *gin.Context) {
+	location := &data.Locations{}
+	if err := c.ShouldBindJSON(&location); err != nil {
+		u.SendRespond(c, u.Message(http.StatusBadRequest, "invalid request"))
+		return
+	}
+	boxPoint, err := location.MakeBoxPoint()
+	if err != nil {
+		u.SendRespond(c, u.Message(http.StatusBadRequest, "invalid request"))
+		return
+	}
+	resp := u.Message(http.StatusOK, "jump to location!")
+	resp.Obj["DontWrite"] = "true"
+	resp.Obj["boxPoint"] = boxPoint
+	u.SendRespond(c, resp)
+}
