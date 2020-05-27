@@ -2,12 +2,13 @@ package crossEdit
 
 import (
 	"fmt"
-	"github.com/jmoiron/sqlx"
 	"net/http"
 	"time"
 
-	"github.com/JanFant/newTLServer/internal/model/logger"
-	u "github.com/JanFant/newTLServer/internal/utils"
+	"github.com/jmoiron/sqlx"
+
+	u "github.com/JanFant/TLServer/internal/utils"
+	"github.com/JanFant/TLServer/logger"
 )
 
 //DeviceLog описание таблицы, храняшей лог от устройств

@@ -2,11 +2,12 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"net/http"
 
-	"github.com/JanFant/newTLServer/internal/model/data"
-	u "github.com/JanFant/newTLServer/internal/utils"
+	"github.com/gin-gonic/gin"
+
+	"github.com/JanFant/TLServer/internal/model/data"
+	u "github.com/JanFant/TLServer/internal/utils"
 )
 
 //ActUpdateAccount обработчик запроса обновления (работа с пользователями)

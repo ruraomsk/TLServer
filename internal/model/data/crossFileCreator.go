@@ -2,15 +2,16 @@ package data
 
 import (
 	"fmt"
-	"github.com/JanFant/newTLServer/internal/model/locations"
 	"io"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 
-	"github.com/JanFant/newTLServer/internal/model/logger"
-	u "github.com/JanFant/newTLServer/internal/utils"
+	"github.com/JanFant/TLServer/internal/model/locations"
+
+	u "github.com/JanFant/TLServer/internal/utils"
+	"github.com/JanFant/TLServer/logger"
 )
 
 //SelectedData общая структура обмена

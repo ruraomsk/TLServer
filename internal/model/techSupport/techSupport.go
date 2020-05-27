@@ -2,10 +2,11 @@ package techSupport
 
 import (
 	"fmt"
-	u "github.com/JanFant/newTLServer/internal/utils"
-	"github.com/jordan-wright/email"
 	"net/http"
 	"net/smtp"
+
+	u "github.com/JanFant/TLServer/internal/utils"
+	"github.com/jordan-wright/email"
 )
 
 type EmailJS struct {

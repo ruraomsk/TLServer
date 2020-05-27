@@ -1,13 +1,14 @@
 package handlers
 
 import (
-	"github.com/JanFant/newTLServer/internal/model/data"
-	"github.com/JanFant/newTLServer/internal/model/logger"
-	"github.com/JanFant/newTLServer/internal/model/serverLog"
-	"github.com/gin-gonic/gin"
 	"net/http"
 
-	u "github.com/JanFant/newTLServer/internal/utils"
+	"github.com/JanFant/TLServer/internal/model/data"
+	"github.com/JanFant/TLServer/internal/model/serverLog"
+	"github.com/JanFant/TLServer/logger"
+	"github.com/gin-gonic/gin"
+
+	u "github.com/JanFant/TLServer/internal/utils"
 )
 
 //DisplayServerLogFile обработчик отображения файлов лога сервера

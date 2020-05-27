@@ -1,11 +1,12 @@
 package handlers
 
 import (
-	"github.com/JanFant/newTLServer/internal/model/crossButtons"
-	"github.com/gin-gonic/gin"
 	"net/http"
 
-	u "github.com/JanFant/newTLServer/internal/utils"
+	"github.com/JanFant/TLServer/internal/model/crossButtons"
+	"github.com/gin-gonic/gin"
+
+	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/ruraomsk/ag-server/comm"
 )
 

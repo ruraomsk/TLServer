@@ -1,11 +1,12 @@
 package handlers
 
 import (
-	"github.com/JanFant/newTLServer/internal/model/crossEdit"
-	"github.com/JanFant/newTLServer/internal/model/data"
-	u "github.com/JanFant/newTLServer/internal/utils"
-	"github.com/gin-gonic/gin"
 	"net/http"
+
+	"github.com/JanFant/TLServer/internal/model/crossEdit"
+	"github.com/JanFant/TLServer/internal/model/data"
+	u "github.com/JanFant/TLServer/internal/utils"
+	"github.com/gin-gonic/gin"
 )
 
 //DisplayDeviceLogFile обработчик отображения файлов лога устройства

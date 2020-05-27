@@ -2,14 +2,15 @@ package apiserver
 
 import (
 	"fmt"
-	"github.com/JanFant/newTLServer/internal/app/handlers"
-	"github.com/JanFant/newTLServer/internal/app/middleWare"
-	"github.com/JanFant/newTLServer/internal/model/chat"
-	"github.com/JanFant/newTLServer/internal/model/logger"
+	"net/http"
+
+	"github.com/JanFant/TLServer/internal/app/handlers"
+	"github.com/JanFant/TLServer/internal/app/middleWare"
+	"github.com/JanFant/TLServer/internal/model/chat"
+	"github.com/JanFant/TLServer/logger"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"net/http"
 )
 
 var err error

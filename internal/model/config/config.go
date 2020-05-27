@@ -2,7 +2,8 @@ package config
 
 import (
 	"fmt"
-	"github.com/JanFant/newTLServer/internal/app/tcpConnect"
+
+	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 )
 
 //GlobalConfig глобальная переменная для структуры конфиг

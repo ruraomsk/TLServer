@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/newTLServer.iml" filepath="$PROJECT_DIR$/.idea/newTLServer.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/TLServer.iml" filepath="$PROJECT_DIR$/.idea/TLServer.iml" />
     </modules>
   </component>
 </project>

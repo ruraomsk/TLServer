@@ -1,8 +1,12 @@
 # Created by .ignore support plugin (hsz.mobi)
 
-
+.idea/**
 logfiles/
 logfiles/**
 .idea/dataSources.local.xml
+
+web/**
+static/**
+ssl/**
 
 

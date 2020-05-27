@@ -1,13 +1,14 @@
 package middleWare
 
 import (
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
 	"strings"
 
-	"github.com/JanFant/newTLServer/internal/model/data"
-	u "github.com/JanFant/newTLServer/internal/utils"
+	"github.com/gin-gonic/gin"
+
+	"github.com/JanFant/TLServer/internal/model/data"
+	u "github.com/JanFant/TLServer/internal/utils"
 )
 
 //AccessControl проверка разрешен ли пользователя доступ к запрашиваемому ресурсу

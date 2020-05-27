@@ -1,11 +1,12 @@
 package handlers
 
 import (
-	"github.com/JanFant/newTLServer/internal/model/data"
-	"github.com/JanFant/newTLServer/internal/model/locations"
-	u "github.com/JanFant/newTLServer/internal/utils"
-	"github.com/gin-gonic/gin"
 	"net/http"
+
+	"github.com/JanFant/TLServer/internal/model/data"
+	"github.com/JanFant/TLServer/internal/model/locations"
+	u "github.com/JanFant/TLServer/internal/utils"
+	"github.com/gin-gonic/gin"
 )
 
 //BuildMapPage собираем данные для авторизованного пользователя

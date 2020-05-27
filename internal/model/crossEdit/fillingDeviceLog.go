@@ -1,9 +1,10 @@
 package crossEdit
 
 import (
-	"github.com/JanFant/newTLServer/internal/model/logger"
-	"github.com/jmoiron/sqlx"
 	"time"
+
+	"github.com/JanFant/TLServer/logger"
+	"github.com/jmoiron/sqlx"
 )
 
 //FillingInfo информация о запросе

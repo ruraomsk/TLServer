@@ -3,14 +3,15 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/BurntSushi/toml"
-	"github.com/JanFant/newTLServer/internal/app/apiserver"
-	"github.com/JanFant/newTLServer/internal/app/tcpConnect"
-	"github.com/JanFant/newTLServer/internal/model/config"
-	"github.com/JanFant/newTLServer/internal/model/data"
-	"github.com/JanFant/newTLServer/internal/model/license"
-	"github.com/JanFant/newTLServer/internal/model/logger"
 	"os"
+
+	"github.com/BurntSushi/toml"
+	"github.com/JanFant/TLServer/internal/app/apiserver"
+	"github.com/JanFant/TLServer/internal/app/tcpConnect"
+	"github.com/JanFant/TLServer/internal/model/config"
+	"github.com/JanFant/TLServer/internal/model/data"
+	"github.com/JanFant/TLServer/internal/model/license"
+	"github.com/JanFant/TLServer/logger"
 )
 
 var err error
@@ -23,6 +24,7 @@ func init() {
 	//Начало работы, читаем настроечный фаил
 	config.GlobalConfig = config.NewConfig()
 	apiserver.ServerConfig = apiserver.NewConfig()
+	logger.LogGlobalConf = logger.NewConfig()
 	if _, err := toml.DecodeFile(configPath, &apiserver.ServerConfig); err != nil {
 		fmt.Println("Can't load config file - ", err.Error())
 		os.Exit(1)
@@ -31,7 +33,6 @@ func init() {
 		fmt.Println("Can't load config file - ", err.Error())
 		os.Exit(1)
 	}
-	logger.LogGlobalConf = logger.NewConfig()
 	if _, err := toml.DecodeFile(configPath, &logger.LogGlobalConf); err != nil {
 		fmt.Println("Can't load config file - ", err.Error())
 		os.Exit(1)

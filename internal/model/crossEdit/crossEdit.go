@@ -2,12 +2,13 @@ package crossEdit
 
 import (
 	"encoding/json"
-	"github.com/jmoiron/sqlx"
 	"net/http"
 	"sync"
 	"time"
 
-	u "github.com/JanFant/newTLServer/internal/utils"
+	"github.com/jmoiron/sqlx"
+
+	u "github.com/JanFant/TLServer/internal/utils"
 )
 
 //BusyArmInfo глобальная переменная для управления

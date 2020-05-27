@@ -4,16 +4,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/JanFant/newTLServer/internal/model/crossEdit"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/JanFant/newTLServer/internal/app/tcpConnect"
-	"github.com/JanFant/newTLServer/internal/model/logger"
-	"github.com/JanFant/newTLServer/internal/model/stateVerified"
-	u "github.com/JanFant/newTLServer/internal/utils"
+	"github.com/JanFant/TLServer/internal/model/crossEdit"
+
+	"github.com/JanFant/TLServer/internal/app/tcpConnect"
+	"github.com/JanFant/TLServer/internal/model/stateVerified"
+	u "github.com/JanFant/TLServer/internal/utils"
+	"github.com/JanFant/TLServer/logger"
 	agS_pudge "github.com/ruraomsk/ag-server/pudge"
 )
 

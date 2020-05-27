@@ -1,11 +1,12 @@
 package handlers
 
 import (
-	"github.com/JanFant/newTLServer/internal/model/license"
-	"github.com/JanFant/newTLServer/internal/model/techSupport"
-	u "github.com/JanFant/newTLServer/internal/utils"
-	"github.com/gin-gonic/gin"
 	"net/http"
+
+	"github.com/JanFant/TLServer/internal/model/license"
+	"github.com/JanFant/TLServer/internal/model/techSupport"
+	u "github.com/JanFant/TLServer/internal/utils"
+	"github.com/gin-gonic/gin"
 )
 
 var TechSupp = func(c *gin.Context) {

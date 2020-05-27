@@ -1,11 +1,12 @@
 package handlers
 
 import (
-	"github.com/JanFant/newTLServer/internal/model/data"
-	"github.com/gin-gonic/gin"
 	"net/http"
 
-	u "github.com/JanFant/newTLServer/internal/utils"
+	"github.com/JanFant/TLServer/internal/model/data"
+	"github.com/gin-gonic/gin"
+
+	u "github.com/JanFant/TLServer/internal/utils"
 )
 
 //MainCrossCreator сборка информации для странички создания каталогов перекрестков

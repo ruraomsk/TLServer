@@ -2,11 +2,12 @@ package data
 
 import (
 	"fmt"
-	"github.com/JanFant/newTLServer/internal/model/crossEdit"
 	"sync"
 	"time"
 
-	"github.com/JanFant/newTLServer/internal/model/logger"
+	"github.com/JanFant/TLServer/internal/model/crossEdit"
+
+	"github.com/JanFant/TLServer/logger"
 )
 
 //CacheInfo глобальная переменная для обращения к данным

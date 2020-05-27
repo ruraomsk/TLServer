@@ -3,14 +3,15 @@ package license
 import (
 	"errors"
 	"fmt"
-	"github.com/JanFant/newTLServer/internal/model/logger"
-	u "github.com/JanFant/newTLServer/internal/utils"
-	"github.com/dgrijalva/jwt-go"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"sync"
 	"time"
+
+	u "github.com/JanFant/TLServer/internal/utils"
+	"github.com/JanFant/TLServer/logger"
+	"github.com/dgrijalva/jwt-go"
 )
 
 //LicenseToken токен лицензии клиента

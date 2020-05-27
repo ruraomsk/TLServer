@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/JanFant/newTLServer/internal/app/tcpConnect"
-	"github.com/JanFant/newTLServer/internal/model/logger"
-	u "github.com/JanFant/newTLServer/internal/utils"
+	"github.com/JanFant/TLServer/internal/app/tcpConnect"
+	u "github.com/JanFant/TLServer/internal/utils"
+	"github.com/JanFant/TLServer/logger"
 	"github.com/ruraomsk/ag-server/comm"
 )
 

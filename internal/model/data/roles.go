@@ -3,11 +3,12 @@ package data
 import (
 	"encoding/json"
 	"fmt"
-	u "github.com/JanFant/newTLServer/internal/utils"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"sync"
+
+	u "github.com/JanFant/TLServer/internal/utils"
 
 	"github.com/pkg/errors"
 )

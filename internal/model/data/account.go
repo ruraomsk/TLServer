@@ -4,16 +4,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/JanFant/newTLServer/internal/model/config"
-	"github.com/JanFant/newTLServer/internal/model/locations"
-	u "github.com/JanFant/newTLServer/internal/utils"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/go-ozzo/ozzo-validation"
-	"github.com/go-ozzo/ozzo-validation/is"
-	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/JanFant/TLServer/internal/model/config"
+	"github.com/JanFant/TLServer/internal/model/locations"
+	u "github.com/JanFant/TLServer/internal/utils"
+	"github.com/dgrijalva/jwt-go"
+	validation "github.com/go-ozzo/ozzo-validation"
+	"github.com/go-ozzo/ozzo-validation/is"
+	"golang.org/x/crypto/bcrypt"
 )
 
 //Token (JWT) структура токена доступа

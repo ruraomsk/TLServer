@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/JanFant/newTLServer/internal/model/locations"
-	"github.com/JanFant/newTLServer/internal/model/logger"
-	u "github.com/JanFant/newTLServer/internal/utils"
-	agS_pudge "github.com/ruraomsk/ag-server/pudge"
 	"net/http"
+
+	"github.com/JanFant/TLServer/internal/model/locations"
+	u "github.com/JanFant/TLServer/internal/utils"
+	"github.com/JanFant/TLServer/logger"
+	agS_pudge "github.com/ruraomsk/ag-server/pudge"
 )
 
 //TrafficLights информация о светофоре

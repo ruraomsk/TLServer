@@ -2,12 +2,13 @@ package serverLog
 
 import (
 	"fmt"
-	"github.com/JanFant/newTLServer/internal/model/logger"
-	u "github.com/JanFant/newTLServer/internal/utils"
-	"github.com/jmoiron/sqlx"
 	"io/ioutil"
 	"net/http"
 	"strings"
+
+	u "github.com/JanFant/TLServer/internal/utils"
+	"github.com/JanFant/TLServer/logger"
+	"github.com/jmoiron/sqlx"
 )
 
 //ServerLogInfo данные для хранения информации лог файлов

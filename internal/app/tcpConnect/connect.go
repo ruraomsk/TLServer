@@ -3,11 +3,12 @@ package tcpConnect
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/JanFant/newTLServer/internal/model/license"
 	"net"
 	"time"
 
-	"github.com/JanFant/newTLServer/internal/model/logger"
+	"github.com/JanFant/TLServer/internal/model/license"
+
+	"github.com/JanFant/TLServer/logger"
 )
 
 //StateMessage state информация для отправки на сервер

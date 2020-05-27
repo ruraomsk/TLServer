@@ -2,8 +2,9 @@ package data
 
 import (
 	"fmt"
-	"github.com/JanFant/newTLServer/internal/model/config"
-	"github.com/JanFant/newTLServer/internal/model/logger"
+
+	"github.com/JanFant/TLServer/internal/model/config"
+	"github.com/JanFant/TLServer/logger"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/jmoiron/sqlx"
 )

@@ -1,13 +1,14 @@
 package handlers
 
 import (
-	"github.com/JanFant/newTLServer/internal/model/crossEdit"
-	"github.com/JanFant/newTLServer/internal/model/data"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
 
-	u "github.com/JanFant/newTLServer/internal/utils"
+	"github.com/JanFant/TLServer/internal/model/crossEdit"
+	"github.com/JanFant/TLServer/internal/model/data"
+	"github.com/gin-gonic/gin"
+
+	u "github.com/JanFant/TLServer/internal/utils"
 	agS_pudge "github.com/ruraomsk/ag-server/pudge"
 )
 

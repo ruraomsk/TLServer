@@ -1,12 +1,13 @@
 package handlers
 
 import (
-	"github.com/JanFant/newTLServer/internal/model/chat"
-	"github.com/JanFant/newTLServer/internal/model/data"
-	u "github.com/JanFant/newTLServer/internal/utils"
+	"net/http"
+
+	"github.com/JanFant/TLServer/internal/model/chat"
+	"github.com/JanFant/TLServer/internal/model/data"
+	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"net/http"
 )
 
 var upgrader = websocket.Upgrader{
