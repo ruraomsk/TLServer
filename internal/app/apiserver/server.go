@@ -2,22 +2,22 @@ package apiserver
 
 import (
 	"fmt"
+	"github.com/JanFant/TLServer/logger"
 	"net/http"
 
 	"github.com/JanFant/TLServer/internal/app/handlers"
 	"github.com/JanFant/TLServer/internal/app/middleWare"
 	"github.com/JanFant/TLServer/internal/model/chat"
-	"github.com/JanFant/TLServer/logger"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
 )
 
 var err error
 
 //StartServer запуск сервера
 func StartServer(conf *ServerConf) {
-	chat.Connections = make(map[*websocket.Conn]string)
+
+	go chat.Broadcast()
 	//data.Names.Users = make(map[string]bool)
 
 	// Создаем engine для соединений
@@ -152,9 +152,13 @@ func StartServer(conf *ServerConf) {
 
 	//------------------------------------------------------------------------------------------------------------------
 	// Запуск HTTP сервера
-	if err := router.RunTLS(conf.ServerIP, conf.SSLPath+"/domain.crt", conf.SSLPath+"/domain.key"); err != nil {
+	if err := router.Run(conf.ServerIP); err != nil {
 		logger.Error.Println("|Message: Error start server ", err.Error())
 		fmt.Println("Error start server ", err.Error())
 	}
+	//if err := router.RunTLS(conf.ServerIP, conf.SSLPath+"/domain.crt", conf.SSLPath+"/domain.key"); err != nil {
+	//	logger.Error.Println("|Message: Error start server ", err.Error())
+	//	fmt.Println("Error start server ", err.Error())
+	//}
 
 }

@@ -169,15 +169,13 @@ func GetCrossInfo(TLignt TrafficLights) u.Response {
 //GetCrossDevInfo сбор информации для пользователя о выбранном перекрестке (информацию о девайсе)
 func GetCrossDevInfo(idevice string) u.Response {
 	var (
-		sqlStr string
 		devStr string
 	)
 	resp := u.Message(http.StatusOK, "cross information")
-	sqlStr = fmt.Sprintf(`SELECT device FROM public.devices WHERE id = %v`, idevice)
-	err := GetDB().QueryRow(sqlStr).Scan(&devStr)
+	err := GetDB().QueryRow(`SELECT device FROM public.devices WHERE id = $1`, idevice).Scan(&devStr)
 	if err != nil {
 		logger.Error.Println("|Message: No result at these points, table device", err.Error())
-		return u.Message(http.StatusBadRequest, "no result at these points")
+		return u.Message(http.StatusOK, "no result at these points")
 	} else {
 		device, err := ConvertDevStrToStruct(devStr)
 		if err != nil {

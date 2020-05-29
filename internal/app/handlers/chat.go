@@ -23,5 +23,5 @@ var ChatEngine = func(c *gin.Context) {
 	}
 	defer conn.Close()
 	mapContx := u.ParserInterface(c.Value("info"))
-	chat.ChatReader(conn, mapContx, data.GetDB())
+	chat.Reader(conn, mapContx, data.GetDB())
 }

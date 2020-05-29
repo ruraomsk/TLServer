@@ -5,8 +5,11 @@ logfiles/
 logfiles/**
 .idea/dataSources.local.xml
 
+web
 web/**
+static
 static/**
 ssl/**
 
-
+release
+release/**
