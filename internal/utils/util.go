@@ -21,6 +21,7 @@ func Message(code int, message string) Response {
 //	return map[string]interface{}{"status": status, "message": message}
 //}
 
+//SendRespond формирует ответ пользователю записывает
 func SendRespond(c *gin.Context, resp Response) {
 	if !strings.Contains(fmt.Sprint(resp.Obj["DontWrite"]), "true") {
 		writeLogMessage(c.Request.RemoteAddr, c.Request.RequestURI, resp.Obj, c.Value("info"))

@@ -334,46 +334,40 @@
       "id": 33,
       "permission": 12,
       "path": "/license",
-      "description": "обработчик сбора начальной информации"
+      "description": "обработчик сбора начальной информации о лицензии"
     },
-    {
+     {
       "id": 34,
-      "permission": 12,
-      "path": "/license/create",
-      "description": "обработка создания лицензий"
-    },
-    {
-      "id": 35,
       "permission": 12,
       "path": "/license/newToken",
       "description": "обработчик сохранения нового токена"
     },
     {
-      "id": 36,
+      "id": 35,
       "permission": 13,
       "path": "/techSupp",
       "description": "страничка тех поддержки"
     },
     {
-      "id": 37,
+      "id": 36,
       "permission": 13,
       "path": "/techSupp/send",
       "description": "отправка сообщения тех поддержке"
     },
     {
-      "id": 38,
+      "id": 37,
       "permission": 14,
       "path": "/chat",
       "description": "чат на сервере"
     },
     {
-      "id": 39,
+      "id": 38,
       "permission": 14,
       "path": "/chatW",
       "description": "чат на сервере (вебсокет)"
     },
     {
-      "id": 40,
+      "id": 39,
       "permission": 14,
       "path": "/chatTest",
       "description": "чат на сервере (вебсокет)"

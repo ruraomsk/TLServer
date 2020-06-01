@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+//TechSupp обработчик отправления сообщения в тех поддержку
 var TechSupp = func(c *gin.Context) {
 	var emailInfo techSupport.EmailJS
 	err := c.ShouldBindJSON(&emailInfo)
