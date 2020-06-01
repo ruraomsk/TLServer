@@ -5,48 +5,34 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+type AllUsersStatus struct {
+	Users []StatusUser `json:"users"`
+}
+
 type StatusUser struct {
-	Type   string `json:"type"`
 	User   string `json:"user"`
 	Status string `json:"status"`
 }
 
-type AllUsersStatus struct {
-	Type  string       `json:"type"`
-	Users []StatusUser `json:"users"`
-}
-
-func (s *StatusUser) toString() ([]byte, error) {
-	raw, err := json.Marshal(s)
-	if err != nil {
-		return nil, err
-	}
-	return raw, err
-}
-
-func (s *StatusUser) send(status string) {
-	s.Status = status
-	raw, _ := s.toString()
-	WriteAll <- raw
+func (s *StatusUser) toString() string {
+	raw, _ := json.Marshal(s)
+	return string(raw)
 }
 
 func checkAnother(login string) bool {
-	for _, state := range Connections {
-		if state == login {
-			return true
-		}
+	if len(ConnectedUsers[login]) > 0 {
+		return true
 	}
 	return false
 }
 
-func newStatus(login string) *StatusUser {
-	return &StatusUser{Type: statusInfo, User: login}
+func newStatus(login, status string) *StatusUser {
+	return &StatusUser{User: login, Status: status}
 }
 
 func (a *AllUsersStatus) setStatus() {
 	for i, user := range a.Users {
-		a.Users[i].Type = statusInfo
-		for _, name := range Connections {
+		for name, _ := range ConnectedUsers {
 			if name == user.User {
 				a.Users[i].Status = statusOnline
 				break
@@ -68,7 +54,11 @@ func (a *AllUsersStatus) getAllUsers(db *sqlx.DB) error {
 		tempUser.Status = statusOffline
 		a.Users = append(a.Users, tempUser)
 	}
-	a.Type = allUsers
 	a.setStatus()
 	return nil
+}
+
+func (a *AllUsersStatus) toString() string {
+	raw, _ := json.Marshal(a)
+	return string(raw)
 }

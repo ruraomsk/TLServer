@@ -7,37 +7,67 @@ import (
 	"time"
 )
 
-var Connections map[*websocket.Conn]string
-var WriteAll chan []byte
-var WriteTo chan Message
+var ConnectedUsers map[string][]*websocket.Conn
+var WriteSendMessage chan SendMessage
+
+func delConn(login string, conn *websocket.Conn) {
+	for index, userConn := range ConnectedUsers[login] {
+		if userConn == conn {
+			ConnectedUsers[login][index] = ConnectedUsers[login][len(ConnectedUsers[login])-1]
+			ConnectedUsers[login][len(ConnectedUsers[login])-1] = nil
+			ConnectedUsers[login] = ConnectedUsers[login][:len(ConnectedUsers[login])-1]
+			break
+		}
+	}
+}
 
 func Broadcast() {
-	Connections = make(map[*websocket.Conn]string)
-	WriteAll = make(chan []byte)
-	WriteTo = make(chan Message)
+	ConnectedUsers = make(map[string][]*websocket.Conn)
+	WriteSendMessage = make(chan SendMessage)
 	for {
 		select {
-		case msg := <-WriteAll:
+		case msg := <-WriteSendMessage:
 			{
-				for connect := range Connections {
-					if err := connect.WriteMessage(websocket.TextMessage, msg); err != nil {
-						connect.Close()
-						delete(Connections, connect)
-						fmt.Println(Connections)
-						return
-					}
-				}
-			}
-		case msg := <-WriteTo:
-			{
-				for connect, state := range Connections {
-					if msg.To == state || msg.From == state {
-						if err := connect.WriteJSON(msg); err != nil {
-							connect.Close()
-							delete(Connections, connect)
-							return
+				switch {
+				case msg.from == msg.to:
+					{
+						if err := msg.conn.WriteJSON(msg); err != nil {
+							msg.conn.Close()
+							delConn(msg.from, msg.conn)
+							break
 						}
 					}
+				case msg.to == globalMessage:
+					{
+						for _, userConn := range ConnectedUsers {
+							for _, conn := range userConn {
+								if err := conn.WriteJSON(msg); err != nil {
+									conn.Close()
+									delConn(msg.from, conn)
+									break
+								}
+							}
+						}
+					}
+				case msg.from != msg.to:
+					{
+						for _, conn := range ConnectedUsers[msg.from] {
+							if err := conn.WriteJSON(msg); err != nil {
+								conn.Close()
+								delConn(msg.from, conn)
+								break
+							}
+						}
+						for _, conn := range ConnectedUsers[msg.to] {
+							if err := conn.WriteJSON(msg); err != nil {
+								conn.Close()
+								delConn(msg.from, conn)
+								break
+							}
+						}
+					}
+				default:
+					continue
 				}
 			}
 		}
@@ -45,83 +75,84 @@ func Broadcast() {
 }
 
 func Reader(conn *websocket.Conn, login string, db *sqlx.DB) {
-	Connections[conn] = login
-
-	var users AllUsersStatus
-	////все пользователи
-	err := users.getAllUsers(db)
-	if err != nil {
-		_ = conn.WriteJSON(newErrorMessage(errNoAccessWithDatabase))
-	}
-	_ = conn.WriteJSON(users)
-
-	uStatus := newStatus(login)
-	uStatus.send(statusOnline)
-
+	ConnectedUsers[login] = append(ConnectedUsers[login], conn)
+	var message SendMessage
+	message.conn = conn
+	//выгрузить список доступных пользователей
 	{
-		var messagesss PeriodMessage
-		messagesss.TimeStart = time.Now()
-		messagesss.TimeEnd = messagesss.TimeStart.AddDate(0, 0, -1)
-		_ = messagesss.takeMessages(db)
-		_ = conn.WriteJSON(messagesss)
+		var users AllUsersStatus
+		err := users.getAllUsers(db)
+		if err != nil {
+			var myError = ErrorMessage{Error: errNoAccessWithDatabase}
+			message.send(myError.toString(), typeError, login, login)
+		}
+		message.send(users.toString(), typeAllUsers, login, login)
 	}
-	fmt.Println(Connections)
+
+	//сообщить пользователям что мы появились в сети
+	uStatus := newStatus(login, statusOnline)
+	if !checkAnother(login) {
+		message.send(uStatus.toString(), typeStatus, login, globalMessage)
+	}
+
+	//выгрузить архив сообщений за последний день
+	{
+		var arc = ArchiveMessages{TimeStart: time.Now(), TimeEnd: time.Now().AddDate(0, 0, -1)}
+		err := arc.takeArchive(db)
+		if err != nil {
+			var myError = ErrorMessage{Error: errNoAccessWithDatabase}
+			message.send(myError.toString(), typeError, login, login)
+		}
+		message.send(arc.toString(), typeArchive, login, login)
+	}
 
 	for {
-		// read in a message
 		_, p, err := conn.ReadMessage()
 		if err != nil {
-			delete(Connections, conn)
+			delConn(login, conn)
 			if !checkAnother(login) {
-				uStatus.send(statusOffline)
+				uStatus.Status = statusOffline
+				message.send(uStatus.toString(), typeStatus, login, globalMessage)
 			}
-			fmt.Println(Connections)
 			return
 		}
+		fmt.Println(ConnectedUsers)
 
 		typeMess, err := setTypeMessage(p)
 		if err != nil {
-			var mess = ErrorMessage{Error: "Не верный тип сообщения", Type: errorMessage}
-			err = conn.WriteJSON(mess)
+			var myError = ErrorMessage{Error: errUnregisteredMessageType}
+			message.send(myError.toString(), typeError, login, login)
 		}
 
 		switch typeMess {
-		case messageInfo:
+		case typeMessage:
 			{
 				var messageFrom Message
 				err = messageFrom.toStruct(p)
 				if err != nil {
-					fmt.Println(err.Error())
+					var myError = ErrorMessage{Error: errCantConvertJSON}
+					message.send(myError.toString(), typeError, login, login)
 				}
-
-				switch {
-				case messageFrom.To == "Global":
-					{
-						if err := saveMessage(messageFrom, db); err != nil {
-							var mess = ErrorMessage{Error: "Сообщение не доставленно попробуйте еще раз", Type: errorMessage}
-							err = conn.WriteJSON(mess)
-						}
-						raw, _ := messageFrom.toString()
-
-						WriteAll <- raw
-					}
-				case messageFrom.To != "Global":
-					{
-						if err := saveMessage(messageFrom, db); err != nil {
-							var mess = ErrorMessage{Error: "Сообщение не доставленно попробуйте еще раз", Type: errorMessage}
-							err = conn.WriteJSON(mess)
-						}
-						WriteTo <- messageFrom
-					}
+				if err := saveMessage(messageFrom, db); err != nil {
+					var myError = ErrorMessage{Error: errNoAccessWithDatabase}
+					message.send(myError.toString(), typeError, login, login)
 				}
+				message.send(messageFrom.toString(), typeMessage, messageFrom.From, messageFrom.To)
 			}
-		case messages:
+		case typeArchive:
 			{
-				var messagesss PeriodMessage
-				messagesss.TimeStart = time.Now()
-				messagesss.TimeEnd = messagesss.TimeStart.AddDate(0, 0, -1)
-				_ = messagesss.takeMessages(db)
-				_ = conn.WriteJSON(messagesss)
+				var arc ArchiveMessages
+				err = arc.toStruct(p)
+				if err != nil {
+					var myError = ErrorMessage{Error: errCantConvertJSON}
+					message.send(myError.toString(), typeError, login, login)
+				}
+				err = arc.takeArchive(db)
+				if err != nil {
+					var myError = ErrorMessage{Error: errNoAccessWithDatabase}
+					message.send(myError.toString(), typeError, login, login)
+				}
+				message.send(arc.toString(), typeArchive, login, login)
 				continue
 			}
 		}

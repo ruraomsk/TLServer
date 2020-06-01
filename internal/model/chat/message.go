@@ -3,38 +3,27 @@ package chat
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/websocket"
 	"github.com/jmoiron/sqlx"
 	"time"
 )
 
 var (
-	messageInfo   = "message"
-	messages      = "messages"
-	errorMessage  = "error"
-	statusInfo    = "status"
+	typeMessage   = "message"
+	typeArchive   = "archive"
+	typeError     = "error"
+	typeStatus    = "status"
+	typeAllUsers  = "users"
 	statusOnline  = "online"
 	statusOffline = "offline"
-	allUsers      = "users"
+	globalMessage = "Global"
 
-	errNoAccessWithDatabase = "no access with database"
+	errNoAccessWithDatabase    = "no access with database"
+	errCantConvertJSON         = "cant convert JSON"
+	errUnregisteredMessageType = "unregistered message type"
 )
 
-var Names UsersInfo
-
-type UsersInfo struct {
-	Type  string          `json:"type"`
-	Users map[string]bool `json:"users"`
-}
-
-type PeriodMessage struct {
-	Type      string    `json:"type"`
-	Messages  []Message `json:"messages"`
-	TimeStart time.Time `json:"timeStart"` //время начала отсчета
-	TimeEnd   time.Time `json:"timeEnd"`   //время конца отсчета
-}
-
 type Message struct {
-	Type    string    `json:"type"`
 	From    string    `json:"from"`
 	To      string    `json:"to"`
 	Message string    `json:"message"`
@@ -49,42 +38,45 @@ func (m *Message) toStruct(str []byte) (err error) {
 	return nil
 }
 
-func (m *Message) toString() ([]byte, error) {
-	raw, err := json.Marshal(m)
-	if err != nil {
-		return nil, err
-	}
-	return raw, err
+func (m *Message) toString() string {
+	raw, _ := json.Marshal(m)
+	return string(raw)
+}
+
+type SendMessage struct {
+	from string
+	to   string
+	conn *websocket.Conn
+	Type string `json:"type"`
+	Data string `json:"data"`
+}
+
+func (sm *SendMessage) send(data, mType, from, to string) {
+	sm.Data = data
+	sm.Type = mType
+	sm.from = from
+	sm.to = to
+	WriteSendMessage <- *sm
+}
+
+func (sm *SendMessage) toString() (string, error) {
+	raw, err := json.Marshal(sm)
+	return string(raw), err
 }
 
 type ErrorMessage struct {
-	Type  string `json:"type"`
 	Error string `json:"error"`
 }
 
-func newErrorMessage(errorStr string) *ErrorMessage {
-	return &ErrorMessage{Type: errorMessage, Error: errorStr}
+func (e *ErrorMessage) toString() string {
+	raw, _ := json.Marshal(e)
+	return string(raw)
 }
 
 func saveMessage(mess Message, db *sqlx.DB) error {
 	_, err := db.Exec(`INSERT INTO public.chat (time, fromu, tou, message) VALUES ($1, $2, $3, $4)`, mess.Time, mess.From, mess.To, mess.Message)
 	if err != nil {
 		return err
-	}
-	return nil
-}
-
-func (p *PeriodMessage) takeMessages(db *sqlx.DB) error {
-	p.Type = messages
-	rows, err := db.Query(`SELECT time, fromu, tou, message FROM public.chat WHERE time < $1 AND time > $2`, p.TimeStart.Format("2006-01-02 15:04:05"), p.TimeEnd.Format("2006-01-02 15:04:05"))
-	if err != nil {
-		return err
-	}
-	for rows.Next() {
-		var tempMess Message
-		tempMess.Type = messageInfo
-		_ = rows.Scan(&tempMess.Time, &tempMess.From, &tempMess.To, &tempMess.Message)
-		p.Messages = append(p.Messages, tempMess)
 	}
 	return nil
 }

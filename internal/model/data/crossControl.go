@@ -126,10 +126,12 @@ func CheckCrossData(state agS_pudge.Cross) u.Response {
 	verifiedState(&state, &verif)
 	if verif.Err != nil {
 		resp := u.Message(http.StatusOK, fmt.Sprintf("data didn't pass verification. IDevice: %v", state.IDevice))
+		resp.Obj["status"] = false
 		resp.Obj["result"] = verif.SumResult
 		return resp
 	}
 	resp := u.Message(http.StatusOK, "Data is correct")
+	resp.Obj["status"] = true
 	resp.Obj["result"] = verif.SumResult
 	return resp
 }
