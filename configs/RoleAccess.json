@@ -1,0 +1,382 @@
+{
+  "roles": [
+    {
+      "name": "Super",
+      "permissions": [
+        1,
+        6
+      ]
+    },
+    {
+      "name": "Admin",
+      "permissions": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ]
+    },
+    {
+      "name": "RegAdmin",
+      "permissions": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ]
+    },
+    {
+      "name": "User",
+      "permissions": [
+        2,
+        4,
+        5,
+        6,
+        13,
+        14
+      ]
+    },
+    {
+      "name": "Viewer",
+      "permissions": [
+        2,
+        4,
+        6
+      ]
+    }
+  ],
+  "permissions": [
+    {
+      "id": 1,
+      "visible": false,
+      "description": "Управление аккаунтами удаление, создание, обновление"
+    },
+    {
+      "id": 2,
+      "visible": false,
+      "description": "Управеление аккаунтами изменение пароля"
+    },
+    {
+      "id": 3,
+      "visible": false,
+      "description": "Просмотр логов сервера"
+    },
+    {
+      "id": 4,
+      "visible": false,
+      "description": "Отображение перекрестков информация для АРМ"
+    },
+    {
+      "id": 5,
+      "visible": false,
+      "description": "Управление перекрестками информация, закрытие, отправка, проверка, создание, удаление, проверка занятого"
+    },
+    {
+      "id": 6,
+      "visible": false,
+      "description": "Работа с картой отображение, обновление, перемещение, выход из системы"
+    },
+    {
+      "id": 7,
+      "visible": false,
+      "description": "Проверка каталогов создание png и svg файлов"
+    },
+    {
+      "id": 8,
+      "visible": false,
+      "description": "Список редактируемых ДК и освобождение занятых"
+    },
+    {
+      "id": 9,
+      "visible": false,
+      "description": "Проверка State по всей базе"
+    },
+    {
+      "id": 10,
+      "visible": true,
+      "description": "Делать тесты"
+    },
+    {
+      "id": 11,
+      "visible": true,
+      "description": "Просмотр логов устройства"
+    },
+    {
+      "id": 12,
+      "visible": true,
+      "description": "Работа с лицензиями программы"
+    },
+    {
+      "id": 13,
+      "visible": false,
+      "description": "Тех поддержка"
+    },
+    {
+      "id": 14,
+      "visible": false,
+      "description": "Чат"
+    }
+  ],
+  "routes": [
+    {
+      "id": 1,
+      "permission": 6,
+      "path": "/map",
+      "description": "запрос информации для заполнения странички с картой"
+    },
+    {
+      "id": 2,
+      "permission": 6,
+      "path": "/map/logOut",
+      "description": "обработчик выхода из системы"
+    },
+    {
+      "id": 3,
+      "permission": 6,
+      "path": "/map/update",
+      "description": "обновление странички с данными которые попали в область пользователя"
+    },
+    {
+      "id": 4,
+      "permission": 6,
+      "path": "/map/locationButton",
+      "description": "обработчик для формирования новых координат отображения карты"
+    },
+    {
+      "id": 5,
+      "permission": 4,
+      "path": "/cross",
+      "description": "информация о состоянии перекрестка"
+    },
+    {
+      "id": 6,
+      "permission": 4,
+      "path": "/cross/dev",
+      "description": "//информация о состоянии перекрестка (информация о дейвайсе)"
+    },
+    {
+      "id": 7,
+      "permission": 5,
+      "path": "/cross/DispatchControlButtons",
+      "description": "обработчик диспетчерского управления (отправка команд управления)"
+    },
+    {
+      "id": 8,
+      "permission": 5,
+      "path": "/cross/control",
+      "description": "расширеная страничка настройки перекрестка"
+    },
+    {
+      "id": 9,
+      "permission": 5,
+      "path": "/cross/control/close",
+      "description": "обработчик закрытия перекрестка"
+    },
+    {
+      "id": 10,
+      "permission": 5,
+      "path": "/cross/control/editable",
+      "description": "обработчик контроля управления перекрестка"
+    },
+    {
+      "id": 11,
+      "permission": 5,
+      "path": "/cross/control/sendButton",
+      "description": "обработчик приема данных от пользователя для отправки на устройство"
+    },
+    {
+      "id": 12,
+      "permission": 5,
+      "path": "/cross/control/checkButton",
+      "description": "обработчик проверки данных"
+    },
+    {
+      "id": 13,
+      "permission": 5,
+      "path": "/cross/control/createButton",
+      "description": "обработчик создания перекрестка"
+    },
+    {
+      "id": 14,
+      "permission": 5,
+      "path": "/cross/control/deleteButton",
+      "description": "обработчик обработчик удаления перекрсетка"
+    },
+    {
+      "id": 15,
+      "permission": 1,
+      "path": "/manage",
+      "description": "обработка создание и редактирования пользователя"
+    },
+    {
+      "id": 16,
+      "permission": 2,
+      "path": "/manage/changepw",
+      "description": "обработчик для изменения пароля"
+    },
+    {
+      "id": 17,
+      "permission": 1,
+      "path": "/manage/delete",
+      "description": "обработчик для удаления аккаунтов"
+    },
+    {
+      "id": 18,
+      "permission": 1,
+      "path": "/manage/add",
+      "description": "обработчик для добавления аккаунтов"
+    },
+    {
+      "id": 19,
+      "permission": 1,
+      "path": "/manage/update",
+      "description": "обработчик для редактирования данных аккаунта"
+    },
+    {
+      "id": 20,
+      "permission": 8,
+      "path": "/manage/crossEditControl",
+      "description": "обработчик по управлению занятых перекрестков"
+    },
+    {
+      "id": 21,
+      "permission": 8,
+      "path": "/manage/crossEditControl/free",
+      "description": "обработчик по управлению освобождению перекрестка"
+    },
+    {
+      "id": 22,
+      "permission": 9,
+      "path": "/manage/stateTest",
+      "description": "обработчик проверки структуры State"
+    },
+    {
+      "id": 23,
+      "permission": 3,
+      "path": "/manage/serverLog",
+      "description": "обработчик по выгрузке лог файлов сервера"
+    },
+    {
+      "id": 24,
+      "permission": 3,
+      "path": "/manage/serverLog/info",
+      "description": "обработчик выбранного лог файла сервера"
+    },
+    {
+      "id": 25,
+      "permission": 7,
+      "path": "/manage/crossCreator",
+      "description": "обработка проверки/создания каталога карты перекрестков"
+    },
+    {
+      "id": 26,
+      "permission": 7,
+      "path": "/manage/crossCreator/checkAllCross",
+      "description": "обработка проверки наличия всех каталогов и файлов необходимых для построения перекрестков"
+    },
+    {
+      "id": 27,
+      "permission": 7,
+      "path": "/manage/crossCreator/checkSelected",
+      "description": "обработка проверки наличия выбранных каталогов и файлов необходимых для построения перекрестков"
+    },
+    {
+      "id": 28,
+      "permission": 7,
+      "path": "/manage/crossCreator/makeSelected",
+      "description": "обработка создания каталога карты перекрестков"
+    },
+    {
+      "id": 29,
+      "permission": 10,
+      "path": "/test",
+      "description": "обработка тест"
+    },
+    {
+      "id": 30,
+      "permission": 10,
+      "path": "/testtoken",
+      "description": "обработка тесттокен"
+    },
+    {
+      "id": 31,
+      "permission": 11,
+      "path": "/map/deviceLog",
+      "description": "обработка лога от устройства"
+    },
+    {
+      "id": 32,
+      "permission": 11,
+      "path": "/map/deviceLog/info",
+      "description": "обработка лога устройства по выбранному интеревалу времени"
+    },
+    {
+      "id": 33,
+      "permission": 12,
+      "path": "/license",
+      "description": "обработчик сбора начальной информации"
+    },
+    {
+      "id": 34,
+      "permission": 12,
+      "path": "/license/create",
+      "description": "обработка создания лицензий"
+    },
+    {
+      "id": 35,
+      "permission": 12,
+      "path": "/license/newToken",
+      "description": "обработчик сохранения нового токена"
+    },
+    {
+      "id": 36,
+      "permission": 13,
+      "path": "/techSupp",
+      "description": "страничка тех поддержки"
+    },
+    {
+      "id": 37,
+      "permission": 13,
+      "path": "/techSupp/send",
+      "description": "отправка сообщения тех поддержке"
+    },
+    {
+      "id": 38,
+      "permission": 14,
+      "path": "/chat",
+      "description": "чат на сервере"
+    },
+    {
+      "id": 39,
+      "permission": 14,
+      "path": "/chatW",
+      "description": "чат на сервере (вебсокет)"
+    },
+    {
+      "id": 40,
+      "permission": 14,
+      "path": "/chatTest",
+      "description": "чат на сервере (вебсокет)"
+    }
+  ]
+}
