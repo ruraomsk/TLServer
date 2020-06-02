@@ -73,8 +73,8 @@ func (e *ErrorMessage) toString() string {
 	return string(raw)
 }
 
-func saveMessage(mess Message, db *sqlx.DB) error {
-	_, err := db.Exec(`INSERT INTO public.chat (time, fromu, tou, message) VALUES ($1, $2, $3, $4)`, mess.Time, mess.From, mess.To, mess.Message)
+func (m *Message) SaveMessage(db *sqlx.DB) error {
+	_, err := db.Exec(`INSERT INTO public.chat (time, fromu, tou, message) VALUES ($1, $2, $3, $4)`, m.Time, m.From, m.To, m.Message)
 	if err != nil {
 		return err
 	}

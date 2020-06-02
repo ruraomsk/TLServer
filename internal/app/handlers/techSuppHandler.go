@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/JanFant/TLServer/internal/model/data"
 	"net/http"
 
 	"github.com/JanFant/TLServer/internal/model/license"
@@ -18,6 +19,6 @@ var TechSupp = func(c *gin.Context) {
 		return
 	}
 	mapContx := u.ParserInterface(c.Value("info"))
-	resp := techSupport.SendEmail(emailInfo, mapContx["login"], license.LicenseFields.CompanyName)
+	resp := techSupport.SendEmail(emailInfo, mapContx["login"], license.LicenseFields.CompanyName, data.GetDB())
 	u.SendRespond(c, resp)
 }

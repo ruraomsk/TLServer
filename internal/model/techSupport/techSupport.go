@@ -2,23 +2,26 @@ package techSupport
 
 import (
 	"fmt"
+	"github.com/JanFant/TLServer/internal/model/chat"
+	"github.com/JanFant/TLServer/internal/model/license"
+	"github.com/jmoiron/sqlx"
 	"net/http"
 	"net/smtp"
+	"time"
 
 	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/jordan-wright/email"
 )
 
 type EmailJS struct {
-	To   string `json:"to"`
 	Text string `json:"text"`
 }
 
-func SendEmail(emailInfo EmailJS, login, companyName string) u.Response {
+func SendEmail(emailInfo EmailJS, login, companyName string, db *sqlx.DB) u.Response {
 	e := email.NewEmail()
 
 	e.From = fmt.Sprintf("%s <%s>", login, "AsudServ@gmail.com")
-	e.To = []string{emailInfo.To}
+	e.To = license.LicenseFields.TechEmail
 	e.Subject = fmt.Sprintf("Tech Support from server: %s", companyName)
 	e.Text = []byte(emailInfo.Text)
 
@@ -27,6 +30,9 @@ func SendEmail(emailInfo EmailJS, login, companyName string) u.Response {
 		return u.Message(http.StatusInternalServerError, fmt.Sprint("Failed send email: ", err.Error()))
 	}
 
+	mess := chat.Message{From: login, Time: time.Now(), To: "Admin"}
+	mess.Message = fmt.Sprintf("Пользователь %v обратился в техподдержку, время обращения ( %v ), с вопросом: %v", mess.From, mess.Time.Format("2006-01-02 15:04:05"), emailInfo.Text)
+	_ = mess.SaveMessage(db)
 	resp := u.Message(http.StatusOK, "email sent")
 	return resp
 }

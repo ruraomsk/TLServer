@@ -32,7 +32,7 @@ func Broadcast() {
 				case msg.from == msg.to:
 					{
 						if err := msg.conn.WriteJSON(msg); err != nil {
-							msg.conn.Close()
+							_ = msg.conn.Close()
 							delConn(msg.from, msg.conn)
 							break
 						}
@@ -42,7 +42,7 @@ func Broadcast() {
 						for _, userConn := range ConnectedUsers {
 							for _, conn := range userConn {
 								if err := conn.WriteJSON(msg); err != nil {
-									conn.Close()
+									_ = conn.Close()
 									delConn(msg.from, conn)
 									break
 								}
@@ -53,14 +53,14 @@ func Broadcast() {
 					{
 						for _, conn := range ConnectedUsers[msg.from] {
 							if err := conn.WriteJSON(msg); err != nil {
-								conn.Close()
+								_ = conn.Close()
 								delConn(msg.from, conn)
 								break
 							}
 						}
 						for _, conn := range ConnectedUsers[msg.to] {
 							if err := conn.WriteJSON(msg); err != nil {
-								conn.Close()
+								_ = conn.Close()
 								delConn(msg.from, conn)
 								break
 							}
@@ -97,7 +97,7 @@ func Reader(conn *websocket.Conn, login string, db *sqlx.DB) {
 
 	//выгрузить архив сообщений за последний день
 	{
-		var arc = ArchiveMessages{TimeStart: time.Now(), TimeEnd: time.Now().AddDate(0, 0, -1)}
+		var arc = ArchiveMessages{TimeStart: time.Now(), TimeEnd: time.Now().AddDate(0, 0, -1), To: globalMessage}
 		err := arc.takeArchive(db)
 		if err != nil {
 			var myError = ErrorMessage{Error: errNoAccessWithDatabase}
@@ -133,7 +133,7 @@ func Reader(conn *websocket.Conn, login string, db *sqlx.DB) {
 					var myError = ErrorMessage{Error: errCantConvertJSON}
 					message.send(myError.toString(), typeError, login, login)
 				}
-				if err := saveMessage(messageFrom, db); err != nil {
+				if err := messageFrom.SaveMessage(db); err != nil {
 					var myError = ErrorMessage{Error: errNoAccessWithDatabase}
 					message.send(myError.toString(), typeError, login, login)
 				}

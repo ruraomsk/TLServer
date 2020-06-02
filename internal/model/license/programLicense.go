@@ -16,13 +16,14 @@ import (
 
 //LicenseToken токен лицензии клиента
 type LicenseToken struct {
-	NumDevice int    //количество устройств
-	YaKey     string //ключ яндекса
-	TokenPass string //пароль для шифрования токена https запросов
-	Name      string //название фирмы
-	Phone     string //телефон фирмы
-	Id        int    //уникальный номер сервера
-	Email     string //почта фирмы
+	NumDevice int      //количество устройств
+	YaKey     string   //ключ яндекса
+	TokenPass string   //пароль для шифрования токена https запросов
+	Name      string   //название фирмы
+	Phone     string   //телефон фирмы
+	Id        int      //уникальный номер сервера
+	TechEmail []string //почта для отправки сообщений в тех поддержку
+	Email     string   //почта фирмы
 	jwt.StandardClaims
 }
 
@@ -32,11 +33,12 @@ var LicenseFields licenseInfo
 //licenseInfo информация о полях лицензии
 type licenseInfo struct {
 	Mux         sync.Mutex
-	NumDev      int    //количество устройств
-	YaKey       string //ключ яндекса
-	Id          int    //уникальный номер сервера
-	CompanyName string //название фирмы
-	TokenPass   string //пароль для шифрования токена https запросов
+	NumDev      int      //количество устройств
+	YaKey       string   //ключ яндекса
+	Id          int      //уникальный номер сервера
+	CompanyName string   //название фирмы
+	TechEmail   []string //почта для отправки сообщений в тех поддержку
+	TokenPass   string   //пароль для шифрования токена https запросов
 }
 
 var key = "yreRmn6JKVv1md1Yh1PptBIjtGrL8pRjo8sAp5ZPlR6zK8xjxnzt6mGi6mtjWPJ6lz1HbhgNBxfSReuqP9ijLQ4JiWLQ4ADHefWVgtTzeI35pqB6hsFjOWufdAW8UEdK9ajm3T76uQlucUP2g4rUV8B9gTMoLtkn5Pxk6G83YZrvAIR7ddsd5PreTwGDoLrS6bdsbJ7u"
@@ -92,6 +94,7 @@ func (licInfo *licenseInfo) ParseFields(token *LicenseToken) {
 	licInfo.NumDev = token.NumDevice
 	licInfo.Id = token.Id
 	licInfo.CompanyName = token.Name
+	licInfo.TechEmail = token.TechEmail
 }
 
 func LicenseCheck() {
@@ -151,7 +154,7 @@ func readFile() (string, error) {
 }
 
 func writeFile(tokenStr string) error {
-	err := ioutil.WriteFile("license.key", []byte(tokenStr), os.ModePerm)
+	err := ioutil.WriteFile("./configs/license.key", []byte(tokenStr), os.ModePerm)
 	if err != nil {
 		logger.Error.Println("|Message: Error write license.key file")
 		return err
