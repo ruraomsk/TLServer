@@ -12,13 +12,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var err error
-
 //StartServer запуск сервера
 func StartServer(conf *ServerConf) {
 
 	go chat.Broadcast()
-	//data.Names.Users = make(map[string]bool)
 
 	// Создаем engine для соединений
 	router := gin.Default()
@@ -42,12 +39,13 @@ func StartServer(conf *ServerConf) {
 	})
 	router.POST("/login", handlers.LoginAcc) //запрос на вход в систему
 
+	router.GET("/mapW", handlers.MapEngine)
+
 	//------------------------------------------------------------------------------------------------------------------
 	//обязательный общий путь
 	mainRouter := router.Group("/user")
 	mainRouter.Use(middleWare.JwtAuth())
 	mainRouter.Use(middleWare.AccessControl())
-	//subRout.Use(AccessControl) //проверка разрешения на доступ к ресурсу
 
 	mainRouter.GET("/:slug/map", func(c *gin.Context) { //работа с основной страничкой карты
 		c.HTML(http.StatusOK, "map.html", gin.H{"message": "map page"})
@@ -156,9 +154,4 @@ func StartServer(conf *ServerConf) {
 		logger.Error.Println("|Message: Error start server ", err.Error())
 		fmt.Println("Error start server ", err.Error())
 	}
-	//if err := router.RunTLS(conf.ServerIP, conf.SSLPath+"/domain.crt", conf.SSLPath+"/domain.key"); err != nil {
-	//	logger.Error.Println("|Message: Error start server ", err.Error())
-	//	fmt.Println("Error start server ", err.Error())
-	//}
-
 }

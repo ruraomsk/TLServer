@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/JanFant/TLServer/internal/model/license"
 	"net/http"
 	"strings"
 	"time"
@@ -44,7 +45,7 @@ func Login(login, password, ip string) u.Response {
 	ipSplit := strings.Split(ip, ":")
 	account := &Account{}
 	//Забираю из базы запись с подходящей почтой
-	rows, err := GetDB().Query(`SELECT id, login, password, work_time, ya_map_key FROM public.accounts WHERE login=$1`, login)
+	rows, err := GetDB().Query(`SELECT id, login, password, work_time FROM public.accounts WHERE login=$1`, login)
 	if rows == nil {
 		return u.Message(http.StatusUnauthorized, fmt.Sprintf("login: %s not found", login))
 	}
@@ -52,7 +53,7 @@ func Login(login, password, ip string) u.Response {
 		return u.Message(http.StatusInternalServerError, "Connection to DB error. Please try again")
 	}
 	for rows.Next() {
-		_ = rows.Scan(&account.ID, &account.Login, &account.Password, &account.WorkTime, &account.YaMapKey)
+		_ = rows.Scan(&account.ID, &account.Login, &account.Password, &account.WorkTime)
 	}
 
 	//Авторизировались добираем полномочия
@@ -129,12 +130,11 @@ func (data *Account) Create(privilege Privilege) u.Response {
 		return u.Message(http.StatusBadRequest, err.Error())
 	}
 	//Отдаем ключ для yandex map
-	data.YaMapKey = config.GlobalConfig.YaKey
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(data.Password), bcrypt.DefaultCost)
 	data.Password = string(hashedPassword)
 
-	row := GetDB().QueryRow(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4) RETURNING id`,
-		data.Login, data.Password, data.WorkTime, data.YaMapKey)
+	row := GetDB().QueryRow(`INSERT INTO  public.accounts (login, password, work_time) VALUES ($1, $2, $3, $4) RETURNING id`,
+		data.Login, data.Password, data.WorkTime)
 	if err := row.Scan(&data.ID); err != nil {
 		return u.Message(http.StatusInternalServerError, err.Error())
 	}
@@ -243,7 +243,7 @@ func (data *Account) GetInfoForUser() u.Response {
 	}
 	tflight := GetLightsFromBD(data.BoxPoint)
 	resp := u.Message(http.StatusOK, "loading content for the main page")
-	resp.Obj["ya_map"] = data.YaMapKey
+	resp.Obj["ya_map"] = license.LicenseFields.YaKey
 	resp.Obj["boxPoint"] = data.BoxPoint
 	resp.Obj["tflight"] = tflight
 
@@ -274,12 +274,11 @@ func SuperCreate() {
 	account := &Account{}
 	account.Login = "Super"
 	//Отдаем ключ для yandex map
-	account.YaMapKey = config.GlobalConfig.YaKey
 	account.WorkTime = 24
 	account.Password = "$2a$10$ZCWyIEfEVF3KGj6OUtIeSOQ3WexMjuAZ43VSO6T.QqOndn4HN1J6C"
 	privilege := NewPrivilege("Super", "*", []string{"*"})
-	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
-		account.Login, account.Password, account.WorkTime, account.YaMapKey)
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time) VALUES ($1, $2, $3)`,
+		account.Login, account.Password, account.WorkTime)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
 
@@ -287,132 +286,123 @@ func SuperCreate() {
 	account = &Account{}
 	account.Login = "Moscow"
 	//Отдаем ключ для yandex map
-	account.YaMapKey = config.GlobalConfig.YaKey
 	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = NewPrivilege("RegAdmin", "1", []string{"1", "2", "3"})
-	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
-		account.Login, account.Password, account.WorkTime, account.YaMapKey)
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time) VALUES ($1, $2, $3)`,
+		account.Login, account.Password, account.WorkTime)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
 
 	account = &Account{}
 	account.Login = "Sachalin"
 	//Отдаем ключ для yandex map
-	account.YaMapKey = config.GlobalConfig.YaKey
 	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = NewPrivilege("RegAdmin", "3", []string{"1"})
-	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
-		account.Login, account.Password, account.WorkTime, account.YaMapKey)
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time) VALUES ($1, $2, $3)`,
+		account.Login, account.Password, account.WorkTime)
+
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
 
 	account = &Account{}
 	account.Login = "Cykotka"
 	//Отдаем ключ для yandex map
-	account.YaMapKey = config.GlobalConfig.YaKey
 	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = NewPrivilege("RegAdmin", "2", []string{"1", "2", "3"})
-	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
-		account.Login, account.Password, account.WorkTime, account.YaMapKey)
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time) VALUES ($1, $2, $3)`,
+		account.Login, account.Password, account.WorkTime)
+
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
 
 	account = &Account{}
 	account.Login = "All"
 	//Отдаем ключ для yandex map
-	account.YaMapKey = config.GlobalConfig.YaKey
 	account.WorkTime = 1000
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = NewPrivilege("Admin", "*", []string{"*"})
-	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
-		account.Login, account.Password, account.WorkTime, account.YaMapKey)
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time) VALUES ($1, $2, $3)`,
+		account.Login, account.Password, account.WorkTime)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
 
 	account = &Account{}
 	account.Login = "Rura"
 	//Отдаем ключ для yandex map
-	account.YaMapKey = config.GlobalConfig.YaKey
 	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = NewPrivilege("Admin", "*", []string{"*"})
-	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
-		account.Login, account.Password, account.WorkTime, account.YaMapKey)
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time) VALUES ($1, $2, $3)`,
+		account.Login, account.Password, account.WorkTime)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
 
 	account = &Account{}
 	account.Login = "Alex_B"
 	//Отдаем ключ для yandex map
-	account.YaMapKey = config.GlobalConfig.YaKey
 	account.WorkTime = 24
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = NewPrivilege("Admin", "*", []string{"*"})
-	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
-		account.Login, account.Password, account.WorkTime, account.YaMapKey)
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time) VALUES ($1, $2, $3)`,
+		account.Login, account.Password, account.WorkTime)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
 
 	account = &Account{}
 	account.Login = "MMM"
 	//Отдаем ключ для yandex map
-	account.YaMapKey = config.GlobalConfig.YaKey
 	account.WorkTime = 10000
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = NewPrivilege("Admin", "*", []string{"*"})
-	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
-		account.Login, account.Password, account.WorkTime, account.YaMapKey)
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time) VALUES ($1, $2, $3)`,
+		account.Login, account.Password, account.WorkTime)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
 
 	account = &Account{}
 	account.Login = "Admin"
 	//Отдаем ключ для yandex map
-	account.YaMapKey = config.GlobalConfig.YaKey
 	account.WorkTime = 10000
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = NewPrivilege("Admin", "*", []string{"*"})
-	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
-		account.Login, account.Password, account.WorkTime, account.YaMapKey)
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time) VALUES ($1, $2, $3)`,
+		account.Login, account.Password, account.WorkTime)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
 
 	account = &Account{}
 	account.Login = "RegAdmin"
 	//Отдаем ключ для yandex map
-	account.YaMapKey = config.GlobalConfig.YaKey
 	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = NewPrivilege("RegAdmin", "1", []string{"1", "2", "3"})
-	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
-		account.Login, account.Password, account.WorkTime, account.YaMapKey)
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time) VALUES ($1, $2, $3)`,
+		account.Login, account.Password, account.WorkTime)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
 
 	account = &Account{}
 	account.Login = "User"
 	//Отдаем ключ для yandex map
-	account.YaMapKey = config.GlobalConfig.YaKey
 	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = NewPrivilege("User", "2", []string{"2"})
-	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
-		account.Login, account.Password, account.WorkTime, account.YaMapKey)
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time) VALUES ($1, $2, $3)`,
+		account.Login, account.Password, account.WorkTime)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
 
 	account = &Account{}
 	account.Login = "Viewer"
 	//Отдаем ключ для yandex map
-	account.YaMapKey = config.GlobalConfig.YaKey
 	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	privilege = NewPrivilege("Viewer", "3", []string{"1"})
-	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, ya_map_key) VALUES ($1, $2, $3, $4)`,
-		account.Login, account.Password, account.WorkTime, account.YaMapKey)
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time) VALUES ($1, $2, $3)`,
+		account.Login, account.Password, account.WorkTime)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
 

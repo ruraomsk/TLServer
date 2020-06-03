@@ -7,7 +7,6 @@ static_path = "static"
 web_path = "web"
 ssl_path = "ssl"
 server_ip = ":8082"
-ya_key = "65162f5f-2d15-41d1-a881-6c1acf34cfa1"
 token_password = "123456789"
 
 #настройка подключения к тсп серверу обемена командами

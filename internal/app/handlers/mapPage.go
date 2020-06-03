@@ -9,6 +9,18 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+//MapEngine обработчик вебсокета для работы с картой
+var MapEngine = func(c *gin.Context) {
+	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		u.SendRespond(c, u.Message(http.StatusInternalServerError, "Bad socket connect"))
+		return
+	}
+	defer conn.Close()
+	//mapContx := u.ParserInterface(c.Value("info"))
+	data.ReaderStrong(conn)
+}
+
 //BuildMapPage собираем данные для авторизованного пользователя
 var BuildMapPage = func(c *gin.Context) {
 	account := &data.Account{}
@@ -49,6 +61,6 @@ var LocationButtonMapPage = func(c *gin.Context) {
 	}
 	resp := u.Message(http.StatusOK, "jump to location!")
 	resp.Obj["DontWrite"] = "true"
-	resp.Obj["boxPoint"] = boxPoint
+	resp.Obj["boxPoint"] = &boxPoint
 	u.SendRespond(c, resp)
 }

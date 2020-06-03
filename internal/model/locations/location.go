@@ -1,6 +1,7 @@
 package locations
 
 import (
+	"encoding/json"
 	"github.com/jmoiron/sqlx"
 	"strconv"
 	"strings"
@@ -15,6 +16,10 @@ type Point struct {
 type BoxPoint struct {
 	Point0 Point `json:"point0"` //левая нижняя точка на карте
 	Point1 Point `json:"point1"` //правая верхняя точка на карте
+}
+
+func (box *BoxPoint) ToStruct(str string) {
+	_ = json.Unmarshal([]byte(str), &box)
 }
 
 //GetPoint возвращает значение координаты

@@ -50,7 +50,7 @@ func GetLightsFromBD(box locations.BoxPoint) (tfdata []TrafficLights) {
 		tempTF := SelectTL(point0, point1, false)
 		tflight = append(tflight, tempTF...)
 
-	} else if int(box.Point0.X) == int(box.Point1.X) {
+	} else if box.Point0.X == box.Point1.X {
 		tflight = SelectTL(box.Point0, box.Point1, true)
 	} else {
 		tflight = SelectTL(box.Point0, box.Point1, false)
@@ -189,19 +189,21 @@ func GetCrossDevInfo(idevice string) u.Response {
 }
 
 //MakeBoxPoint расчет координат для перемещения по карте
-func (location *Locations) MakeBoxPoint() (box locations.BoxPoint, err error) {
+func (l *Locations) MakeBoxPoint() (box locations.BoxPoint, err error) {
 	var sqlStr = `SELECT Min(dgis[0]) as "Y0", Min(convTo360(dgis[1])) as "X0", Max(dgis[0]) as "Y1", Max(convTo360(dgis[1])) as "X1"  FROM public."cross"`
-	tempStr := " WHERE "
-	tempStr += fmt.Sprintf("region = %v AND area in (", location.Region)
-	for numArea, area := range location.Area {
-		if numArea == 0 {
-			tempStr += fmt.Sprintf("%v", area)
-		} else {
-			tempStr += fmt.Sprintf(",%v", area)
+	if l.Region != "" {
+		tempStr := " WHERE "
+		tempStr += fmt.Sprintf("region = %v AND area in (", l.Region)
+		for numArea, area := range l.Area {
+			if numArea == 0 {
+				tempStr += fmt.Sprintf("%v", area)
+			} else {
+				tempStr += fmt.Sprintf(",%v", area)
+			}
 		}
+		tempStr += ")"
+		sqlStr += tempStr
 	}
-	tempStr += ")"
-	sqlStr += tempStr
 	row := GetDB().QueryRow(sqlStr)
 	err = row.Scan(&box.Point0.Y, &box.Point0.X, &box.Point1.Y, &box.Point1.X)
 	if err != nil {

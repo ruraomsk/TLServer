@@ -34,7 +34,6 @@ func Broadcast() {
 						if err := msg.conn.WriteJSON(msg); err != nil {
 							_ = msg.conn.Close()
 							delConn(msg.from, msg.conn)
-							break
 						}
 					}
 				case msg.to == globalMessage:
@@ -44,7 +43,6 @@ func Broadcast() {
 								if err := conn.WriteJSON(msg); err != nil {
 									_ = conn.Close()
 									delConn(msg.from, conn)
-									break
 								}
 							}
 						}
@@ -55,14 +53,12 @@ func Broadcast() {
 							if err := conn.WriteJSON(msg); err != nil {
 								_ = conn.Close()
 								delConn(msg.from, conn)
-								break
 							}
 						}
 						for _, conn := range ConnectedUsers[msg.to] {
 							if err := conn.WriteJSON(msg); err != nil {
 								_ = conn.Close()
 								delConn(msg.from, conn)
-								break
 							}
 						}
 					}
@@ -118,16 +114,17 @@ func Reader(conn *websocket.Conn, login string, db *sqlx.DB) {
 		}
 		fmt.Println(ConnectedUsers)
 
-		typeMess, err := setTypeMessage(p)
+		typeSelect, err := setTypeMessage(p)
 		if err != nil {
 			var myError = ErrorMessage{Error: errUnregisteredMessageType}
 			message.send(myError.toString(), typeError, login, login)
 		}
 
-		switch typeMess {
+		switch typeSelect {
 		case typeMessage:
 			{
 				var messageFrom Message
+				fmt.Println(string(p))
 				err = messageFrom.toStruct(p)
 				if err != nil {
 					var myError = ErrorMessage{Error: errCantConvertJSON}

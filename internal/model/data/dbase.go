@@ -16,6 +16,9 @@ var (
 		fromU text,
 		toU text,
 		message text	
+	)
+	WITH (
+		autovacuum_enabled = true		
 	);`
 	accountsTable = `
 	CREATE TABLE accounts (
@@ -23,9 +26,11 @@ var (
 		login text,
 		password text,
 		work_time bigint,
-		ya_map_key text,
 		token text,
 		privilege jsonb
+	)
+	WITH (
+		autovacuum_enabled = true		
 	);`
 	createFuncSQL = `Create or replace function convTo360(x double precision) returns double precision as $$
 		begin
