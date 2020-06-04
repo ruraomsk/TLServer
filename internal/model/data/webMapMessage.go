@@ -3,17 +3,21 @@ package data
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/websocket"
 )
 
-type mapMessage struct {
+type mapResponse struct {
 	Type string                 `json:"type"`
 	Data map[string]interface{} `json:"data"`
+	conn *websocket.Conn        `json:"-"`
 }
 
-func (m *mapMessage) send(mType string, mData map[string]interface{}, ch chan mapMessage) {
-	m.Type = mType
-	m.Data = mData
-	ch <- *m
+func mapMessage(mType string, conn *websocket.Conn) mapResponse {
+	return mapResponse{Type: mType, conn: conn, Data: map[string]interface{}{}}
+}
+
+func (m *mapResponse) send() {
+	WriteMap <- *m
 }
 
 func setTypeMessage(raw []byte) (string, error) {
@@ -28,21 +32,13 @@ type ErrorMessage struct {
 	Error string `json:"error"`
 }
 
-func (e *ErrorMessage) toString() string {
-	raw, _ := json.Marshal(e)
-	return string(raw)
-}
-
 var (
-	typeError   = "error"
-	typeUpdate  = "update"
-	typeStatus  = "status"
-	typeJump    = "jump"
-	typeMapInfo = "mapInfo"
-	typeNewBox  = "newBox"
-	typeTFlight = "tflight"
-	closeSocket = "closeSocket"
-
+	typeError                  = "error"
+	typeJump                   = "jump"
+	typeMapInfo                = "mapInfo"
+	typeTFlight                = "tflight"
+	typeLogin                  = "login"
+	typeLogOut                 = "logOut"
 	errNoAccessWithDatabase    = "no access with database"
 	errCantConvertJSON         = "cant convert JSON"
 	errUnregisteredMessageType = "unregistered message type"

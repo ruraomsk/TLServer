@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/JanFant/TLServer/internal/model/license"
 	"net/http"
 	"strings"
 	"time"
@@ -90,12 +89,13 @@ func Login(login, password, ip string) u.Response {
 	resp := u.Message(http.StatusOK, "Logged In")
 	resp.Obj["login"] = account.Login
 	resp.Obj["token"] = tokenString
+	resp.Obj["role"] = privilege.Role
 	return resp
 }
 
 //LogOut выход из учетной записи
-func LogOut(mapContx map[string]string) u.Response {
-	_, err := GetDB().Exec("UPDATE public.accounts SET token = $1 where login = $2", "", mapContx["login"])
+func LogOut(login string) u.Response {
+	_, err := GetDB().Exec("UPDATE public.accounts SET token = $1 where login = $2", "", login)
 	if err != nil {
 		return u.Message(http.StatusInternalServerError, "Connection to DB error. Please try again")
 	}
@@ -225,49 +225,49 @@ func (data *Account) ParserBoxPointsUser() (err error) {
 }
 
 //GetInfoForUser собор информацию для пользователя, который авторизировался
-func (data *Account) GetInfoForUser() u.Response {
-	rows, err := GetDB().Query(`SELECT id, login, password FROM public.accounts WHERE login=$1`, data.Login)
-	if rows == nil {
-		return u.Message(http.StatusUnauthorized, fmt.Sprintf("login: %s not found", data.Login))
-	}
-	if err != nil {
-		return u.Message(http.StatusInternalServerError, "Connection to DB error. Please try again")
-	}
-	for rows.Next() {
-		_ = rows.Scan(&data.ID, &data.Login, &data.Password)
-	}
-
-	err = data.ParserBoxPointsUser()
-	if err != nil {
-		return u.Message(http.StatusInternalServerError, err.Error())
-	}
-	tflight := GetLightsFromBD(data.BoxPoint)
-	resp := u.Message(http.StatusOK, "loading content for the main page")
-	resp.Obj["ya_map"] = license.LicenseFields.YaKey
-	resp.Obj["boxPoint"] = data.BoxPoint
-	resp.Obj["tflight"] = tflight
-
-	//собираю в кучу регионы для отображения
-	chosenRegion := make(map[string]string)
-	CacheInfo.Mux.Lock()
-	for first, second := range CacheInfo.MapRegion {
-		chosenRegion[first] = second
-	}
-	delete(chosenRegion, "*")
-	resp.Obj["regionInfo"] = chosenRegion
-
-	//собираю в кучу районы для отображения
-	chosenArea := make(map[string]map[string]string)
-	for first, second := range CacheInfo.MapArea {
-		chosenArea[first] = make(map[string]string)
-		chosenArea[first] = second
-	}
-	delete(chosenArea, "Все регионы")
-	CacheInfo.Mux.Unlock()
-	resp.Obj["areaInfo"] = chosenArea
-
-	return resp
-}
+//func (data *Account) GetInfoForUser() u.Response {
+//	rows, err := GetDB().Query(`SELECT id, login, password FROM public.accounts WHERE login=$1`, data.Login)
+//	if rows == nil {
+//		return u.Message(http.StatusUnauthorized, fmt.Sprintf("login: %s not found", data.Login))
+//	}
+//	if err != nil {
+//		return u.Message(http.StatusInternalServerError, "Connection to DB error. Please try again")
+//	}
+//	for rows.Next() {
+//		_ = rows.Scan(&data.ID, &data.Login, &data.Password)
+//	}
+//
+//	err = data.ParserBoxPointsUser()
+//	if err != nil {
+//		return u.Message(http.StatusInternalServerError, err.Error())
+//	}
+//	tflight := GetLightsFromBD(data.BoxPoint)
+//	resp := u.Message(http.StatusOK, "loading content for the main page")
+//	resp.Obj["ya_map"] = license.LicenseFields.YaKey
+//	resp.Obj["boxPoint"] = data.BoxPoint
+//	resp.Obj["tflight"] = tflight
+//
+//	//собираю в кучу регионы для отображения
+//	chosenRegion := make(map[string]string)
+//	CacheInfo.Mux.Lock()
+//	for first, second := range CacheInfo.MapRegion {
+//		chosenRegion[first] = second
+//	}
+//	delete(chosenRegion, "*")
+//	resp.Obj["regionInfo"] = chosenRegion
+//
+//	//собираю в кучу районы для отображения
+//	chosenArea := make(map[string]map[string]string)
+//	for first, second := range CacheInfo.MapArea {
+//		chosenArea[first] = make(map[string]string)
+//		chosenArea[first] = second
+//	}
+//	delete(chosenArea, "Все регионы")
+//	CacheInfo.Mux.Unlock()
+//	resp.Obj["areaInfo"] = chosenArea
+//
+//	return resp
+//}
 
 //SuperCreate создание суперпользователя
 func SuperCreate() {

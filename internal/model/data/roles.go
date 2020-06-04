@@ -280,17 +280,16 @@ func NewPrivilege(role, region string, area []string) *Privilege {
 }
 
 //RoleCheck проверка полученной роли на соответствие заданной и разрешение на выполнение действия
-func AccessCheck(mapContx map[string]string, act int) (accept bool, err error) {
-	if mapContx["role"] == "Admin" {
+func AccessCheck(login, role string, act int) (accept bool, err error) {
+	if role == "Admin" {
 		return true, nil
 	}
 	privilege := Privilege{}
 	//Проверил соответствует ли роль которую мне дали с ролью установленной в БД
-	err = privilege.ReadFromBD(mapContx["login"])
+	err = privilege.ReadFromBD(login)
 	if err != nil {
 		return false, err
 	}
-
 	//Проверяю можно ли делать этой роле данное действие
 	for _, perm := range privilege.Role.Perm {
 		if perm == act {

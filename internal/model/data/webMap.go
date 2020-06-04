@@ -1,140 +1,116 @@
 package data
 
 import (
+	"encoding/json"
 	"fmt"
-	"github.com/JanFant/TLServer/internal/model/license"
-	"github.com/JanFant/TLServer/internal/model/locations"
-	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/gorilla/websocket"
+	"net/http"
+	"time"
 )
 
-func ReaderStrong(conn *websocket.Conn) {
-	ch := make(chan mapMessage)
-	go broadcast(conn, ch)
+var ConnectedUsers map[*websocket.Conn]bool
+var WriteMap chan mapResponse
 
-	var message mapMessage
-	message.send(typeMapInfo, mapOpenInfo(), ch)
+func MapReader(conn *websocket.Conn) {
+	ConnectedUsers[conn] = true
+	login := ""
+	{
+		resp := mapMessage(typeMapInfo, conn)
+		resp.Data = mapOpenInfo()
+		resp.send()
+	}
 
 	for {
 		_, p, err := conn.ReadMessage()
 		if err != nil {
-			message.send(closeSocket, nil, ch)
+			delete(ConnectedUsers, conn)
 			//закрытие коннекта
 			return
 		}
 
 		typeSelect, err := setTypeMessage(p)
 		if err != nil {
-			//var myError = ErrorMessage{Error: errUnregisteredMessageType}
-			//message.send(typeError, myError.toString(), ch)
+			resp := mapMessage(typeError, conn)
+			resp.Data["message"] = ErrorMessage{Error: errUnregisteredMessageType}
+			resp.send()
 		}
 		switch typeSelect {
-		case typeNewBox:
-			{
-				obj := make(map[string]interface{})
-				obj["box"] = string(p)
-				message.send(typeNewBox, obj, ch)
-			}
-
-		case typeUpdate:
-			{
-
-			}
-		case typeStatus:
-			{
-
-			}
 		case typeJump:
 			{
-
+				location := &Locations{}
+				_ = json.Unmarshal(p, &location)
+				box, _ := location.MakeBoxPoint()
+				resp := mapMessage(typeJump, conn)
+				resp.Data["boxPoint"] = box
+				resp.send()
 			}
+		case typeLogin:
+			{
+				account := &Account{}
+				_ = json.Unmarshal(p, &account)
+				resp := mapMessage(typeLogin, conn)
+				obj := Login(account.Login, account.Password, conn.RemoteAddr().String())
+				if obj.Code == http.StatusOK {
+					login = fmt.Sprint(obj.Obj["login"])
+					resp.Data["authorizedFlag"] = true
+					resp.Data["manageFlag"], _ = AccessCheck(login, fmt.Sprint(obj.Obj["role"]), 1)
+					resp.Data["logDeviceFlag"], _ = AccessCheck(login, fmt.Sprint(obj.Obj["role"]), 11)
+				}
+				resp.Data["login"] = obj
+				resp.send()
+			}
+		case typeLogOut:
+			{
+				if login != "" {
+					resp := mapMessage(typeLogOut, conn)
+					resp.Data["logOut"] = LogOut(login)
+					resp.send()
+				}
+			}
+
 		}
 	}
 }
 
-func broadcast(conn *websocket.Conn, write chan mapMessage) {
-	var box locations.BoxPoint
-	{
-		location := &Locations{}
-		box, _ = location.MakeBoxPoint()
-	}
-
-	oldTFs := GetLightsFromBD(box)
-
+func Broadcast() {
+	ConnectedUsers = make(map[*websocket.Conn]bool)
+	WriteMap = make(chan mapResponse)
+	crossReadTick := time.Tick(time.Second * 5)
+	oldTFs := selectTL()
 	for {
 		select {
-		case msg := <-write:
+		case <-crossReadTick:
 			{
-				switch msg.Type {
-				case closeSocket:
-					{
-						return
+				newTFs := selectTL()
+				var tempTF []TrafficLights
+				for _, nTF := range newTFs {
+					for _, oTF := range oldTFs {
+						if oTF.Idevice == nTF.Idevice && oTF.Sost.Num != nTF.Sost.Num {
+							tempTF = append(tempTF, nTF)
+							break
+						}
 					}
-				case typeNewBox:
-					{
-						data := u.ParserInterface(msg.Data)
-						fmt.Println(data)
-						box.ToStruct(data["box"])
-						fmt.Println(box)
-						newTFs := GetLightsFromBD(box)
-						var tempTF []TrafficLights
-						for _, nTF := range newTFs {
-							for _, oTF := range oldTFs {
-								if oTF.Idevice == nTF.Idevice && oTF.Sost.Num != nTF.Sost.Num {
-									tempTF = append(tempTF, nTF)
-									break
-								}
+				}
+				oldTFs = newTFs
+				if len(ConnectedUsers) > 0 {
+					if len(tempTF) > 0 {
+						resp := mapMessage(typeTFlight, nil)
+						resp.Data["tflight"] = tempTF
+						for conn := range ConnectedUsers {
+							if err := conn.WriteJSON(resp); err != nil {
+								_ = conn.Close()
 							}
 						}
-						oldTFs = newTFs
-						if len(tempTF) > 0 {
-							var message mapMessage
-							message.Data = make(map[string]interface{})
-							message.Type = typeTFlight
-							message.Data["tflight"] = tempTF
-							_ = conn.WriteJSON(message)
-						}
-
 					}
-				default:
-					if err := conn.WriteJSON(msg); err != nil {
-						_ = conn.Close()
-						return
-					}
-
+				}
+			}
+		case msg := <-WriteMap:
+			{
+				if err := msg.conn.WriteJSON(msg); err != nil {
+					_ = msg.conn.Close()
+					return
 				}
 			}
 		}
 	}
-}
-
-func mapOpenInfo() (obj map[string]interface{}) {
-	obj = make(map[string]interface{})
-
-	location := &Locations{}
-	box, _ := location.MakeBoxPoint()
-	obj["boxPoint"] = &box
-	obj["tflight"] = GetLightsFromBD(box)
-	obj["flagUnauthorized"] = false
-	obj["yaKey"] = license.LicenseFields.YaKey
-
-	//собираю в кучу регионы для отображения
-	chosenRegion := make(map[string]string)
-	CacheInfo.Mux.Lock()
-	for first, second := range CacheInfo.MapRegion {
-		chosenRegion[first] = second
-	}
-	delete(chosenRegion, "*")
-	obj["regionInfo"] = chosenRegion
-
-	//собираю в кучу районы для отображения
-	chosenArea := make(map[string]map[string]string)
-	for first, second := range CacheInfo.MapArea {
-		chosenArea[first] = make(map[string]string)
-		chosenArea[first] = second
-	}
-	delete(chosenArea, "Все регионы")
-	CacheInfo.Mux.Unlock()
-	obj["areaInfo"] = chosenArea
-	return
 }

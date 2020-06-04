@@ -23,7 +23,7 @@ var BuildCross = func(c *gin.Context) {
 	resp := data.GetCrossInfo(*TLight)
 	mapContx := u.ParserInterface(c.Value("info"))
 
-	controlCrossFlag, _ := data.AccessCheck(mapContx, 5)
+	controlCrossFlag, _ := data.AccessCheck(mapContx["login"], mapContx["role"], 5)
 	if (TLight.Region.Num == mapContx["region"]) || (mapContx["region"] == "*") {
 		resp.Obj["controlCrossFlag"] = controlCrossFlag
 	} else {

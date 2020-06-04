@@ -2,6 +2,8 @@ package apiserver
 
 import (
 	"fmt"
+	"github.com/JanFant/TLServer/internal/model/data"
+	"github.com/JanFant/TLServer/internal/model/license"
 	"github.com/JanFant/TLServer/logger"
 	"net/http"
 
@@ -16,6 +18,7 @@ import (
 func StartServer(conf *ServerConf) {
 
 	go chat.Broadcast()
+	go data.Broadcast()
 
 	// Создаем engine для соединений
 	router := gin.Default()
@@ -25,6 +28,9 @@ func StartServer(conf *ServerConf) {
 
 	//скрипт и иконка которые должны быть доступны всем
 	router.StaticFile("screen/screen.js", conf.WebPath+"/js/screen.js")
+	router.StaticFile("map/map.js", conf.WebPath+"/js/map.js")
+	router.StaticFS("map/img", http.Dir(conf.StaticPath+"/img"))
+
 	router.StaticFile("icon/trafficlight.svg", conf.WebPath+"/resources/trafficlight.svg")
 	router.StaticFile("/notFound.jpg", conf.WebPath+"/resources/notFound.jpg")
 
@@ -35,11 +41,19 @@ func StartServer(conf *ServerConf) {
 
 	//начальная страница
 	router.GET("/", func(c *gin.Context) {
+		c.Redirect(http.StatusPermanentRedirect, "/map")
+		//c.HTML(http.StatusOK, "screen.html", gin.H{"message": "login page"})
+	})
+	router.GET("/map", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "map.html", gin.H{"yaKey": license.LicenseFields.YaKey})
+	})
+	router.GET("/mapW", handlers.MapEngine)
+
+	router.GET("/map/screen", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "screen.html", gin.H{"message": "login page"})
 	})
-	router.POST("/login", handlers.LoginAcc) //запрос на вход в систему
 
-	router.GET("/mapW", handlers.MapEngine)
+	//router.POST("/login", handlers.LoginAcc) //запрос на вход в систему
 
 	//------------------------------------------------------------------------------------------------------------------
 	//обязательный общий путь
@@ -47,13 +61,13 @@ func StartServer(conf *ServerConf) {
 	mainRouter.Use(middleWare.JwtAuth())
 	mainRouter.Use(middleWare.AccessControl())
 
-	mainRouter.GET("/:slug/map", func(c *gin.Context) { //работа с основной страничкой карты
-		c.HTML(http.StatusOK, "map.html", gin.H{"message": "map page"})
-	})
-	mainRouter.POST("/:slug/map", handlers.BuildMapPage)                         //запрос информации для заполнения странички с картой
-	mainRouter.POST("/:slug/map/logOut", handlers.LoginAccOut)                   //обработчик выхода из системы
-	mainRouter.POST("/:slug/map/update", handlers.UpdateMapPage)                 //обновление странички с данными которые попали в область пользователя
-	mainRouter.POST("/:slug/map/locationButton", handlers.LocationButtonMapPage) //обработчик для формирования новых координат отображения карты
+	//mainRouter.GET("/:slug/map", func(c *gin.Context) { //работа с основной страничкой карты
+	//	c.HTML(http.StatusOK, "map.html", gin.H{"yaKey": license.LicenseFields.YaKey})
+	//})
+	//mainRouter.POST("/:slug/map", handlers.BuildMapPage)                         //запрос информации для заполнения странички с картой
+	//mainRouter.POST("/:slug/map/logOut", handlers.LoginAccOut)                   //обработчик выхода из системы
+	//mainRouter.POST("/:slug/map/update", handlers.UpdateMapPage)                 //обновление странички с данными которые попали в область пользователя
+	//mainRouter.POST("/:slug/map/locationButton", handlers.LocationButtonMapPage) //обработчик для формирования новых координат отображения карты
 
 	mainRouter.GET("/:slug/chat", func(c *gin.Context) { //работа с основной страничкой чата (страница)
 		c.HTML(http.StatusOK, "chat.html", gin.H{"message": "chat page"})

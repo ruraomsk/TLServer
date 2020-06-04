@@ -30,74 +30,127 @@ type Locations struct {
 	Area   []string `json:"area"`   //районы
 }
 
-//GetLightsFromBD определяем область отображения светофоров
-func GetLightsFromBD(box locations.BoxPoint) (tfdata []TrafficLights) {
-	var tflight = []TrafficLights{}
-	if (box.Point1.X > -180 && box.Point1.X < 0) && (box.Point0.X > 0 && box.Point0.X < 180) {
-		var (
-			point0 locations.Point
-			point1 locations.Point
-		)
-		//для первую область
-		point0 = box.Point0
-		point1.Y = box.Point1.Y
-		point1.X = 179.9999999999
-		tflight = SelectTL(point0, point1, false)
-		//для второй области
-		point0.Y = box.Point0.Y
-		point0.X = -179.9999999999
-		point1 = box.Point1
-		tempTF := SelectTL(point0, point1, false)
-		tflight = append(tflight, tempTF...)
-
-	} else if box.Point0.X == box.Point1.X {
-		tflight = SelectTL(box.Point0, box.Point1, true)
-	} else {
-		tflight = SelectTL(box.Point0, box.Point1, false)
-	}
-
-	return tflight
-}
-
-//SelectTL возвращает массив в котором содержатся светофоры, которые попали в указанную область
-func SelectTL(point0 locations.Point, point1 locations.Point, equalPoint bool) (tfdata []TrafficLights) {
-	var (
-		dgis     string
-		sqlStr   string
-		StateStr string
-	)
-
+//selectTL возвращает массив в котором содержатся светофоры, которые попали в указанную область
+func selectTL() (tfdata []TrafficLights) {
+	var dgis string
 	temp := &TrafficLights{}
-	if equalPoint {
-		sqlStr = fmt.Sprintf(`SELECT region, area, subarea, id, idevice, dgis, describ, state FROM public.cross`)
-	} else {
-		sqlStr = fmt.Sprintf("SELECT region, area, subarea, id, idevice, dgis, describ, state FROM public.cross WHERE box '((%3.15f,%3.15f),(%3.15f,%3.15f))'@> dgis", point0.Y, point0.X, point1.Y, point1.X)
-	}
-	rowsTL, _ := GetDB().Query(sqlStr)
+	rowsTL, _ := GetDB().Query(`SELECT region, area, subarea, id, idevice, dgis, describ, status FROM public.cross`)
 	for rowsTL.Next() {
-		err := rowsTL.Scan(&temp.Region.Num, &temp.Area.Num, &temp.Subarea, &temp.ID, &temp.Idevice, &dgis, &temp.Description, &StateStr)
+		err := rowsTL.Scan(&temp.Region.Num, &temp.Area.Num, &temp.Subarea, &temp.ID, &temp.Idevice, &dgis, &temp.Description, &temp.Sost.Num)
 		if err != nil {
 			logger.Error.Println("|Message: No result at these points", err.Error())
 			return nil
 		}
 		temp.Points.StrToFloat(dgis)
-		//Состояние светофора!
-		rState, err := ConvertStateStrToStruct(StateStr)
-		if err != nil {
-			logger.Error.Println("|Message: Failed to parse cross information", err.Error())
-			return nil
-		}
 		CacheInfo.Mux.Lock()
 		temp.Region.NameRegion = CacheInfo.MapRegion[temp.Region.Num]
 		temp.Area.NameArea = CacheInfo.MapArea[temp.Region.NameRegion][temp.Area.Num]
 		temp.Sost.Description = CacheInfo.MapTLSost[temp.Sost.Num]
 		CacheInfo.Mux.Unlock()
-		temp.Sost.Num = rState.StatusDevice
 		tfdata = append(tfdata, *temp)
 	}
 
 	return tfdata
 }
+
+func mapOpenInfo() (obj map[string]interface{}) {
+	obj = make(map[string]interface{})
+
+	location := &Locations{}
+	box, _ := location.MakeBoxPoint()
+	obj["boxPoint"] = &box
+	obj["tflight"] = selectTL()
+	obj["authorizedFlag"] = false
+
+	//собираю в кучу регионы для отображения
+	chosenRegion := make(map[string]string)
+	CacheInfo.Mux.Lock()
+	for first, second := range CacheInfo.MapRegion {
+		chosenRegion[first] = second
+	}
+	delete(chosenRegion, "*")
+	obj["regionInfo"] = chosenRegion
+
+	//собираю в кучу районы для отображения
+	chosenArea := make(map[string]map[string]string)
+	for first, second := range CacheInfo.MapArea {
+		chosenArea[first] = make(map[string]string)
+		chosenArea[first] = second
+	}
+	delete(chosenArea, "Все регионы")
+	CacheInfo.Mux.Unlock()
+	obj["areaInfo"] = chosenArea
+	return
+}
+
+//GetLightsFromBD определяем область отображения светофоров
+//func GetLightsFromBD(box locations.BoxPoint) (tfdata []TrafficLights) {
+//	var tflight = []TrafficLights{}
+//	if (box.Point1.X > -180 && box.Point1.X < 0) && (box.Point0.X > 0 && box.Point0.X < 180) {
+//		var (
+//			point0 locations.Point
+//			point1 locations.Point
+//		)
+//		//для первую область
+//		point0 = box.Point0
+//		point1.Y = box.Point1.Y
+//		point1.X = 179.9999999999
+//		tflight = SelectTL(point0, point1, false)
+//		//для второй области
+//		point0.Y = box.Point0.Y
+//		point0.X = -179.9999999999
+//		point1 = box.Point1
+//		tempTF := SelectTL(point0, point1, false)
+//		tflight = append(tflight, tempTF...)
+//
+//	} else if box.Point0.X == box.Point1.X {
+//		tflight = SelectTL(box.Point0, box.Point1, true)
+//	} else {
+//		tflight = SelectTL(box.Point0, box.Point1, false)
+//	}
+//
+//	return tflight
+//}
+
+//SelectTL возвращает массив в котором содержатся светофоры, которые попали в указанную область
+//func SelectTL(point0 locations.Point, point1 locations.Point, equalPoint bool) (tfdata []TrafficLights) {
+//	var (
+//		dgis     string
+//		sqlStr   string
+//		StateStr string
+//	)
+//
+//	temp := &TrafficLights{}
+//	if equalPoint {
+//		sqlStr = fmt.Sprintf(`SELECT region, area, subarea, id, idevice, dgis, describ, state FROM public.cross`)
+//	} else {
+//		sqlStr = fmt.Sprintf("SELECT region, area, subarea, id, idevice, dgis, describ, state FROM public.cross WHERE box '((%3.15f,%3.15f),(%3.15f,%3.15f))'@> dgis", point0.Y, point0.X, point1.Y, point1.X)
+//	}
+//	rowsTL, _ := GetDB().Query(sqlStr)
+//	for rowsTL.Next() {
+//		err := rowsTL.Scan(&temp.Region.Num, &temp.Area.Num, &temp.Subarea, &temp.ID, &temp.Idevice, &dgis, &temp.Description, &StateStr)
+//		if err != nil {
+//			logger.Error.Println("|Message: No result at these points", err.Error())
+//			return nil
+//		}
+//		temp.Points.StrToFloat(dgis)
+//		//Состояние светофора!
+//		rState, err := ConvertStateStrToStruct(StateStr)
+//		if err != nil {
+//			logger.Error.Println("|Message: Failed to parse cross information", err.Error())
+//			return nil
+//		}
+//		CacheInfo.Mux.Lock()
+//		temp.Region.NameRegion = CacheInfo.MapRegion[temp.Region.Num]
+//		temp.Area.NameArea = CacheInfo.MapArea[temp.Region.NameRegion][temp.Area.Num]
+//		temp.Sost.Description = CacheInfo.MapTLSost[temp.Sost.Num]
+//		CacheInfo.Mux.Unlock()
+//		temp.Sost.Num = rState.StatusDevice
+//		tfdata = append(tfdata, *temp)
+//	}
+//
+//	return tfdata
+//}
 
 //GetAllTrafficLights запрос информации об всех сфетофорах из БД
 func GetAllTrafficLights() (tfData []TrafficLights) {
