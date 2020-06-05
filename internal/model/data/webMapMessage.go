@@ -3,20 +3,34 @@ package data
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/JanFant/TLServer/logger"
 	"github.com/gorilla/websocket"
 )
 
-type mapResponse struct {
+type MapSocketResponse struct {
 	Type string                 `json:"type"`
 	Data map[string]interface{} `json:"data"`
 	conn *websocket.Conn        `json:"-"`
 }
 
-func mapMessage(mType string, conn *websocket.Conn) mapResponse {
-	return mapResponse{Type: mType, conn: conn, Data: map[string]interface{}{}}
+func mapMessage(mType string, conn *websocket.Conn, data map[string]interface{}) MapSocketResponse {
+	var resp MapSocketResponse
+	resp.Type = mType
+	resp.conn = conn
+	if data != nil {
+		resp.Data = data
+	} else {
+		resp.Data = make(map[string]interface{})
+	}
+	return resp
 }
 
-func (m *mapResponse) send() {
+func (m *MapSocketResponse) send() {
+	if m.Type == typeError {
+		go func() {
+			logger.Warning.Printf("|IP: %s |Login: %s |Resource: %s |Message: %v", m.conn.RemoteAddr(), "map socket", "/map", m.Data["message"])
+		}()
+	}
 	WriteMap <- *m
 }
 

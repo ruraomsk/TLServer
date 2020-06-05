@@ -10,6 +10,7 @@ import (
 var ConnectedUsers map[string][]*websocket.Conn
 var WriteSendMessage chan SendMessage
 
+//delConn удаление подключения из массива подключений пользователя
 func delConn(login string, conn *websocket.Conn) {
 	for index, userConn := range ConnectedUsers[login] {
 		if userConn == conn {
@@ -21,6 +22,7 @@ func delConn(login string, conn *websocket.Conn) {
 	}
 }
 
+//Broadcast обработчик сообщений (работа с чатом)
 func Broadcast() {
 	ConnectedUsers = make(map[string][]*websocket.Conn)
 	WriteSendMessage = make(chan SendMessage)
@@ -70,6 +72,7 @@ func Broadcast() {
 	}
 }
 
+//Reader обработчик соединений (работа с чатом)
 func Reader(conn *websocket.Conn, login string, db *sqlx.DB) {
 	ConnectedUsers[login] = append(ConnectedUsers[login], conn)
 	var message SendMessage

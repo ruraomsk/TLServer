@@ -4,19 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
-	"net/http"
 	"time"
 )
 
 var ConnectedUsers map[*websocket.Conn]bool
-var WriteMap chan mapResponse
+var WriteMap chan MapSocketResponse
 
 func MapReader(conn *websocket.Conn) {
 	ConnectedUsers[conn] = true
 	login := ""
 	{
-		resp := mapMessage(typeMapInfo, conn)
-		resp.Data = mapOpenInfo()
+		resp := mapMessage(typeMapInfo, conn, mapOpenInfo())
 		resp.send()
 	}
 
@@ -30,7 +28,7 @@ func MapReader(conn *websocket.Conn) {
 
 		typeSelect, err := setTypeMessage(p)
 		if err != nil {
-			resp := mapMessage(typeError, conn)
+			resp := mapMessage(typeError, conn, nil)
 			resp.Data["message"] = ErrorMessage{Error: errUnregisteredMessageType}
 			resp.send()
 		}
@@ -40,7 +38,7 @@ func MapReader(conn *websocket.Conn) {
 				location := &Locations{}
 				_ = json.Unmarshal(p, &location)
 				box, _ := location.MakeBoxPoint()
-				resp := mapMessage(typeJump, conn)
+				resp := mapMessage(typeJump, conn, nil)
 				resp.Data["boxPoint"] = box
 				resp.send()
 			}
@@ -48,22 +46,19 @@ func MapReader(conn *websocket.Conn) {
 			{
 				account := &Account{}
 				_ = json.Unmarshal(p, &account)
-				resp := mapMessage(typeLogin, conn)
-				obj := Login(account.Login, account.Password, conn.RemoteAddr().String())
-				if obj.Code == http.StatusOK {
-					login = fmt.Sprint(obj.Obj["login"])
-					resp.Data["authorizedFlag"] = true
-					resp.Data["manageFlag"], _ = AccessCheck(login, fmt.Sprint(obj.Obj["role"]), 1)
-					resp.Data["logDeviceFlag"], _ = AccessCheck(login, fmt.Sprint(obj.Obj["role"]), 11)
+				resp := Login(account.Login, account.Password, conn.RemoteAddr().String())
+				if resp.Type == typeLogin {
+					login = fmt.Sprint(resp.Data["login"])
 				}
-				resp.Data["login"] = obj
+				resp.conn = conn
 				resp.send()
 			}
 		case typeLogOut:
 			{
 				if login != "" {
-					resp := mapMessage(typeLogOut, conn)
-					resp.Data["logOut"] = LogOut(login)
+					resp := LogOut(login)
+					resp.conn = conn
+					resp.Data["authorizedFlag"] = true
 					resp.send()
 				}
 			}
@@ -74,7 +69,7 @@ func MapReader(conn *websocket.Conn) {
 
 func Broadcast() {
 	ConnectedUsers = make(map[*websocket.Conn]bool)
-	WriteMap = make(chan mapResponse)
+	WriteMap = make(chan MapSocketResponse)
 	crossReadTick := time.Tick(time.Second * 5)
 	oldTFs := selectTL()
 	for {
@@ -94,7 +89,7 @@ func Broadcast() {
 				oldTFs = newTFs
 				if len(ConnectedUsers) > 0 {
 					if len(tempTF) > 0 {
-						resp := mapMessage(typeTFlight, nil)
+						resp := mapMessage(typeTFlight, nil, nil)
 						resp.Data["tflight"] = tempTF
 						for conn := range ConnectedUsers {
 							if err := conn.WriteJSON(resp); err != nil {
@@ -114,3 +109,24 @@ func Broadcast() {
 		}
 	}
 }
+
+//var (
+//	typePage  = "page"
+//	typePage1 = "page1"
+//	typePage2 = "page2"
+//)
+//
+//case typePage1:
+//{
+//resp := mapMessage(typePage, conn, nil)
+//raw, _ := ioutil.ReadFile("./web/html/screen111.html")
+//resp.Data["html"] = string(raw)
+//resp.send()
+//}
+//case typePage2:
+//{
+//resp := mapMessage(typePage, conn, nil)
+//raw, _ := ioutil.ReadFile("./web/html/screen.html")
+//resp.Data["html"] = string(raw)
+//resp.send()
+//}

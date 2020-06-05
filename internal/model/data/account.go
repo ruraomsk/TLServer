@@ -40,16 +40,20 @@ type Account struct {
 }
 
 //login обработчик авторизации пользователя в системе
-func Login(login, password, ip string) u.Response {
+func Login(login, password, ip string) MapSocketResponse {
 	ipSplit := strings.Split(ip, ":")
 	account := &Account{}
 	//Забираю из базы запись с подходящей почтой
 	rows, err := GetDB().Query(`SELECT id, login, password, work_time FROM public.accounts WHERE login=$1`, login)
 	if rows == nil {
-		return u.Message(http.StatusUnauthorized, fmt.Sprintf("login: %s not found", login))
+		resp := mapMessage(typeError, nil, nil)
+		resp.Data["message"] = fmt.Sprintf("login: %s not found", login)
+		return resp
 	}
 	if err != nil {
-		return u.Message(http.StatusInternalServerError, "Connection to DB error. Please try again")
+		resp := mapMessage(typeError, nil, nil)
+		resp.Data["message"] = "connection to DB error. Please try again"
+		return resp
 	}
 	for rows.Next() {
 		_ = rows.Scan(&account.ID, &account.Login, &account.Password, &account.WorkTime)
@@ -59,13 +63,17 @@ func Login(login, password, ip string) u.Response {
 	privilege := Privilege{}
 	err = privilege.ReadFromBD(account.Login)
 	if err != nil {
-		return u.Message(http.StatusUnauthorized, fmt.Sprintf("Privilege error. login(%s)", login))
+		resp := mapMessage(typeError, nil, nil)
+		resp.Data["message"] = fmt.Sprintf("Privilege error. login(%s)", login)
+		return resp
 	}
 
 	//Сравниваю хэши полученного пароля и пароля взятого из БД
 	err = bcrypt.CompareHashAndPassword([]byte(account.Password), []byte(password))
 	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
-		return u.Message(http.StatusUnauthorized, fmt.Sprintf("Invalid login credentials. login(%s)", account.Login))
+		resp := mapMessage(typeError, nil, nil)
+		resp.Data["message"] = fmt.Sprintf("Invalid login credentials. login(%s)", account.Login)
+		return resp
 	}
 	//Залогинились, создаем токен
 	account.Password = ""
@@ -82,25 +90,31 @@ func Login(login, password, ip string) u.Response {
 
 	_, err = GetDB().Exec(`UPDATE public.accounts SET token = $1 WHERE login = $2`, account.Token, account.Login)
 	if err != nil {
-		return u.Message(http.StatusInternalServerError, "Connection to DB error. Please try again")
+		resp := mapMessage(typeError, nil, nil)
+		resp.Data["message"] = "connection to DB error. Please try again"
+		return resp
 	}
 
 	//Формируем ответ
-	resp := u.Message(http.StatusOK, "Logged In")
-	resp.Obj["login"] = account.Login
-	resp.Obj["token"] = tokenString
-	resp.Obj["role"] = privilege.Role
+	resp := mapMessage(typeLogin, nil, nil)
+	resp.Data["login"] = account.Login
+	resp.Data["token"] = tokenString
+	resp.Data["manageFlag"], _ = AccessCheck(login, privilege.Role.Name, 1)
+	resp.Data["logDeviceFlag"], _ = AccessCheck(login, privilege.Role.Name, 11)
+	resp.Data["authorizedFlag"] = true
+
 	return resp
 }
 
 //LogOut выход из учетной записи
-func LogOut(login string) u.Response {
+func LogOut(login string) MapSocketResponse {
 	_, err := GetDB().Exec("UPDATE public.accounts SET token = $1 where login = $2", "", login)
 	if err != nil {
-		return u.Message(http.StatusInternalServerError, "Connection to DB error. Please try again")
+		resp := mapMessage(typeError, nil, nil)
+		resp.Data["message"] = "connection to DB error. Please try again"
+		return resp
 	}
-	resp := u.Message(http.StatusOK, "log out")
-	return resp
+	return mapMessage(typeLogOut, nil, nil)
 }
 
 //Validate проверка аккаунда в бд
@@ -223,51 +237,6 @@ func (data *Account) ParserBoxPointsUser() (err error) {
 	data.BoxPoint = boxpoint
 	return nil
 }
-
-//GetInfoForUser собор информацию для пользователя, который авторизировался
-//func (data *Account) GetInfoForUser() u.Response {
-//	rows, err := GetDB().Query(`SELECT id, login, password FROM public.accounts WHERE login=$1`, data.Login)
-//	if rows == nil {
-//		return u.Message(http.StatusUnauthorized, fmt.Sprintf("login: %s not found", data.Login))
-//	}
-//	if err != nil {
-//		return u.Message(http.StatusInternalServerError, "Connection to DB error. Please try again")
-//	}
-//	for rows.Next() {
-//		_ = rows.Scan(&data.ID, &data.Login, &data.Password)
-//	}
-//
-//	err = data.ParserBoxPointsUser()
-//	if err != nil {
-//		return u.Message(http.StatusInternalServerError, err.Error())
-//	}
-//	tflight := GetLightsFromBD(data.BoxPoint)
-//	resp := u.Message(http.StatusOK, "loading content for the main page")
-//	resp.Obj["ya_map"] = license.LicenseFields.YaKey
-//	resp.Obj["boxPoint"] = data.BoxPoint
-//	resp.Obj["tflight"] = tflight
-//
-//	//собираю в кучу регионы для отображения
-//	chosenRegion := make(map[string]string)
-//	CacheInfo.Mux.Lock()
-//	for first, second := range CacheInfo.MapRegion {
-//		chosenRegion[first] = second
-//	}
-//	delete(chosenRegion, "*")
-//	resp.Obj["regionInfo"] = chosenRegion
-//
-//	//собираю в кучу районы для отображения
-//	chosenArea := make(map[string]map[string]string)
-//	for first, second := range CacheInfo.MapArea {
-//		chosenArea[first] = make(map[string]string)
-//		chosenArea[first] = second
-//	}
-//	delete(chosenArea, "Все регионы")
-//	CacheInfo.Mux.Unlock()
-//	resp.Obj["areaInfo"] = chosenArea
-//
-//	return resp
-//}
 
 //SuperCreate создание суперпользователя
 func SuperCreate() {

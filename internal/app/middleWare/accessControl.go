@@ -1,6 +1,7 @@
 package middleWare
 
 import (
+	"github.com/JanFant/TLServer/logger"
 	"net/http"
 	"strconv"
 	"strings"
@@ -36,6 +37,7 @@ var AccessControl = func() gin.HandlerFunc {
 		if !ok {
 			c.HTML(http.StatusNotFound, "notFound.html", gin.H{"message": "page not found"})
 			c.Abort()
+			return
 		}
 
 		access := false
@@ -54,10 +56,8 @@ var AccessControl = func() gin.HandlerFunc {
 		if access {
 			c.Next()
 		} else {
-			resp := u.Message(http.StatusForbidden, "access denied")
-			resp.Obj["logLogin"] = mapContx["login"]
-			c.HTML(http.StatusForbidden, "accessDenied.html", gin.H{"message": "accessDenied"})
-			u.SendRespond(c, resp)
+			c.HTML(http.StatusForbidden, "accessDenied.html", gin.H{"status": http.StatusForbidden, "message": "accessDenied"})
+			logger.Warning.Printf("|IP: %s |Login: %s |Resource: %s |Message: %v", c.Request.RemoteAddr, mapContx["login"], c.Request.RequestURI, "accessDenied")
 			c.Abort()
 			return
 		}

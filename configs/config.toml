@@ -3,8 +3,9 @@
 # AsudServ@gmail.com - mail  H49qFgUDTzSUQFYmoVwf - pass
 
 logger_path = "logfiles"
-static_path = "static"
-web_path = "web"
+static_path = "resources/static"
+web_path = "resources/web"
+free_path = "resources/free"
 ssl_path = "ssl"
 server_ip = ":8082"
 token_password = "123456789"

@@ -5,20 +5,24 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+//AllUsersStatus список всех пользователей
 type AllUsersStatus struct {
 	Users []StatusUser `json:"users"`
 }
 
+//StatusUser информация о статусе юзера
 type StatusUser struct {
 	User   string `json:"user"`
 	Status string `json:"status"`
 }
 
+//toString преобразование в строку
 func (s *StatusUser) toString() string {
 	raw, _ := json.Marshal(s)
 	return string(raw)
 }
 
+//checkAnother проверка есть ли еще подключенные сокеты у пользователя
 func checkAnother(login string) bool {
 	if len(ConnectedUsers[login]) > 0 {
 		return true
@@ -26,10 +30,12 @@ func checkAnother(login string) bool {
 	return false
 }
 
+//newStatus создать статус пользователя
 func newStatus(login, status string) *StatusUser {
 	return &StatusUser{User: login, Status: status}
 }
 
+//setStatus установить статус пользователя
 func (a *AllUsersStatus) setStatus() {
 	for i, user := range a.Users {
 		for name, _ := range ConnectedUsers {
@@ -41,6 +47,7 @@ func (a *AllUsersStatus) setStatus() {
 	}
 }
 
+//getAllUsers запросить пользователей из БД
 func (a *AllUsersStatus) getAllUsers(db *sqlx.DB) error {
 	var (
 		tempUser StatusUser
@@ -58,6 +65,7 @@ func (a *AllUsersStatus) getAllUsers(db *sqlx.DB) error {
 	return nil
 }
 
+//toString преобразовать в строку
 func (a *AllUsersStatus) toString() string {
 	raw, _ := json.Marshal(a)
 	return string(raw)
