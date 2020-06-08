@@ -18,7 +18,8 @@ import (
 func StartServer(conf *ServerConf) {
 
 	go chat.Broadcast()
-	go data.Broadcast()
+	go data.MapBroadcast()
+	go data.CrossBroadcast()
 
 	// Создаем engine для соединений
 	router := gin.Default()
@@ -53,6 +54,12 @@ func StartServer(conf *ServerConf) {
 	router.GET("/map/screen", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "screen.html", nil)
 	})
+
+	//cross WebSocket
+	router.GET("/crossTest", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "crossTest.html", nil)
+	})
+	router.GET("/crossW", handlers.CrossEngine)
 
 	//------------------------------------------------------------------------------------------------------------------
 	//обязательный общий путь

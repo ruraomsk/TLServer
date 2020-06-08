@@ -12,6 +12,33 @@ import (
 	agS_pudge "github.com/ruraomsk/ag-server/pudge"
 )
 
+//CrossEngine обработчик вебсокета для работы с перекрестком
+var CrossEngine = func(c *gin.Context) {
+	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		u.SendRespond(c, u.Message(http.StatusInternalServerError, "Bad socket connect"))
+		return
+	}
+	defer conn.Close()
+
+	var crConn data.CrossConn
+	crConn.Pos.Region, crConn.Pos.Area, crConn.Pos.Id, err = queryParser(c)
+	if err != nil {
+		return
+	}
+
+	mapContx := u.ParserInterface(c.Value("info"))
+	crConn.Login = mapContx["login"]
+	crConn.Conn = conn
+
+	crConn.Pos.Region = "1"
+	crConn.Pos.Area = "1"
+	crConn.Pos.Id = 1
+	crConn.Login = "All"
+
+	data.CrossReader(crConn)
+}
+
 //BuildCross обработчик собора данных для отображения прекрёстка
 var BuildCross = func(c *gin.Context) {
 	var err error

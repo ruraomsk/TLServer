@@ -40,18 +40,18 @@ type Account struct {
 }
 
 //login обработчик авторизации пользователя в системе
-func Login(login, password, ip string) MapSocketResponse {
+func Login(login, password, ip string) MapSokResponse {
 	ipSplit := strings.Split(ip, ":")
 	account := &Account{}
 	//Забираю из базы запись с подходящей почтой
 	rows, err := GetDB().Query(`SELECT id, login, password, work_time FROM public.accounts WHERE login=$1`, login)
 	if rows == nil {
-		resp := mapMessage(typeError, nil, nil)
+		resp := mapSokMessage(typeError, nil, nil)
 		resp.Data["message"] = fmt.Sprintf("login: %s not found", login)
 		return resp
 	}
 	if err != nil {
-		resp := mapMessage(typeError, nil, nil)
+		resp := mapSokMessage(typeError, nil, nil)
 		resp.Data["message"] = "connection to DB error. Please try again"
 		return resp
 	}
@@ -63,7 +63,7 @@ func Login(login, password, ip string) MapSocketResponse {
 	privilege := Privilege{}
 	err = privilege.ReadFromBD(account.Login)
 	if err != nil {
-		resp := mapMessage(typeError, nil, nil)
+		resp := mapSokMessage(typeError, nil, nil)
 		resp.Data["message"] = fmt.Sprintf("Privilege error. login(%s)", login)
 		return resp
 	}
@@ -71,7 +71,7 @@ func Login(login, password, ip string) MapSocketResponse {
 	//Сравниваю хэши полученного пароля и пароля взятого из БД
 	err = bcrypt.CompareHashAndPassword([]byte(account.Password), []byte(password))
 	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
-		resp := mapMessage(typeError, nil, nil)
+		resp := mapSokMessage(typeError, nil, nil)
 		resp.Data["message"] = fmt.Sprintf("Invalid login credentials. login(%s)", account.Login)
 		return resp
 	}
@@ -90,13 +90,13 @@ func Login(login, password, ip string) MapSocketResponse {
 
 	_, err = GetDB().Exec(`UPDATE public.accounts SET token = $1 WHERE login = $2`, account.Token, account.Login)
 	if err != nil {
-		resp := mapMessage(typeError, nil, nil)
+		resp := mapSokMessage(typeError, nil, nil)
 		resp.Data["message"] = "connection to DB error. Please try again"
 		return resp
 	}
 
 	//Формируем ответ
-	resp := mapMessage(typeLogin, nil, nil)
+	resp := mapSokMessage(typeLogin, nil, nil)
 	resp.Data["login"] = account.Login
 	resp.Data["token"] = tokenString
 	resp.Data["manageFlag"], _ = AccessCheck(login, privilege.Role.Name, 1)
@@ -107,14 +107,14 @@ func Login(login, password, ip string) MapSocketResponse {
 }
 
 //LogOut выход из учетной записи
-func LogOut(login string) MapSocketResponse {
+func LogOut(login string) MapSokResponse {
 	_, err := GetDB().Exec("UPDATE public.accounts SET token = $1 where login = $2", "", login)
 	if err != nil {
-		resp := mapMessage(typeError, nil, nil)
+		resp := mapSokMessage(typeError, nil, nil)
 		resp.Data["message"] = "connection to DB error. Please try again"
 		return resp
 	}
-	return mapMessage(typeLogOut, nil, nil)
+	return mapSokMessage(typeLogOut, nil, nil)
 }
 
 //Validate проверка аккаунда в бд

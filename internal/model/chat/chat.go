@@ -22,56 +22,6 @@ func delConn(login string, conn *websocket.Conn) {
 	}
 }
 
-//Broadcast обработчик сообщений (работа с чатом)
-func Broadcast() {
-	ConnectedUsers = make(map[string][]*websocket.Conn)
-	WriteSendMessage = make(chan SendMessage)
-	for {
-		select {
-		case msg := <-WriteSendMessage:
-			{
-				switch {
-				case msg.from == msg.to:
-					{
-						if err := msg.conn.WriteJSON(msg); err != nil {
-							_ = msg.conn.Close()
-							delConn(msg.from, msg.conn)
-						}
-					}
-				case msg.to == globalMessage:
-					{
-						for _, userConn := range ConnectedUsers {
-							for _, conn := range userConn {
-								if err := conn.WriteJSON(msg); err != nil {
-									_ = conn.Close()
-									delConn(msg.from, conn)
-								}
-							}
-						}
-					}
-				case msg.from != msg.to:
-					{
-						for _, conn := range ConnectedUsers[msg.from] {
-							if err := conn.WriteJSON(msg); err != nil {
-								_ = conn.Close()
-								delConn(msg.from, conn)
-							}
-						}
-						for _, conn := range ConnectedUsers[msg.to] {
-							if err := conn.WriteJSON(msg); err != nil {
-								_ = conn.Close()
-								delConn(msg.from, conn)
-							}
-						}
-					}
-				default:
-					continue
-				}
-			}
-		}
-	}
-}
-
 //Reader обработчик соединений (работа с чатом)
 func Reader(conn *websocket.Conn, login string, db *sqlx.DB) {
 	ConnectedUsers[login] = append(ConnectedUsers[login], conn)
@@ -157,5 +107,55 @@ func Reader(conn *websocket.Conn, login string, db *sqlx.DB) {
 			}
 		}
 
+	}
+}
+
+//Broadcast обработчик сообщений (работа с чатом)
+func Broadcast() {
+	ConnectedUsers = make(map[string][]*websocket.Conn)
+	WriteSendMessage = make(chan SendMessage)
+	for {
+		select {
+		case msg := <-WriteSendMessage:
+			{
+				switch {
+				case msg.from == msg.to:
+					{
+						if err := msg.conn.WriteJSON(msg); err != nil {
+							_ = msg.conn.Close()
+							delConn(msg.from, msg.conn)
+						}
+					}
+				case msg.to == globalMessage:
+					{
+						for _, userConn := range ConnectedUsers {
+							for _, conn := range userConn {
+								if err := conn.WriteJSON(msg); err != nil {
+									_ = conn.Close()
+									delConn(msg.from, conn)
+								}
+							}
+						}
+					}
+				case msg.from != msg.to:
+					{
+						for _, conn := range ConnectedUsers[msg.from] {
+							if err := conn.WriteJSON(msg); err != nil {
+								_ = conn.Close()
+								delConn(msg.from, conn)
+							}
+						}
+						for _, conn := range ConnectedUsers[msg.to] {
+							if err := conn.WriteJSON(msg); err != nil {
+								_ = conn.Close()
+								delConn(msg.from, conn)
+							}
+						}
+					}
+				default:
+					continue
+				}
+			}
+		}
 	}
 }

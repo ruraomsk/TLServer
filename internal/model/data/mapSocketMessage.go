@@ -7,14 +7,14 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type MapSocketResponse struct {
+type MapSokResponse struct {
 	Type string                 `json:"type"`
 	Data map[string]interface{} `json:"data"`
 	conn *websocket.Conn        `json:"-"`
 }
 
-func mapMessage(mType string, conn *websocket.Conn, data map[string]interface{}) MapSocketResponse {
-	var resp MapSocketResponse
+func mapSokMessage(mType string, conn *websocket.Conn, data map[string]interface{}) MapSokResponse {
+	var resp MapSokResponse
 	resp.Type = mType
 	resp.conn = conn
 	if data != nil {
@@ -25,7 +25,7 @@ func mapMessage(mType string, conn *websocket.Conn, data map[string]interface{})
 	return resp
 }
 
-func (m *MapSocketResponse) send() {
+func (m *MapSokResponse) send() {
 	if m.Type == typeError {
 		go func() {
 			logger.Warning.Printf("|IP: %s |Login: %s |Resource: %s |Message: %v", m.conn.RemoteAddr(), "map socket", "/map", m.Data["message"])

@@ -16,5 +16,5 @@ var MapEngine = func(c *gin.Context) {
 		return
 	}
 	defer conn.Close()
-	data.MapReader(conn)
+	data.MapReader(conn, c)
 }
