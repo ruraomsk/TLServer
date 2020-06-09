@@ -7,17 +7,16 @@ import (
 )
 
 type CrossSokResponse struct {
-	Type   string                 `json:"type"`
-	Data   map[string]interface{} `json:"data"`
-	ccInfo CrossConn              `json:"-"`
+	Type string                 `json:"type"`
+	Data map[string]interface{} `json:"data"`
+	conn *websocket.Conn        `json:"-"`
+	info newInfo                `json:"-"`
 }
 
-//CrossConn соединение
-type CrossConn struct {
-	Pos   CrossEditInfo   //какой перекресток редактирует
-	Conn  *websocket.Conn //подключение
-	Edit  bool            //флаг редактирование
-	Login string          //пользователь
+type newInfo struct {
+	login string
+	edit  bool
+	pos   CrossEditInfo
 }
 
 //CrossEditInfo положение перекрестка
@@ -27,10 +26,8 @@ type CrossEditInfo struct {
 	Id     int    //ID
 }
 
-func crossSokMessage(mType string, crConn CrossConn, data map[string]interface{}) CrossSokResponse {
-	var resp CrossSokResponse
-	resp.Type = mType
-	resp.ccInfo = crConn
+func crossSokMessage(mType string, conn *websocket.Conn, data map[string]interface{}, info newInfo) CrossSokResponse {
+	var resp = CrossSokResponse{Type: mType, conn: conn, info: info}
 	if data != nil {
 		resp.Data = data
 	} else {
@@ -43,9 +40,9 @@ func (m *CrossSokResponse) send() {
 	if m.Type == typeError {
 		go func() {
 			logger.Warning.Printf("|IP: %s |Login: %s |Resource: %s |Message: %v",
-				m.ccInfo.Conn.RemoteAddr(),
-				m.ccInfo.Login,
-				fmt.Sprintf("/cross?Region=%v&Area=%v&ID=%v", m.ccInfo.Pos.Region, m.ccInfo.Pos.Area, m.ccInfo.Pos.Id),
+				m.conn.RemoteAddr(),
+				m.info.login,
+				fmt.Sprintf("/cross?Region=%v&Area=%v&ID=%v", m.info.pos.Region, m.info.pos.Area, m.info.pos.Id),
 				m.Data["message"])
 		}()
 	}
@@ -77,7 +74,7 @@ func crossInfo(pos CrossEditInfo) CrossSokResponse {
 	rowsTL := GetDB().QueryRow(`SELECT area, subarea, idevice, dgis, describ, state FROM public.cross WHERE region = $1 and id = $2 and area = $3`, pos.Region, pos.Id, pos.Area)
 	err := rowsTL.Scan(&TLignt.Area.Num, &TLignt.Subarea, &TLignt.Idevice, &dgis, &TLignt.Description, &stateStr)
 	if err != nil {
-		resp := crossSokMessage(typeError, CrossConn{}, nil)
+		resp := crossSokMessage(typeError, nil, nil, newInfo{})
 		resp.Data["message"] = "No result at these points, table cross"
 		return resp
 	}
@@ -85,12 +82,12 @@ func crossInfo(pos CrossEditInfo) CrossSokResponse {
 	//Состояние светофора!
 	rState, err := ConvertStateStrToStruct(stateStr)
 	if err != nil {
-		resp := crossSokMessage(typeError, CrossConn{}, nil)
+		resp := crossSokMessage(typeError, nil, nil, newInfo{})
 		resp.Data["message"] = "failed to parse cross information"
 		return resp
 	}
 
-	resp := crossSokMessage(typeCrossBuild, CrossConn{}, nil)
+	resp := crossSokMessage(typeCrossBuild, nil, nil, newInfo{})
 	CacheInfo.Mux.Lock()
 	TLignt.Region.NameRegion = CacheInfo.MapRegion[TLignt.Region.Num]
 	TLignt.Area.NameArea = CacheInfo.MapArea[TLignt.Region.NameRegion][TLignt.Area.Num]
@@ -106,11 +103,12 @@ func crossInfo(pos CrossEditInfo) CrossSokResponse {
 	}
 	resp.Data["cross"] = TLignt
 	resp.Data["state"] = rState
-
+	resp.Data["region"] = TLignt.Region.Num
 	return resp
 }
 
 var (
+	typeClose              = "close"
 	typeDButton            = "dispatch"
 	typeChangeEdit         = "changeEdit"
 	typeCrossBuild         = "crossBuild"

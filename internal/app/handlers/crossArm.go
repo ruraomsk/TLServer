@@ -21,17 +21,15 @@ var CrossEngine = func(c *gin.Context) {
 	}
 	defer conn.Close()
 
-	var crConn data.CrossConn
-	crConn.Pos.Region, crConn.Pos.Area, crConn.Pos.Id, err = queryParser(c)
+	var crEdit data.CrossEditInfo
+	crEdit.Region, crEdit.Area, crEdit.Id, err = queryParser(c)
 	if err != nil {
 		return
 	}
 
 	mapContx := u.ParserInterface(c.Value("info"))
-	crConn.Login = mapContx["login"]
-	crConn.Conn = conn
 
-	data.CrossReader(crConn, mapContx)
+	data.CrossReader(conn, crEdit, mapContx)
 }
 
 //BuildCross обработчик собора данных для отображения прекрёстка
