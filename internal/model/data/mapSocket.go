@@ -116,17 +116,13 @@ func MapBroadcast() {
 			{
 				if err := msg.conn.WriteJSON(msg); err != nil {
 					_ = msg.conn.Close()
-					return
 				}
 			}
 		}
 	}
 }
 
-//resp.Data["manageFlag"], _ = AccessCheck(login, privilege.Role.Name, 1)
-//resp.Data["logDeviceFlag"], _ = AccessCheck(login, privilege.Role.Name, 11)
-//resp.Data["authorizedFlag"] = true
-
+//checkToken проверка токена для вебсокета
 func checkToken(c *gin.Context) (flag bool, mapCont map[string]string) {
 	var tokenString string
 	cookie, err := c.Cookie("Authorization")
@@ -187,9 +183,7 @@ func checkToken(c *gin.Context) (flag bool, mapCont map[string]string) {
 	}
 
 	mapCont["login"] = tk.Login
-	//mapCont["region"] = tk.Region
 	mapCont["role"] = tk.Role
-	//mapCont["perm"] = fmt.Sprint(tk.Permission)
 
 	return true, mapCont
 }

@@ -47,7 +47,7 @@ func Login(login, password, ip string) MapSokResponse {
 	rows, err := GetDB().Query(`SELECT id, login, password, work_time FROM public.accounts WHERE login=$1`, login)
 	if rows == nil {
 		resp := mapSokMessage(typeError, nil, nil)
-		resp.Data["message"] = fmt.Sprintf("login: %s not found", login)
+		resp.Data["message"] = fmt.Sprintf("Invalid login credentials. login(%s)", login)
 		return resp
 	}
 	if err != nil {
@@ -64,7 +64,7 @@ func Login(login, password, ip string) MapSokResponse {
 	err = privilege.ReadFromBD(account.Login)
 	if err != nil {
 		resp := mapSokMessage(typeError, nil, nil)
-		resp.Data["message"] = fmt.Sprintf("Privilege error. login(%s)", login)
+		resp.Data["message"] = fmt.Sprintf("Invalid login credentials. login(%s)", login)
 		return resp
 	}
 

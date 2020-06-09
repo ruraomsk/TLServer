@@ -24,9 +24,13 @@ func delConn(login string, conn *websocket.Conn) {
 
 //Reader обработчик соединений (работа с чатом)
 func Reader(conn *websocket.Conn, login string, db *sqlx.DB) {
-	ConnectedUsers[login] = append(ConnectedUsers[login], conn)
 	var message SendMessage
 	message.conn = conn
+
+	//сообщить пользователям что мы появились в сети
+	changeFlag := checkAnother(login)
+	ConnectedUsers[login] = append(ConnectedUsers[login], conn)
+
 	//выгрузить список доступных пользователей
 	{
 		var users AllUsersStatus
@@ -38,9 +42,8 @@ func Reader(conn *websocket.Conn, login string, db *sqlx.DB) {
 		message.send(users.toString(), typeAllUsers, login, login)
 	}
 
-	//сообщить пользователям что мы появились в сети
 	uStatus := newStatus(login, statusOnline)
-	if !checkAnother(login) {
+	if !changeFlag {
 		message.send(uStatus.toString(), typeStatus, login, globalMessage)
 	}
 

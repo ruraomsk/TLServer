@@ -1,46 +1,43 @@
 package data
 
 import (
+	"encoding/json"
+	"fmt"
+	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/gorilla/websocket"
+	"github.com/ruraomsk/ag-server/comm"
+	"strings"
 	"time"
 )
 
-var ConnectedCrossUsers map[string][]CrossConn
+var cConnMapUsers map[string][]CrossConn
+var editMapCross map[CrossEditInfo]string
 var WriteCrossMessage chan CrossSokResponse
 
 //delConn удаление подключения из массива подключений пользователя
 func delConn(login string, conn *websocket.Conn) {
-	for index, userConn := range ConnectedCrossUsers[login] {
+	for index, userConn := range cConnMapUsers[login] {
 		if userConn.Conn == conn {
-			ConnectedCrossUsers[login][index] = ConnectedCrossUsers[login][len(ConnectedCrossUsers[login])-1]
-			//TODO тут может быть что-то не так
-			//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-			ConnectedCrossUsers[login][len(ConnectedCrossUsers[login])-1] = CrossConn{} //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-			//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-			ConnectedCrossUsers[login] = ConnectedCrossUsers[login][:len(ConnectedCrossUsers[login])-1]
+			cConnMapUsers[login][index] = cConnMapUsers[login][len(cConnMapUsers[login])-1]
+			cConnMapUsers[login][len(cConnMapUsers[login])-1] = CrossConn{}
+			cConnMapUsers[login] = cConnMapUsers[login][:len(cConnMapUsers[login])-1]
 			break
 		}
 	}
 }
 
-//CrossConn соединение
-type CrossConn struct {
-	Pos   CrossEditInfo
-	Conn  *websocket.Conn //подключение
-	First bool
-	Login string
+var newCrossMapConnect map[*websocket.Conn]newInfo
+
+type newInfo struct {
+	login string
+	edit  bool
+	pos   CrossEditInfo
 }
 
-type CrossEditInfo struct {
-	Region string
-	Area   string
-	Id     int
-}
-
-func CrossReader(crossConn CrossConn) {
+func CrossReader(crossConn CrossConn, mapContx map[string]string) {
 	//дропаю соединение, если перекресток уже открыт у пользователя
-	for _, crConn := range ConnectedCrossUsers[crossConn.Login] {
-		if crConn.Pos == crossConn.Pos {
+	for _, cc := range cConnMapUsers[crossConn.Login] {
+		if cc.Pos == crossConn.Pos {
 			resp := crossSokMessage(typeError, crossConn, nil)
 			resp.Data["message"] = ErrorMessage{Error: errDoubleOpeningDevice}
 			_ = crossConn.Conn.WriteJSON(resp)
@@ -49,109 +46,180 @@ func CrossReader(crossConn CrossConn) {
 		}
 	}
 
-	//это точно не тот перекресток который уже открыт
-	//проверка первым ли он занял перекресток
-	for user, connInfos := range ConnectedCrossUsers {
-		if user == crossConn.Login {
-			continue
-		}
-		for _, crConn := range connInfos {
-			if crConn.Pos == crossConn.Pos {
-				crossConn.First = false
-				break
-			}
+	//===================================
+	var (
+		conn     *websocket.Conn
+		pos      CrossEditInfo
+		login    string
+		newCInfo newInfo
+		//var newCrossMapConnect map[*websocket.Conn]newInfo
+	)
+
+	//===================================
+	//===================================
+	newCInfo.login = login
+	newCInfo.pos = pos
+	newCInfo.edit = false
+
+	for _, info := range newCrossMapConnect {
+		if info.pos == pos && info.login == login {
+			resp := crossSokMessage(typeError, crossConn, nil)
+			resp.Data["message"] = ErrorMessage{Error: errDoubleOpeningDevice}
+			_ = conn.WriteJSON(resp)
+			_ = conn.Close()
+			return
 		}
 	}
-	crossConn.First = true
-	//если все ОК идем дальше
-	ConnectedCrossUsers[crossConn.Login] = append(ConnectedCrossUsers[crossConn.Login], crossConn)
+	flagEdit := false
+	for _, info := range newCrossMapConnect {
+		if newCInfo.pos == info.pos && info.edit {
+			flagEdit = true
+		}
+	}
+	if !flagEdit {
+		newCInfo.edit = true
+	}
+	newCrossMapConnect[conn] = newCInfo
+	//===================================
+	//===================================
+	//проверка редактирования
+	delC := newCrossMapConnect[conn]
+	delete(newCrossMapConnect, conn)
+	for cc, coI := range newCrossMapConnect {
+		if coI.pos == delC.pos {
+			coI.edit = true
+			newCrossMapConnect[cc] = coI
 
+		}
+	}
+	//===================================
+	//===================================
+	//===================================
+
+	//проверка редактируется ли данный перекресток
+	crossConn.Edit = false
+	if _, ok := editMapCross[crossConn.Pos]; !ok {
+		editMapCross[crossConn.Pos] = crossConn.Login
+		crossConn.Edit = true
+		//resp := crossSokMessage(typeChangeEdit, cc, nil)
+		//resp.Data["edit"] = true
+		//resp.send()
+	}
+
+	//если все ОК идем дальше
+	cConnMapUsers[crossConn.Login] = append(cConnMapUsers[crossConn.Login], crossConn)
+
+	//сборка начальной информации для отображения перекрестка
 	{
-		resp := blob(crossConn.Pos)
-		resp.crConn.Conn = crossConn.Conn
-		resp.Data["first"] = crossConn.First
+		resp := crossInfo(crossConn.Pos)
+		resp.ccInfo.Conn = crossConn.Conn
+		resp.Data["edit"] = crossConn.Edit
+		resp.Data["controlCrossFlag"] = false
+		controlCrossFlag, _ := AccessCheck(crossConn.Login, mapContx["role"], 5)
+		if (crossConn.Pos.Region == mapContx["region"]) || (mapContx["region"] == "*") {
+			resp.Data["controlCrossFlag"] = controlCrossFlag
+		}
 		resp.send()
 	}
+
+	fmt.Println(cConnMapUsers)
+	fmt.Println(editMapCross)
 
 	for {
 		_, p, err := crossConn.Conn.ReadMessage()
 		if err != nil {
 			delConn(crossConn.Login, crossConn.Conn)
+
+			//проверка был ли пользователь редактором перекрестка
+			//TODO мне не нравится этот кусок
+			if editMapCross[crossConn.Pos] == crossConn.Login {
+				delete(editMapCross, crossConn.Pos)
+				for user, ccs := range cConnMapUsers {
+					for num, cc := range ccs {
+						if cc.Pos == crossConn.Pos {
+							editMapCross[crossConn.Pos] = user
+							cConnMapUsers[user][num].Edit = true
+							resp := crossSokMessage(typeChangeEdit, cc, nil)
+							resp.Data["edit"] = true
+							resp.send()
+						}
+					}
+				}
+			}
+			//--------------------------------------
+
 			return
 		}
 
 		typeSelect, err := setTypeMessage(p)
 		if err != nil {
-			resp := mapSokMessage(typeError, crossConn.Conn, nil)
+			resp := crossSokMessage(typeError, crossConn, nil)
 			resp.Data["message"] = ErrorMessage{Error: errUnregisteredMessageType}
 			resp.send()
 		}
 		switch typeSelect {
 		// case
+		case typeDButton:
+			{
+				arm := comm.CommandARM{}
+				_ = json.Unmarshal(p, &arm)
+				arm.User = crossConn.Login
+				resp := DispatchControl(arm)
+				resp.ccInfo = crossConn
+				resp.send()
+			}
 		}
 	}
 }
 
-type phaseInfo struct {
-	idevice int  `json:"-"`
-	Fdk     int  `json:"fdk"`
-	Tdk     int  `json:"tdk"`
-	Pdk     bool `json:"pdk"`
-}
-
-func (p *phaseInfo) get() error {
-	err := GetDB().QueryRow(`SELECT Fdk, tdk, pdk FROM public.devices WHERE id = $1`, p.idevice).Scan(&p.Fdk, &p.Tdk, &p.Pdk)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func blob(pos CrossEditInfo) CrossSokResponse {
+//DispatchControl отправка команды на устройство
+func DispatchControl(arm comm.CommandARM) CrossSokResponse {
 	var (
-		dgis     string
-		stateStr string
-		phase    phaseInfo
+		err        error
+		armMessage tcpConnect.ArmCommandMessage
 	)
-	TLignt := TrafficLights{Area: AreaInfo{Num: pos.Area}, Region: RegionInfo{Num: pos.Region}, ID: pos.Id}
-	rowsTL := GetDB().QueryRow(`SELECT area, subarea, idevice, dgis, describ, state FROM public.cross WHERE region = $1 and id = $2 and area = $3`, pos.Region, pos.Id, pos.Area)
-	err := rowsTL.Scan(&TLignt.Area.Num, &TLignt.Subarea, &TLignt.Idevice, &dgis, &TLignt.Description, &stateStr)
-	if err != nil {
-		resp := crossSokMessage(typeError, CrossConn{}, nil)
-		resp.Data["message"] = "No result at these points, table cross"
-		return resp
-	}
-	TLignt.Points.StrToFloat(dgis)
-	//Состояние светофора!
-	rState, err := ConvertStateStrToStruct(stateStr)
-	if err != nil {
-		resp := crossSokMessage(typeError, CrossConn{}, nil)
-		resp.Data["message"] = "failed to parse cross information"
-		return resp
-	}
 
-	resp := crossSokMessage(typeCrossBuild, CrossConn{}, nil)
-	CacheInfo.Mux.Lock()
-	TLignt.Region.NameRegion = CacheInfo.MapRegion[TLignt.Region.Num]
-	TLignt.Area.NameArea = CacheInfo.MapArea[TLignt.Region.NameRegion][TLignt.Area.Num]
-	TLignt.Sost.Num = rState.StatusDevice
-	TLignt.Sost.Description = CacheInfo.MapTLSost[TLignt.Sost.Num]
-	CacheInfo.Mux.Unlock()
-	phase.idevice = TLignt.Idevice
-	err = phase.get()
+	armMessage.CommandStr, err = armControlMarshal(arm)
 	if err != nil {
-		resp.Data["phase"] = phaseInfo{}
-	} else {
-		resp.Data["phase"] = phase
+		resp := crossSokMessage(typeError, CrossConn{}, nil)
+		resp.Data["message"] = "failed to Marshal ArmControlData information"
+		return resp
 	}
-	resp.Data["cross"] = TLignt
-	resp.Data["state"] = rState
-	return resp
+	armMessage.User = arm.User
+	tcpConnect.ArmCommandChan <- armMessage
+	for {
+		chanRespond := <-tcpConnect.ArmCommandChan
+		if strings.Contains(armMessage.User, arm.User) {
+			if chanRespond.Message == "ok" {
+				resp := crossSokMessage(typeDButton, CrossConn{}, nil)
+				resp.Data["message"] = fmt.Sprintf("command %v send to server", armMessage.CommandStr)
+				resp.Data["user"] = arm.User
+				return resp
+			} else {
+				resp := crossSokMessage(typeDButton, CrossConn{}, nil)
+				resp.Data["message"] = "TCP Server not responding"
+				resp.Data["user"] = arm.User
+				return resp
+			}
+		}
+	}
 }
 
+//armControlMarshal преобразовать структуру в строку
+func armControlMarshal(arm comm.CommandARM) (str string, err error) {
+	newByte, err := json.Marshal(arm)
+	if err != nil {
+		return "", err
+	}
+	return string(newByte), err
+}
+
+//CrossEditInfo вещатель для кросса
 func CrossBroadcast() {
-	ConnectedCrossUsers = make(map[string][]CrossConn)
+	cConnMapUsers = make(map[string][]CrossConn)
 	WriteCrossMessage = make(chan CrossSokResponse)
+	editMapCross = make(map[CrossEditInfo]string)
+	newCrossMapConnect = make(map[*websocket.Conn]newInfo)
 
 	readTick := time.Tick(time.Second * 1)
 	for {
@@ -162,10 +230,22 @@ func CrossBroadcast() {
 			}
 		case msg := <-WriteCrossMessage:
 			{
-				if err := msg.crConn.Conn.WriteJSON(msg); err != nil {
-					delConn(msg.crConn.Login, msg.crConn.Conn)
-					_ = msg.crConn.Conn.Close()
-					return
+				if msg.Type == typeDButton {
+					for _, ccs := range cConnMapUsers {
+						for _, cc := range ccs {
+							if cc.Pos == msg.ccInfo.Pos {
+								if err := cc.Conn.WriteJSON(msg); err != nil {
+									delConn(cc.Login, cc.Conn)
+									_ = cc.Conn.Close()
+								}
+							}
+						}
+					}
+				} else {
+					if err := msg.ccInfo.Conn.WriteJSON(msg); err != nil {
+						delConn(msg.ccInfo.Login, msg.ccInfo.Conn)
+						_ = msg.ccInfo.Conn.Close()
+					}
 				}
 			}
 		}

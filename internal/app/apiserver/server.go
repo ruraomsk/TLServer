@@ -81,7 +81,10 @@ func StartServer(conf *ServerConf) {
 	mainRouter.GET("/:slug/cross", func(c *gin.Context) { //работа со странички перекрестков (страничка)
 		c.HTML(http.StatusOK, "cross.html", nil)
 	})
-	mainRouter.POST("/:slug/cross", handlers.BuildCross)                                    //информация о состоянии перекрёстка
+	mainRouter.GET("/:slug/crossW", handlers.CrossEngine)
+
+	mainRouter.POST("/:slug/cross", handlers.BuildCross) //информация о состоянии перекрёстка
+
 	mainRouter.POST("/:slug/cross/dev", handlers.DevCrossInfo)                              //информация о состоянии перекрестка (информация о дейвайсе)
 	mainRouter.POST("/:slug/cross/DispatchControlButtons", handlers.DispatchControlButtons) //обработчик диспетчерского управления (отправка команд управления)
 

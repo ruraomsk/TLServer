@@ -31,12 +31,7 @@ var CrossEngine = func(c *gin.Context) {
 	crConn.Login = mapContx["login"]
 	crConn.Conn = conn
 
-	crConn.Pos.Region = "1"
-	crConn.Pos.Area = "1"
-	crConn.Pos.Id = 1
-	crConn.Login = "All"
-
-	data.CrossReader(crConn)
+	data.CrossReader(crConn, mapContx)
 }
 
 //BuildCross обработчик собора данных для отображения прекрёстка

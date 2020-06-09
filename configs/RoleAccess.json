@@ -336,7 +336,7 @@
       "path": "/license",
       "description": "обработчик сбора начальной информации о лицензии"
     },
-     {
+    {
       "id": 34,
       "permission": 12,
       "path": "/license/newToken",
@@ -371,6 +371,12 @@
       "permission": 14,
       "path": "/chatTest",
       "description": "чат на сервере (вебсокет)"
+    },
+    {
+      "id": 40,
+      "permission": 4,
+      "path": "/crossW",
+      "description": "сросс вебсокет (вебсокет)"
     }
   ]
 }
