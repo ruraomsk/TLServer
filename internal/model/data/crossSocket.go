@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/gorilla/websocket"
+	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/ag-server/comm"
+	agS_pudge "github.com/ruraomsk/ag-server/pudge"
 	"strings"
 	"time"
 )
@@ -14,7 +16,7 @@ var writeCrossMessage chan CrossSokResponse
 var crossMapConnect map[*websocket.Conn]crossInfo
 
 //CrossReader обработчик открытия сокета для перекрестка
-func CrossReader(conn *websocket.Conn, pos CrossEditInfo, mapContx map[string]string) {
+func CrossReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string) {
 	//дропаю соединение, если перекресток уже открыт у пользователя
 	var crossCI = crossInfo{login: mapContx["login"], pos: pos, edit: false}
 
@@ -39,12 +41,10 @@ func CrossReader(conn *websocket.Conn, pos CrossEditInfo, mapContx map[string]st
 		crossCI.edit = true
 	}
 
-	//добавление в пул перекрестка
-	crossMapConnect[conn] = crossCI
-
 	//сборка начальной информации для отображения перекрестка
 	{
-		resp := takeCrossInfo(crossCI.pos)
+		resp := newCrossMess(typeCrossBuild, conn, nil, crossCI)
+		resp, crossCI.idevice = takeCrossInfo(crossCI.pos)
 		resp.conn = conn
 		resp.Data["edit"] = crossCI.edit
 		resp.Data["controlCrossFlag"] = false
@@ -55,6 +55,9 @@ func CrossReader(conn *websocket.Conn, pos CrossEditInfo, mapContx map[string]st
 		delete(resp.Data, "region")
 		resp.send()
 	}
+
+	//добавление в пул перекрестка
+	crossMapConnect[conn] = crossCI
 
 	fmt.Println(crossMapConnect)
 
@@ -85,6 +88,7 @@ func CrossReader(conn *websocket.Conn, pos CrossEditInfo, mapContx map[string]st
 				_ = json.Unmarshal(p, &arm)
 				arm.User = crossCI.login
 				resp := DispatchControl(arm)
+				resp.info = crossCI
 				resp.conn = conn
 				resp.send()
 			}
@@ -134,16 +138,134 @@ func armControlMarshal(arm comm.CommandARM) (str string, err error) {
 	return string(newByte), err
 }
 
-//CrossEditInfo передатчик для перекрестка (cross)
+//PosInfo передатчик для перекрестка (cross)
 func CrossBroadcast() {
 	writeCrossMessage = make(chan CrossSokResponse)
 	crossMapConnect = make(map[*websocket.Conn]crossInfo)
 
+	type crossUpdateInfo struct {
+		Idevice  int             `json:"idevice"`
+		Status   TLSostInfo      `json:"status"`
+		State    agS_pudge.Cross `json:"state"`
+		stateStr string
+	}
+
+	globArrCross := make(map[int]crossUpdateInfo)
+	globArrPhase := make(map[int]phaseInfo)
 	readTick := time.Tick(time.Second * 1)
 	for {
 		select {
 		case <-readTick:
 			{
+				var aPos []int
+				arrayCross := make(map[int]crossUpdateInfo)
+				arrayPhase := make(map[int]phaseInfo)
+				for _, crInfo := range crossMapConnect {
+					aPos = append(aPos, crInfo.idevice)
+					//arrayPhase[crInfo] = phaseInfo{}
+				}
+				//выполняем если хоть что-то есть
+				if len(aPos) > 0 {
+					//запрос статуса и state
+					query, args, err := sqlx.In("SELECT idevice, status, state FROM public.cross WHERE idevice IN (?)", aPos)
+					if err != nil {
+						//todo пока не знаю че с этим делать
+						fmt.Println(err.Error())
+						continue
+					}
+					query = GetDB().Rebind(query)
+					rows, err := GetDB().Queryx(query, args...)
+					if err != nil {
+						//todo пока не знаю че с этим делать
+						fmt.Println(err.Error())
+						continue
+					}
+					for rows.Next() {
+						var tempCR crossUpdateInfo
+						_ = rows.Scan(&tempCR.Idevice, &tempCR.Status.Num, &tempCR.stateStr)
+						tempCR.Status.Description = CacheInfo.MapTLSost[tempCR.Status.Num]
+						tempCR.State, _ = ConvertStateStrToStruct(tempCR.stateStr)
+						arrayCross[tempCR.Idevice] = tempCR
+					}
+					for idevice, newData := range arrayCross {
+						if oldData, ok := globArrCross[idevice]; ok {
+							//если запись есть нужно сравнить и если есть разница отправить изменения
+							if oldData.State.PK != newData.State.PK || oldData.State.NK != newData.State.NK || oldData.State.CK != newData.State.CK || oldData.Status.Num != newData.Status.Num {
+								for conn, info := range crossMapConnect {
+									if info.idevice == newData.Idevice {
+										msg := newCrossMess(typeCrossUpdate, conn, nil, info)
+										msg.Data["idevice"] = newData.Idevice
+										msg.Data["status"] = newData.Status
+										msg.Data["state"] = newData.State
+										_ = conn.WriteJSON(msg)
+									}
+								}
+							}
+						} else {
+							//если не существует старой записи ее нужно отправить
+							for conn, info := range crossMapConnect {
+								if info.idevice == newData.Idevice {
+									msg := newCrossMess(typeCrossUpdate, conn, nil, info)
+									msg.Data["idevice"] = newData.Idevice
+									msg.Data["status"] = newData.Status
+									msg.Data["state"] = newData.State
+									_ = conn.WriteJSON(msg)
+								}
+							}
+						}
+					}
+					globArrCross = arrayCross
+
+					//запрос phase
+					query, args, err = sqlx.In("SELECT id, fdk, tdk, pdk FROM public.devices WHERE id IN (?)", aPos)
+					if err != nil {
+						//todo пока не знаю че с этим делать
+						fmt.Println(err.Error())
+						continue
+					}
+					query = GetDB().Rebind(query)
+					rows, err = GetDB().Queryx(query, args...)
+					if err != nil {
+						//todo пока не знаю че с этим делать
+						fmt.Println(err.Error())
+						continue
+					}
+					for rows.Next() {
+						var tempPhase phaseInfo
+						_ = rows.Scan(&tempPhase.idevice, &tempPhase.Fdk, &tempPhase.Tdk, &tempPhase.Pdk)
+						arrayPhase[tempPhase.idevice] = tempPhase
+					}
+					for idevice, newData := range arrayPhase {
+						if oldData, ok := globArrPhase[idevice]; ok {
+							//если запись есть нужно сравнить и если есть разница отправить изменения
+							if oldData.Pdk != newData.Pdk || oldData.Tdk != newData.Tdk || oldData.Fdk != newData.Fdk {
+								for conn, info := range crossMapConnect {
+									if info.idevice == newData.idevice {
+										msg := newCrossMess(typePhase, conn, nil, info)
+										msg.Data["idevice"] = newData.idevice
+										msg.Data["fdk"] = newData.Fdk
+										msg.Data["tdk"] = newData.Tdk
+										msg.Data["pdk"] = newData.Pdk
+										_ = conn.WriteJSON(msg)
+									}
+								}
+							}
+						} else {
+							//если не существует старой записи ее нужно отправить
+							for conn, info := range crossMapConnect {
+								if info.idevice == newData.idevice {
+									msg := newCrossMess(typePhase, conn, nil, info)
+									msg.Data["idevice"] = newData.idevice
+									msg.Data["fdk"] = newData.Fdk
+									msg.Data["tdk"] = newData.Tdk
+									msg.Data["pdk"] = newData.Pdk
+									_ = conn.WriteJSON(msg)
+								}
+							}
+						}
+					}
+					globArrPhase = arrayPhase
+				}
 
 			}
 		case msg := <-writeCrossMessage:

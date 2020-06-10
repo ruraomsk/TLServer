@@ -107,9 +107,7 @@ func MapBroadcast() {
 						resp := newMapMess(typeTFlight, nil, nil)
 						resp.Data["tflight"] = tempTF
 						for conn := range connectedMapUsers {
-							if err := conn.WriteJSON(resp); err != nil {
-								_ = conn.Close()
-							}
+							_ = conn.WriteJSON(resp)
 						}
 					}
 				}

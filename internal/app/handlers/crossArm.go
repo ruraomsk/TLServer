@@ -21,7 +21,7 @@ var CrossEngine = func(c *gin.Context) {
 	}
 	defer conn.Close()
 
-	var crEdit data.CrossEditInfo
+	var crEdit data.PosInfo
 	crEdit.Region, crEdit.Area, crEdit.Id, err = queryParser(c)
 	if err != nil {
 		return

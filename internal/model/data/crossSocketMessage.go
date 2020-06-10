@@ -17,13 +17,14 @@ type CrossSokResponse struct {
 
 //crossInfo информация о перекрестке для которого открыт сокет
 type crossInfo struct {
-	login string
-	edit  bool
-	pos   CrossEditInfo
+	login   string
+	edit    bool
+	idevice int
+	pos     PosInfo
 }
 
-//CrossEditInfo положение перекрестка
-type CrossEditInfo struct {
+//PosInfo положение перекрестка
+type PosInfo struct {
 	Region string //регион
 	Area   string //район
 	Id     int    //ID
@@ -72,7 +73,7 @@ func (p *phaseInfo) get() error {
 }
 
 //takeCrossInfo формарование необходимой информации о перекрестке
-func takeCrossInfo(pos CrossEditInfo) CrossSokResponse {
+func takeCrossInfo(pos PosInfo) (CrossSokResponse, int) {
 	var (
 		dgis     string
 		stateStr string
@@ -84,7 +85,7 @@ func takeCrossInfo(pos CrossEditInfo) CrossSokResponse {
 	if err != nil {
 		resp := newCrossMess(typeError, nil, nil, crossInfo{})
 		resp.Data["message"] = "No result at these points, table cross"
-		return resp
+		return resp, 0
 	}
 	TLignt.Points.StrToFloat(dgis)
 	//Состояние светофора!
@@ -92,7 +93,7 @@ func takeCrossInfo(pos CrossEditInfo) CrossSokResponse {
 	if err != nil {
 		resp := newCrossMess(typeError, nil, nil, crossInfo{})
 		resp.Data["message"] = "failed to parse cross information"
-		return resp
+		return resp, 0
 	}
 
 	resp := newCrossMess(typeCrossBuild, nil, nil, crossInfo{})
@@ -112,7 +113,7 @@ func takeCrossInfo(pos CrossEditInfo) CrossSokResponse {
 	resp.Data["cross"] = TLignt
 	resp.Data["state"] = rState
 	resp.Data["region"] = TLignt.Region.Num
-	return resp
+	return resp, TLignt.Idevice
 }
 
 var (
@@ -120,5 +121,7 @@ var (
 	typeDButton            = "dispatch"
 	typeChangeEdit         = "changeEdit"
 	typeCrossBuild         = "crossBuild"
+	typePhase              = "phase"
+	typeCrossUpdate        = "crossUpdate"
 	errDoubleOpeningDevice = "double opening device"
 )

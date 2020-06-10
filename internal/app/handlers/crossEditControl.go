@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-//CrossEditInfo сбор информации о занятых перекрестках
+//PosInfo сбор информации о занятых перекрестках
 var CrossEditInfo = func(c *gin.Context) {
 	mapContx := u.ParserInterface(c.Value("info"))
 	resp := crossEdit.DisplayCrossEditInfo(mapContx, data.GetDB())
