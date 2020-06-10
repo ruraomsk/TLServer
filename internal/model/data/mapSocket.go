@@ -11,17 +11,17 @@ import (
 	"time"
 )
 
-var ConnectedMapUsers map[*websocket.Conn]bool
-var WriteMap chan MapSokResponse
+var connectedMapUsers map[*websocket.Conn]bool
+var writeMap chan MapSokResponse
 
+//MapReader обработчик открытия сокета для карты
 func MapReader(conn *websocket.Conn, c *gin.Context) {
-	ConnectedMapUsers[conn] = true
+	connectedMapUsers[conn] = true
 	login := ""
 	flag, mapContx := checkToken(c)
 
 	{
-		resp := mapSokMessage(typeMapInfo, conn, mapOpenInfo())
-
+		resp := newMapMess(typeMapInfo, conn, mapOpenInfo())
 		if flag {
 			login = mapContx["login"]
 			resp.Data["manageFlag"], _ = AccessCheck(login, mapContx["role"], 1)
@@ -34,14 +34,15 @@ func MapReader(conn *websocket.Conn, c *gin.Context) {
 	for {
 		_, p, err := conn.ReadMessage()
 		if err != nil {
-			delete(ConnectedMapUsers, conn)
 			//закрытие коннекта
+			resp := newMapMess(typeClose, conn, nil)
+			resp.send()
 			return
 		}
 
 		typeSelect, err := setTypeMessage(p)
 		if err != nil {
-			resp := mapSokMessage(typeError, conn, nil)
+			resp := newMapMess(typeError, conn, nil)
 			resp.Data["message"] = ErrorMessage{Error: errUnregisteredMessageType}
 			resp.send()
 		}
@@ -51,7 +52,7 @@ func MapReader(conn *websocket.Conn, c *gin.Context) {
 				location := &Locations{}
 				_ = json.Unmarshal(p, &location)
 				box, _ := location.MakeBoxPoint()
-				resp := mapSokMessage(typeJump, conn, nil)
+				resp := newMapMess(typeJump, conn, nil)
 				resp.Data["boxPoint"] = box
 				resp.send()
 			}
@@ -80,9 +81,10 @@ func MapReader(conn *websocket.Conn, c *gin.Context) {
 	}
 }
 
+//MapBroadcast передатчик для карты (map)
 func MapBroadcast() {
-	ConnectedMapUsers = make(map[*websocket.Conn]bool)
-	WriteMap = make(chan MapSokResponse)
+	connectedMapUsers = make(map[*websocket.Conn]bool)
+	writeMap = make(chan MapSokResponse)
 	crossReadTick := time.Tick(time.Second * 5)
 	oldTFs := selectTL()
 	for {
@@ -100,11 +102,11 @@ func MapBroadcast() {
 					}
 				}
 				oldTFs = newTFs
-				if len(ConnectedMapUsers) > 0 {
+				if len(connectedMapUsers) > 0 {
 					if len(tempTF) > 0 {
-						resp := mapSokMessage(typeTFlight, nil, nil)
+						resp := newMapMess(typeTFlight, nil, nil)
 						resp.Data["tflight"] = tempTF
-						for conn := range ConnectedMapUsers {
+						for conn := range connectedMapUsers {
 							if err := conn.WriteJSON(resp); err != nil {
 								_ = conn.Close()
 							}
@@ -112,10 +114,17 @@ func MapBroadcast() {
 					}
 				}
 			}
-		case msg := <-WriteMap:
-			{
-				if err := msg.conn.WriteJSON(msg); err != nil {
-					_ = msg.conn.Close()
+		case msg := <-writeMap:
+			switch msg.Type {
+			case typeClose:
+				{
+					delete(connectedMapUsers, msg.conn)
+				}
+			default:
+				{
+					if err := msg.conn.WriteJSON(msg); err != nil {
+						_ = msg.conn.Close()
+					}
 				}
 			}
 		}

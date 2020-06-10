@@ -46,12 +46,12 @@ func Login(login, password, ip string) MapSokResponse {
 	//Забираю из базы запись с подходящей почтой
 	rows, err := GetDB().Query(`SELECT id, login, password, work_time FROM public.accounts WHERE login=$1`, login)
 	if rows == nil {
-		resp := mapSokMessage(typeError, nil, nil)
+		resp := newMapMess(typeError, nil, nil)
 		resp.Data["message"] = fmt.Sprintf("Invalid login credentials. login(%s)", login)
 		return resp
 	}
 	if err != nil {
-		resp := mapSokMessage(typeError, nil, nil)
+		resp := newMapMess(typeError, nil, nil)
 		resp.Data["message"] = "connection to DB error. Please try again"
 		return resp
 	}
@@ -63,7 +63,7 @@ func Login(login, password, ip string) MapSokResponse {
 	privilege := Privilege{}
 	err = privilege.ReadFromBD(account.Login)
 	if err != nil {
-		resp := mapSokMessage(typeError, nil, nil)
+		resp := newMapMess(typeError, nil, nil)
 		resp.Data["message"] = fmt.Sprintf("Invalid login credentials. login(%s)", login)
 		return resp
 	}
@@ -71,7 +71,7 @@ func Login(login, password, ip string) MapSokResponse {
 	//Сравниваю хэши полученного пароля и пароля взятого из БД
 	err = bcrypt.CompareHashAndPassword([]byte(account.Password), []byte(password))
 	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
-		resp := mapSokMessage(typeError, nil, nil)
+		resp := newMapMess(typeError, nil, nil)
 		resp.Data["message"] = fmt.Sprintf("Invalid login credentials. login(%s)", account.Login)
 		return resp
 	}
@@ -90,13 +90,13 @@ func Login(login, password, ip string) MapSokResponse {
 
 	_, err = GetDB().Exec(`UPDATE public.accounts SET token = $1 WHERE login = $2`, account.Token, account.Login)
 	if err != nil {
-		resp := mapSokMessage(typeError, nil, nil)
+		resp := newMapMess(typeError, nil, nil)
 		resp.Data["message"] = "connection to DB error. Please try again"
 		return resp
 	}
 
 	//Формируем ответ
-	resp := mapSokMessage(typeLogin, nil, nil)
+	resp := newMapMess(typeLogin, nil, nil)
 	resp.Data["login"] = account.Login
 	resp.Data["token"] = tokenString
 	resp.Data["manageFlag"], _ = AccessCheck(login, privilege.Role.Name, 1)
@@ -110,11 +110,11 @@ func Login(login, password, ip string) MapSokResponse {
 func LogOut(login string) MapSokResponse {
 	_, err := GetDB().Exec("UPDATE public.accounts SET token = $1 where login = $2", "", login)
 	if err != nil {
-		resp := mapSokMessage(typeError, nil, nil)
+		resp := newMapMess(typeError, nil, nil)
 		resp.Data["message"] = "connection to DB error. Please try again"
 		return resp
 	}
-	return mapSokMessage(typeLogOut, nil, nil)
+	return newMapMess(typeLogOut, nil, nil)
 }
 
 //Validate проверка аккаунда в бд
@@ -216,7 +216,7 @@ func (data *Account) ParserBoxPointsUser() (err error) {
 	)
 	err = privilege.ReadFromBD(data.Login)
 	if err != nil {
-		return errors.New(fmt.Sprintf("ParserPoints. Privilege error: %s", err.Error()))
+		return fmt.Errorf("parserPoints. Privilege error: %s", err.Error())
 	}
 	var sqlString = `SELECT Min(dgis[0]) as "Y0", Min(convTo360(dgis[1])) as "X0", Max(dgis[0]) as "Y1", Max(convTo360(dgis[1])) as "X1"  FROM public."cross"`
 	if !strings.EqualFold(privilege.Region, "*") {
@@ -225,7 +225,7 @@ func (data *Account) ParserBoxPointsUser() (err error) {
 	row := GetDB().QueryRow(sqlString)
 	err = row.Scan(&boxpoint.Point0.Y, &boxpoint.Point0.X, &boxpoint.Point1.Y, &boxpoint.Point1.X)
 	if err != nil {
-		return errors.New(fmt.Sprintf("ParserPoints. Request error: %s", err.Error()))
+		return fmt.Errorf("parserPoints. Request error: %s", err.Error())
 	}
 	if boxpoint.Point0.X > 180 {
 		boxpoint.Point0.X -= 360

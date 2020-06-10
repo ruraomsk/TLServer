@@ -10,31 +10,17 @@ import (
 	"time"
 )
 
-//var cConnMapUsers map[string][]CrossConn
-var WriteCrossMessage chan CrossSokResponse
-var CrossMapConnect map[*websocket.Conn]newInfo
+var writeCrossMessage chan CrossSokResponse
+var crossMapConnect map[*websocket.Conn]crossInfo
 
-//delConn удаление подключения из массива подключений пользователя
-//func delConn(login string, conn *websocket.Conn) {
-//	for index, userConn := range cConnMapUsers[login] {
-//		if userConn.Conn == conn {
-//			cConnMapUsers[login][index] = cConnMapUsers[login][len(cConnMapUsers[login])-1]
-//			cConnMapUsers[login][len(cConnMapUsers[login])-1] = CrossConn{}
-//			cConnMapUsers[login] = cConnMapUsers[login][:len(cConnMapUsers[login])-1]
-//			break
-//		}
-//	}
-//}
-
-//var CrossMapConnect map[*websocket.Conn]newInfo
-
+//CrossReader обработчик открытия сокета для перекрестка
 func CrossReader(conn *websocket.Conn, pos CrossEditInfo, mapContx map[string]string) {
 	//дропаю соединение, если перекресток уже открыт у пользователя
-	var crossCI = newInfo{login: mapContx["login"], pos: pos, edit: false}
+	var crossCI = crossInfo{login: mapContx["login"], pos: pos, edit: false}
 
-	for _, info := range CrossMapConnect {
+	for _, info := range crossMapConnect {
 		if info.pos == pos && info.login == crossCI.login {
-			resp := crossSokMessage(typeError, conn, nil, crossCI)
+			resp := newCrossMess(typeError, conn, nil, crossCI)
 			resp.Data["message"] = ErrorMessage{Error: errDoubleOpeningDevice}
 			resp.send()
 			return
@@ -43,7 +29,7 @@ func CrossReader(conn *websocket.Conn, pos CrossEditInfo, mapContx map[string]st
 
 	//флаг редактирования перекрестка
 	flagEdit := false
-	for _, info := range CrossMapConnect {
+	for _, info := range crossMapConnect {
 		if crossCI.pos == info.pos && info.edit {
 			flagEdit = true
 			break
@@ -54,11 +40,11 @@ func CrossReader(conn *websocket.Conn, pos CrossEditInfo, mapContx map[string]st
 	}
 
 	//добавление в пул перекрестка
-	CrossMapConnect[conn] = crossCI
+	crossMapConnect[conn] = crossCI
 
 	//сборка начальной информации для отображения перекрестка
 	{
-		resp := crossInfo(crossCI.pos)
+		resp := takeCrossInfo(crossCI.pos)
 		resp.conn = conn
 		resp.Data["edit"] = crossCI.edit
 		resp.Data["controlCrossFlag"] = false
@@ -70,17 +56,17 @@ func CrossReader(conn *websocket.Conn, pos CrossEditInfo, mapContx map[string]st
 		resp.send()
 	}
 
-	fmt.Println(CrossMapConnect)
+	fmt.Println(crossMapConnect)
 
 	for {
 		_, p, err := conn.ReadMessage()
 		if err != nil {
 			//проверка редактирования
-			if CrossMapConnect[conn].edit {
-				resp := crossSokMessage(typeChangeEdit, conn, nil, crossCI)
+			if crossMapConnect[conn].edit {
+				resp := newCrossMess(typeChangeEdit, conn, nil, crossCI)
 				resp.send()
 			} else {
-				resp := crossSokMessage(typeClose, conn, nil, crossCI)
+				resp := newCrossMess(typeClose, conn, nil, crossCI)
 				resp.send()
 			}
 			return
@@ -88,12 +74,11 @@ func CrossReader(conn *websocket.Conn, pos CrossEditInfo, mapContx map[string]st
 
 		typeSelect, err := setTypeMessage(p)
 		if err != nil {
-			resp := crossSokMessage(typeError, conn, nil, crossCI)
+			resp := newCrossMess(typeError, conn, nil, crossCI)
 			resp.Data["message"] = ErrorMessage{Error: errUnregisteredMessageType}
 			resp.send()
 		}
 		switch typeSelect {
-		// case
 		case typeDButton:
 			{
 				arm := comm.CommandARM{}
@@ -116,7 +101,7 @@ func DispatchControl(arm comm.CommandARM) CrossSokResponse {
 
 	armMessage.CommandStr, err = armControlMarshal(arm)
 	if err != nil {
-		resp := crossSokMessage(typeError, nil, nil, newInfo{})
+		resp := newCrossMess(typeError, nil, nil, crossInfo{})
 		resp.Data["message"] = "failed to Marshal ArmControlData information"
 		return resp
 	}
@@ -126,12 +111,12 @@ func DispatchControl(arm comm.CommandARM) CrossSokResponse {
 		chanRespond := <-tcpConnect.ArmCommandChan
 		if strings.Contains(armMessage.User, arm.User) {
 			if chanRespond.Message == "ok" {
-				resp := crossSokMessage(typeDButton, nil, nil, newInfo{})
+				resp := newCrossMess(typeDButton, nil, nil, crossInfo{})
 				resp.Data["message"] = fmt.Sprintf("command %v send to server", armMessage.CommandStr)
 				resp.Data["user"] = arm.User
 				return resp
 			} else {
-				resp := crossSokMessage(typeDButton, nil, nil, newInfo{})
+				resp := newCrossMess(typeDButton, nil, nil, crossInfo{})
 				resp.Data["message"] = "TCP Server not responding"
 				resp.Data["user"] = arm.User
 				return resp
@@ -149,10 +134,10 @@ func armControlMarshal(arm comm.CommandARM) (str string, err error) {
 	return string(newByte), err
 }
 
-//CrossEditInfo вещатель для кросса
+//CrossEditInfo передатчик для перекрестка (cross)
 func CrossBroadcast() {
-	WriteCrossMessage = make(chan CrossSokResponse)
-	CrossMapConnect = make(map[*websocket.Conn]newInfo)
+	writeCrossMessage = make(chan CrossSokResponse)
+	crossMapConnect = make(map[*websocket.Conn]crossInfo)
 
 	readTick := time.Tick(time.Second * 1)
 	for {
@@ -161,15 +146,15 @@ func CrossBroadcast() {
 			{
 
 			}
-		case msg := <-WriteCrossMessage:
+		case msg := <-writeCrossMessage:
 			{
 				switch msg.Type {
 				case typeDButton:
 					{
-						for conn, info := range CrossMapConnect {
+						for conn, info := range crossMapConnect {
 							if info.pos == msg.info.pos {
 								if err := conn.WriteJSON(msg); err != nil {
-									delete(CrossMapConnect, conn)
+									delete(crossMapConnect, conn)
 									_ = msg.conn.Close()
 								}
 
@@ -178,15 +163,15 @@ func CrossBroadcast() {
 					}
 				case typeChangeEdit:
 					{
-						delC := CrossMapConnect[msg.conn]
-						delete(CrossMapConnect, msg.conn)
-						for cc, coI := range CrossMapConnect {
+						delC := crossMapConnect[msg.conn]
+						delete(crossMapConnect, msg.conn)
+						for cc, coI := range crossMapConnect {
 							if coI.pos == delC.pos {
 								coI.edit = true
-								CrossMapConnect[cc] = coI
+								crossMapConnect[cc] = coI
 								msg.Data["edit"] = true
 								if err := cc.WriteJSON(msg); err != nil {
-									delete(CrossMapConnect, cc)
+									delete(crossMapConnect, cc)
 									_ = cc.Close()
 								}
 								break
@@ -196,13 +181,13 @@ func CrossBroadcast() {
 					}
 				case typeClose:
 					{
-						delete(CrossMapConnect, msg.conn)
+						delete(crossMapConnect, msg.conn)
 						_ = msg.conn.Close()
 					}
 				default:
 					{
 						if err := msg.conn.WriteJSON(msg); err != nil {
-							delete(CrossMapConnect, msg.conn)
+							delete(crossMapConnect, msg.conn)
 							_ = msg.conn.Close()
 						}
 					}

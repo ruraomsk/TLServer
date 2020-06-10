@@ -7,13 +7,15 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+//MapSokResponse структура для отправки сообщений (map)
 type MapSokResponse struct {
 	Type string                 `json:"type"`
 	Data map[string]interface{} `json:"data"`
 	conn *websocket.Conn        `json:"-"`
 }
 
-func mapSokMessage(mType string, conn *websocket.Conn, data map[string]interface{}) MapSokResponse {
+//newMapMess создание нового сообщения
+func newMapMess(mType string, conn *websocket.Conn, data map[string]interface{}) MapSokResponse {
 	var resp MapSokResponse
 	resp.Type = mType
 	resp.conn = conn
@@ -25,15 +27,17 @@ func mapSokMessage(mType string, conn *websocket.Conn, data map[string]interface
 	return resp
 }
 
+//send отправка сообщения с обработкой ошибки
 func (m *MapSokResponse) send() {
 	if m.Type == typeError {
 		go func() {
 			logger.Warning.Printf("|IP: %s |Login: %s |Resource: %s |Message: %v", m.conn.RemoteAddr(), "map socket", "/map", m.Data["message"])
 		}()
 	}
-	WriteMap <- *m
+	writeMap <- *m
 }
 
+//setTypeMessage определение типа сообщения
 func setTypeMessage(raw []byte) (string, error) {
 	var temp map[string]interface{}
 	if err := json.Unmarshal(raw, &temp); err != nil {
@@ -42,6 +46,7 @@ func setTypeMessage(raw []byte) (string, error) {
 	return fmt.Sprint(temp["type"]), nil
 }
 
+//ErrorMessage структура ошибки
 type ErrorMessage struct {
 	Error string `json:"error"`
 }

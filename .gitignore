@@ -13,5 +13,7 @@ ssl/**
 
 release
 release/**
+resources
+resources/**
 
 TLServer.exe
