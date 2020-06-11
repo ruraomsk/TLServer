@@ -1,9 +1,9 @@
 package handlers
 
 import (
+	"github.com/JanFant/TLServer/internal/model/data"
 	"net/http"
 
-	"github.com/JanFant/TLServer/internal/model/data"
 	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/gin-gonic/gin"
 )

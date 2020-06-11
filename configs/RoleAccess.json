@@ -377,6 +377,12 @@
       "permission": 4,
       "path": "/crossW",
       "description": "сросс вебсокет (вебсокет)"
+    },
+    {
+      "id": 41,
+      "permission": 5,
+      "path": "/cross/controlW",
+      "description": "вебсокет арма перекрестков"
     }
   ]
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
+	"github.com/JanFant/TLServer/logger"
 	"github.com/gorilla/websocket"
 	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/ag-server/comm"
@@ -58,8 +59,6 @@ func CrossReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string) 
 
 	//добавление в пул перекрестка
 	crossMapConnect[conn] = crossCI
-
-	fmt.Println(crossMapConnect)
 
 	for {
 		_, p, err := conn.ReadMessage()
@@ -157,27 +156,33 @@ func CrossBroadcast() {
 		select {
 		case <-readTick:
 			{
-				var aPos []int
+				aPos := make([]int, 0)
 				arrayCross := make(map[int]crossUpdateInfo)
 				arrayPhase := make(map[int]phaseInfo)
 				for _, crInfo := range crossMapConnect {
-					aPos = append(aPos, crInfo.idevice)
-					//arrayPhase[crInfo] = phaseInfo{}
+					if len(aPos) == 0 {
+						aPos = append(aPos, crInfo.idevice)
+						continue
+					}
+					for _, a := range aPos {
+						if a == crInfo.idevice {
+							break
+						}
+						aPos = append(aPos, crInfo.idevice)
+					}
 				}
 				//выполняем если хоть что-то есть
 				if len(aPos) > 0 {
 					//запрос статуса и state
 					query, args, err := sqlx.In("SELECT idevice, status, state FROM public.cross WHERE idevice IN (?)", aPos)
 					if err != nil {
-						//todo пока не знаю че с этим делать
-						fmt.Println(err.Error())
+						logger.Error.Println("|Message: cross socket cant make IN ", err.Error())
 						continue
 					}
 					query = GetDB().Rebind(query)
 					rows, err := GetDB().Queryx(query, args...)
 					if err != nil {
-						//todo пока не знаю че с этим делать
-						fmt.Println(err.Error())
+						logger.Error.Println("|Message: db not respond", err.Error())
 						continue
 					}
 					for rows.Next() {
@@ -219,15 +224,13 @@ func CrossBroadcast() {
 					//запрос phase
 					query, args, err = sqlx.In("SELECT id, fdk, tdk, pdk FROM public.devices WHERE id IN (?)", aPos)
 					if err != nil {
-						//todo пока не знаю че с этим делать
-						fmt.Println(err.Error())
+						logger.Error.Println("|Message: cross socket cant make IN ", err.Error())
 						continue
 					}
 					query = GetDB().Rebind(query)
 					rows, err = GetDB().Queryx(query, args...)
 					if err != nil {
-						//todo пока не знаю че с этим делать
-						fmt.Println(err.Error())
+						logger.Error.Println("|Message: db not respond", err.Error())
 						continue
 					}
 					for rows.Next() {

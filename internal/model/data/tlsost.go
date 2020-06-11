@@ -34,7 +34,11 @@ type Locations struct {
 func selectTL() (tfdata []TrafficLights) {
 	var dgis string
 	temp := &TrafficLights{}
-	rowsTL, _ := GetDB().Query(`SELECT region, area, subarea, id, idevice, dgis, describ, status FROM public.cross`)
+	rowsTL, err := GetDB().Query(`SELECT region, area, subarea, id, idevice, dgis, describ, status FROM public.cross`)
+	if err != nil {
+		logger.Error.Println("|Message: db not respond", err.Error())
+		return nil
+	}
 	for rowsTL.Next() {
 		err := rowsTL.Scan(&temp.Region.Num, &temp.Area.Num, &temp.Subarea, &temp.ID, &temp.Idevice, &dgis, &temp.Description, &temp.Sost.Num)
 		if err != nil {
@@ -88,7 +92,11 @@ func GetAllTrafficLights() (tfData []TrafficLights) {
 	var dgis string
 	temp := &TrafficLights{}
 	sqlStr := fmt.Sprintf("SELECT region, id, area, dgis, describ FROM public.cross")
-	rows, _ := GetDB().Query(sqlStr)
+	rows, err := GetDB().Query(sqlStr)
+	if err != nil {
+		logger.Error.Println("|Message: db not respond", err.Error())
+		return nil
+	}
 	for rows.Next() {
 		_ = rows.Scan(&temp.Region.Num, &temp.ID, &temp.Area.Num, &dgis, &temp.Description)
 		temp.Points.StrToFloat(dgis)

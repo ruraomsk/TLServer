@@ -20,19 +20,13 @@ func StartServer(conf *ServerConf) {
 	go chat.Broadcast()
 	go data.MapBroadcast()
 	go data.CrossBroadcast()
+	go data.ControlBroadcast()
 
 	// Создаем engine для соединений
 	router := gin.Default()
 	router.Use(cors.Default())
 
 	router.LoadHTMLGlob(conf.WebPath + "/html/**")
-
-	//router.StaticFile("screen/screen.js", conf.WebPath+"/js/screen.js")
-	//router.StaticFile("map/map.js", conf.WebPath+"/js/map.js")
-	//router.StaticFile("icon/trafficlight.svg", conf.WebPath+"/resources/trafficlight.svg")
-	//router.StaticFile("/notFound.jpg", conf.WebPath+"/resources/notFound.jpg")
-	//router.StaticFile("/accessDenied.jpg", conf.WebPath+"/resources/accessDenied.jpg")
-	//router.StaticFS("map/img", http.Dir(conf.StaticPath+"/img"))
 
 	//скрипт и иконка которые должны быть доступны всем
 	router.StaticFS("/free", http.Dir(conf.FreePath))
@@ -83,21 +77,18 @@ func StartServer(conf *ServerConf) {
 	})
 	mainRouter.GET("/:slug/crossW", handlers.CrossEngine)
 
-	mainRouter.POST("/:slug/cross", handlers.BuildCross) //информация о состоянии перекрёстка
-
-	mainRouter.POST("/:slug/cross/dev", handlers.DevCrossInfo)                              //информация о состоянии перекрестка (информация о дейвайсе)
-	mainRouter.POST("/:slug/cross/DispatchControlButtons", handlers.DispatchControlButtons) //обработчик диспетчерского управления (отправка команд управления)
-
 	mainRouter.GET("/:slug/cross/control", func(c *gin.Context) { //расширеная страничка настройки перекрестка (страничка)
 		c.HTML(http.StatusOK, "crossControl.html", nil)
 	})
-	mainRouter.POST("/:slug/cross/control", handlers.ControlCross)                     //данные по расширенной странички перекрестков
-	mainRouter.GET("/:slug/cross/control/close", handlers.ControlCloseCross)           //обработчик закрытия перекрестка
-	mainRouter.GET("/:slug/cross/control/editable", handlers.ControlEditableCross)     //обработчик контроля управления перекрестка
-	mainRouter.POST("/:slug/cross/control/sendButton", handlers.ControlSendButton)     //обработчик приема данных от пользователя для отправки на устройство
-	mainRouter.POST("/:slug/cross/control/checkButton", handlers.ControlCheckButton)   //обработчик проверки данных
-	mainRouter.POST("/:slug/cross/control/createButton", handlers.ControlCreateButton) //обработчик создания перекрестка
-	mainRouter.POST("/:slug/cross/control/deleteButton", handlers.ControlDeleteButton) //обработчик обработчик удаления перекрсетка
+	mainRouter.GET("/:slug/cross/controlW", handlers.CrossControlEngine)
+
+	//mainRouter.POST("/:slug/cross/control", handlers.ControlCross)                     //данные по расширенной странички перекрестков
+	//mainRouter.GET("/:slug/cross/control/close", handlers.ControlCloseCross)           //обработчик закрытия перекрестка
+	//mainRouter.GET("/:slug/cross/control/editable", handlers.ControlEditableCross)     //обработчик контроля управления перекрестка
+	//mainRouter.POST("/:slug/cross/control/sendButton", handlers.ControlSendButton)     //обработчик приема данных от пользователя для отправки на устройство
+	//mainRouter.POST("/:slug/cross/control/checkButton", handlers.ControlCheckButton)   //обработчик проверки данных
+	//mainRouter.POST("/:slug/cross/control/createButton", handlers.ControlCreateButton) //обработчик создания перекрестка
+	//mainRouter.POST("/:slug/cross/control/deleteButton", handlers.ControlDeleteButton) //обработчик обработчик удаления перекрсетка
 
 	mainRouter.GET("/:slug/manage", func(c *gin.Context) { //обработка создание и редактирования пользователя (страничка)
 		c.HTML(http.StatusOK, "manage.html", nil)
