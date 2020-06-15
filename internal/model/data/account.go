@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/JanFant/TLServer/internal/model/config"
+	"github.com/JanFant/TLServer/internal/model/license"
 	"github.com/JanFant/TLServer/internal/model/locations"
 	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/dgrijalva/jwt-go"
@@ -84,7 +84,7 @@ func Login(login, password, ip string) MapSokResponse {
 	tk.ExpiresAt = time.Now().Add(time.Hour * account.WorkTime).Unix()
 
 	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tk)
-	tokenString, _ := token.SignedString([]byte(config.GlobalConfig.TokenPassword))
+	tokenString, _ := token.SignedString([]byte(license.LicenseFields.TokenPass))
 	account.Token = tokenString
 	//сохраняем токен в БД чтобы точно знать что дейтвителен только 1 токен
 

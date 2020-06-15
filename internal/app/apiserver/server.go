@@ -82,14 +82,6 @@ func StartServer(conf *ServerConf) {
 	})
 	mainRouter.GET("/:slug/cross/controlW", handlers.CrossControlEngine)
 
-	//mainRouter.POST("/:slug/cross/control", handlers.ControlCross)                     //данные по расширенной странички перекрестков
-	//mainRouter.GET("/:slug/cross/control/close", handlers.ControlCloseCross)           //обработчик закрытия перекрестка
-	//mainRouter.GET("/:slug/cross/control/editable", handlers.ControlEditableCross)     //обработчик контроля управления перекрестка
-	//mainRouter.POST("/:slug/cross/control/sendButton", handlers.ControlSendButton)     //обработчик приема данных от пользователя для отправки на устройство
-	//mainRouter.POST("/:slug/cross/control/checkButton", handlers.ControlCheckButton)   //обработчик проверки данных
-	//mainRouter.POST("/:slug/cross/control/createButton", handlers.ControlCreateButton) //обработчик создания перекрестка
-	//mainRouter.POST("/:slug/cross/control/deleteButton", handlers.ControlDeleteButton) //обработчик обработчик удаления перекрсетка
-
 	mainRouter.GET("/:slug/manage", func(c *gin.Context) { //обработка создание и редактирования пользователя (страничка)
 		c.HTML(http.StatusOK, "manage.html", nil)
 	})

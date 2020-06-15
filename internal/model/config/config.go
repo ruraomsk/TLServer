@@ -22,9 +22,9 @@ type DBConfig struct {
 
 //Config структура с объявлением всех переменных config.toml файла
 type Config struct {
-	TokenPassword string               `toml:"token_password"` //ключ для шифрования токенов доступа
-	TCPConfig     tcpConnect.TCPConfig `toml:"tcpServer"`      //информация о tcp соединении с сервером устройств
-	DBConfig      DBConfig             `toml:"database"`       //информация о соединении с базой данных
+	DBWait    int                  `toml:"db_waitTime"` //должно соответствовать задержке записи в бд Rura
+	TCPConfig tcpConnect.TCPConfig `toml:"tcpServer"`   //информация о tcp соединении с сервером устройств
+	DBConfig  DBConfig             `toml:"database"`    //информация о соединении с базой данных
 }
 
 func (dbConfig *DBConfig) GetDBurl() string {

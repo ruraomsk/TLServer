@@ -5,42 +5,40 @@ import (
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/ruraomsk/ag-server/comm"
-	"time"
 )
 
 var writeControlMessage chan ControlSokResponse
-var controlMapConnect map[*websocket.Conn]crossInfo
+var controlConnect map[*websocket.Conn]crossInfo
 
 //ControlReader обработчик открытия сокета для арма перекрестка
 func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string) {
 	//дропаю соединение, если перекресток уже открыт у пользователя
 	var controlI = crossInfo{login: mapContx["login"], pos: pos, edit: false}
 
+	//проверка не существование такого перекрестка (сбос если нету)
+	_, err := getNewState(pos)
+	if err != nil {
+		_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, errThereIsnSuchIntersection))
+		return
+	}
+
 	//проверка на полномочия редактирования
 	if !((pos.Region == mapContx["region"]) || (mapContx["region"] == "*")) {
-		resp := newControlMess(typeError, conn, nil, controlI)
-		resp.Data["message"] = ErrorMessage{Error: typeNotEdit}
-		_ = conn.WriteMessage(websocket.CloseNormalClosure, []byte(typeNotEdit))
-		//resp.send()
-		conn.Close()
+		_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, typeNotEdit))
 		return
 	}
 
 	//есть ли уже открытый арм у этого пользователя
-	for _, info := range controlMapConnect {
+	for _, info := range controlConnect {
 		if info.pos == pos && info.login == controlI.login {
-			resp := newControlMess(typeError, conn, nil, controlI)
-			resp.Data["message"] = ErrorMessage{Error: errDoubleOpeningDevice}
-			_ = conn.WriteMessage(websocket.CloseNormalClosure, []byte(errDoubleOpeningDevice))
-			conn.Close()
-			//resp.send()
+			_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, errDoubleOpeningDevice))
 			return
 		}
 	}
 
 	//флаг редактирования перекрестка
 	flagEdit := false
-	for _, info := range controlMapConnect {
+	for _, info := range controlConnect {
 		if controlI.pos == info.pos && info.edit {
 			flagEdit = true
 			break
@@ -63,15 +61,15 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 	}
 
 	//добавление в пул перекрестка
-	controlMapConnect[conn] = controlI
+	controlConnect[conn] = controlI
 
-	fmt.Println("control cok :", controlMapConnect)
+	fmt.Println("control cok :", controlConnect)
 
 	for {
 		_, p, err := conn.ReadMessage()
 		if err != nil {
 			//проверка редактирования
-			if controlMapConnect[conn].edit {
+			if controlConnect[conn].edit {
 				resp := newControlMess(typeChangeEdit, conn, nil, controlI)
 				resp.send()
 			} else {
@@ -89,7 +87,7 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 		}
 
 		switch typeSelect {
-		case typeSendB:
+		case typeSendB: //отправка state
 			{
 				temp := StateHandler{}
 				_ = json.Unmarshal(p, &temp)
@@ -98,7 +96,7 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 				resp.info = controlI
 				resp.send()
 			}
-		case typeCheckB:
+		case typeCheckB: //проверка state
 			{
 				temp := StateHandler{}
 				_ = json.Unmarshal(p, &temp)
@@ -106,7 +104,7 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 				resp.conn = conn
 				resp.send()
 			}
-		case typeCreateB:
+		case typeCreateB: //создание перекрестка
 			{
 				temp := StateHandler{}
 				_ = json.Unmarshal(p, &temp)
@@ -115,7 +113,7 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 				resp.send()
 
 			}
-		case typeDeleteB:
+		case typeDeleteB: //удаление state
 			{
 				temp := StateHandler{}
 				_ = json.Unmarshal(p, &temp)
@@ -123,14 +121,14 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 				resp.conn = conn
 				resp.send()
 			}
-		case typeUpdateB:
+		case typeUpdateB: //обновление state
 			{
 				resp := newControlMess(typeUpdateB, conn, nil, controlI)
 				resp, _ = takeControlInfo(controlI.pos)
 				resp.conn = conn
 				resp.send()
 			}
-		case typeEditInfoB:
+		case typeEditInfoB: //информация о пользователях что редактируют перекресток
 			{
 				resp := newControlMess(typeEditInfoB, conn, nil, controlI)
 
@@ -140,7 +138,7 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 				}
 				var users []UsersEdit
 
-				for _, info := range controlMapConnect {
+				for _, info := range controlConnect {
 					if info.pos == controlI.pos {
 						temp := UsersEdit{User: info.login, Edit: info.edit}
 						users = append(users, temp)
@@ -149,7 +147,7 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 				resp.Data["users"] = users
 				resp.send()
 			}
-		case typeDButton:
+		case typeDButton: //отправка сообщения о изменениии режима работы
 			{
 				arm := comm.CommandARM{}
 				_ = json.Unmarshal(p, &arm)
@@ -166,15 +164,9 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 //ControlBroadcast передатчик для арма перекрестка (crossControl)
 func ControlBroadcast() {
 	writeControlMessage = make(chan ControlSokResponse)
-	controlMapConnect = make(map[*websocket.Conn]crossInfo)
-
-	readTick := time.Tick(time.Second * 1)
+	controlConnect = make(map[*websocket.Conn]crossInfo)
 	for {
 		select {
-		case <-readTick:
-			{
-
-			}
 		case msg := <-writeControlMessage:
 			{
 				switch msg.Type {
@@ -182,90 +174,83 @@ func ControlBroadcast() {
 					{
 						if _, ok := msg.Data["state"]; ok {
 							//если есть поле отправить всем кто слушает
-							for conn, info := range controlMapConnect {
+							for conn, info := range controlConnect {
 								if info.pos == msg.info.pos {
 									if err := conn.WriteJSON(msg); err != nil {
-										delete(controlMapConnect, conn)
-										_ = msg.conn.Close()
+										delete(controlConnect, conn)
+										_ = conn.Close()
 									}
 								}
 							}
+							changeState <- msg.info.pos
 						} else {
 							// если нету поля отправить ошибку только пользователю
-							if err := msg.conn.WriteJSON(msg); err != nil {
-								delete(controlMapConnect, msg.conn)
-								_ = msg.conn.Close()
-							}
+							defaultSend(msg)
 						}
 					}
 				case typeCheckB:
 					{
-						if err := msg.conn.WriteJSON(msg); err != nil {
-							delete(controlMapConnect, msg.conn)
-							_ = msg.conn.Close()
-						}
+						defaultSend(msg)
 					}
 				case typeCreateB:
 					{
-						if err := msg.conn.WriteJSON(msg); err != nil {
-							delete(controlMapConnect, msg.conn)
-							_ = msg.conn.Close()
-						}
+						defaultSend(msg)
+						mapRepaint <- true
 					}
 				case typeDeleteB:
 					{
 						if _, ok := msg.Data["ok"]; ok {
 							//если есть поле отправить всем кто слушает
-							for conn, info := range controlMapConnect {
+							for conn, info := range controlConnect {
 								if info.pos == msg.info.pos {
-									delete(controlMapConnect, conn)
-									_ = msg.conn.Close()
+									delete(controlConnect, conn)
+									_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "cross deleted"))
+									_ = conn.Close()
+								}
+							}
+							for conn, info := range crossConnect {
+								if info.pos == msg.info.pos {
+									delete(crossConnect, conn)
+									_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "cross deleted"))
+									_ = conn.Close()
 								}
 							}
 						} else {
 							// если нету поля отправить ошибку только пользователю
-							if err := msg.conn.WriteJSON(msg); err != nil {
-								delete(controlMapConnect, msg.conn)
-								_ = msg.conn.Close()
-							}
+							defaultSend(msg)
 						}
+						mapRepaint <- true
 					}
 				case typeUpdateB:
 					{
-						if err := msg.conn.WriteJSON(msg); err != nil {
-							delete(controlMapConnect, msg.conn)
-							_ = msg.conn.Close()
-						}
+						defaultSend(msg)
 					}
 				case typeEditInfoB:
 					{
-						if err := msg.conn.WriteJSON(msg); err != nil {
-							delete(controlMapConnect, msg.conn)
-							_ = msg.conn.Close()
-						}
+						defaultSend(msg)
 					}
 				case typeDButton:
 					{
-						for conn, info := range controlMapConnect {
+						for conn, info := range controlConnect {
 							if info.pos == msg.info.pos {
 								if err := conn.WriteJSON(msg); err != nil {
-									delete(controlMapConnect, conn)
-									_ = msg.conn.Close()
+									delete(controlConnect, conn)
+									_ = conn.Close()
 								}
 							}
 						}
 					}
 				case typeChangeEdit:
 					{
-						delC := controlMapConnect[msg.conn]
-						delete(controlMapConnect, msg.conn)
-						for cc, coI := range controlMapConnect {
+						delC := controlConnect[msg.conn]
+						delete(controlConnect, msg.conn)
+						for cc, coI := range controlConnect {
 							if coI.pos == delC.pos {
 								coI.edit = true
-								controlMapConnect[cc] = coI
+								controlConnect[cc] = coI
 								msg.Data["edit"] = true
 								if err := cc.WriteJSON(msg); err != nil {
-									delete(controlMapConnect, cc)
+									delete(controlConnect, cc)
 									_ = cc.Close()
 								}
 								break
@@ -274,18 +259,24 @@ func ControlBroadcast() {
 					}
 				case typeClose:
 					{
-						delete(controlMapConnect, msg.conn)
+						delete(controlConnect, msg.conn)
+						_ = msg.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, typeClose))
 						_ = msg.conn.Close()
 					}
 				default:
 					{
-						if err := msg.conn.WriteJSON(msg); err != nil {
-							delete(controlMapConnect, msg.conn)
-							_ = msg.conn.Close()
-						}
+						defaultSend(msg)
 					}
 				}
 			}
 		}
+	}
+}
+
+//defaultSend стандартная отправка для одного пользователя
+func defaultSend(msg ControlSokResponse) {
+	if err := msg.conn.WriteJSON(msg); err != nil {
+		delete(controlConnect, msg.conn)
+		_ = msg.conn.Close()
 	}
 }

@@ -8,7 +8,6 @@ web_path = "resources/web"
 free_path = "resources/free"
 ssl_path = "ssl"
 server_ip = ":8082"
-token_password = "123456789"
 
 #настройка подключения к тсп серверу обемена командами
 [tcpServer]
@@ -19,6 +18,7 @@ portMessageInfo = ":2003"
 
 #настройки для постгреса
 [database]
+db_waitTime = 1  # должно соответствовать задержке записи в бд Rura
 db_name = "agserv"
 db_password = "162747"
 db_user = "postgres"

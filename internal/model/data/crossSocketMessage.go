@@ -1,7 +1,12 @@
 package data
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/JanFant/TLServer/internal/app/tcpConnect"
+	"github.com/ruraomsk/ag-server/comm"
+	agS_pudge "github.com/ruraomsk/ag-server/pudge"
+	"strings"
 
 	"github.com/JanFant/TLServer/logger"
 	"github.com/gorilla/websocket"
@@ -72,6 +77,18 @@ func (p *phaseInfo) get() error {
 	return nil
 }
 
+//getNewState получение обновленного state
+func getNewState(pos PosInfo) (agS_pudge.Cross, error) {
+	var stateStr string
+	rowsTL := GetDB().QueryRow(`SELECT state FROM public.cross WHERE region = $1 and id = $2 and area = $3`, pos.Region, pos.Id, pos.Area)
+	_ = rowsTL.Scan(&stateStr)
+	rState, err := ConvertStateStrToStruct(stateStr)
+	if err != nil {
+		return agS_pudge.Cross{}, err
+	}
+	return rState, nil
+}
+
 //takeCrossInfo формарование необходимой информации о перекрестке
 func takeCrossInfo(pos PosInfo) (CrossSokResponse, int) {
 	var (
@@ -116,12 +133,57 @@ func takeCrossInfo(pos PosInfo) (CrossSokResponse, int) {
 	return resp, TLignt.Idevice
 }
 
+//DispatchControl отправка команды на устройство
+func DispatchControl(arm comm.CommandARM) CrossSokResponse {
+	var (
+		err        error
+		armMessage tcpConnect.ArmCommandMessage
+	)
+
+	armMessage.CommandStr, err = armControlMarshal(arm)
+	if err != nil {
+		resp := newCrossMess(typeError, nil, nil, crossInfo{})
+		resp.Data["message"] = "failed to Marshal ArmControlData information"
+		return resp
+	}
+	armMessage.User = arm.User
+	tcpConnect.ArmCommandChan <- armMessage
+	for {
+		chanRespond := <-tcpConnect.ArmCommandChan
+		if strings.Contains(armMessage.User, arm.User) {
+			if chanRespond.Message == "ok" {
+				resp := newCrossMess(typeDButton, nil, nil, crossInfo{})
+				resp.Data["message"] = fmt.Sprintf("command %v send to server", armMessage.CommandStr)
+				resp.Data["user"] = arm.User
+				return resp
+			} else {
+				resp := newCrossMess(typeDButton, nil, nil, crossInfo{})
+				resp.Data["message"] = "TCP Server not responding"
+				resp.Data["user"] = arm.User
+				return resp
+			}
+		}
+	}
+}
+
+//armControlMarshal преобразовать структуру в строку
+func armControlMarshal(arm comm.CommandARM) (str string, err error) {
+	newByte, err := json.Marshal(arm)
+	if err != nil {
+		return "", err
+	}
+	return string(newByte), err
+}
+
 var (
-	typeClose              = "close"
-	typeDButton            = "dispatch"
-	typeChangeEdit         = "changeEdit"
-	typeCrossBuild         = "crossBuild"
-	typePhase              = "phase"
-	typeCrossUpdate        = "crossUpdate"
-	errDoubleOpeningDevice = "double opening device"
+	typeClose       = "close"
+	typeDButton     = "dispatch"
+	typeChangeEdit  = "changeEdit"
+	typeCrossBuild  = "crossBuild"
+	typePhase       = "phase"
+	typeCrossUpdate = "crossUpdate"
+	typeStateChange = "stateChange"
+
+	errDoubleOpeningDevice      = "double opening device"
+	errThereIsnSuchIntersection = "there isn such intersection"
 )

@@ -3,36 +3,41 @@ package data
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/logger"
 	"github.com/gorilla/websocket"
 	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/ag-server/comm"
 	agS_pudge "github.com/ruraomsk/ag-server/pudge"
-	"strings"
 	"time"
 )
 
 var writeCrossMessage chan CrossSokResponse
-var crossMapConnect map[*websocket.Conn]crossInfo
+var crossConnect map[*websocket.Conn]crossInfo
+var changeState chan PosInfo
 
 //CrossReader обработчик открытия сокета для перекрестка
 func CrossReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string) {
 	//дропаю соединение, если перекресток уже открыт у пользователя
 	var crossCI = crossInfo{login: mapContx["login"], pos: pos, edit: false}
 
-	for _, info := range crossMapConnect {
+	//проверка не существование такого перекрестка (сбос если нету)
+	_, err := getNewState(pos)
+	if err != nil {
+		_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, errThereIsnSuchIntersection))
+		return
+	}
+
+	//проверка открыт ли у этого пользователя такой перекресток
+	for _, info := range crossConnect {
 		if info.pos == pos && info.login == crossCI.login {
-			resp := newCrossMess(typeError, conn, nil, crossCI)
-			resp.Data["message"] = ErrorMessage{Error: errDoubleOpeningDevice}
-			resp.send()
+			_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, errDoubleOpeningDevice))
 			return
 		}
 	}
 
 	//флаг редактирования перекрестка
 	flagEdit := false
-	for _, info := range crossMapConnect {
+	for _, info := range crossConnect {
 		if crossCI.pos == info.pos && info.edit {
 			flagEdit = true
 			break
@@ -58,13 +63,13 @@ func CrossReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string) 
 	}
 
 	//добавление в пул перекрестка
-	crossMapConnect[conn] = crossCI
+	crossConnect[conn] = crossCI
 
 	for {
 		_, p, err := conn.ReadMessage()
 		if err != nil {
 			//проверка редактирования
-			if crossMapConnect[conn].edit {
+			if crossConnect[conn].edit {
 				resp := newCrossMess(typeChangeEdit, conn, nil, crossCI)
 				resp.send()
 			} else {
@@ -95,52 +100,11 @@ func CrossReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string) 
 	}
 }
 
-//DispatchControl отправка команды на устройство
-func DispatchControl(arm comm.CommandARM) CrossSokResponse {
-	var (
-		err        error
-		armMessage tcpConnect.ArmCommandMessage
-	)
-
-	armMessage.CommandStr, err = armControlMarshal(arm)
-	if err != nil {
-		resp := newCrossMess(typeError, nil, nil, crossInfo{})
-		resp.Data["message"] = "failed to Marshal ArmControlData information"
-		return resp
-	}
-	armMessage.User = arm.User
-	tcpConnect.ArmCommandChan <- armMessage
-	for {
-		chanRespond := <-tcpConnect.ArmCommandChan
-		if strings.Contains(armMessage.User, arm.User) {
-			if chanRespond.Message == "ok" {
-				resp := newCrossMess(typeDButton, nil, nil, crossInfo{})
-				resp.Data["message"] = fmt.Sprintf("command %v send to server", armMessage.CommandStr)
-				resp.Data["user"] = arm.User
-				return resp
-			} else {
-				resp := newCrossMess(typeDButton, nil, nil, crossInfo{})
-				resp.Data["message"] = "TCP Server not responding"
-				resp.Data["user"] = arm.User
-				return resp
-			}
-		}
-	}
-}
-
-//armControlMarshal преобразовать структуру в строку
-func armControlMarshal(arm comm.CommandARM) (str string, err error) {
-	newByte, err := json.Marshal(arm)
-	if err != nil {
-		return "", err
-	}
-	return string(newByte), err
-}
-
-//PosInfo передатчик для перекрестка (cross)
+//CrossBroadcast передатчик для перекрестка (cross)
 func CrossBroadcast() {
 	writeCrossMessage = make(chan CrossSokResponse)
-	crossMapConnect = make(map[*websocket.Conn]crossInfo)
+	crossConnect = make(map[*websocket.Conn]crossInfo)
+	changeState = make(chan PosInfo)
 
 	type crossUpdateInfo struct {
 		Idevice  int             `json:"idevice"`
@@ -156,47 +120,60 @@ func CrossBroadcast() {
 		select {
 		case <-readTick:
 			{
-				aPos := make([]int, 0)
-				arrayCross := make(map[int]crossUpdateInfo)
-				arrayPhase := make(map[int]phaseInfo)
-				for _, crInfo := range crossMapConnect {
-					if len(aPos) == 0 {
-						aPos = append(aPos, crInfo.idevice)
-						continue
-					}
-					for _, a := range aPos {
-						if a == crInfo.idevice {
-							break
+				if len(crossConnect) > 0 {
+					aPos := make([]int, 0)
+					arrayCross := make(map[int]crossUpdateInfo)
+					arrayPhase := make(map[int]phaseInfo)
+					for _, crInfo := range crossConnect {
+						if len(aPos) == 0 {
+							aPos = append(aPos, crInfo.idevice)
+							continue
 						}
-						aPos = append(aPos, crInfo.idevice)
+						for _, a := range aPos {
+							if a == crInfo.idevice {
+								break
+							}
+							aPos = append(aPos, crInfo.idevice)
+						}
 					}
-				}
-				//выполняем если хоть что-то есть
-				if len(aPos) > 0 {
-					//запрос статуса и state
-					query, args, err := sqlx.In("SELECT idevice, status, state FROM public.cross WHERE idevice IN (?)", aPos)
-					if err != nil {
-						logger.Error.Println("|Message: cross socket cant make IN ", err.Error())
-						continue
-					}
-					query = GetDB().Rebind(query)
-					rows, err := GetDB().Queryx(query, args...)
-					if err != nil {
-						logger.Error.Println("|Message: db not respond", err.Error())
-						continue
-					}
-					for rows.Next() {
-						var tempCR crossUpdateInfo
-						_ = rows.Scan(&tempCR.Idevice, &tempCR.Status.Num, &tempCR.stateStr)
-						tempCR.Status.Description = CacheInfo.MapTLSost[tempCR.Status.Num]
-						tempCR.State, _ = ConvertStateStrToStruct(tempCR.stateStr)
-						arrayCross[tempCR.Idevice] = tempCR
-					}
-					for idevice, newData := range arrayCross {
-						if oldData, ok := globArrCross[idevice]; ok {
-							//если запись есть нужно сравнить и если есть разница отправить изменения
-							if oldData.State.PK != newData.State.PK || oldData.State.NK != newData.State.NK || oldData.State.CK != newData.State.CK || oldData.Status.Num != newData.Status.Num {
-								for conn, info := range crossMapConnect {
+					//выполняем если хоть что-то есть
+					if len(aPos) > 0 {
+						//запрос статуса и state
+						query, args, err := sqlx.In("SELECT idevice, status, state FROM public.cross WHERE idevice IN (?)", aPos)
+						if err != nil {
+							logger.Error.Println("|Message: cross socket cant make IN ", err.Error())
+							continue
+						}
+						query = GetDB().Rebind(query)
+						rows, err := GetDB().Queryx(query, args...)
+						if err != nil {
+							logger.Error.Println("|Message: db not respond", err.Error())
+							continue
+						}
+						for rows.Next() {
+							var tempCR crossUpdateInfo
+							_ = rows.Scan(&tempCR.Idevice, &tempCR.Status.Num, &tempCR.stateStr)
+							tempCR.Status.Description = CacheInfo.MapTLSost[tempCR.Status.Num]
+							tempCR.State, _ = ConvertStateStrToStruct(tempCR.stateStr)
+							arrayCross[tempCR.Idevice] = tempCR
+						}
+						for idevice, newData := range arrayCross {
+							if oldData, ok := globArrCross[idevice]; ok {
+								//если запись есть нужно сравнить и если есть разница отправить изменения
+								if oldData.State.PK != newData.State.PK || oldData.State.NK != newData.State.NK || oldData.State.CK != newData.State.CK || oldData.Status.Num != newData.Status.Num {
+									for conn, info := range crossConnect {
+										if info.idevice == newData.Idevice {
+											msg := newCrossMess(typeCrossUpdate, conn, nil, info)
+											msg.Data["idevice"] = newData.Idevice
+											msg.Data["status"] = newData.Status
+											msg.Data["state"] = newData.State
+											_ = conn.WriteJSON(msg)
+										}
+									}
+								}
+							} else {
+								//если не существует старой записи ее нужно отправить
+								for conn, info := range crossConnect {
 									if info.idevice == newData.Idevice {
 										msg := newCrossMess(typeCrossUpdate, conn, nil, info)
 										msg.Data["idevice"] = newData.Idevice
@@ -206,43 +183,44 @@ func CrossBroadcast() {
 									}
 								}
 							}
-						} else {
-							//если не существует старой записи ее нужно отправить
-							for conn, info := range crossMapConnect {
-								if info.idevice == newData.Idevice {
-									msg := newCrossMess(typeCrossUpdate, conn, nil, info)
-									msg.Data["idevice"] = newData.Idevice
-									msg.Data["status"] = newData.Status
-									msg.Data["state"] = newData.State
-									_ = conn.WriteJSON(msg)
-								}
-							}
 						}
-					}
-					globArrCross = arrayCross
+						globArrCross = arrayCross
 
-					//запрос phase
-					query, args, err = sqlx.In("SELECT id, fdk, tdk, pdk FROM public.devices WHERE id IN (?)", aPos)
-					if err != nil {
-						logger.Error.Println("|Message: cross socket cant make IN ", err.Error())
-						continue
-					}
-					query = GetDB().Rebind(query)
-					rows, err = GetDB().Queryx(query, args...)
-					if err != nil {
-						logger.Error.Println("|Message: db not respond", err.Error())
-						continue
-					}
-					for rows.Next() {
-						var tempPhase phaseInfo
-						_ = rows.Scan(&tempPhase.idevice, &tempPhase.Fdk, &tempPhase.Tdk, &tempPhase.Pdk)
-						arrayPhase[tempPhase.idevice] = tempPhase
-					}
-					for idevice, newData := range arrayPhase {
-						if oldData, ok := globArrPhase[idevice]; ok {
-							//если запись есть нужно сравнить и если есть разница отправить изменения
-							if oldData.Pdk != newData.Pdk || oldData.Tdk != newData.Tdk || oldData.Fdk != newData.Fdk {
-								for conn, info := range crossMapConnect {
+						//запрос phase
+						query, args, err = sqlx.In("SELECT id, fdk, tdk, pdk FROM public.devices WHERE id IN (?)", aPos)
+						if err != nil {
+							logger.Error.Println("|Message: cross socket cant make IN ", err.Error())
+							continue
+						}
+						query = GetDB().Rebind(query)
+						rows, err = GetDB().Queryx(query, args...)
+						if err != nil {
+							logger.Error.Println("|Message: db not respond", err.Error())
+							continue
+						}
+						for rows.Next() {
+							var tempPhase phaseInfo
+							_ = rows.Scan(&tempPhase.idevice, &tempPhase.Fdk, &tempPhase.Tdk, &tempPhase.Pdk)
+							arrayPhase[tempPhase.idevice] = tempPhase
+						}
+						for idevice, newData := range arrayPhase {
+							if oldData, ok := globArrPhase[idevice]; ok {
+								//если запись есть нужно сравнить и если есть разница отправить изменения
+								if oldData.Pdk != newData.Pdk || oldData.Tdk != newData.Tdk || oldData.Fdk != newData.Fdk {
+									for conn, info := range crossConnect {
+										if info.idevice == newData.idevice {
+											msg := newCrossMess(typePhase, conn, nil, info)
+											msg.Data["idevice"] = newData.idevice
+											msg.Data["fdk"] = newData.Fdk
+											msg.Data["tdk"] = newData.Tdk
+											msg.Data["pdk"] = newData.Pdk
+											_ = conn.WriteJSON(msg)
+										}
+									}
+								}
+							} else {
+								//если не существует старой записи ее нужно отправить
+								for conn, info := range crossConnect {
 									if info.idevice == newData.idevice {
 										msg := newCrossMess(typePhase, conn, nil, info)
 										msg.Data["idevice"] = newData.idevice
@@ -253,34 +231,35 @@ func CrossBroadcast() {
 									}
 								}
 							}
-						} else {
-							//если не существует старой записи ее нужно отправить
-							for conn, info := range crossMapConnect {
-								if info.idevice == newData.idevice {
-									msg := newCrossMess(typePhase, conn, nil, info)
-									msg.Data["idevice"] = newData.idevice
-									msg.Data["fdk"] = newData.Fdk
-									msg.Data["tdk"] = newData.Tdk
-									msg.Data["pdk"] = newData.Pdk
-									_ = conn.WriteJSON(msg)
-								}
-							}
+						}
+						globArrPhase = arrayPhase
+					}
+				}
+			}
+		case pos := <-changeState:
+			{
+				resp := newControlMess(typeStateChange, nil, nil, crossInfo{})
+				state, _ := getNewState(pos)
+				resp.Data["state"] = state
+				for conn, info := range crossConnect {
+					if info.pos == pos {
+						if err := conn.WriteJSON(resp); err != nil {
+							delete(crossConnect, conn)
+							_ = conn.Close()
 						}
 					}
-					globArrPhase = arrayPhase
 				}
-
 			}
 		case msg := <-writeCrossMessage:
 			{
 				switch msg.Type {
 				case typeDButton:
 					{
-						for conn, info := range crossMapConnect {
+						for conn, info := range crossConnect {
 							if info.pos == msg.info.pos {
 								if err := conn.WriteJSON(msg); err != nil {
-									delete(crossMapConnect, conn)
-									_ = msg.conn.Close()
+									delete(crossConnect, conn)
+									_ = conn.Close()
 								}
 
 							}
@@ -288,15 +267,15 @@ func CrossBroadcast() {
 					}
 				case typeChangeEdit:
 					{
-						delC := crossMapConnect[msg.conn]
-						delete(crossMapConnect, msg.conn)
-						for cc, coI := range crossMapConnect {
+						delC := crossConnect[msg.conn]
+						delete(crossConnect, msg.conn)
+						for cc, coI := range crossConnect {
 							if coI.pos == delC.pos {
 								coI.edit = true
-								crossMapConnect[cc] = coI
+								crossConnect[cc] = coI
 								msg.Data["edit"] = true
 								if err := cc.WriteJSON(msg); err != nil {
-									delete(crossMapConnect, cc)
+									delete(crossConnect, cc)
 									_ = cc.Close()
 								}
 								break
@@ -306,13 +285,13 @@ func CrossBroadcast() {
 					}
 				case typeClose:
 					{
-						delete(crossMapConnect, msg.conn)
+						delete(crossConnect, msg.conn)
 						_ = msg.conn.Close()
 					}
 				default:
 					{
 						if err := msg.conn.WriteJSON(msg); err != nil {
-							delete(crossMapConnect, msg.conn)
+							delete(crossConnect, msg.conn)
 							_ = msg.conn.Close()
 						}
 					}

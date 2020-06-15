@@ -2,14 +2,15 @@ package middleWare
 
 import (
 	"fmt"
-	"github.com/JanFant/TLServer/logger"
 	"net/http"
 	"strings"
 
-	"github.com/JanFant/TLServer/internal/model/config"
+	"github.com/JanFant/TLServer/logger"
+
 	"github.com/gin-gonic/gin"
 
 	"github.com/JanFant/TLServer/internal/model/data"
+	"github.com/JanFant/TLServer/internal/model/license"
 	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/dgrijalva/jwt-go"
 )
@@ -47,7 +48,7 @@ var JwtAuth = func() gin.HandlerFunc {
 		tk := &data.Token{}
 
 		token, err := jwt.ParseWithClaims(tokenSTR, tk, func(token *jwt.Token) (interface{}, error) {
-			return []byte(config.GlobalConfig.TokenPassword), nil
+			return []byte(license.LicenseFields.TokenPass), nil
 		})
 
 		//не правильный токен возвращаем ошибку с кодом 403
@@ -158,7 +159,7 @@ var JwtFile = func() gin.HandlerFunc {
 		tk := &data.Token{}
 
 		token, err := jwt.ParseWithClaims(tokenSTR, tk, func(token *jwt.Token) (interface{}, error) {
-			return []byte(config.GlobalConfig.TokenPassword), nil
+			return []byte(license.LicenseFields.TokenPass), nil
 		})
 
 		//не правильный токен возвращаем ошибку с кодом 403

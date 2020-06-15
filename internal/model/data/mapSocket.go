@@ -4,19 +4,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/JanFant/TLServer/internal/model/config"
-	"github.com/dgrijalva/jwt-go"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"strings"
-	"time"
 )
 
-var connectedMapUsers map[*websocket.Conn]bool
+var connectedUsersOnMap map[*websocket.Conn]bool
 var writeMap chan MapSokResponse
+var mapRepaint chan bool
 
 //MapReader обработчик открытия сокета для карты
 func MapReader(conn *websocket.Conn, c *gin.Context) {
-	connectedMapUsers[conn] = true
+	connectedUsersOnMap[conn] = true
 	login := ""
 	flag, mapContx := checkToken(c)
 
@@ -83,114 +83,62 @@ func MapReader(conn *websocket.Conn, c *gin.Context) {
 
 //MapBroadcast передатчик для карты (map)
 func MapBroadcast() {
-	connectedMapUsers = make(map[*websocket.Conn]bool)
+	connectedUsersOnMap = make(map[*websocket.Conn]bool)
 	writeMap = make(chan MapSokResponse)
+	mapRepaint = make(chan bool)
+
 	crossReadTick := time.Tick(time.Second * 5)
+
 	oldTFs := selectTL()
 	for {
 		select {
 		case <-crossReadTick:
 			{
-				newTFs := selectTL()
-				var tempTF []TrafficLights
-				for _, nTF := range newTFs {
-					for _, oTF := range oldTFs {
-						if oTF.Idevice == nTF.Idevice && oTF.Sost.Num != nTF.Sost.Num {
-							tempTF = append(tempTF, nTF)
-							break
+				if len(connectedUsersOnMap) > 0 {
+					newTFs := selectTL()
+					var tempTF []TrafficLights
+					for _, nTF := range newTFs {
+						for _, oTF := range oldTFs {
+							if oTF.Idevice == nTF.Idevice && oTF.Sost.Num != nTF.Sost.Num {
+								tempTF = append(tempTF, nTF)
+								break
+							}
 						}
 					}
-				}
-				oldTFs = newTFs
-				if len(connectedMapUsers) > 0 {
+					oldTFs = newTFs
 					if len(tempTF) > 0 {
 						resp := newMapMess(typeTFlight, nil, nil)
 						resp.Data["tflight"] = tempTF
-						for conn := range connectedMapUsers {
+						for conn := range connectedUsersOnMap {
 							_ = conn.WriteJSON(resp)
 						}
 					}
+				}
+			}
+		case <-mapRepaint:
+			{
+				time.Sleep(time.Second * time.Duration(config.GlobalConfig.DBWait))
+				oldTFs = selectTL()
+				resp := newMapMess(typeRepaint, nil, nil)
+				resp.Data["tflight"] = oldTFs
+				for conn := range connectedUsersOnMap {
+					_ = conn.WriteJSON(resp)
 				}
 			}
 		case msg := <-writeMap:
 			switch msg.Type {
 			case typeClose:
 				{
-					delete(connectedMapUsers, msg.conn)
+					delete(connectedUsersOnMap, msg.conn)
 				}
 			default:
 				{
 					if err := msg.conn.WriteJSON(msg); err != nil {
+						delete(connectedUsersOnMap, msg.conn)
 						_ = msg.conn.Close()
 					}
 				}
 			}
 		}
 	}
-}
-
-//checkToken проверка токена для вебсокета
-func checkToken(c *gin.Context) (flag bool, mapCont map[string]string) {
-	var tokenString string
-	cookie, err := c.Cookie("Authorization")
-	//Проверка куков получили ли их вообще
-	if err != nil {
-		return false, nil
-	}
-	tokenString = cookie
-
-	ip := strings.Split(c.Request.RemoteAddr, ":")
-	//проверка если ли токен, если нету ошибка 403 нужно авторизироваться!
-	if tokenString == "" {
-		return false, nil
-	}
-	//токен приходит строкой в формате {слово пробел слово} разделяем строку и забираем нужную нам часть
-	splitted := strings.Split(tokenString, " ")
-	if len(splitted) != 2 {
-		return false, nil
-	}
-
-	//берем часть где хранится токен
-	tokenSTR := splitted[1]
-	tk := &Token{}
-
-	token, err := jwt.ParseWithClaims(tokenSTR, tk, func(token *jwt.Token) (interface{}, error) {
-		return []byte(config.GlobalConfig.TokenPassword), nil
-	})
-
-	//не правильный токен возвращаем ошибку с кодом 403
-	if err != nil {
-		return false, nil
-	}
-
-	//Проверка на уникальность токена
-	var (
-		userPrivilege  Privilege
-		tokenStrFromBd string
-	)
-	rows, err := GetDB().Query(`SELECT token, privilege FROM public.accounts WHERE login = $1`, tk.Login)
-	if err != nil {
-		return false, nil
-	}
-	for rows.Next() {
-		_ = rows.Scan(&tokenStrFromBd, &userPrivilege.PrivilegeStr)
-	}
-
-	if tokenSTR != tokenStrFromBd || tk.IP != ip[0] || !token.Valid {
-		return false, nil
-	}
-
-	//проверка токен пришел от правильного URL
-	mapCont = make(map[string]string)
-
-	//проверка правильности роли для указанного пользователя
-	_ = userPrivilege.ConvertToJson()
-	if userPrivilege.Role.Name != tk.Role {
-		return false, nil
-	}
-
-	mapCont["login"] = tk.Login
-	mapCont["role"] = tk.Role
-
-	return true, mapCont
 }
