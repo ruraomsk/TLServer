@@ -3,8 +3,9 @@ package data
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/JanFant/TLServer/internal/model/config"
 	"time"
+
+	"github.com/JanFant/TLServer/internal/model/config"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -21,7 +22,7 @@ func MapReader(conn *websocket.Conn, c *gin.Context) {
 	flag, mapContx := checkToken(c)
 
 	{
-		resp := newMapMess(typeMapInfo, conn, mapOpenInfo())
+		resp := newMapMess(typeMapInfo, conn, MapOpenInfo())
 		if flag {
 			login = mapContx["login"]
 			resp.Data["manageFlag"], _ = AccessCheck(login, mapContx["role"], 1)
@@ -89,13 +90,13 @@ func MapBroadcast() {
 
 	crossReadTick := time.Tick(time.Second * 5)
 
-	oldTFs := selectTL()
+	oldTFs := SelectTL()
 	for {
 		select {
 		case <-crossReadTick:
 			{
 				if len(connectedUsersOnMap) > 0 {
-					newTFs := selectTL()
+					newTFs := SelectTL()
 					var tempTF []TrafficLights
 					for _, nTF := range newTFs {
 						for _, oTF := range oldTFs {
@@ -117,8 +118,8 @@ func MapBroadcast() {
 			}
 		case <-mapRepaint:
 			{
-				time.Sleep(time.Second * time.Duration(config.GlobalConfig.DBWait))
-				oldTFs = selectTL()
+				time.Sleep(time.Second * time.Duration(config.GlobalConfig.DBConfig.DBWait))
+				oldTFs = SelectTL()
 				resp := newMapMess(typeRepaint, nil, nil)
 				resp.Data["tflight"] = oldTFs
 				for conn := range connectedUsersOnMap {

@@ -1,6 +1,7 @@
-package crossEdit
+package deviceLog
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -19,32 +20,34 @@ type DeviceLog struct {
 	Devices BusyArm   `json:"devices"` //информация о девайсе
 }
 
-//DeviceLogInfo структура запроса пользователя за данными в бд
-type DeviceLogInfo struct {
+//LogDeviceInfo структура запроса пользователя за данными в бд
+type LogDeviceInfo struct {
 	Devices   []BusyArm `json:"devices"`   //информация о девайсах
 	TimeStart time.Time `json:"timeStart"` //время начала отсчета
 	TimeEnd   time.Time `json:"timeEnd"`   //время конца отсчета
 	structStr string    //строка для запроса в бд
 }
 
+//BusyArm информация о занятом перекрестке
+type BusyArm struct {
+	Region      string `json:"region"`      //регион
+	Area        string `json:"area"`        //район
+	ID          int    `json:"ID"`          //ID
+	Description string `json:"description"` //описание
+}
+
+//toStr конвертировать в структуру
+func (busyArm *BusyArm) toStruct(str string) (err error) {
+	err = json.Unmarshal([]byte(str), busyArm)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 //DisplayDeviceLog формирование начальной информации отображения логов устройства
 func DisplayDeviceLog(mapContx map[string]string, db *sqlx.DB) u.Response {
-	var (
-		devices []BusyArm
-		//fillInfo FillingInfo
-	)
-	//fillInfo.User = mapContx["login"]
-	//FillingDeviceChan <- fillInfo
-	//for {
-	//	chanRespond := <-FillingDeviceChan
-	//	if strings.Contains(chanRespond.User, fillInfo.User) {
-	//		if chanRespond.Status {
-	//			break
-	//		} else {
-	//			return u.Message(http.StatusBadRequest, "incorrect data in logDevice table. Please report it to Admin")
-	//		}
-	//	}
-	//}
+	var devices []BusyArm
 	var sqlStr string
 	if mapContx["region"] == "*" {
 		sqlStr = fmt.Sprintf("SELECT distinct crossinfo FROM public.logdevice")
@@ -79,26 +82,11 @@ func DisplayDeviceLog(mapContx map[string]string, db *sqlx.DB) u.Response {
 }
 
 //DisplayDeviceLogInfo обработчик запроса пользователя, выгрузка логов за запрошенный период
-func DisplayDeviceLogInfo(arms DeviceLogInfo, mapContx map[string]string, db *sqlx.DB) u.Response {
-	var (
-		deviceLogs []DeviceLog
-		//fillInfo   FillingInfo
-	)
+func DisplayDeviceLogInfo(arms LogDeviceInfo, db *sqlx.DB) u.Response {
+	var deviceLogs []DeviceLog
 	if len(arms.Devices) <= 0 {
 		return u.Message(http.StatusBadRequest, "no one devices selected")
 	}
-	//fillInfo.User = mapContx["login"]
-	//FillingDeviceChan <- fillInfo
-	//for {
-	//	chanRespond := <-FillingDeviceChan
-	//	if chanRespond.User == fillInfo.User {
-	//		if chanRespond.Status {
-	//			break
-	//		} else {
-	//			return u.Message(http.StatusBadRequest, "incorrect data in logDevice table. Please report it to Admin")
-	//		}
-	//	}
-	//}
 	for _, arm := range arms.Devices {
 		sqlStr := fmt.Sprintf(`SELECT tm, id, txt FROM public.logdevice WHERE crossinfo::jsonb @> '{"ID": %v, "area": "%v", "region": "%v"}'::jsonb and tm > '%v' and tm < '%v'`, arm.ID, arm.Area, arm.Region, arms.TimeStart.Format("2006-01-02 15:04:05"), arms.TimeEnd.Format("2006-01-02 15:04:05"))
 		rowsDevices, err := db.Query(sqlStr)

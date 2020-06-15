@@ -18,7 +18,7 @@ type TrafficLights struct {
 	Region      RegionInfo      `json:"region"`      //Регион
 	Area        AreaInfo        `json:"area"`        //Район
 	Subarea     int             `json:"subarea"`     //ПодРайон
-	Idevice     int             `json:"idevice"`     //Реальный номер устройства
+	Idevice     int             `json:"Idevice"`     //Реальный номер устройства
 	Sost        TLSostInfo      `json:"tlsost"`      //Состояние светофора
 	Description string          `json:"description"` //Описание светофора
 	Points      locations.Point `json:"points"`      //Координата где находится светофор
@@ -30,11 +30,11 @@ type Locations struct {
 	Area   []string `json:"area"`   //районы
 }
 
-//selectTL возвращает массив в котором содержатся светофоры, которые попали в указанную область
-func selectTL() (tfdata []TrafficLights) {
+//SelectTL возвращает массив в котором содержатся светофоры, которые попали в указанную область
+func SelectTL() (tfdata []TrafficLights) {
 	var dgis string
 	temp := &TrafficLights{}
-	rowsTL, err := GetDB().Query(`SELECT region, area, subarea, id, idevice, dgis, describ, status FROM public.cross`)
+	rowsTL, err := GetDB().Query(`SELECT region, area, subarea, id, Idevice, dgis, describ, status FROM public.cross`)
 	if err != nil {
 		logger.Error.Println("|Message: db not respond", err.Error())
 		return nil
@@ -57,13 +57,13 @@ func selectTL() (tfdata []TrafficLights) {
 	return tfdata
 }
 
-func mapOpenInfo() (obj map[string]interface{}) {
+func MapOpenInfo() (obj map[string]interface{}) {
 	obj = make(map[string]interface{})
 
 	location := &Locations{}
 	box, _ := location.MakeBoxPoint()
 	obj["boxPoint"] = &box
-	obj["tflight"] = selectTL()
+	obj["tflight"] = SelectTL()
 	obj["authorizedFlag"] = false
 
 	//собираю в кучу регионы для отображения
@@ -129,7 +129,7 @@ func GetCrossInfo(TLignt TrafficLights) u.Response {
 		stateStr string
 	)
 
-	sqlStr = fmt.Sprintf("SELECT area, subarea, idevice, dgis, describ, state FROM public.cross WHERE region = %v and id = %v and area = %v", TLignt.Region.Num, TLignt.ID, TLignt.Area.Num)
+	sqlStr = fmt.Sprintf("SELECT area, subarea, Idevice, dgis, describ, state FROM public.cross WHERE region = %v and id = %v and area = %v", TLignt.Region.Num, TLignt.ID, TLignt.Area.Num)
 	rowsTL := GetDB().QueryRow(sqlStr)
 	err := rowsTL.Scan(&TLignt.Area.Num, &TLignt.Subarea, &TLignt.Idevice, &dgis, &TLignt.Description, &stateStr)
 	if err != nil {

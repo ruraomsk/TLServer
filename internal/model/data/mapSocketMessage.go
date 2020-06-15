@@ -3,12 +3,13 @@ package data
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+
 	"github.com/JanFant/TLServer/internal/model/license"
 	"github.com/JanFant/TLServer/logger"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"strings"
 )
 
 //MapSokResponse структура для отправки сообщений (map)
@@ -56,15 +57,14 @@ type ErrorMessage struct {
 }
 
 var (
-	typeError                  = "error"
-	typeJump                   = "jump"
-	typeMapInfo                = "mapInfo"
-	typeTFlight                = "tflight"
-	typeRepaint                = "repaint"
-	typeLogin                  = "login"
-	typeLogOut                 = "logOut"
-	errNoAccessWithDatabase    = "no access with database"
-	errCantConvertJSON         = "cant convert JSON"
+	typeJump    = "jump"
+	typeMapInfo = "mapInfo"
+	typeTFlight = "tflight"
+	typeRepaint = "repaint"
+	typeLogin   = "login"
+	typeLogOut  = "logOut"
+	//errNoAccessWithDatabase    = "no access with database"
+	//errCantConvertJSON         = "cant convert JSON"
 	errUnregisteredMessageType = "unregistered message type"
 )
 
@@ -107,7 +107,7 @@ func checkToken(c *gin.Context) (flag bool, mapCont map[string]string) {
 		userPrivilege  Privilege
 		tokenStrFromBd string
 	)
-	rows, err := GetDB().Query(`SELECT token, privilege FROM public.accounts WHERE login = $1`, tk.Login)
+	rows, err := GetDB().Query(`SELECT token, privilege FROM public.accounts WHERE Login = $1`, tk.Login)
 	if err != nil {
 		return false, nil
 	}
