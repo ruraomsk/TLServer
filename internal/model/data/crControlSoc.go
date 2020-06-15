@@ -57,7 +57,7 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 		CacheInfo.Mux.Lock()
 		resp.Data["areaMap"] = CacheInfo.MapArea[CacheInfo.MapRegion[pos.Region]]
 		CacheInfo.Mux.Unlock()
-		resp.Data["Edit"] = controlI.Edit
+		resp.Data["edit"] = controlI.Edit
 		resp.send()
 	}
 
@@ -102,6 +102,7 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 				temp := StateHandler{}
 				_ = json.Unmarshal(p, &temp)
 				resp := checkCrossData(temp.State)
+				resp.info = controlI
 				resp.conn = conn
 				resp.send()
 			}
@@ -110,6 +111,7 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 				temp := StateHandler{}
 				_ = json.Unmarshal(p, &temp)
 				resp := createCrossData(temp.State, controlI.Login)
+				resp.info = controlI
 				resp.conn = conn
 				resp.send()
 
@@ -119,6 +121,7 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 				temp := StateHandler{}
 				_ = json.Unmarshal(p, &temp)
 				resp := deleteCrossData(temp.State, controlI.Login)
+				resp.info = controlI
 				resp.conn = conn
 				resp.send()
 			}
@@ -126,6 +129,7 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 			{
 				resp := newControlMess(typeUpdateB, conn, nil, controlI)
 				resp, _, _ = takeControlInfo(controlI.Pos)
+				resp.info = controlI
 				resp.conn = conn
 				resp.send()
 			}
@@ -135,7 +139,7 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 
 				type usersEdit struct {
 					User string `json:"user"`
-					Edit bool   `json:"Edit"`
+					Edit bool   `json:"edit"`
 				}
 				var users []usersEdit
 
@@ -252,7 +256,7 @@ func ControlBroadcast() {
 							if coI.Pos == delC.Pos {
 								coI.Edit = true
 								controlConnect[cc] = coI
-								msg.Data["Edit"] = true
+								msg.Data["edit"] = true
 								if err := cc.WriteJSON(msg); err != nil {
 									delete(controlConnect, cc)
 									_ = cc.Close()

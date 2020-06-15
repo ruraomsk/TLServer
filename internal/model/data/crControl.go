@@ -145,10 +145,10 @@ func deleteCrossData(state agS_pudge.Cross, login string) ControlSokResponse {
 	resp.Data["user"] = login
 	if sendToUDPServer(stateMessage) {
 		resp.Data["message"] = fmt.Sprintf("cross data deleted. Info (%v)", stateMessage.Info)
+		resp.Data["ok"] = true
 		return resp
 	} else {
 		resp.Data["message"] = "TCP Server not responding"
-		resp.Data["ok"] = false
 		return resp
 	}
 }

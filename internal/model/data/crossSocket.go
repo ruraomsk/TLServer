@@ -53,7 +53,7 @@ func CrossReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string) 
 		resp := newCrossMess(typeCrossBuild, conn, nil, crossCI)
 		resp, crossCI.Idevice, crossCI.Description = takeCrossInfo(crossCI.Pos)
 		resp.conn = conn
-		resp.Data["Edit"] = crossCI.Edit
+		resp.Data["edit"] = crossCI.Edit
 		resp.Data["controlCrossFlag"] = false
 		controlCrossFlag, _ := AccessCheck(crossCI.Login, mapContx["role"], 5)
 		if (fmt.Sprint(resp.Data["region"]) == mapContx["region"]) || (mapContx["region"] == "*") {
@@ -274,7 +274,7 @@ func CrossBroadcast() {
 							if coI.Pos == delC.Pos {
 								coI.Edit = true
 								crossConnect[cc] = coI
-								msg.Data["Edit"] = true
+								msg.Data["edit"] = true
 								if err := cc.WriteJSON(msg); err != nil {
 									delete(crossConnect, cc)
 									_ = cc.Close()
