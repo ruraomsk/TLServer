@@ -10,6 +10,8 @@ import (
 
 var writeControlMessage chan ControlSokResponse
 var controlConnect map[*websocket.Conn]crossInfo
+var crArmUsers chan []crossInfo
+var getArmUsers chan bool
 
 //ControlReader обработчик открытия сокета для арма перекрестка
 func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string) {
@@ -170,6 +172,10 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 func ControlBroadcast() {
 	writeControlMessage = make(chan ControlSokResponse)
 	controlConnect = make(map[*websocket.Conn]crossInfo)
+
+	getArmUsers = make(chan bool)
+	crArmUsers = make(chan []crossInfo)
+
 	for {
 		select {
 		case msg := <-writeControlMessage:
@@ -276,6 +282,14 @@ func ControlBroadcast() {
 						defaultSend(msg)
 					}
 				}
+			}
+		case <-getArmUsers:
+			{
+				var temp []crossInfo
+				for _, info := range controlConnect {
+					temp = append(temp, info)
+				}
+				crArmUsers <- temp
 			}
 		}
 	}

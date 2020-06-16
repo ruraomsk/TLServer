@@ -15,6 +15,8 @@ import (
 var writeCrossMessage chan CrossSokResponse
 var crossConnect map[*websocket.Conn]crossInfo
 var changeState chan PosInfo
+var crossUsers chan []crossInfo
+var getCrossUsers chan bool
 
 //CrossReader обработчик открытия сокета для перекрестка
 func CrossReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string) {
@@ -106,6 +108,8 @@ func CrossBroadcast() {
 	writeCrossMessage = make(chan CrossSokResponse)
 	crossConnect = make(map[*websocket.Conn]crossInfo)
 	changeState = make(chan PosInfo)
+	crossUsers = make(chan []crossInfo)
+	getCrossUsers = make(chan bool)
 
 	type crossUpdateInfo struct {
 		Idevice  int            `json:"idevice"`
@@ -297,6 +301,14 @@ func CrossBroadcast() {
 						}
 					}
 				}
+			}
+		case <-getCrossUsers:
+			{
+				var temp []crossInfo
+				for _, info := range crossConnect {
+					temp = append(temp, info)
+				}
+				crossUsers <- temp
 			}
 		}
 	}

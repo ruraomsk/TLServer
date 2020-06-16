@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/JanFant/TLServer/internal/model/locations"
 	"github.com/JanFant/TLServer/logger"
-	agS_pudge "github.com/ruraomsk/ag-server/pudge"
+	agspudge "github.com/ruraomsk/ag-server/pudge"
 )
 
 //TrafficLights информация о светофоре
@@ -103,20 +103,20 @@ func GetAllTrafficLights() (tfData []TrafficLights) {
 }
 
 //ConvertStateStrToStruct разбор данных (Cross) полученных из БД в нужную структуру
-func ConvertStateStrToStruct(str string) (rState agS_pudge.Cross, err error) {
+func ConvertStateStrToStruct(str string) (rState agspudge.Cross, err error) {
 	if err := json.Unmarshal([]byte(str), &rState); err != nil {
 		return rState, err
 	}
 	return rState, nil
 }
 
-//ConvertDevStrToStruct разбор данных (Controller) полученных из БД в нужную структуру
-func ConvertDevStrToStruct(str string) (controller agS_pudge.Controller, err error) {
-	if err := json.Unmarshal([]byte(str), &controller); err != nil {
-		return controller, err
-	}
-	return controller, nil
-}
+////ConvertDevStrToStruct разбор данных (Controller) полученных из БД в нужную структуру
+//func ConvertDevStrToStruct(str string) (controller agS_pudge.Controller, err error) {
+//	if err := json.Unmarshal([]byte(str), &controller); err != nil {
+//		return controller, err
+//	}
+//	return controller, nil
+//}
 
 ////GetCrossInfo сбор информации для пользователя о выбранном перекрестке
 //func GetCrossInfo(TLignt TrafficLights) u.Response {
