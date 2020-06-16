@@ -17,7 +17,7 @@ import (
 //StartServer запуск сервера
 func StartServer(conf *ServerConf) {
 
-	go chat.Broadcast()
+	go chat.CBroadcast()
 	go data.MapBroadcast()
 	go data.CrossBroadcast()
 	go data.ControlBroadcast()

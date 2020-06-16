@@ -7,39 +7,30 @@ import (
 
 //AllUsersStatus список всех пользователей
 type AllUsersStatus struct {
-	Users []StatusUser `json:"users"`
+	Users []userInfo `json:"users"`
 }
 
-//StatusUser информация о статусе юзера
-type StatusUser struct {
+//userInfo информация о статусе юзера
+type userInfo struct {
 	User   string `json:"user"`
 	Status string `json:"status"`
 }
 
-//toString преобразование в строку
-func (s *StatusUser) toString() string {
-	raw, _ := json.Marshal(s)
-	return string(raw)
-}
-
-//checkAnother проверка есть ли еще подключенные сокеты у пользователя
-func checkAnother(login string) bool {
-	if len(ConnectedUsers[login]) > 0 {
-		return true
+//checkOnline проверка есть ли еще подключенный сокет
+func checkOnline(login string) bool {
+	for _, info := range chatConnUsers {
+		if info.User == login {
+			return true
+		}
 	}
 	return false
-}
-
-//newStatus создать статус пользователя
-func newStatus(login, status string) *StatusUser {
-	return &StatusUser{User: login, Status: status}
 }
 
 //setStatus установить статус пользователя
 func (a *AllUsersStatus) setStatus() {
 	for i, user := range a.Users {
-		for name, _ := range ConnectedUsers {
-			if name == user.User {
+		for _, name := range chatConnUsers {
+			if name.User == user.User {
 				a.Users[i].Status = statusOnline
 				break
 			}
@@ -50,7 +41,7 @@ func (a *AllUsersStatus) setStatus() {
 //getAllUsers запросить пользователей из БД
 func (a *AllUsersStatus) getAllUsers(db *sqlx.DB) error {
 	var (
-		tempUser StatusUser
+		tempUser userInfo
 	)
 	rows, err := db.Query(`SELECT login FROM public.accounts`)
 	if err != nil {

@@ -132,6 +132,7 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 				resp := newControlMess(typeUpdateB, conn, nil, controlI)
 				resp, _, _ = takeControlInfo(controlI.Pos)
 				resp.info = controlI
+				resp.Data["edit"] = controlI.Edit
 				resp.conn = conn
 				resp.send()
 			}

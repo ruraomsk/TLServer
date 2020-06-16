@@ -3,25 +3,61 @@ package chat
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/JanFant/TLServer/logger"
 	"github.com/gorilla/websocket"
 	"github.com/jmoiron/sqlx"
 	"time"
 )
 
 var (
-	typeMessage   = "message"
-	typeArchive   = "archive"
-	typeError     = "error"
-	typeStatus    = "status"
-	typeAllUsers  = "users"
-	statusOnline  = "online"
-	statusOffline = "offline"
-	globalMessage = "Global"
+	typeMessage     = "message"
+	typeArchive     = "archive"
+	typeError       = "error"
+	typeStatus      = "status"
+	typeAllUsers    = "users"
+	typeCheckStatus = "checkStatus"
+	statusOnline    = "online"
+	statusOffline   = "offline"
+	globalMessage   = "Global"
 
 	errNoAccessWithDatabase    = "no access with database"
 	errCantConvertJSON         = "cant convert JSON"
 	errUnregisteredMessageType = "unregistered message type"
 )
+
+//chatSokResponse структура для отправки сообщений (chat)
+type chatSokResponse struct {
+	Type     string                 `json:"type"`
+	Data     map[string]interface{} `json:"data"`
+	conn     *websocket.Conn        `json:"-"`
+	userInfo userInfo               `json:"-"`
+	to       string                 `json:"-"`
+}
+
+//newChatMess создание нового сообщения
+func newChatMess(mType string, conn *websocket.Conn, data map[string]interface{}, info userInfo) chatSokResponse {
+	var resp = chatSokResponse{Type: mType, conn: conn, userInfo: info}
+	if data != nil {
+		resp.Data = data
+	} else {
+		resp.Data = make(map[string]interface{})
+	}
+	return resp
+}
+
+//send отправка с обработкой ошибки
+func (m *chatSokResponse) send() {
+	if m.Type == typeError {
+		go func() {
+			logger.Warning.Printf("|IP: %s |Login: %s |Resource: %s |Message: %v",
+				m.conn.RemoteAddr(),
+				m.userInfo.User,
+				"chat",
+				m.Data["message"])
+		}()
+	}
+	writeChatMess <- *m
+}
 
 //Message структура для приема сообщений
 type Message struct {
@@ -64,14 +100,14 @@ type SendMessage struct {
 	Data string `json:"data"`
 }
 
-//send отправка сообщения в Broadcast
-func (sm *SendMessage) send(data, mType, from, to string) {
-	sm.Data = data
-	sm.Type = mType
-	sm.from = from
-	sm.to = to
-	WriteSendMessage <- *sm
-}
+////send отправка сообщения в Broadcast
+//func (sm *SendMessage) send(data, mType, from, to string) {
+//	sm.Data = data
+//	sm.Type = mType
+//	sm.from = from
+//	sm.to = to
+//	WriteSendMessage <- *sm
+//}
 
 //ErrorMessage структура ошибки
 type ErrorMessage struct {

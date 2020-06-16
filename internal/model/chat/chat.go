@@ -1,50 +1,44 @@
 package chat
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/jmoiron/sqlx"
 	"time"
 )
 
-var ConnectedUsers map[string][]*websocket.Conn
-var WriteSendMessage chan SendMessage
-
-//delConn удаление подключения из массива подключений пользователя
-func delConn(login string, conn *websocket.Conn) {
-	for index, userConn := range ConnectedUsers[login] {
-		if userConn == conn {
-			ConnectedUsers[login][index] = ConnectedUsers[login][len(ConnectedUsers[login])-1]
-			ConnectedUsers[login][len(ConnectedUsers[login])-1] = nil
-			ConnectedUsers[login] = ConnectedUsers[login][:len(ConnectedUsers[login])-1]
-			break
-		}
-	}
-}
+var writeChatMess chan chatSokResponse
+var chatConnUsers map[*websocket.Conn]userInfo
 
 //Reader обработчик соединений (работа с чатом)
 func Reader(conn *websocket.Conn, login string, db *sqlx.DB) {
-	var message SendMessage
-	message.conn = conn
+	//-----------------------------------------------------------------------------------------------------------------------------------------------------------
+	uInfo := userInfo{User: login, Status: statusOnline}
 
-	//сообщить пользователям что мы появились в сети
-	changeFlag := checkAnother(login)
-	ConnectedUsers[login] = append(ConnectedUsers[login], conn)
+	//проверяем есть ли еще сокеты этого пользователя, если нет отправляем статус online
+	if !checkOnline(login) {
+		resp := newChatMess(typeStatus, conn, nil, uInfo)
+		resp.Data["user"] = uInfo.User
+		resp.Data["status"] = uInfo.Status
+		resp.send()
+	}
+
+	chatConnUsers[conn] = uInfo
+	//-----------------------------------------------------------------------------------------------------------------------------------------------------------
 
 	//выгрузить список доступных пользователей
 	{
 		var users AllUsersStatus
 		err := users.getAllUsers(db)
 		if err != nil {
-			var myError = ErrorMessage{Error: errNoAccessWithDatabase}
-			message.send(myError.toString(), typeError, login, login)
+			resp := newChatMess(typeError, conn, nil, uInfo)
+			resp.Data["message"] = ErrorMessage{Error: errUnregisteredMessageType}
+			resp.send()
 		}
-		message.send(users.toString(), typeAllUsers, login, login)
-	}
-
-	uStatus := newStatus(login, statusOnline)
-	if !changeFlag {
-		message.send(uStatus.toString(), typeStatus, login, globalMessage)
+		resp := newChatMess(typeAllUsers, conn, nil, uInfo)
+		resp.Data[typeAllUsers] = users.Users
+		resp.send()
 	}
 
 	//выгрузить архив сообщений за последний день
@@ -52,61 +46,66 @@ func Reader(conn *websocket.Conn, login string, db *sqlx.DB) {
 		var arc = ArchiveMessages{TimeStart: time.Now(), TimeEnd: time.Now().AddDate(0, 0, -1), To: globalMessage}
 		err := arc.takeArchive(db)
 		if err != nil {
-			var myError = ErrorMessage{Error: errNoAccessWithDatabase}
-			message.send(myError.toString(), typeError, login, login)
+			resp := newChatMess(typeError, conn, nil, uInfo)
+			resp.Data["message"] = ErrorMessage{Error: errNoAccessWithDatabase}
+			resp.send()
 		}
-		message.send(arc.toString(), typeArchive, login, login)
+		resp := newChatMess(typeArchive, conn, nil, uInfo)
+		resp.Data[typeArchive] = arc
+		resp.send()
 	}
-
+	fmt.Println("chat : ", chatConnUsers)
 	for {
 		_, p, err := conn.ReadMessage()
 		if err != nil {
-			delConn(login, conn)
-			if !checkAnother(login) {
-				uStatus.Status = statusOffline
-				message.send(uStatus.toString(), typeStatus, login, globalMessage)
-			}
+			resp := newChatMess(typeCheckStatus, conn, nil, uInfo)
+			resp.send()
 			return
 		}
-		fmt.Println(ConnectedUsers)
 
 		typeSelect, err := setTypeMessage(p)
 		if err != nil {
-			var myError = ErrorMessage{Error: errUnregisteredMessageType}
-			message.send(myError.toString(), typeError, login, login)
+			resp := newChatMess(typeError, conn, nil, uInfo)
+			resp.Data["message"] = ErrorMessage{Error: errUnregisteredMessageType}
+			resp.send()
 		}
 
 		switch typeSelect {
 		case typeMessage:
 			{
-				var messageFrom Message
-				fmt.Println(string(p))
-				err = messageFrom.toStruct(p)
-				if err != nil {
-					var myError = ErrorMessage{Error: errCantConvertJSON}
-					message.send(myError.toString(), typeError, login, login)
+				var mF Message
+				_ = json.Unmarshal(p, &mF)
+				if err := mF.SaveMessage(db); err != nil {
+					resp := newChatMess(typeError, conn, nil, uInfo)
+					resp.Data["message"] = ErrorMessage{Error: errNoAccessWithDatabase}
+					resp.send()
 				}
-				if err := messageFrom.SaveMessage(db); err != nil {
-					var myError = ErrorMessage{Error: errNoAccessWithDatabase}
-					message.send(myError.toString(), typeError, login, login)
-				}
-				message.send(messageFrom.toString(), typeMessage, messageFrom.From, messageFrom.To)
+				resp := newChatMess(typeMessage, conn, nil, uInfo)
+				resp.Data["message"] = mF.Message
+				resp.Data["time"] = mF.Time
+				resp.Data["from"] = mF.From
+				resp.Data["to"] = mF.To
+				resp.to = mF.To
+				resp.send()
 			}
 		case typeArchive:
 			{
 				var arc ArchiveMessages
 				err = arc.toStruct(p)
 				if err != nil {
-					var myError = ErrorMessage{Error: errCantConvertJSON}
-					message.send(myError.toString(), typeError, login, login)
+					resp := newChatMess(typeError, conn, nil, uInfo)
+					resp.Data["message"] = ErrorMessage{Error: errCantConvertJSON}
+					resp.send()
 				}
 				err = arc.takeArchive(db)
 				if err != nil {
-					var myError = ErrorMessage{Error: errNoAccessWithDatabase}
-					message.send(myError.toString(), typeError, login, login)
+					resp := newChatMess(typeError, conn, nil, uInfo)
+					resp.Data["message"] = ErrorMessage{Error: errNoAccessWithDatabase}
+					resp.send()
 				}
-				message.send(arc.toString(), typeArchive, login, login)
-				continue
+				resp := newChatMess(typeArchive, conn, nil, uInfo)
+				resp.Data[typeArchive] = arc
+				resp.send()
 			}
 		}
 
@@ -114,51 +113,84 @@ func Reader(conn *websocket.Conn, login string, db *sqlx.DB) {
 }
 
 //Broadcast обработчик сообщений (работа с чатом)
-func Broadcast() {
-	ConnectedUsers = make(map[string][]*websocket.Conn)
-	WriteSendMessage = make(chan SendMessage)
+func CBroadcast() {
+	chatConnUsers = make(map[*websocket.Conn]userInfo)
+	writeChatMess = make(chan chatSokResponse, 1)
+
 	for {
 		select {
-		case msg := <-WriteSendMessage:
+		case msg := <-writeChatMess:
 			{
-				switch {
-				case msg.from == msg.to:
+				switch msg.Type {
+				case typeStatus:
 					{
-						if err := msg.conn.WriteJSON(msg); err != nil {
-							_ = msg.conn.Close()
-							delConn(msg.from, msg.conn)
-						}
-					}
-				case msg.to == globalMessage:
-					{
-						for _, userConn := range ConnectedUsers {
-							for _, conn := range userConn {
+						for conn, uInfo := range chatConnUsers {
+							if uInfo.User != msg.userInfo.User {
 								if err := conn.WriteJSON(msg); err != nil {
+									//delete(chatConnUsers, conn)
+									deleteUser(msg)
 									_ = conn.Close()
-									delConn(msg.from, conn)
 								}
 							}
 						}
 					}
-				case msg.from != msg.to:
+				case typeArchive:
 					{
-						for _, conn := range ConnectedUsers[msg.from] {
+						for conn := range chatConnUsers {
 							if err := conn.WriteJSON(msg); err != nil {
+								//delete(chatConnUsers, conn)
+								deleteUser(msg)
 								_ = conn.Close()
-								delConn(msg.from, conn)
 							}
 						}
-						for _, conn := range ConnectedUsers[msg.to] {
+					}
+				case typeAllUsers:
+					{
+						for conn := range chatConnUsers {
 							if err := conn.WriteJSON(msg); err != nil {
+								//delete(chatConnUsers, conn)
+								deleteUser(msg)
 								_ = conn.Close()
-								delConn(msg.from, conn)
+							}
+						}
+					}
+				case typeCheckStatus:
+					{
+						//delete(chatConnUsers, msg.conn)
+						deleteUser(msg)
+					}
+				case typeMessage:
+					{
+						if msg.to == "Global" {
+							for conn := range chatConnUsers {
+								if err := conn.WriteJSON(msg); err != nil {
+									//delete(chatConnUsers, conn)
+									deleteUser(msg)
+									_ = conn.Close()
+								}
 							}
 						}
 					}
 				default:
-					continue
+					{
+						if err := msg.conn.WriteJSON(msg); err != nil {
+							//delete(chatConnUsers, msg.conn)
+							deleteUser(msg)
+							_ = msg.conn.Close()
+						}
+					}
 				}
 			}
 		}
+	}
+}
+
+func deleteUser(c chatSokResponse) {
+	delete(chatConnUsers, c.conn)
+	if !checkOnline(c.userInfo.User) {
+		resp := newChatMess(typeStatus, c.conn, nil, c.userInfo)
+		resp.Data["user"] = c.userInfo.User
+		resp.Data["status"] = statusOffline
+		resp.send()
 	}
 }
