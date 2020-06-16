@@ -107,7 +107,7 @@ func checkToken(c *gin.Context) (flag bool, mapCont map[string]string) {
 		userPrivilege  Privilege
 		tokenStrFromBd string
 	)
-	rows, err := GetDB().Query(`SELECT token, privilege FROM public.accounts WHERE Login = $1`, tk.Login)
+	rows, err := GetDB().Query(`SELECT token, privilege FROM public.accounts WHERE login = $1`, tk.Login)
 	if err != nil {
 		return false, nil
 	}

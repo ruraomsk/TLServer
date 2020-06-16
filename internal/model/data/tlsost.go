@@ -4,10 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
-
 	"github.com/JanFant/TLServer/internal/model/locations"
-	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/JanFant/TLServer/logger"
 	agS_pudge "github.com/ruraomsk/ag-server/pudge"
 )
@@ -18,7 +15,7 @@ type TrafficLights struct {
 	Region      RegionInfo      `json:"region"`      //Регион
 	Area        AreaInfo        `json:"area"`        //Район
 	Subarea     int             `json:"subarea"`     //ПодРайон
-	Idevice     int             `json:"Idevice"`     //Реальный номер устройства
+	Idevice     int             `json:"idevice"`     //Реальный номер устройства
 	Sost        TLSostInfo      `json:"tlsost"`      //Состояние светофора
 	Description string          `json:"description"` //Описание светофора
 	Points      locations.Point `json:"points"`      //Координата где находится светофор
@@ -34,7 +31,7 @@ type Locations struct {
 func SelectTL() (tfdata []TrafficLights) {
 	var dgis string
 	temp := &TrafficLights{}
-	rowsTL, err := GetDB().Query(`SELECT region, area, subarea, id, Idevice, dgis, describ, status FROM public.cross`)
+	rowsTL, err := GetDB().Query(`SELECT region, area, subarea, id, idevice, dgis, describ, status FROM public.cross`)
 	if err != nil {
 		logger.Error.Println("|Message: db not respond", err.Error())
 		return nil
@@ -121,64 +118,64 @@ func ConvertDevStrToStruct(str string) (controller agS_pudge.Controller, err err
 	return controller, nil
 }
 
-//GetCrossInfo сбор информации для пользователя о выбранном перекрестке
-func GetCrossInfo(TLignt TrafficLights) u.Response {
-	var (
-		dgis     string
-		sqlStr   string
-		stateStr string
-	)
-
-	sqlStr = fmt.Sprintf("SELECT area, subarea, Idevice, dgis, describ, state FROM public.cross WHERE region = %v and id = %v and area = %v", TLignt.Region.Num, TLignt.ID, TLignt.Area.Num)
-	rowsTL := GetDB().QueryRow(sqlStr)
-	err := rowsTL.Scan(&TLignt.Area.Num, &TLignt.Subarea, &TLignt.Idevice, &dgis, &TLignt.Description, &stateStr)
-	if err != nil {
-		logger.Error.Println("|Message: No result at these points, table cross", err.Error())
-		return u.Message(http.StatusInternalServerError, "no result at these points")
-	}
-	TLignt.Points.StrToFloat(dgis)
-	//Состояние светофора!
-	rState, err := ConvertStateStrToStruct(stateStr)
-	if err != nil {
-		logger.Error.Println("|Message: Failed to parse cross information", err.Error())
-		return u.Message(http.StatusInternalServerError, "failed to parse cross information")
-	}
-
-	resp := u.Message(http.StatusOK, "cross information")
-
-	CacheInfo.Mux.Lock()
-	TLignt.Region.NameRegion = CacheInfo.MapRegion[TLignt.Region.Num]
-	TLignt.Area.NameArea = CacheInfo.MapArea[TLignt.Region.NameRegion][TLignt.Area.Num]
-	TLignt.Sost.Num = rState.StatusDevice
-	TLignt.Sost.Description = CacheInfo.MapTLSost[TLignt.Sost.Num]
-	CacheInfo.Mux.Unlock()
-	resp.Obj["DontWrite"] = "true"
-	resp.Obj["cross"] = TLignt
-	resp.Obj["state"] = rState
-	return resp
-}
-
-//GetCrossDevInfo сбор информации для пользователя о выбранном перекрестке (информацию о девайсе)
-func GetCrossDevInfo(idevice string) u.Response {
-	var (
-		devStr string
-	)
-	resp := u.Message(http.StatusOK, "cross information")
-	err := GetDB().QueryRow(`SELECT device FROM public.devices WHERE id = $1`, idevice).Scan(&devStr)
-	if err != nil {
-		logger.Error.Println("|Message: No result at these points, table device", err.Error())
-		return u.Message(http.StatusOK, "no result at these points")
-	} else {
-		device, err := ConvertDevStrToStruct(devStr)
-		if err != nil {
-			logger.Error.Println("|Message: Failed to parse cross information", err.Error())
-			return u.Message(http.StatusInternalServerError, "failed to parse cross information")
-		}
-		resp.Obj["device"] = device
-	}
-	resp.Obj["DontWrite"] = "true"
-	return resp
-}
+////GetCrossInfo сбор информации для пользователя о выбранном перекрестке
+//func GetCrossInfo(TLignt TrafficLights) u.Response {
+//	var (
+//		dgis     string
+//		sqlStr   string
+//		stateStr string
+//	)
+//
+//	sqlStr = fmt.Sprintf("SELECT area, subarea, idevice, dgis, describ, state FROM public.cross WHERE region = %v and id = %v and area = %v", TLignt.Region.Num, TLignt.ID, TLignt.Area.Num)
+//	rowsTL := GetDB().QueryRow(sqlStr)
+//	err := rowsTL.Scan(&TLignt.Area.Num, &TLignt.Subarea, &TLignt.Idevice, &dgis, &TLignt.Description, &stateStr)
+//	if err != nil {
+//		logger.Error.Println("|Message: No result at these points, table cross", err.Error())
+//		return u.Message(http.StatusInternalServerError, "no result at these points")
+//	}
+//	TLignt.Points.StrToFloat(dgis)
+//	//Состояние светофора!
+//	rState, err := ConvertStateStrToStruct(stateStr)
+//	if err != nil {
+//		logger.Error.Println("|Message: Failed to parse cross information", err.Error())
+//		return u.Message(http.StatusInternalServerError, "failed to parse cross information")
+//	}
+//
+//	resp := u.Message(http.StatusOK, "cross information")
+//
+//	CacheInfo.Mux.Lock()
+//	TLignt.Region.NameRegion = CacheInfo.MapRegion[TLignt.Region.Num]
+//	TLignt.Area.NameArea = CacheInfo.MapArea[TLignt.Region.NameRegion][TLignt.Area.Num]
+//	TLignt.Sost.Num = rState.StatusDevice
+//	TLignt.Sost.Description = CacheInfo.MapTLSost[TLignt.Sost.Num]
+//	CacheInfo.Mux.Unlock()
+//	resp.Obj["DontWrite"] = "true"
+//	resp.Obj["cross"] = TLignt
+//	resp.Obj["state"] = rState
+//	return resp
+//}
+//
+////GetCrossDevInfo сбор информации для пользователя о выбранном перекрестке (информацию о девайсе)
+//func GetCrossDevInfo(idevice string) u.Response {
+//	var (
+//		devStr string
+//	)
+//	resp := u.Message(http.StatusOK, "cross information")
+//	err := GetDB().QueryRow(`SELECT device FROM public.devices WHERE id = $1`, idevice).Scan(&devStr)
+//	if err != nil {
+//		logger.Error.Println("|Message: No result at these points, table device", err.Error())
+//		return u.Message(http.StatusOK, "no result at these points")
+//	} else {
+//		device, err := ConvertDevStrToStruct(devStr)
+//		if err != nil {
+//			logger.Error.Println("|Message: Failed to parse cross information", err.Error())
+//			return u.Message(http.StatusInternalServerError, "failed to parse cross information")
+//		}
+//		resp.Obj["device"] = device
+//	}
+//	resp.Obj["DontWrite"] = "true"
+//	return resp
+//}
 
 //MakeBoxPoint расчет координат для перемещения по карте
 func (l *Locations) MakeBoxPoint() (box locations.BoxPoint, err error) {

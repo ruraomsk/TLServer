@@ -108,7 +108,7 @@ func CrossBroadcast() {
 	changeState = make(chan PosInfo)
 
 	type crossUpdateInfo struct {
-		Idevice  int            `json:"Idevice"`
+		Idevice  int            `json:"idevice"`
 		Status   TLSostInfo     `json:"status"`
 		State    agspudge.Cross `json:"state"`
 		stateStr string
@@ -140,7 +140,7 @@ func CrossBroadcast() {
 					//выполняем если хоть что-то есть
 					if len(aPos) > 0 {
 						//запрос статуса и state
-						query, args, err := sqlx.In("SELECT Idevice, status, state FROM public.cross WHERE Idevice IN (?)", aPos)
+						query, args, err := sqlx.In("SELECT idevice, status, state FROM public.cross WHERE idevice IN (?)", aPos)
 						if err != nil {
 							logger.Error.Println("|Message: cross socket cant make IN ", err.Error())
 							continue
@@ -165,7 +165,7 @@ func CrossBroadcast() {
 									for conn, info := range crossConnect {
 										if info.Idevice == newData.Idevice {
 											msg := newCrossMess(typeCrossUpdate, conn, nil, info)
-											msg.Data["Idevice"] = newData.Idevice
+											msg.Data["idevice"] = newData.Idevice
 											msg.Data["status"] = newData.Status
 											msg.Data["state"] = newData.State
 											_ = conn.WriteJSON(msg)
@@ -177,7 +177,7 @@ func CrossBroadcast() {
 								for conn, info := range crossConnect {
 									if info.Idevice == newData.Idevice {
 										msg := newCrossMess(typeCrossUpdate, conn, nil, info)
-										msg.Data["Idevice"] = newData.Idevice
+										msg.Data["idevice"] = newData.Idevice
 										msg.Data["status"] = newData.Status
 										msg.Data["state"] = newData.State
 										_ = conn.WriteJSON(msg)
@@ -211,7 +211,7 @@ func CrossBroadcast() {
 									for conn, info := range crossConnect {
 										if info.Idevice == newData.idevice {
 											msg := newCrossMess(typePhase, conn, nil, info)
-											msg.Data["Idevice"] = newData.idevice
+											msg.Data["idevice"] = newData.idevice
 											msg.Data["fdk"] = newData.Fdk
 											msg.Data["tdk"] = newData.Tdk
 											msg.Data["pdk"] = newData.Pdk
@@ -224,7 +224,7 @@ func CrossBroadcast() {
 								for conn, info := range crossConnect {
 									if info.Idevice == newData.idevice {
 										msg := newCrossMess(typePhase, conn, nil, info)
-										msg.Data["Idevice"] = newData.idevice
+										msg.Data["idevice"] = newData.idevice
 										msg.Data["fdk"] = newData.Fdk
 										msg.Data["tdk"] = newData.Tdk
 										msg.Data["pdk"] = newData.Pdk
