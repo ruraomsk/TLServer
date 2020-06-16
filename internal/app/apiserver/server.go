@@ -94,8 +94,8 @@ func StartServer(conf *ServerConf) {
 	mainRouter.GET("/:slug/manage/crossEditControl", func(c *gin.Context) { //обработчик по управлению занятых перекрестков (страничка)
 		c.HTML(http.StatusOK, "crossEditControl.html", nil)
 	})
-	mainRouter.POST("/:slug/manage/crossEditControl", handlers.CrossEditInfo) //обработчик по управлению занятых перекрестков
-	//mainRouter.POST("/:slug/manage/crossEditControl/free", handlers.CrossEditFree) //обработчик по управлению освобождению перекрестка
+	mainRouter.POST("/:slug/manage/crossEditControl", handlers.CrossEditInfo)      //обработчик по управлению занятых перекрестков
+	mainRouter.POST("/:slug/manage/crossEditControl/free", handlers.CrossEditFree) //обработчик по управлению освобождению перекрестка
 
 	mainRouter.GET("/:slug/manage/stateTest", func(c *gin.Context) { //обработчик проверки всего State (страничка)
 		c.HTML(http.StatusOK, "stateTest.html", nil)

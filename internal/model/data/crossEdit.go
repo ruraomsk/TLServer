@@ -5,23 +5,28 @@ import (
 	"net/http"
 )
 
+type CrossDisc struct {
+	Arms    []CrossInfo `json:"arms"`
+	Crosses []CrossInfo `json:"crosses"`
+}
+
 func DisplayCrossEditInfo(mapContx map[string]string) u.Response {
-	resp := u.Message(http.StatusOK, "Edit info")
+	resp := u.Message(http.StatusOK, "edit info")
 
 	getArmUsers <- true
 	arms := <-crArmUsers
 	if len(arms) == 0 {
-		arms = make([]crossInfo, 0)
+		arms = make([]CrossInfo, 0)
 	}
 
 	getCrossUsers <- true
 	crosses := <-crossUsers
 	if len(crosses) == 0 {
-		crosses = make([]crossInfo, 0)
+		crosses = make([]CrossInfo, 0)
 	}
 
 	if mapContx["region"] != "*" {
-		var temp []crossInfo
+		var temp = make([]CrossInfo, 0)
 		for _, arm := range arms {
 			if arm.Pos.Region == mapContx["region"] {
 				temp = append(temp, arm)
@@ -29,7 +34,7 @@ func DisplayCrossEditInfo(mapContx map[string]string) u.Response {
 		}
 		arms = temp
 
-		temp = make([]crossInfo, 0)
+		temp = make([]CrossInfo, 0)
 		for _, cross := range crosses {
 			if cross.Pos.Region == mapContx["region"] {
 				temp = append(temp, cross)
@@ -40,5 +45,12 @@ func DisplayCrossEditInfo(mapContx map[string]string) u.Response {
 
 	resp.Obj["arms"] = arms
 	resp.Obj["crosses"] = crosses
+	return resp
+}
+
+func CrossEditFree(disc CrossDisc) u.Response {
+	resp := u.Message(http.StatusOK, "free")
+	discCrossUsers <- disc.Crosses
+	discArmUsers <- disc.Arms
 	return resp
 }

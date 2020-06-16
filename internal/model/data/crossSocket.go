@@ -13,15 +13,16 @@ import (
 )
 
 var writeCrossMessage chan CrossSokResponse
-var crossConnect map[*websocket.Conn]crossInfo
+var crossConnect map[*websocket.Conn]CrossInfo
 var changeState chan PosInfo
-var crossUsers chan []crossInfo
+var crossUsers chan []CrossInfo
+var discCrossUsers chan []CrossInfo
 var getCrossUsers chan bool
 
 //CrossReader обработчик открытия сокета для перекрестка
 func CrossReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string) {
 	//дропаю соединение, если перекресток уже открыт у пользователя
-	var crossCI = crossInfo{Login: mapContx["login"], Pos: pos, Edit: false}
+	var crossCI = CrossInfo{Login: mapContx["login"], Pos: pos, Edit: false}
 
 	//проверка не существование такого перекрестка (сбос если нету)
 	_, err := getNewState(pos)
@@ -106,9 +107,10 @@ func CrossReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string) 
 //CrossBroadcast передатчик для перекрестка (cross)
 func CrossBroadcast() {
 	writeCrossMessage = make(chan CrossSokResponse)
-	crossConnect = make(map[*websocket.Conn]crossInfo)
+	crossConnect = make(map[*websocket.Conn]CrossInfo)
 	changeState = make(chan PosInfo)
-	crossUsers = make(chan []crossInfo)
+	crossUsers = make(chan []CrossInfo)
+	discCrossUsers = make(chan []CrossInfo)
 	getCrossUsers = make(chan bool)
 
 	type crossUpdateInfo struct {
@@ -243,7 +245,7 @@ func CrossBroadcast() {
 			}
 		case pos := <-changeState:
 			{
-				resp := newControlMess(typeStateChange, nil, nil, crossInfo{})
+				resp := newControlMess(typeStateChange, nil, nil, CrossInfo{})
 				state, _ := getNewState(pos)
 				resp.Data["state"] = state
 				for conn, info := range crossConnect {
@@ -304,11 +306,22 @@ func CrossBroadcast() {
 			}
 		case <-getCrossUsers:
 			{
-				var temp []crossInfo
+				var temp []CrossInfo
 				for _, info := range crossConnect {
 					temp = append(temp, info)
 				}
 				crossUsers <- temp
+			}
+		case dCrInfo := <-discCrossUsers:
+			{
+				for _, dCr := range dCrInfo {
+					for conn, cross := range crossConnect {
+						if cross.Pos == dCr.Pos && cross.Login == dCr.Login {
+							delete(crossConnect, conn)
+							_ = conn.Close()
+						}
+					}
+				}
 			}
 		}
 	}

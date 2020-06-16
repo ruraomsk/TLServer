@@ -20,7 +20,7 @@ func takeCrossInfo(pos PosInfo) (resp CrossSokResponse, idev int, desc string) {
 	rowsTL := GetDB().QueryRow(`SELECT area, subarea, Idevice, dgis, describ, state FROM public.cross WHERE region = $1 and id = $2 and area = $3`, pos.Region, pos.Id, pos.Area)
 	err := rowsTL.Scan(&TLignt.Area.Num, &TLignt.Subarea, &TLignt.Idevice, &dgis, &TLignt.Description, &stateStr)
 	if err != nil {
-		resp := newCrossMess(typeError, nil, nil, crossInfo{})
+		resp := newCrossMess(typeError, nil, nil, CrossInfo{})
 		resp.Data["message"] = "No result at these points, table cross"
 		return resp, 0, ""
 	}
@@ -28,12 +28,12 @@ func takeCrossInfo(pos PosInfo) (resp CrossSokResponse, idev int, desc string) {
 	//Состояние светофора!
 	rState, err := ConvertStateStrToStruct(stateStr)
 	if err != nil {
-		resp := newCrossMess(typeError, nil, nil, crossInfo{})
+		resp := newCrossMess(typeError, nil, nil, CrossInfo{})
 		resp.Data["message"] = "failed to parse cross information"
 		return resp, 0, ""
 	}
 
-	resp = newCrossMess(typeCrossBuild, nil, nil, crossInfo{})
+	resp = newCrossMess(typeCrossBuild, nil, nil, CrossInfo{})
 	CacheInfo.Mux.Lock()
 	TLignt.Region.NameRegion = CacheInfo.MapRegion[TLignt.Region.Num]
 	TLignt.Area.NameArea = CacheInfo.MapArea[TLignt.Region.NameRegion][TLignt.Area.Num]
@@ -74,7 +74,7 @@ func dispatchControl(arm comm.CommandARM) CrossSokResponse {
 
 	armMessage.CommandStr, err = armControlMarshal(arm)
 	if err != nil {
-		resp := newCrossMess(typeError, nil, nil, crossInfo{})
+		resp := newCrossMess(typeError, nil, nil, CrossInfo{})
 		resp.Data["message"] = "failed to Marshal ArmControlData information"
 		return resp
 	}
@@ -84,12 +84,12 @@ func dispatchControl(arm comm.CommandARM) CrossSokResponse {
 		chanRespond := <-tcpConnect.ArmCommandChan
 		if strings.Contains(armMessage.User, arm.User) {
 			if chanRespond.Message == "ok" {
-				resp := newCrossMess(typeDButton, nil, nil, crossInfo{})
+				resp := newCrossMess(typeDButton, nil, nil, CrossInfo{})
 				resp.Data["message"] = fmt.Sprintf("command %v send to server", armMessage.CommandStr)
 				resp.Data["user"] = arm.User
 				return resp
 			} else {
-				resp := newCrossMess(typeDButton, nil, nil, crossInfo{})
+				resp := newCrossMess(typeDButton, nil, nil, CrossInfo{})
 				resp.Data["message"] = "TCP Server not responding"
 				resp.Data["user"] = arm.User
 				return resp

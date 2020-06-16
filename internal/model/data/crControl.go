@@ -12,7 +12,7 @@ import (
 	"github.com/JanFant/TLServer/internal/model/stateVerified"
 	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/JanFant/TLServer/logger"
-	agS_pudge "github.com/ruraomsk/ag-server/pudge"
+	agspudge "github.com/ruraomsk/ag-server/pudge"
 )
 
 func TestCrossStateData(mapContx map[string]string) u.Response {
@@ -61,27 +61,27 @@ func takeControlInfo(pos PosInfo) (resp ControlSokResponse, idev int, desc strin
 	rowsTL := GetDB().QueryRow(`SELECT state FROM public.cross WHERE region = $1 and id = $2 and area = $3`, pos.Region, pos.Id, pos.Area)
 	err := rowsTL.Scan(&stateStr)
 	if err != nil {
-		resp := newControlMess(typeError, nil, nil, crossInfo{})
+		resp := newControlMess(typeError, nil, nil, CrossInfo{})
 		resp.Data["message"] = "No result at these points, table cross"
 		return resp, 0, ""
 	}
 	//Состояние светофора!
 	rState, err := ConvertStateStrToStruct(stateStr)
 	if err != nil {
-		resp := newControlMess(typeError, nil, nil, crossInfo{})
+		resp := newControlMess(typeError, nil, nil, CrossInfo{})
 		resp.Data["message"] = "failed to parse cross information"
 		return resp, 0, ""
 	}
-	resp = newControlMess(typeControlBuild, nil, nil, crossInfo{})
+	resp = newControlMess(typeControlBuild, nil, nil, CrossInfo{})
 	resp.Data["state"] = rState
 	return resp, rState.IDevice, rState.Name
 }
 
 //checkCrossData проверка полученных данных
-func checkCrossData(state agS_pudge.Cross) ControlSokResponse {
+func checkCrossData(state agspudge.Cross) ControlSokResponse {
 	var verif stateVerified.StateResult
 	verifiedState(&state, &verif)
-	resp := newControlMess(typeCheckB, nil, nil, crossInfo{})
+	resp := newControlMess(typeCheckB, nil, nil, CrossInfo{})
 	if verif.Err != nil {
 		resp.Data["status"] = false
 	} else {
@@ -92,11 +92,11 @@ func checkCrossData(state agS_pudge.Cross) ControlSokResponse {
 }
 
 //sendCrossData получение данных от пользователя проверка и отправка серверу(устройств)
-func sendCrossData(state agS_pudge.Cross, login string) ControlSokResponse {
+func sendCrossData(state agspudge.Cross, login string) ControlSokResponse {
 	var (
 		stateMessage tcpConnect.StateMessage
 		err          error
-		userCross    agS_pudge.UserCross
+		userCross    agspudge.UserCross
 	)
 
 	userCross.State = state
@@ -104,12 +104,12 @@ func sendCrossData(state agS_pudge.Cross, login string) ControlSokResponse {
 	stateMessage.StateStr, err = stateMarshal(userCross)
 	if err != nil {
 		logger.Error.Println("|Message: control socket, failed to Marshal state information: ", err.Error())
-		resp := newControlMess(typeError, nil, nil, crossInfo{})
+		resp := newControlMess(typeError, nil, nil, CrossInfo{})
 		resp.Data["message"] = "failed to Marshal state information"
 		return resp
 	}
 	stateMessage.User = login
-	resp := newControlMess(typeSendB, nil, nil, crossInfo{})
+	resp := newControlMess(typeSendB, nil, nil, CrossInfo{})
 	resp.Data["user"] = login
 	if sendToUDPServer(stateMessage) {
 		resp.Data["message"] = "cross send to server"
@@ -123,10 +123,10 @@ func sendCrossData(state agS_pudge.Cross, login string) ControlSokResponse {
 }
 
 //deleteCrossData удаление перекрестка на сервере
-func deleteCrossData(state agS_pudge.Cross, login string) ControlSokResponse {
+func deleteCrossData(state agspudge.Cross, login string) ControlSokResponse {
 	var (
 		stateMessage tcpConnect.StateMessage
-		userCross    agS_pudge.UserCross
+		userCross    agspudge.UserCross
 		err          error
 	)
 	stateMessage.Info = fmt.Sprintf("Idevice: %v, position : %v//%v//%v", state.IDevice, state.Region, state.Area, state.ID)
@@ -136,12 +136,12 @@ func deleteCrossData(state agS_pudge.Cross, login string) ControlSokResponse {
 	stateMessage.StateStr, err = stateMarshal(userCross)
 	if err != nil {
 		logger.Error.Println("|Message: control socket, failed to Marshal state information: ", err.Error())
-		resp := newControlMess(typeError, nil, nil, crossInfo{})
+		resp := newControlMess(typeError, nil, nil, CrossInfo{})
 		resp.Data["message"] = "failed to Marshal state information"
 		return resp
 	}
 	stateMessage.User = login
-	resp := newControlMess(typeDeleteB, nil, nil, crossInfo{})
+	resp := newControlMess(typeDeleteB, nil, nil, CrossInfo{})
 	resp.Data["user"] = login
 	if sendToUDPServer(stateMessage) {
 		resp.Data["message"] = fmt.Sprintf("cross data deleted. Info (%v)", stateMessage.Info)
@@ -154,10 +154,10 @@ func deleteCrossData(state agS_pudge.Cross, login string) ControlSokResponse {
 }
 
 //createCrossData добавление нового перекрестка
-func createCrossData(state agS_pudge.Cross, login string) ControlSokResponse {
+func createCrossData(state agspudge.Cross, login string) ControlSokResponse {
 	var (
 		stateMessage tcpConnect.StateMessage
-		userCross    agS_pudge.UserCross
+		userCross    agspudge.UserCross
 		verRes       []string
 		stateSql     string
 	)
@@ -165,7 +165,7 @@ func createCrossData(state agS_pudge.Cross, login string) ControlSokResponse {
 	rows, err := GetDB().Query(sqlStr)
 	if err != nil {
 		logger.Error.Println("|Message: control socket (create Button), DB not respond : ", err.Error())
-		resp := newControlMess(typeError, nil, nil, crossInfo{})
+		resp := newControlMess(typeError, nil, nil, CrossInfo{})
 		resp.Data["message"] = "DB not respond"
 		return resp
 	}
@@ -180,7 +180,7 @@ func createCrossData(state agS_pudge.Cross, login string) ControlSokResponse {
 		}
 	}
 	if len(verRes) > 0 {
-		resp := newControlMess(typeCreateB, nil, nil, crossInfo{})
+		resp := newControlMess(typeCreateB, nil, nil, CrossInfo{})
 		resp.Data["result"] = verRes
 		return resp
 	}
@@ -190,12 +190,12 @@ func createCrossData(state agS_pudge.Cross, login string) ControlSokResponse {
 	stateMessage.StateStr, err = stateMarshal(userCross)
 	if err != nil {
 		logger.Error.Println("|Message: control socket, failed to Marshal state information: ", err.Error())
-		resp := newControlMess(typeError, nil, nil, crossInfo{})
+		resp := newControlMess(typeError, nil, nil, CrossInfo{})
 		resp.Data["message"] = "failed to Marshal state information"
 		return resp
 	}
 	stateMessage.User = login
-	resp := newControlMess(typeCreateB, nil, nil, crossInfo{})
+	resp := newControlMess(typeCreateB, nil, nil, CrossInfo{})
 	resp.Data["user"] = login
 	if sendToUDPServer(stateMessage) {
 		if ShortCreateDirPng(state.Region, state.Area, state.ID, state.Dgis) {
@@ -229,7 +229,7 @@ func sendToUDPServer(message tcpConnect.StateMessage) bool {
 }
 
 //stateMarshal преобразовать структуру в строку
-func stateMarshal(cross agS_pudge.UserCross) (str string, err error) {
+func stateMarshal(cross agspudge.UserCross) (str string, err error) {
 	newByte, err := json.Marshal(cross)
 	if err != nil {
 		return "", err
@@ -238,7 +238,7 @@ func stateMarshal(cross agS_pudge.UserCross) (str string, err error) {
 }
 
 //verifiedState набор проверкок для стейта
-func verifiedState(cross *agS_pudge.Cross, result *stateVerified.StateResult) {
+func verifiedState(cross *agspudge.Cross, result *stateVerified.StateResult) {
 	resultDay := stateVerified.DaySetsVerified(cross)
 	appendResult(result, resultDay)
 	resultWeek, empty := stateVerified.WeekSetsVerified(cross)

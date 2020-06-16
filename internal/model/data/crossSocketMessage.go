@@ -26,11 +26,11 @@ type CrossSokResponse struct {
 	Type string                 `json:"type"`
 	Data map[string]interface{} `json:"data"`
 	conn *websocket.Conn        `json:"-"`
-	info crossInfo              `json:"-"`
+	info CrossInfo              `json:"-"`
 }
 
 //crossInfo информация о перекрестке для которого открыт сокет
-type crossInfo struct {
+type CrossInfo struct {
 	Login       string  `json:"login"`
 	Edit        bool    `json:"edit"`
 	Idevice     int     `json:"idevice"`
@@ -46,7 +46,7 @@ type PosInfo struct {
 }
 
 //newCrossMess создание нового сообщения
-func newCrossMess(mType string, conn *websocket.Conn, data map[string]interface{}, info crossInfo) CrossSokResponse {
+func newCrossMess(mType string, conn *websocket.Conn, data map[string]interface{}, info CrossInfo) CrossSokResponse {
 	var resp = CrossSokResponse{Type: mType, conn: conn, info: info}
 	if data != nil {
 		resp.Data = data
@@ -70,7 +70,7 @@ func (m *CrossSokResponse) send() {
 	writeCrossMessage <- *m
 }
 
-//phaseInfo инофрмация о фазах
+//phaseInfo инофрмация о фазах3123123123
 type phaseInfo struct {
 	idevice int  `json:"-"`
 	Fdk     int  `json:"fdk"`

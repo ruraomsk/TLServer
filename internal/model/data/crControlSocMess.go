@@ -25,7 +25,7 @@ type ControlSokResponse struct {
 	Type string                 `json:"type"`
 	Data map[string]interface{} `json:"data"`
 	conn *websocket.Conn        `json:"-"`
-	info crossInfo              `json:"-"`
+	info CrossInfo              `json:"-"`
 }
 
 //StateHandler структура приема / отправки state
@@ -49,7 +49,7 @@ func (m *ControlSokResponse) send() {
 }
 
 //newControlMess создание нового сообщения
-func newControlMess(mType string, conn *websocket.Conn, data map[string]interface{}, info crossInfo) ControlSokResponse {
+func newControlMess(mType string, conn *websocket.Conn, data map[string]interface{}, info CrossInfo) ControlSokResponse {
 	var resp = ControlSokResponse{Type: mType, conn: conn, info: info}
 	if data != nil {
 		resp.Data = data

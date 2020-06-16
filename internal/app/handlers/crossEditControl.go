@@ -4,6 +4,7 @@ import (
 	"github.com/JanFant/TLServer/internal/model/data"
 	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
 //CrossEditInfo сбор информации о занятых перекрестках
@@ -17,14 +18,13 @@ var CrossEditInfo = func(c *gin.Context) {
 	u.SendRespond(c, resp)
 }
 
-//
-////CrossEditFree освобождение перекрестков
-//var CrossEditFree = func(c *gin.Context) {
-//	var busyArms deviceLog.BusyArms
-//	if err := c.ShouldBindJSON(&busyArms); err != nil {
-//		u.SendRespond(c, u.Message(http.StatusBadRequest, "invalid request"))
-//		return
-//	}
-//	resp := deviceLog.FreeCrossEdit(busyArms)
-//	u.SendRespond(c, resp)
-//}
+//CrossEditFree освобождение перекрестков
+var CrossEditFree = func(c *gin.Context) {
+	var discDev data.CrossDisc
+	if err := c.ShouldBindJSON(&discDev); err != nil {
+		u.SendRespond(c, u.Message(http.StatusBadRequest, "invalid request"))
+		return
+	}
+	resp := data.CrossEditFree(discDev)
+	u.SendRespond(c, resp)
+}

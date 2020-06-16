@@ -9,14 +9,15 @@ import (
 )
 
 var writeControlMessage chan ControlSokResponse
-var controlConnect map[*websocket.Conn]crossInfo
-var crArmUsers chan []crossInfo
+var controlConnect map[*websocket.Conn]CrossInfo
+var crArmUsers chan []CrossInfo
+var discArmUsers chan []CrossInfo
 var getArmUsers chan bool
 
 //ControlReader обработчик открытия сокета для арма перекрестка
 func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string) {
 	//дропаю соединение, если перекресток уже открыт у пользователя
-	var controlI = crossInfo{Login: mapContx["login"], Pos: pos, Edit: false}
+	var controlI = CrossInfo{Login: mapContx["login"], Pos: pos, Edit: false}
 
 	//проверка не существование такого перекрестка (сбос если нету)
 	_, err := getNewState(pos)
@@ -172,10 +173,11 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 //ControlBroadcast передатчик для арма перекрестка (crossControl)
 func ControlBroadcast() {
 	writeControlMessage = make(chan ControlSokResponse)
-	controlConnect = make(map[*websocket.Conn]crossInfo)
+	controlConnect = make(map[*websocket.Conn]CrossInfo)
 
 	getArmUsers = make(chan bool)
-	crArmUsers = make(chan []crossInfo)
+	crArmUsers = make(chan []CrossInfo)
+	discArmUsers = make(chan []CrossInfo)
 
 	for {
 		select {
@@ -286,12 +288,24 @@ func ControlBroadcast() {
 			}
 		case <-getArmUsers:
 			{
-				var temp []crossInfo
+				var temp []CrossInfo
 				for _, info := range controlConnect {
 					temp = append(temp, info)
 				}
 				crArmUsers <- temp
 			}
+		case dArmInfo := <-discArmUsers:
+			{
+				for _, dArm := range dArmInfo {
+					for conn, control := range controlConnect {
+						if control.Pos == dArm.Pos && control.Login == dArm.Login {
+							delete(controlConnect, conn)
+							_ = conn.Close()
+						}
+					}
+				}
+			}
+
 		}
 	}
 }
