@@ -269,6 +269,7 @@ func ControlBroadcast() {
 								if err := cc.WriteJSON(msg); err != nil {
 									delete(controlConnect, cc)
 									_ = cc.Close()
+									continue
 								}
 								break
 							}
@@ -297,15 +298,34 @@ func ControlBroadcast() {
 		case dArmInfo := <-discArmUsers:
 			{
 				for _, dArm := range dArmInfo {
-					for conn, control := range controlConnect {
-						if control.Pos == dArm.Pos && control.Login == dArm.Login {
-							delete(controlConnect, conn)
-							_ = conn.Close()
+					for conn, cross := range controlConnect {
+						if cross.Pos == dArm.Pos && cross.Login == dArm.Login {
+							//проверка редактирования
+							if cross.Edit {
+								delete(controlConnect, conn)
+								_ = conn.Close()
+								for cc, coI := range controlConnect {
+									if coI.Pos == dArm.Pos {
+										coI.Edit = true
+										controlConnect[cc] = coI
+										resp := newCrossMess(typeChangeEdit, nil, nil, coI)
+										resp.Data["edit"] = true
+										if err := cc.WriteJSON(resp); err != nil {
+											delete(controlConnect, cc)
+											_ = cc.Close()
+											continue
+										}
+										break
+									}
+								}
+							} else {
+								delete(controlConnect, conn)
+								_ = conn.Close()
+							}
 						}
 					}
 				}
 			}
-
 		}
 	}
 }

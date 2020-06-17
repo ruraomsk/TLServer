@@ -284,6 +284,7 @@ func CrossBroadcast() {
 								if err := cc.WriteJSON(msg); err != nil {
 									delete(crossConnect, cc)
 									_ = cc.Close()
+									continue
 								}
 								break
 							}
@@ -317,8 +318,28 @@ func CrossBroadcast() {
 				for _, dCr := range dCrInfo {
 					for conn, cross := range crossConnect {
 						if cross.Pos == dCr.Pos && cross.Login == dCr.Login {
-							delete(crossConnect, conn)
-							_ = conn.Close()
+							//проверка редактирования
+							if cross.Edit {
+								delete(crossConnect, conn)
+								_ = conn.Close()
+								for cc, coI := range crossConnect {
+									if coI.Pos == dCr.Pos {
+										coI.Edit = true
+										crossConnect[cc] = coI
+										resp := newCrossMess(typeChangeEdit, nil, nil, coI)
+										resp.Data["edit"] = true
+										if err := cc.WriteJSON(resp); err != nil {
+											delete(crossConnect, cc)
+											_ = cc.Close()
+											continue
+										}
+										break
+									}
+								}
+							} else {
+								delete(crossConnect, conn)
+								_ = conn.Close()
+							}
 						}
 					}
 				}

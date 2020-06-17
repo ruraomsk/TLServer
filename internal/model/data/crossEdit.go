@@ -50,7 +50,11 @@ func DisplayCrossEditInfo(mapContx map[string]string) u.Response {
 
 func CrossEditFree(disc CrossDisc) u.Response {
 	resp := u.Message(http.StatusOK, "free")
-	discCrossUsers <- disc.Crosses
-	discArmUsers <- disc.Arms
+	if len(disc.Arms) > 0 {
+		discArmUsers <- disc.Arms
+	}
+	if len(disc.Crosses) > 0 {
+		discCrossUsers <- disc.Crosses
+	}
 	return resp
 }
