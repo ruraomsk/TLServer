@@ -3,6 +3,7 @@ package data
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/ruraomsk/ag-server/comm"
@@ -178,7 +179,11 @@ func ControlBroadcast() {
 	getArmUsers = make(chan bool)
 	crArmUsers = make(chan []CrossInfo)
 	discArmUsers = make(chan []CrossInfo)
+	pingTicker := time.NewTicker(pingPeriod)
 
+	defer func() {
+		pingTicker.Stop()
+	}()
 	for {
 		select {
 		case msg := <-writeControlMessage:
@@ -323,6 +328,15 @@ func ControlBroadcast() {
 								_ = conn.Close()
 							}
 						}
+					}
+				}
+			}
+		case <-pingTicker.C:
+			{
+				for conn := range controlConnect {
+					if err := conn.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
+						delete(controlConnect, conn)
+						_ = conn.Close()
 					}
 				}
 			}

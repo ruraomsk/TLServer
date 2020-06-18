@@ -10,6 +10,9 @@ import (
 
 var writeChatMess chan chatSokResponse
 var chatConnUsers map[*websocket.Conn]userInfo
+var UserLogoutChat chan string
+
+const pingPeriod = time.Second * 5
 
 //Reader обработчик соединений (работа с чатом)
 func Reader(conn *websocket.Conn, login string, db *sqlx.DB) {
@@ -56,9 +59,11 @@ func Reader(conn *websocket.Conn, login string, db *sqlx.DB) {
 	}
 	fmt.Println("chat : ", chatConnUsers)
 	for {
-		_, p, err := conn.ReadMessage()
+		typed, p, err := conn.ReadMessage()
+		fmt.Println(typed)
 		if err != nil {
-			resp := newChatMess(typeCheckStatus, conn, nil, uInfo)
+			fmt.Println(err.Error())
+			resp := newChatMess(typeClose, conn, nil, uInfo)
 			resp.send()
 			return
 		}
@@ -116,9 +121,19 @@ func Reader(conn *websocket.Conn, login string, db *sqlx.DB) {
 func CBroadcast() {
 	chatConnUsers = make(map[*websocket.Conn]userInfo)
 	writeChatMess = make(chan chatSokResponse, 1)
+	UserLogoutChat = make(chan string)
+
+	pingTicker := time.NewTicker(pingPeriod)
+	defer pingTicker.Stop()
 
 	for {
 		select {
+		case <-pingTicker.C:
+			{
+				for conn := range chatConnUsers {
+					_ = conn.WriteMessage(websocket.PingMessage, nil)
+				}
+			}
 		case msg := <-writeChatMess:
 			{
 				switch msg.Type {
@@ -126,71 +141,102 @@ func CBroadcast() {
 					{
 						for conn, uInfo := range chatConnUsers {
 							if uInfo.User != msg.userInfo.User {
-								if err := conn.WriteJSON(msg); err != nil {
-									//delete(chatConnUsers, conn)
-									deleteUser(msg)
-									_ = conn.Close()
-								}
+								_ = conn.WriteJSON(msg)
+								//err != nil {
+								//	//delete(chatConnUsers, conn)
+								//	deleteUser(msg)
+								//	_ = conn.Close()
+								//}
 							}
 						}
 					}
 				case typeArchive:
 					{
-						for conn := range chatConnUsers {
-							if err := conn.WriteJSON(msg); err != nil {
-								//delete(chatConnUsers, conn)
-								deleteUser(msg)
-								_ = conn.Close()
-							}
-						}
+						_ = msg.conn.WriteJSON(msg)
+						// err != nil {
+						//	//delete(chatConnUsers, conn)
+						//	deleteUser(msg)
+						//	_ = msg.conn.Close()
+						//}
 					}
 				case typeAllUsers:
 					{
 						for conn := range chatConnUsers {
-							if err := conn.WriteJSON(msg); err != nil {
-								//delete(chatConnUsers, conn)
-								deleteUser(msg)
-								_ = conn.Close()
-							}
+							_ = conn.WriteJSON(msg)
+							//; err != nil {
+							//	//delete(chatConnUsers, conn)
+							//	deleteUser(msg)
+							//	_ = conn.Close()
+							//}
 						}
 					}
-				case typeCheckStatus:
-					{
-						//delete(chatConnUsers, msg.conn)
-						deleteUser(msg)
-					}
+
 				case typeMessage:
 					{
 						if msg.to == "Global" {
 							for conn := range chatConnUsers {
-								if err := conn.WriteJSON(msg); err != nil {
-									//delete(chatConnUsers, conn)
-									deleteUser(msg)
-									_ = conn.Close()
-								}
+								_ = conn.WriteJSON(msg)
+								//; err != nil {
+								//	//delete(chatConnUsers, conn)
+								//	deleteUser(msg)
+								//	_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "asd"))
+								//	//_ = conn.Close()
+								//}
+							}
+						}
+					}
+
+				case typeClose:
+					{
+						delete(chatConnUsers, msg.conn)
+						if !checkOnline(msg.userInfo.User) {
+							msg.Type = typeStatus
+							msg.Data["user"] = msg.userInfo.User
+							msg.Data["status"] = statusOffline
+							for conn := range chatConnUsers {
+								_ = conn.WriteJSON(msg)
 							}
 						}
 					}
 				default:
 					{
-						if err := msg.conn.WriteJSON(msg); err != nil {
-							//delete(chatConnUsers, msg.conn)
-							deleteUser(msg)
-							_ = msg.conn.Close()
-						}
+						_ = msg.conn.WriteJSON(msg)
+						//; err != nil {
+						//	//delete(chatConnUsers, msg.conn)
+						//	deleteUser(msg)
+						//	_ = msg.conn.Close()
+						//}
 					}
 				}
+			}
+		case login := <-UserLogoutChat:
+			{
+				//disconnected := false
+				for conn, infoUser := range chatConnUsers {
+					if infoUser.User == login {
+						_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "пользователь вышел из системы"))
+						//disconnected = true
+					}
+				}
+				//if disconnected {
+				//	user := userInfo{User: login, Status: statusOffline}
+				//	resp := newChatMess(typeStatus, nil, nil, user)
+				//	resp.Data["user"] = user.User
+				//	resp.Data["status"] = user.Status
+				//	for conn := range chatConnUsers {
+				//		_ = conn.WriteJSON(resp)
+				//	}
 			}
 		}
 	}
 }
 
-func deleteUser(c chatSokResponse) {
-	delete(chatConnUsers, c.conn)
-	if !checkOnline(c.userInfo.User) {
-		resp := newChatMess(typeStatus, c.conn, nil, c.userInfo)
-		resp.Data["user"] = c.userInfo.User
-		resp.Data["status"] = statusOffline
-		resp.send()
-	}
-}
+//func deleteUser(c chatSokResponse) {
+//	delete(chatConnUsers, c.conn)
+//	if !checkOnline(c.userInfo.User) {
+//		resp := newChatMess(typeStatus, c.conn, nil, c.userInfo)
+//		resp.Data["user"] = c.userInfo.User
+//		resp.Data["status"] = statusOffline
+//		resp.send()
+//	}
+//}

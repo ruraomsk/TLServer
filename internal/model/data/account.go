@@ -299,6 +299,17 @@ func SuperCreate() {
 	_ = privilege.WriteRoleInBD(account.Login)
 
 	account = &Account{}
+	account.Login = "Marina"
+	//Отдаем ключ для yandex map
+	account.WorkTime = 1000
+	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
+	privilege = NewPrivilege("Admin", "*", []string{"*"})
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time) VALUES ($1, $2, $3)`,
+		account.Login, account.Password, account.WorkTime)
+	////Записываю координаты в базу!!!
+	_ = privilege.WriteRoleInBD(account.Login)
+
+	account = &Account{}
 	account.Login = "Rura"
 	//Отдаем ключ для yandex map
 	account.WorkTime = 12

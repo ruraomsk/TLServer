@@ -3,6 +3,7 @@ package data
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/JanFant/TLServer/internal/model/chat"
 	"time"
 
 	"github.com/JanFant/TLServer/internal/model/config"
@@ -14,6 +15,8 @@ import (
 var connectedUsersOnMap map[*websocket.Conn]bool
 var writeMap chan MapSokResponse
 var mapRepaint chan bool
+
+const pingPeriod = time.Second * 60
 
 //MapReader обработчик открытия сокета для карты
 func MapReader(conn *websocket.Conn, c *gin.Context) {
@@ -75,6 +78,7 @@ func MapReader(conn *websocket.Conn, c *gin.Context) {
 					resp.conn = conn
 					resp.Data["authorizedFlag"] = true
 					resp.send()
+					chat.UserLogoutChat <- login
 				}
 			}
 
@@ -88,12 +92,17 @@ func MapBroadcast() {
 	writeMap = make(chan MapSokResponse)
 	mapRepaint = make(chan bool)
 
-	crossReadTick := time.Tick(time.Second * 5)
+	crossReadTick := time.NewTicker(time.Second * 5)
+	pingTicker := time.NewTicker(pingPeriod)
 
+	defer func() {
+		pingTicker.Stop()
+		crossReadTick.Stop()
+	}()
 	oldTFs := SelectTL()
 	for {
 		select {
-		case <-crossReadTick:
+		case <-crossReadTick.C:
 			{
 				if len(connectedUsersOnMap) > 0 {
 					newTFs := SelectTL()
@@ -124,6 +133,15 @@ func MapBroadcast() {
 				resp.Data["tflight"] = oldTFs
 				for conn := range connectedUsersOnMap {
 					_ = conn.WriteJSON(resp)
+				}
+			}
+		case <-pingTicker.C:
+			{
+				for conn := range connectedUsersOnMap {
+					if err := conn.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
+						delete(connectedUsersOnMap, conn)
+						_ = conn.Close()
+					}
 				}
 			}
 		case msg := <-writeMap:

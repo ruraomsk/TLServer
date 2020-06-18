@@ -45,16 +45,6 @@ func StartServer(conf *ServerConf) {
 	})
 	router.GET("/mapW", handlers.MapEngine)
 
-	router.GET("/map/screen", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "screen.html", nil)
-	})
-
-	//cross WebSocket
-	router.GET("/crossTest", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "crossTest.html", nil)
-	})
-	router.GET("/crossW", handlers.CrossEngine)
-
 	//------------------------------------------------------------------------------------------------------------------
 	//обязательный общий путь
 	mainRouter := router.Group("/user")
@@ -111,7 +101,6 @@ func StartServer(conf *ServerConf) {
 	mainRouter.GET("/:slug/manage/crossCreator", func(c *gin.Context) { //обработка проверки/создания каталога карты перекрестков (страничка)
 		c.HTML(http.StatusOK, "crossCreator.html", nil)
 	})
-
 	mainRouter.POST("/:slug/manage/crossCreator", handlers.MainCrossCreator)                    //обработка проверки/создания каталога карты перекрестков
 	mainRouter.POST("/:slug/manage/crossCreator/checkAllCross", handlers.CheckAllCross)         //обработка проверки наличия всех каталогов и файлов необходимых для построения перекрестков
 	mainRouter.POST("/:slug/manage/crossCreator/checkSelected", handlers.CheckSelectedDirCross) //обработка проверки наличия выбранных каталогов и файлов необходимых для построения перекрестков

@@ -61,14 +61,15 @@ func CheckLicenseKey(tokenSTR string) (*LicenseToken, error) {
 
 func ControlLicenseKey() {
 	var temp = make(chan bool)
-	timeTick := time.Tick(time.Hour * 1)
+	timeTick := time.NewTicker(time.Hour * 1)
+	defer timeTick.Stop()
 	for {
 		select {
 		case <-temp:
 			{
 
 			}
-		case <-timeTick:
+		case <-timeTick.C:
 			{
 				key, err := readFile()
 				if err != nil {

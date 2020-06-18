@@ -122,10 +122,16 @@ func CrossBroadcast() {
 
 	globArrCross := make(map[int]crossUpdateInfo)
 	globArrPhase := make(map[int]phaseInfo)
-	readTick := time.Tick(time.Second * 1)
+	readTick := time.NewTicker(time.Second * 1)
+	pingTicker := time.NewTicker(pingPeriod)
+
+	defer func() {
+		readTick.Stop()
+		pingTicker.Stop()
+	}()
 	for {
 		select {
-		case <-readTick:
+		case <-readTick.C:
 			{
 				if len(crossConnect) > 0 {
 					aPos := make([]int, 0)
@@ -344,6 +350,16 @@ func CrossBroadcast() {
 					}
 				}
 			}
+		case <-pingTicker.C:
+			{
+				for conn := range crossConnect {
+					if err := conn.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
+						delete(crossConnect, conn)
+						_ = conn.Close()
+					}
+				}
+			}
 		}
+
 	}
 }

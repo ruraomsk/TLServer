@@ -19,6 +19,7 @@ var (
 	statusOnline    = "online"
 	statusOffline   = "offline"
 	globalMessage   = "Global"
+	typeClose       = "close"
 
 	errNoAccessWithDatabase    = "no access with database"
 	errCantConvertJSON         = "cant convert JSON"

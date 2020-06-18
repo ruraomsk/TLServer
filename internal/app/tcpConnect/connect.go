@@ -92,11 +92,12 @@ func TCPForMessage(IP string) {
 		message MessageInfo
 		err     error
 	)
-	timeTick := time.Tick(time.Second * 5)
+	timeTick := time.NewTicker(time.Second * 5)
+	defer timeTick.Stop()
 	FlagConnect := false
 	for {
 		select {
-		case <-timeTick:
+		case <-timeTick.C:
 			{
 				for {
 					if !FlagConnect {
@@ -125,7 +126,7 @@ func TCPForMessage(IP string) {
 					_ = conn.Close()
 					break
 				}
-				timeTick = time.Tick(time.Hour * 24)
+				timeTick = time.NewTicker(time.Hour * 24)
 			}
 		}
 	}
@@ -138,7 +139,8 @@ func TCPForState(IP string) {
 		err      error
 		errCount = 0
 	)
-	timeTick := time.Tick(time.Second * 5)
+	timeTick := time.NewTicker(time.Second * 5)
+	defer timeTick.Stop()
 	FlagConnect := false
 	for {
 		select {
@@ -167,7 +169,7 @@ func TCPForState(IP string) {
 				errCount = 0
 				StateChan <- state
 			}
-		case <-timeTick:
+		case <-timeTick.C:
 			{
 				if !FlagConnect {
 					conn, err = net.Dial("tcp", IP)
@@ -198,7 +200,8 @@ func TCPForARM(IP string) {
 		err      error
 		errCount = 0
 	)
-	timeTick := time.Tick(time.Second * 5)
+	timeTick := time.NewTicker(time.Second * 5)
+	defer timeTick.Stop()
 	FlagConnect := false
 	for {
 		select {
@@ -227,7 +230,7 @@ func TCPForARM(IP string) {
 				errCount = 0
 				ArmCommandChan <- armCommand
 			}
-		case <-timeTick:
+		case <-timeTick.C:
 			{
 				if !FlagConnect {
 					conn, err = net.Dial("tcp", IP)
