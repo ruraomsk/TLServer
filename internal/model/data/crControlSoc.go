@@ -186,7 +186,7 @@ func ControlBroadcast() {
 	}()
 	for {
 		select {
-		case msg := <-writeControlMessage:
+		case msg := <-writeControlMessage: //ok
 			{
 				switch msg.Type {
 				case typeSendB:
@@ -195,25 +195,18 @@ func ControlBroadcast() {
 							//если есть поле отправить всем кто слушает
 							for conn, info := range controlConnect {
 								if info.Pos == msg.info.Pos {
-									if err := conn.WriteJSON(msg); err != nil {
-										delete(controlConnect, conn)
-										_ = conn.Close()
-									}
+									_ = conn.WriteJSON(msg)
 								}
 							}
 							changeState <- msg.info.Pos
 						} else {
 							// если нету поля отправить ошибку только пользователю
-							defaultSend(msg)
+							_ = msg.conn.WriteJSON(msg)
 						}
-					}
-				case typeCheckB:
-					{
-						defaultSend(msg)
 					}
 				case typeCreateB:
 					{
-						defaultSend(msg)
+						_ = msg.conn.WriteJSON(msg)
 						if _, ok := msg.Data["ok"]; ok {
 							mapRepaint <- true
 						}
@@ -224,41 +217,23 @@ func ControlBroadcast() {
 							//если есть поле отправить всем кто слушает
 							for conn, info := range controlConnect {
 								if info.Pos == msg.info.Pos {
-									delete(controlConnect, conn)
-									_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "cross deleted"))
-									_ = conn.Close()
+									_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "перекресток удален"))
 								}
 							}
-							for conn, info := range crossConnect {
-								if info.Pos == msg.info.Pos {
-									delete(crossConnect, conn)
-									_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "cross deleted"))
-									_ = conn.Close()
-								}
-							}
+							armDeleted <- msg.info
 							mapRepaint <- true
 						} else {
 							// если нету поля отправить ошибку только пользователю
-							defaultSend(msg)
+							_ = msg.conn.WriteJSON(msg)
 						}
 
 					}
-				case typeUpdateB:
-					{
-						defaultSend(msg)
-					}
-				case typeEditInfoB:
-					{
-						defaultSend(msg)
-					}
+
 				case typeDButton:
 					{
 						for conn, info := range controlConnect {
 							if info.Pos == msg.info.Pos {
-								if err := conn.WriteJSON(msg); err != nil {
-									delete(controlConnect, conn)
-									_ = conn.Close()
-								}
+								_ = conn.WriteJSON(msg)
 							}
 						}
 					}
@@ -271,11 +246,7 @@ func ControlBroadcast() {
 								coI.Edit = true
 								controlConnect[cc] = coI
 								msg.Data["edit"] = true
-								if err := cc.WriteJSON(msg); err != nil {
-									delete(controlConnect, cc)
-									_ = cc.Close()
-									continue
-								}
+								_ = cc.WriteJSON(msg)
 								break
 							}
 						}
@@ -283,16 +254,14 @@ func ControlBroadcast() {
 				case typeClose:
 					{
 						delete(controlConnect, msg.conn)
-						_ = msg.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, typeClose))
-						_ = msg.conn.Close()
 					}
 				default:
 					{
-						defaultSend(msg)
+						_ = msg.conn.WriteJSON(msg)
 					}
 				}
 			}
-		case <-getArmUsers:
+		case <-getArmUsers: //ok
 			{
 				var temp []CrossInfo
 				for _, info := range controlConnect {
@@ -305,49 +274,17 @@ func ControlBroadcast() {
 				for _, dArm := range dArmInfo {
 					for conn, cross := range controlConnect {
 						if cross.Pos == dArm.Pos && cross.Login == dArm.Login {
-							//проверка редактирования
-							if cross.Edit {
-								delete(controlConnect, conn)
-								_ = conn.Close()
-								for cc, coI := range controlConnect {
-									if coI.Pos == dArm.Pos {
-										coI.Edit = true
-										controlConnect[cc] = coI
-										resp := newCrossMess(typeChangeEdit, nil, nil, coI)
-										resp.Data["edit"] = true
-										if err := cc.WriteJSON(resp); err != nil {
-											delete(controlConnect, cc)
-											_ = cc.Close()
-											continue
-										}
-										break
-									}
-								}
-							} else {
-								delete(controlConnect, conn)
-								_ = conn.Close()
-							}
+							_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "закрытие администратором"))
 						}
 					}
 				}
 			}
-		case <-pingTicker.C:
+		case <-pingTicker.C: //ok
 			{
 				for conn := range controlConnect {
-					if err := conn.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
-						delete(controlConnect, conn)
-						_ = conn.Close()
-					}
+					_ = conn.WriteMessage(websocket.PingMessage, nil)
 				}
 			}
 		}
-	}
-}
-
-//defaultSend стандартная отправка для одного пользователя
-func defaultSend(msg ControlSokResponse) {
-	if err := msg.conn.WriteJSON(msg); err != nil {
-		delete(controlConnect, msg.conn)
-		_ = msg.conn.Close()
 	}
 }

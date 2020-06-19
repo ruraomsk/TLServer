@@ -18,6 +18,7 @@ var changeState chan PosInfo
 var crossUsers chan []CrossInfo
 var discCrossUsers chan []CrossInfo
 var getCrossUsers chan bool
+var armDeleted chan CrossInfo
 
 //CrossReader обработчик открытия сокета для перекрестка
 func CrossReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string) {
@@ -68,7 +69,7 @@ func CrossReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string) 
 
 	//добавление в пул перекрестка
 	crossConnect[conn] = crossCI
-
+	fmt.Println("cross: ", crossConnect)
 	for {
 		_, p, err := conn.ReadMessage()
 		if err != nil {
@@ -112,6 +113,7 @@ func CrossBroadcast() {
 	crossUsers = make(chan []CrossInfo)
 	discCrossUsers = make(chan []CrossInfo)
 	getCrossUsers = make(chan bool)
+	armDeleted = make(chan CrossInfo)
 
 	type crossUpdateInfo struct {
 		Idevice  int            `json:"idevice"`
@@ -131,7 +133,7 @@ func CrossBroadcast() {
 	}()
 	for {
 		select {
-		case <-readTick.C:
+		case <-readTick.C: //ok
 			{
 				if len(crossConnect) > 0 {
 					aPos := make([]int, 0)
@@ -249,17 +251,14 @@ func CrossBroadcast() {
 					}
 				}
 			}
-		case pos := <-changeState:
+		case pos := <-changeState: //ok
 			{
 				resp := newControlMess(typeStateChange, nil, nil, CrossInfo{})
 				state, _ := getNewState(pos)
 				resp.Data["state"] = state
 				for conn, info := range crossConnect {
 					if info.Pos == pos {
-						if err := conn.WriteJSON(resp); err != nil {
-							delete(crossConnect, conn)
-							_ = conn.Close()
-						}
+						_ = conn.WriteJSON(resp)
 					}
 				}
 			}
@@ -270,11 +269,7 @@ func CrossBroadcast() {
 					{
 						for conn, info := range crossConnect {
 							if info.Pos == msg.info.Pos {
-								if err := conn.WriteJSON(msg); err != nil {
-									delete(crossConnect, conn)
-									_ = conn.Close()
-								}
-
+								_ = conn.WriteJSON(msg)
 							}
 						}
 					}
@@ -287,31 +282,22 @@ func CrossBroadcast() {
 								coI.Edit = true
 								crossConnect[cc] = coI
 								msg.Data["edit"] = true
-								if err := cc.WriteJSON(msg); err != nil {
-									delete(crossConnect, cc)
-									_ = cc.Close()
-									continue
-								}
+								_ = cc.WriteJSON(msg)
 								break
 							}
-
 						}
 					}
 				case typeClose:
 					{
 						delete(crossConnect, msg.conn)
-						_ = msg.conn.Close()
 					}
 				default:
 					{
-						if err := msg.conn.WriteJSON(msg); err != nil {
-							delete(crossConnect, msg.conn)
-							_ = msg.conn.Close()
-						}
+						_ = msg.conn.WriteJSON(msg)
 					}
 				}
 			}
-		case <-getCrossUsers:
+		case <-getCrossUsers: //ok
 			{
 				var temp []CrossInfo
 				for _, info := range crossConnect {
@@ -324,38 +310,22 @@ func CrossBroadcast() {
 				for _, dCr := range dCrInfo {
 					for conn, cross := range crossConnect {
 						if cross.Pos == dCr.Pos && cross.Login == dCr.Login {
-							//проверка редактирования
-							if cross.Edit {
-								delete(crossConnect, conn)
-								_ = conn.Close()
-								for cc, coI := range crossConnect {
-									if coI.Pos == dCr.Pos {
-										coI.Edit = true
-										crossConnect[cc] = coI
-										resp := newCrossMess(typeChangeEdit, nil, nil, coI)
-										resp.Data["edit"] = true
-										if err := cc.WriteJSON(resp); err != nil {
-											delete(crossConnect, cc)
-											_ = cc.Close()
-											continue
-										}
-										break
-									}
-								}
-							} else {
-								delete(crossConnect, conn)
-								_ = conn.Close()
-							}
+							_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "закрытие администратором"))
 						}
 					}
 				}
 			}
-		case <-pingTicker.C:
+		case <-pingTicker.C: //ok
 			{
 				for conn := range crossConnect {
-					if err := conn.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
-						delete(crossConnect, conn)
-						_ = conn.Close()
+					_ = conn.WriteMessage(websocket.PingMessage, nil)
+				}
+			}
+		case armInfo := <-armDeleted:
+			{
+				for conn, info := range crossConnect {
+					if info.Pos == armInfo.Pos {
+						_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "перекресток удален"))
 					}
 				}
 			}

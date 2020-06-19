@@ -16,7 +16,7 @@ var connectedUsersOnMap map[*websocket.Conn]bool
 var writeMap chan MapSokResponse
 var mapRepaint chan bool
 
-const pingPeriod = time.Second * 60
+const pingPeriod = time.Second * 30
 
 //MapReader обработчик открытия сокета для карты
 func MapReader(conn *websocket.Conn, c *gin.Context) {
@@ -64,7 +64,8 @@ func MapReader(conn *websocket.Conn, c *gin.Context) {
 			{
 				account := &Account{}
 				_ = json.Unmarshal(p, &account)
-				resp := Login(account.Login, account.Password, conn.RemoteAddr().String())
+				resp := newMapMess(typeLogin, conn, nil)
+				resp = Login(account.Login, account.Password, conn.RemoteAddr().String())
 				if resp.Type == typeLogin {
 					login = fmt.Sprint(resp.Data["login"])
 				}
@@ -138,10 +139,7 @@ func MapBroadcast() {
 		case <-pingTicker.C:
 			{
 				for conn := range connectedUsersOnMap {
-					if err := conn.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
-						delete(connectedUsersOnMap, conn)
-						_ = conn.Close()
-					}
+					_ = conn.WriteMessage(websocket.PingMessage, nil)
 				}
 			}
 		case msg := <-writeMap:
@@ -152,10 +150,7 @@ func MapBroadcast() {
 				}
 			default:
 				{
-					if err := msg.conn.WriteJSON(msg); err != nil {
-						delete(connectedUsersOnMap, msg.conn)
-						_ = msg.conn.Close()
-					}
+					_ = msg.conn.WriteJSON(msg)
 				}
 			}
 		}
