@@ -32,6 +32,7 @@ type CrossSokResponse struct {
 //crossInfo информация о перекрестке для которого открыт сокет
 type CrossInfo struct {
 	Login       string  `json:"login"`
+	Role        string  `json:"-"`
 	Edit        bool    `json:"edit"`
 	Idevice     int     `json:"idevice"`
 	Description string  `json:"description"` //описание

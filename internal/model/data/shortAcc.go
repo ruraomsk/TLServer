@@ -46,7 +46,7 @@ func (shortAcc *ShortAccount) ConvertShortToAcc() (account Account, privilege Pr
 func (shortAcc *ShortAccount) ValidCreate(role string, region string) (err error) {
 	//проверка полученной роли
 	RoleInfo.Mux.Lock()
-	if _, ok := RoleInfo.MapRoles[shortAcc.Role.Name]; !ok || shortAcc.Role.Name == "Super" {
+	if _, ok := RoleInfo.MapRoles[shortAcc.Role.Name]; !ok {
 		return errors.New("role not found")
 	}
 	RoleInfo.Mux.Unlock()

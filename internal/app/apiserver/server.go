@@ -2,10 +2,11 @@ package apiserver
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/model/license"
 	"github.com/JanFant/TLServer/logger"
-	"net/http"
 
 	"github.com/JanFant/TLServer/internal/app/handlers"
 	"github.com/JanFant/TLServer/internal/app/middleWare"
@@ -51,17 +52,13 @@ func StartServer(conf *ServerConf) {
 	mainRouter.Use(middleWare.JwtAuth())
 	mainRouter.Use(middleWare.AccessControl())
 
+	//--------- SocketS--------------
+
 	mainRouter.GET("/:slug/chat", func(c *gin.Context) { //работа с основной страничкой чата (страница)
 		c.HTML(http.StatusOK, "chat.html", nil)
 	})
 	mainRouter.GET("/:slug/chatW", handlers.ChatEngine) //обработчик веб сокета для чата
 
-	mainRouter.GET("/:slug/techSupp", func(c *gin.Context) { //работа со страничкой тех поддержки
-		c.HTML(http.StatusOK, "techSupp.html", nil)
-	})
-	mainRouter.POST("/:slug/techSupp/send", handlers.TechSupp) //обработчик подключения email тех поддержки
-
-	//---------------------------------------------------------------------------------------------------------------------------------------------------
 	mainRouter.GET("/:slug/cross", func(c *gin.Context) { //работа со странички перекрестков (страничка)
 		c.HTML(http.StatusOK, "cross.html", nil)
 	})
@@ -71,6 +68,13 @@ func StartServer(conf *ServerConf) {
 		c.HTML(http.StatusOK, "crossControl.html", nil)
 	})
 	mainRouter.GET("/:slug/cross/controlW", handlers.CrossControlEngine)
+
+	//--------- SocketS--------------
+
+	mainRouter.GET("/:slug/techSupp", func(c *gin.Context) { //работа со страничкой тех поддержки
+		c.HTML(http.StatusOK, "techSupp.html", nil)
+	})
+	mainRouter.POST("/:slug/techSupp/send", handlers.TechSupp) //обработчик подключения email тех поддержки
 
 	mainRouter.GET("/:slug/manage", func(c *gin.Context) { //обработка создание и редактирования пользователя (страничка)
 		c.HTML(http.StatusOK, "manage.html", nil)

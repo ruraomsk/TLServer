@@ -129,9 +129,7 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) u.Re
 			tempArea.SetAreaInfo(tempSA.Region.Num, num)
 			tempSA.Area = append(tempSA.Area, tempArea)
 		}
-		if tempSA.Role.Name != "Super" {
-			shortAcc = append(shortAcc, tempSA)
-		}
+		shortAcc = append(shortAcc, tempSA)
 	}
 
 	resp := u.Message(http.StatusOK, "display information for Admins")
@@ -139,20 +137,19 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) u.Re
 	//собираем в кучу роли
 	RoleInfo.Mux.Lock()
 	var roles []string
-	if mapContx["role"] == "Super" {
+
+	if mapContx["login"] == AutomaticLogin {
 		roles = append(roles, "Admin")
-	} else {
-		for roleName, _ := range RoleInfo.MapRoles {
-			if roleName != "Super" {
-				if (mapContx["role"] == "Admin") && (roleName == "Admin") {
-					continue
-				}
-				if (mapContx["role"] == "RegAdmin") && ((roleName == "Admin") || (roleName == "RegAdmin")) {
-					continue
-				}
-				roles = append(roles, roleName)
-			}
+	}
+
+	for roleName, _ := range RoleInfo.MapRoles {
+		if (mapContx["role"] == "Admin") && (roleName == "Admin") {
+			continue
 		}
+		if (mapContx["role"] == "RegAdmin") && ((roleName == "Admin") || (roleName == "RegAdmin")) {
+			continue
+		}
+		roles = append(roles, roleName)
 	}
 	resp.Obj["roles"] = roles
 
@@ -171,18 +168,20 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) u.Re
 	CacheInfo.Mux.Lock()
 	//собираю в кучу регионы для отображения
 	chosenRegion := make(map[string]string)
-	if mapContx["role"] != "Super" {
-		if mapContx["role"] != "RegAdmin" {
-			for first, second := range CacheInfo.MapRegion {
-				chosenRegion[first] = second
-			}
-		} else {
-			chosenRegion[mapContx["region"]] = CacheInfo.MapRegion[mapContx["region"]]
+
+	if mapContx["role"] != "RegAdmin" {
+		for first, second := range CacheInfo.MapRegion {
+			chosenRegion[first] = second
 		}
 		delete(chosenRegion, "*")
 	} else {
+		chosenRegion[mapContx["region"]] = CacheInfo.MapRegion[mapContx["region"]]
+	}
+
+	if mapContx["login"] == AutomaticLogin {
 		chosenRegion["*"] = CacheInfo.MapRegion["*"]
 	}
+
 	resp.Obj["regionInfo"] = chosenRegion
 
 	//собираю в кучу районы для отображения
@@ -191,7 +190,7 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) u.Re
 		chosenArea[key] = make(map[string]string)
 		chosenArea[key] = value
 	}
-	if mapContx["role"] != "Super" {
+	if mapContx["login"] != AutomaticLogin {
 		delete(chosenArea, "Все регионы")
 	}
 	CacheInfo.Mux.Unlock()

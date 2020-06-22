@@ -39,6 +39,8 @@ type Account struct {
 	Token    string             `json:"token",sql:"-"`           //Токен пользователя
 }
 
+var AutomaticLogin = "TechAutomatic"
+
 //login обработчик авторизации пользователя в системе
 func Login(login, password, ip string) MapSokResponse {
 	ipSplit := strings.Split(ip, ":")
@@ -99,8 +101,8 @@ func Login(login, password, ip string) MapSokResponse {
 	resp := newMapMess(typeLogin, nil, nil)
 	resp.Data["login"] = account.Login
 	resp.Data["token"] = tokenString
-	resp.Data["manageFlag"], _ = AccessCheck(login, privilege.Role.Name, 1)
-	resp.Data["logDeviceFlag"], _ = AccessCheck(login, privilege.Role.Name, 11)
+	resp.Data["manageFlag"], _ = AccessCheck(login, privilege.Role.Name, 2)
+	resp.Data["logDeviceFlag"], _ = AccessCheck(login, privilege.Role.Name, 5)
 	resp.Data["authorizedFlag"] = true
 
 	return resp
@@ -241,11 +243,11 @@ func (data *Account) ParserBoxPointsUser() (err error) {
 //SuperCreate создание суперпользователя
 func SuperCreate() {
 	account := &Account{}
-	account.Login = "Super"
+	account.Login = AutomaticLogin
 	//Отдаем ключ для yandex map
 	account.WorkTime = 24
 	account.Password = "$2a$10$ZCWyIEfEVF3KGj6OUtIeSOQ3WexMjuAZ43VSO6T.QqOndn4HN1J6C"
-	privilege := NewPrivilege("Super", "*", []string{"*"})
+	privilege := NewPrivilege("Admin", "*", []string{"*"})
 	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time) VALUES ($1, $2, $3)`,
 		account.Login, account.Password, account.WorkTime)
 	////Записываю координаты в базу!!!

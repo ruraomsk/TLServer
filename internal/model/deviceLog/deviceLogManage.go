@@ -88,7 +88,7 @@ func DisplayDeviceLogInfo(arms LogDeviceInfo, db *sqlx.DB) u.Response {
 		return u.Message(http.StatusBadRequest, "no one devices selected")
 	}
 	for _, arm := range arms.Devices {
-		sqlStr := fmt.Sprintf(`SELECT tm, id, txt FROM public.logdevice WHERE crossinfo::jsonb @> '{"ID": %v, "area": "%v", "region": "%v"}'::jsonb and tm > '%v' and tm < '%v'`, arm.ID, arm.Area, arm.Region, arms.TimeStart.Format("2006-01-02 15:04:05"), arms.TimeEnd.Format("2006-01-02 15:04:05"))
+		sqlStr := fmt.Sprintf(`SELECT tm, id, txt FROM public.logdevice WHERE crossinfo::jsonb @> '{"ID": %v, "area": "%v", "region": "%v"}'::jsonb and tm > '%v' and tm < '%v'`, arm.ID, arm.Area, arm.Region, arms.TimeStart.Format("2006-01-02 15:04"), arms.TimeEnd.Format("2006-01-02 15:04"))
 		rowsDevices, err := db.Query(sqlStr)
 		if err != nil {
 			return u.Message(http.StatusInternalServerError, "Connection to DB error. Please try again")

@@ -23,7 +23,7 @@ var armDeleted chan CrossInfo
 //CrossReader обработчик открытия сокета для перекрестка
 func CrossReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string) {
 	//дропаю соединение, если перекресток уже открыт у пользователя
-	var crossCI = CrossInfo{Login: mapContx["login"], Pos: pos, Edit: false}
+	var crossCI = CrossInfo{Login: mapContx["login"], Role: mapContx["role"], Pos: pos, Edit: false}
 
 	//проверка не существование такого перекрестка (сбос если нету)
 	_, err := getNewState(pos)
@@ -41,15 +41,18 @@ func CrossReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string) 
 	}
 
 	//флаг редактирования перекрестка
+	//если роль пришедшего Viewer то влаг ему не ставим
 	flagEdit := false
-	for _, info := range crossConnect {
-		if crossCI.Pos == info.Pos && info.Edit {
-			flagEdit = true
-			break
+	if crossCI.Role != "Viewer" {
+		for _, info := range crossConnect {
+			if crossCI.Pos == info.Pos && info.Edit {
+				flagEdit = true
+				break
+			}
 		}
-	}
-	if !flagEdit {
-		crossCI.Edit = true
+		if !flagEdit {
+			crossCI.Edit = true
+		}
 	}
 
 	//сборка начальной информации для отображения перекрестка
@@ -59,7 +62,7 @@ func CrossReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string) 
 		resp.conn = conn
 		resp.Data["edit"] = crossCI.Edit
 		resp.Data["controlCrossFlag"] = false
-		controlCrossFlag, _ := AccessCheck(crossCI.Login, mapContx["role"], 5)
+		controlCrossFlag, _ := AccessCheck(crossCI.Login, mapContx["role"], 4)
 		if (fmt.Sprint(resp.Data["region"]) == mapContx["region"]) || (mapContx["region"] == "*") {
 			resp.Data["controlCrossFlag"] = controlCrossFlag
 		}
@@ -278,7 +281,7 @@ func CrossBroadcast() {
 						delC := crossConnect[msg.conn]
 						delete(crossConnect, msg.conn)
 						for cc, coI := range crossConnect {
-							if coI.Pos == delC.Pos {
+							if (coI.Pos == delC.Pos) && (coI.Role != "Viewer") {
 								coI.Edit = true
 								crossConnect[cc] = coI
 								msg.Data["edit"] = true
