@@ -14,11 +14,15 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
+// key ключ шифрования токена должен совпадать с ключем на сервере создания ключа
+var key = "yreRmn6JKVv1md1Yh1PptBIjtGrL8pRjo8sAp5ZPlR6zK8xjxnzt6mGi6mtjWPJ6lz1HbhgNBxfSReuqP9ijLQ4JiWLQ4ADHefWVgtTzeI35pqB6hsFjOWufdAW8UEdK9ajm3T76uQlucUP2g4rUV8B9gTMoLtkn5Pxk6G83YZrvAIR7ddsd5PreTwGDoLrS6bdsbJ7u"
+
 //LicenseToken токен лицензии клиента
 type LicenseToken struct {
 	NumDevice int      //количество устройств
 	YaKey     string   //ключ яндекса
 	TokenPass string   //пароль для шифрования токена https запросов
+	NumAcc    int      //колическво аккаунтов
 	Name      string   //название фирмы
 	Phone     string   //телефон фирмы
 	Id        int      //уникальный номер сервера
@@ -34,14 +38,13 @@ var LicenseFields licenseInfo
 type licenseInfo struct {
 	Mux         sync.Mutex
 	NumDev      int      //количество устройств
+	NumAcc      int      //колическво аккаунтов
 	YaKey       string   //ключ яндекса
 	Id          int      //уникальный номер сервера
 	CompanyName string   //название фирмы
 	TechEmail   []string //почта для отправки сообщений в тех поддержку
 	TokenPass   string   //пароль для шифрования токена https запросов
 }
-
-var key = "yreRmn6JKVv1md1Yh1PptBIjtGrL8pRjo8sAp5ZPlR6zK8xjxnzt6mGi6mtjWPJ6lz1HbhgNBxfSReuqP9ijLQ4JiWLQ4ADHefWVgtTzeI35pqB6hsFjOWufdAW8UEdK9ajm3T76uQlucUP2g4rUV8B9gTMoLtkn5Pxk6G83YZrvAIR7ddsd5PreTwGDoLrS6bdsbJ7u"
 
 func CheckLicenseKey(tokenSTR string) (*LicenseToken, error) {
 	tk := &LicenseToken{}
@@ -92,6 +95,7 @@ func (licInfo *licenseInfo) ParseFields(token *LicenseToken) {
 	defer licInfo.Mux.Unlock()
 	licInfo.TokenPass = token.TokenPass
 	licInfo.YaKey = token.YaKey
+	licInfo.NumAcc = token.NumAcc
 	licInfo.NumDev = token.NumDevice
 	licInfo.Id = token.Id
 	licInfo.CompanyName = token.Name

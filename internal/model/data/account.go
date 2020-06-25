@@ -19,34 +19,37 @@ import (
 
 //Token (JWT) структура токена доступа
 type Token struct {
-	UserID     int    //Уникальный ID пользователя
-	Login      string //Уникальный логин пользователя
-	IP         string //IP пользователя
-	Role       string //Роль
-	Permission []int  //Привелегии
-	Region     string //Регион пользователя
+	UserID      int    //Уникальный ID пользователя
+	Login       string //Уникальный логин пользователя
+	IP          string //IP пользователя
+	Description string //какая-то хуйня!!!?!??!?!?!?!?!!?
+	Role        string //Роль
+	Permission  []int  //Привелегии
+	Region      string //Регион пользователя
 	jwt.StandardClaims
 }
 
 //Account структура аккаунта пользователя
 type Account struct {
-	ID       int                `json:"id",sql:"id"`             //уникальный номер пользователя
-	Login    string             `json:"login",sql:"login"`       //Имя пользователя
-	Password string             `json:"password"`                //Пароль
-	BoxPoint locations.BoxPoint `json:"boxPoint",sql:"-"`        //Точки области отображения
-	WorkTime time.Duration      `json:"workTime",sql:"workTime"` //Время работы пользователя в часах
-	YaMapKey string             `json:"ya_key",sql:"-"`          //Ключ доступа к яндекс карте
-	Token    string             `json:"token",sql:"-"`           //Токен пользователя
+	ID          int                `json:"id",sql:"id"`                   //уникальный номер пользователя
+	Description string             `json:"description",sql:"description"` //какая-то хуйня!!!?!??!?!?!?!?!!?
+	Login       string             `json:"login",sql:"login"`             //Имя пользователя
+	Password    string             `json:"password"`                      //Пароль
+	BoxPoint    locations.BoxPoint `json:"boxPoint",sql:"-"`              //Точки области отображения
+	WorkTime    time.Duration      `json:"workTime",sql:"workTime"`       //Время работы пользователя в часах
+	YaMapKey    string             `json:"ya_key",sql:"-"`                //Ключ доступа к яндекс карте
+	Token       string             `json:"token",sql:"-"`                 //Токен пользователя
 }
 
 var AutomaticLogin = "TechAutomatic"
+var errorConnectDB = "соединение с БД потеряно"
 
 //login обработчик авторизации пользователя в системе
 func Login(login, password, ip string) MapSokResponse {
 	ipSplit := strings.Split(ip, ":")
 	account := &Account{}
 	//Забираю из базы запись с подходящей почтой
-	rows, err := GetDB().Query(`SELECT id, login, password, work_time FROM public.accounts WHERE login=$1`, login)
+	rows, err := GetDB().Query(`SELECT id, login, password, work_time, description FROM public.accounts WHERE login=$1`, login)
 	if rows == nil {
 		resp := newMapMess(typeError, nil, nil)
 		resp.Data["message"] = fmt.Sprintf("Invalid login credentials. login(%s)", login)
@@ -58,7 +61,7 @@ func Login(login, password, ip string) MapSokResponse {
 		return resp
 	}
 	for rows.Next() {
-		_ = rows.Scan(&account.ID, &account.Login, &account.Password, &account.WorkTime)
+		_ = rows.Scan(&account.ID, &account.Login, &account.Password, &account.WorkTime, &account.Description)
 	}
 
 	//Авторизировались добираем полномочия
@@ -79,7 +82,7 @@ func Login(login, password, ip string) MapSokResponse {
 	}
 	//Залогинились, создаем токен
 	account.Password = ""
-	tk := &Token{UserID: account.ID, Login: account.Login, IP: ipSplit[0], Role: privilege.Role.Name, Region: privilege.Region, Permission: privilege.Role.Perm}
+	tk := &Token{UserID: account.ID, Login: account.Login, IP: ipSplit[0], Role: privilege.Role.Name, Region: privilege.Region, Permission: privilege.Role.Perm, Description: account.Description}
 	//врямя выдачи токена
 	tk.IssuedAt = time.Now().Unix()
 	//время когда закончится действие токена
@@ -104,7 +107,7 @@ func Login(login, password, ip string) MapSokResponse {
 	resp.Data["manageFlag"], _ = AccessCheck(login, privilege.Role.Name, 2)
 	resp.Data["logDeviceFlag"], _ = AccessCheck(login, privilege.Role.Name, 5)
 	resp.Data["authorizedFlag"] = true
-
+	resp.Data["description"] = account.Description
 	return resp
 }
 
@@ -124,7 +127,11 @@ func (data *Account) Validate() error {
 	err := validation.ValidateStruct(data,
 		validation.Field(&data.Login, validation.Required, is.ASCII, validation.Length(4, 100)),
 		validation.Field(&data.Password, validation.Required, is.ASCII, validation.Length(6, 100)),
+		validation.Field(&data.Description, validation.Required, is.ASCII, validation.Length(1, 255)),
 	)
+	if data.Login == "Global" {
+		return errors.New("этот логин не может быть создан")
+	}
 	if err != nil {
 		return err
 	}
@@ -142,29 +149,35 @@ func (data *Account) Validate() error {
 
 //Create создание аккаунта для пользователей
 func (data *Account) Create(privilege Privilege) u.Response {
+	var count int
+	if err := GetDB().QueryRow(`SELECT count(*) FROM public.accounts`).Scan(&count); err != nil {
+		return u.Message(http.StatusInternalServerError, errorConnectDB)
+	}
+	if (count - 1) >= license.LicenseFields.NumAcc {
+		return u.Message(http.StatusOK, "ограничение по количеству аккаунтов")
+	}
 	if err := data.Validate(); err != nil {
-		return u.Message(http.StatusBadRequest, err.Error())
+		return u.Message(http.StatusBadRequest, errorConnectDB)
 	}
 	//Отдаем ключ для yandex map
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(data.Password), bcrypt.DefaultCost)
 	data.Password = string(hashedPassword)
-
-	row := GetDB().QueryRow(`INSERT INTO  public.accounts (login, password, work_time) VALUES ($1, $2, $3, $4) RETURNING id`,
-		data.Login, data.Password, data.WorkTime)
+	row := GetDB().QueryRow(`INSERT INTO  public.accounts (login, password, work_time, description) VALUES ($1, $2, $3, $4) RETURNING id`,
+		data.Login, data.Password, data.WorkTime, data.Description)
 	if err := row.Scan(&data.ID); err != nil {
-		return u.Message(http.StatusInternalServerError, err.Error())
+		return u.Message(http.StatusInternalServerError, errorConnectDB)
 	}
 	if data.ID <= 0 {
-		return u.Message(http.StatusBadRequest, "failed to create data, connection error.")
+		return u.Message(http.StatusBadRequest, "ошибка создания пользователя")
 	}
 	RoleInfo.Mux.Lock()
 	privilege.Role.Perm = append(privilege.Role.Perm, RoleInfo.MapRoles[privilege.Role.Name]...)
 	RoleInfo.Mux.Unlock()
 	if err := privilege.WriteRoleInBD(data.Login); err != nil {
-		return u.Message(http.StatusBadRequest, "connection to DB error. Please try again")
+		return u.Message(http.StatusBadRequest, errorConnectDB)
 	}
 	data.Password = ""
-	resp := u.Message(http.StatusOK, "account has been created")
+	resp := u.Message(http.StatusOK, "аккаунт создан")
 	resp.Obj["login"] = data.Login
 	return resp
 }
@@ -175,7 +188,7 @@ func (data *Account) Update(privilege Privilege) u.Response {
 	privilege.Role.Perm = append(privilege.Role.Perm, RoleInfo.MapRoles[privilege.Role.Name]...)
 	RoleInfo.Mux.Unlock()
 	privStr, _ := json.Marshal(privilege)
-	_, err := GetDB().Exec(`UPDATE public.accounts SET privilege = $1, work_time = $2 WHERE login = $3`, string(privStr), data.WorkTime, data.Login)
+	_, err := GetDB().Exec(`UPDATE public.accounts SET privilege = $1, work_time = $2, description = $3 WHERE login = $4`, string(privStr), data.WorkTime, data.Description, data.Login)
 	if err != nil {
 		resp := u.Message(http.StatusInternalServerError, fmt.Sprintf("Account update error: %s", err.Error()))
 		return resp
@@ -247,9 +260,10 @@ func SuperCreate() {
 	//Отдаем ключ для yandex map
 	account.WorkTime = 24
 	account.Password = "$2a$10$ZCWyIEfEVF3KGj6OUtIeSOQ3WexMjuAZ43VSO6T.QqOndn4HN1J6C"
+	account.Description = "Tech"
 	privilege := NewPrivilege("Admin", "*", []string{"*"})
-	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time) VALUES ($1, $2, $3)`,
-		account.Login, account.Password, account.WorkTime)
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, description) VALUES ($1, $2, $3, $4)`,
+		account.Login, account.Password, account.WorkTime, account.Description)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
 
@@ -259,9 +273,10 @@ func SuperCreate() {
 	//Отдаем ключ для yandex map
 	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
+	account.Description = "Moscow ADs"
 	privilege = NewPrivilege("RegAdmin", "1", []string{"1", "2", "3"})
-	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time) VALUES ($1, $2, $3)`,
-		account.Login, account.Password, account.WorkTime)
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, description) VALUES ($1, $2, $3, $4)`,
+		account.Login, account.Password, account.WorkTime, account.Description)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
 
@@ -270,9 +285,10 @@ func SuperCreate() {
 	//Отдаем ключ для yandex map
 	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
+	account.Description = "Sachalin"
 	privilege = NewPrivilege("RegAdmin", "3", []string{"1"})
-	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time) VALUES ($1, $2, $3)`,
-		account.Login, account.Password, account.WorkTime)
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, description) VALUES ($1, $2, $3, $4)`,
+		account.Login, account.Password, account.WorkTime, account.Description)
 
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
@@ -282,9 +298,10 @@ func SuperCreate() {
 	//Отдаем ключ для yandex map
 	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
+	account.Description = "Cykotka"
 	privilege = NewPrivilege("RegAdmin", "2", []string{"1", "2", "3"})
-	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time) VALUES ($1, $2, $3)`,
-		account.Login, account.Password, account.WorkTime)
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, description) VALUES ($1, $2, $3, $4)`,
+		account.Login, account.Password, account.WorkTime, account.Description)
 
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
@@ -294,9 +311,10 @@ func SuperCreate() {
 	//Отдаем ключ для yandex map
 	account.WorkTime = 1000
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
+	account.Description = "ALLLLLLAAAAALLLLAAA"
 	privilege = NewPrivilege("Admin", "*", []string{"*"})
-	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time) VALUES ($1, $2, $3)`,
-		account.Login, account.Password, account.WorkTime)
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, description) VALUES ($1, $2, $3, $4)`,
+		account.Login, account.Password, account.WorkTime, account.Description)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
 
@@ -305,9 +323,10 @@ func SuperCreate() {
 	//Отдаем ключ для yandex map
 	account.WorkTime = 1000
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
+	account.Description = "Marina ARM"
 	privilege = NewPrivilege("Admin", "*", []string{"*"})
-	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time) VALUES ($1, $2, $3)`,
-		account.Login, account.Password, account.WorkTime)
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, description) VALUES ($1, $2, $3, $4)`,
+		account.Login, account.Password, account.WorkTime, account.Description)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
 
@@ -316,9 +335,10 @@ func SuperCreate() {
 	//Отдаем ключ для yandex map
 	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
+	account.Description = "BoSS"
 	privilege = NewPrivilege("Admin", "*", []string{"*"})
-	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time) VALUES ($1, $2, $3)`,
-		account.Login, account.Password, account.WorkTime)
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, description) VALUES ($1, $2, $3, $4)`,
+		account.Login, account.Password, account.WorkTime, account.Description)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
 
@@ -327,9 +347,10 @@ func SuperCreate() {
 	//Отдаем ключ для yandex map
 	account.WorkTime = 24
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
+	account.Description = "Alex_B Description"
 	privilege = NewPrivilege("Admin", "*", []string{"*"})
-	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time) VALUES ($1, $2, $3)`,
-		account.Login, account.Password, account.WorkTime)
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, description) VALUES ($1, $2, $3, $4)`,
+		account.Login, account.Password, account.WorkTime, account.Description)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
 
@@ -338,9 +359,10 @@ func SuperCreate() {
 	//Отдаем ключ для yandex map
 	account.WorkTime = 10000
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
+	account.Description = "MMMMMMMMMMMMM"
 	privilege = NewPrivilege("Admin", "*", []string{"*"})
-	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time) VALUES ($1, $2, $3)`,
-		account.Login, account.Password, account.WorkTime)
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, description) VALUES ($1, $2, $3, $4)`,
+		account.Login, account.Password, account.WorkTime, account.Description)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
 
@@ -349,9 +371,10 @@ func SuperCreate() {
 	//Отдаем ключ для yandex map
 	account.WorkTime = 10000
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
+	account.Description = "Admin KEKW"
 	privilege = NewPrivilege("Admin", "*", []string{"*"})
-	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time) VALUES ($1, $2, $3)`,
-		account.Login, account.Password, account.WorkTime)
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, description) VALUES ($1, $2, $3, $4)`,
+		account.Login, account.Password, account.WorkTime, account.Description)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
 
@@ -360,9 +383,10 @@ func SuperCreate() {
 	//Отдаем ключ для yandex map
 	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
+	account.Description = "RegA"
 	privilege = NewPrivilege("RegAdmin", "1", []string{"1", "2", "3"})
-	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time) VALUES ($1, $2, $3)`,
-		account.Login, account.Password, account.WorkTime)
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, description) VALUES ($1, $2, $3, $4)`,
+		account.Login, account.Password, account.WorkTime, account.Description)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
 
@@ -371,9 +395,10 @@ func SuperCreate() {
 	//Отдаем ключ для yandex map
 	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
+	account.Description = "User"
 	privilege = NewPrivilege("User", "2", []string{"2"})
-	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time) VALUES ($1, $2, $3)`,
-		account.Login, account.Password, account.WorkTime)
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, description) VALUES ($1, $2, $3, $4)`,
+		account.Login, account.Password, account.WorkTime, account.Description)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
 
@@ -382,9 +407,10 @@ func SuperCreate() {
 	//Отдаем ключ для yandex map
 	account.WorkTime = 12
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
+	account.Description = "View ASD"
 	privilege = NewPrivilege("Viewer", "3", []string{"1"})
-	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time) VALUES ($1, $2, $3)`,
-		account.Login, account.Password, account.WorkTime)
+	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, description) VALUES ($1, $2, $3, $4)`,
+		account.Login, account.Password, account.WorkTime, account.Description)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)
 

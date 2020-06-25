@@ -12,13 +12,14 @@ import (
 
 //ShortAccount удобная структура аккаунта для обмена с пользователем
 type ShortAccount struct {
-	Login     string     `json:"login"`    //логин пользователя
-	WorkTime  int        `json:"workTime"` //время сеанса пользователя
-	Password  string     `json:"password"` //пароль пользователя
-	Role      Role       `json:"role"`     //роль пользователя
-	Privilege string     `json:"-"`        //привелегии (не уходят на верх)
-	Region    RegionInfo `json:"region"`   //регион работы пользователя
-	Area      []AreaInfo `json:"area"`     //районы работы пользователя
+	Login       string     `json:"login"`       //логин пользователя
+	WorkTime    int        `json:"workTime"`    //время сеанса пользователя
+	Description string     `json:"description"` //описание
+	Password    string     `json:"password"`    //пароль пользователя
+	Role        Role       `json:"role"`        //роль пользователя
+	Privilege   string     `json:"-"`           //привелегии (не уходят на верх)
+	Region      RegionInfo `json:"region"`      //регион работы пользователя
+	Area        []AreaInfo `json:"area"`        //районы работы пользователя
 }
 
 //PassChange структура для изменения пароля
@@ -32,6 +33,7 @@ func (shortAcc *ShortAccount) ConvertShortToAcc() (account Account, privilege Pr
 	account = Account{}
 	privilege = Privilege{}
 	account.Password = shortAcc.Password
+	account.Description = shortAcc.Description
 	account.Login = shortAcc.Login
 	account.WorkTime = time.Duration(shortAcc.WorkTime)
 	privilege.Region = shortAcc.Region.Num

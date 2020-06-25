@@ -1,9 +1,7 @@
 package utils
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
-	"strings"
 )
 
 type Response struct {
@@ -18,11 +16,8 @@ func Message(code int, message string) Response {
 
 //SendRespond формирует ответ пользователю записывает
 func SendRespond(c *gin.Context, resp Response) {
-	if !strings.Contains(fmt.Sprint(resp.Obj["DontWrite"]), "true") {
-		writeLogMessage(c.Request.RemoteAddr, c.Request.RequestURI, resp.Obj, c.Value("info"))
-		delete(resp.Obj, "logLogin")
-	} else {
-		delete(resp.Obj, "DontWrite")
-	}
+	//if resp.Code != http.StatusOK {
+	writeLogMessage(c.Request.RemoteAddr, c.Request.RequestURI, resp.Obj, c.Value("info"))
+	//}
 	c.JSON(resp.Code, resp.Obj)
 }

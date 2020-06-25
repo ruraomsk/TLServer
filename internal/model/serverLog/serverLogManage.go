@@ -35,7 +35,7 @@ func DisplayServerLogFiles(logPath string) u.Response {
 	for _, file := range files {
 		fileNames = append(fileNames, strings.TrimSuffix(file.Name(), ".log"))
 	}
-	resp := u.Message(http.StatusOK, "Display a list of log files")
+	resp := u.Message(http.StatusOK, "display a list of log files")
 	resp.Obj["fileNames"] = fileNames
 	return resp
 }
@@ -57,14 +57,14 @@ func DisplayServerFileLog(fileName, logPath string, mapContex map[string]string,
 			var login string
 			err := rowsTL.Scan(&login)
 			if err != nil {
-				return u.Message(http.StatusBadRequest, "Display info: Bad request")
+				return u.Message(http.StatusBadRequest, "display info: Bad request")
 			}
 			loginNames = append(loginNames, login)
 		}
 	}
 
 	logData := logParser(string(byteFile), loginNames)
-	resp := u.Message(http.StatusOK, fmt.Sprintf("Display info from file: %v", fileName))
+	resp := u.Message(http.StatusOK, fmt.Sprintf("display info from file: %v", fileName))
 	resp.Obj["logData"] = logData
 	return resp
 }

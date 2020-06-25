@@ -23,6 +23,7 @@ var (
 	accountsTable = `
 	CREATE TABLE accounts (
 		id serial PRIMARY KEY,
+		description text,
 		login text,
 		password text,
 		work_time bigint,

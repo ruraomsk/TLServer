@@ -30,6 +30,7 @@ func MapReader(conn *websocket.Conn, c *gin.Context) {
 			login = mapContx["login"]
 			resp.Data["manageFlag"], _ = AccessCheck(login, mapContx["role"], 2)
 			resp.Data["logDeviceFlag"], _ = AccessCheck(login, mapContx["role"], 5)
+			resp.Data["description"] = mapContx["description"]
 			resp.Data["authorizedFlag"] = true
 		}
 		resp.send()

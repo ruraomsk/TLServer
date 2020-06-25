@@ -11,7 +11,6 @@ import (
 
 	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/model/license"
-	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/dgrijalva/jwt-go"
 )
 
@@ -120,6 +119,7 @@ var JwtAuth = func() gin.HandlerFunc {
 		mapCont["region"] = tk.Region
 		mapCont["role"] = tk.Role
 		mapCont["perm"] = fmt.Sprint(tk.Permission)
+		mapCont["description"] = tk.Description
 
 		c.Set("info", mapCont)
 		c.Next()
@@ -134,7 +134,7 @@ var JwtFile = func() gin.HandlerFunc {
 		cookie, err := c.Cookie("Authorization")
 		//Проверка куков получили ли их вообще
 		if err != nil {
-			u.SendRespond(c, u.Message(http.StatusForbidden, "missing cookie"))
+			c.HTML(http.StatusForbidden, "accessDenied.html", gin.H{"status": http.StatusForbidden, "message": "missing cookie"})
 			c.Abort()
 			return
 		}
@@ -143,14 +143,14 @@ var JwtFile = func() gin.HandlerFunc {
 		ip := strings.Split(c.Request.RemoteAddr, ":")
 		//проверка если ли токен, если нету ошибка 403 нужно авторизироваться!
 		if tokenString == "" {
-			u.SendRespond(c, u.Message(http.StatusForbidden, "missing auth token"))
+			c.HTML(http.StatusForbidden, "accessDenied.html", gin.H{"status": http.StatusForbidden, "message": "missing auth token"})
 			c.Abort()
 			return
 		}
 		//токен приходит строкой в формате {слово пробел слово} разделяем строку и забираем нужную нам часть
 		splitted := strings.Split(tokenString, " ")
 		if len(splitted) != 2 {
-			u.SendRespond(c, u.Message(http.StatusForbidden, "invalid token"))
+			c.HTML(http.StatusForbidden, "accessDenied.html", gin.H{"status": http.StatusForbidden, "message": "invalid token"})
 			c.Abort()
 			return
 		}
@@ -164,9 +164,8 @@ var JwtFile = func() gin.HandlerFunc {
 
 		//не правильный токен возвращаем ошибку с кодом 403
 		if err != nil {
-			resp := u.Message(http.StatusForbidden, "wrong auth token")
-			resp.Obj["logLogin"] = tk.Login
-			u.SendRespond(c, resp)
+			c.HTML(http.StatusForbidden, "accessDenied.html", gin.H{"status": http.StatusForbidden, "message": "wrong auth token"})
+			logger.Warning.Printf("|IP: %s |Login: %s |Resource: %s |Message: %v", ip, tk.Login, c.Request.RequestURI, "wrong auth token")
 			c.Abort()
 			return
 		}
@@ -178,7 +177,7 @@ var JwtFile = func() gin.HandlerFunc {
 		)
 		rows, err := data.GetDB().Query(`SELECT token, privilege FROM public.accounts WHERE login = $1`, tk.Login)
 		if err != nil {
-			u.SendRespond(c, u.Message(http.StatusForbidden, "can't take token from BD"))
+			c.HTML(http.StatusForbidden, "accessDenied.html", gin.H{"status": http.StatusForbidden, "message": "can't take token from BD"})
 			c.Abort()
 			return
 		}
@@ -187,27 +186,24 @@ var JwtFile = func() gin.HandlerFunc {
 		}
 
 		if tokenSTR != tokenStrFromBd {
-			resp := u.Message(http.StatusForbidden, "token is out of date, log in")
-			resp.Obj["logLogin"] = tk.Login
-			u.SendRespond(c, resp)
+			c.HTML(http.StatusForbidden, "accessDenied.html", gin.H{"status": http.StatusForbidden, "message": "token is out of date, log in"})
+			logger.Warning.Printf("|IP: %s |Login: %s |Resource: %s |Message: %v", ip, tk.Login, c.Request.RequestURI, "token is out of date, log in")
 			c.Abort()
 			return
 		}
 
 		//проверка с какого ip пришел токен
 		if tk.IP != ip[0] {
-			resp := u.Message(http.StatusForbidden, "Invalid token, log in again")
-			resp.Obj["logLogin"] = tk.Login
-			u.SendRespond(c, resp)
+			c.HTML(http.StatusForbidden, "accessDenied.html", gin.H{"status": http.StatusForbidden, "message": "Invalid token, log in again"})
+			logger.Warning.Printf("|IP: %s |Login: %s |Resource: %s |Message: %v", ip, tk.Login, c.Request.RequestURI, "Invalid token, log in again")
 			c.Abort()
 			return
 		}
 
 		//токен не действителен, возможно не подписан на этом сервере
 		if !token.Valid {
-			resp := u.Message(http.StatusForbidden, "Invalid auth token")
-			resp.Obj["logLogin"] = tk.Login
-			u.SendRespond(c, resp)
+			c.HTML(http.StatusForbidden, "accessDenied.html", gin.H{"status": http.StatusForbidden, "message": "Invalid auth token"})
+			logger.Warning.Printf("|IP: %s |Login: %s |Resource: %s |Message: %v", ip, tk.Login, c.Request.RequestURI, "Invalid token, log in again")
 			c.Abort()
 			return
 		}

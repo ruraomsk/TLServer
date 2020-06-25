@@ -130,6 +130,6 @@ func checkToken(c *gin.Context) (flag bool, mapCont map[string]string) {
 
 	mapCont["login"] = tk.Login
 	mapCont["role"] = tk.Role
-
+	mapCont["description"] = tk.Description
 	return true, mapCont
 }

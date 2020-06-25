@@ -74,26 +74,24 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) u.Re
 	)
 	err := privilege.ReadFromBD(mapContx["login"])
 	if err != nil {
-		return u.Message(http.StatusInternalServerError, "Display info: Privilege error")
+		return u.Message(http.StatusInternalServerError, "display info: Privilege error")
 	}
-	sqlStr = fmt.Sprintf("select login, work_time, privilege from public.accounts where login != '%s'", mapContx["login"])
+	sqlStr = fmt.Sprintf("select login, work_time, privilege, description from public.accounts where login != '%s'", mapContx["login"])
 	if !strings.EqualFold(privilege.Region, "*") {
 		sqlStr += fmt.Sprintf(`and privilege::jsonb @> '{"region":"%s"}'::jsonb`, privilege.Region)
 	}
 	rowsTL, _ := GetDB().Query(sqlStr)
 	for rowsTL.Next() {
 		var tempSA = ShortAccount{}
-		err := rowsTL.Scan(&tempSA.Login, &tempSA.WorkTime, &tempSA.Privilege)
+		err := rowsTL.Scan(&tempSA.Login, &tempSA.WorkTime, &tempSA.Privilege, &tempSA.Description)
 		if err != nil {
-			//logger.Info.Println("DisplayInfoForAdmin: Что-то не так с запросом", err)
-			return u.Message(http.StatusBadRequest, "Display info: Bad request")
+			return u.Message(http.StatusBadRequest, "display info: Bad request")
 		}
 		var tempPrivilege = Privilege{}
 		tempPrivilege.PrivilegeStr = tempSA.Privilege
 		err = tempPrivilege.ConvertToJson()
 		if err != nil {
-			//logger.Info.Println("DisplayInfoForAdmin: Что-то не так со строкой привилегий", err)
-			return u.Message(http.StatusInternalServerError, "Display info: Privilege json error")
+			return u.Message(http.StatusInternalServerError, "display info: Privilege json error")
 		}
 		tempSA.Role.Name = tempPrivilege.Role.Name
 
@@ -129,7 +127,9 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) u.Re
 			tempArea.SetAreaInfo(tempSA.Region.Num, num)
 			tempSA.Area = append(tempSA.Area, tempArea)
 		}
-		shortAcc = append(shortAcc, tempSA)
+		if tempSA.Login != AutomaticLogin {
+			shortAcc = append(shortAcc, tempSA)
+		}
 	}
 
 	resp := u.Message(http.StatusOK, "display information for Admins")
@@ -142,7 +142,7 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) u.Re
 		roles = append(roles, "Admin")
 	}
 
-	for roleName, _ := range RoleInfo.MapRoles {
+	for roleName := range RoleInfo.MapRoles {
 		if (mapContx["role"] == "Admin") && (roleName == "Admin") {
 			continue
 		}
