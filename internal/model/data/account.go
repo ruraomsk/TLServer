@@ -108,6 +108,9 @@ func Login(login, password, ip string) MapSokResponse {
 	resp.Data["logDeviceFlag"], _ = AccessCheck(login, privilege.Role.Name, 5)
 	resp.Data["authorizedFlag"] = true
 	resp.Data["description"] = account.Description
+	CacheArea.Mux.Lock()
+	resp.Data["areaBox"] = CacheArea.Areas
+	CacheArea.Mux.Unlock()
 	return resp
 }
 
@@ -157,7 +160,7 @@ func (data *Account) Create(privilege Privilege) u.Response {
 		return u.Message(http.StatusOK, "ограничение по количеству аккаунтов")
 	}
 	if err := data.Validate(); err != nil {
-		return u.Message(http.StatusBadRequest, errorConnectDB)
+		return u.Message(http.StatusBadRequest, err.Error())
 	}
 	//Отдаем ключ для yandex map
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(data.Password), bcrypt.DefaultCost)

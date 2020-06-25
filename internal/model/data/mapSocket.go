@@ -23,7 +23,6 @@ func MapReader(conn *websocket.Conn, c *gin.Context) {
 	connectedUsersOnMap[conn] = true
 	login := ""
 	flag, mapContx := checkToken(c)
-
 	{
 		resp := newMapMess(typeMapInfo, conn, MapOpenInfo())
 		if flag {
@@ -32,6 +31,9 @@ func MapReader(conn *websocket.Conn, c *gin.Context) {
 			resp.Data["logDeviceFlag"], _ = AccessCheck(login, mapContx["role"], 5)
 			resp.Data["description"] = mapContx["description"]
 			resp.Data["authorizedFlag"] = true
+			CacheArea.Mux.Lock()
+			resp.Data["areaBox"] = CacheArea.Areas
+			CacheArea.Mux.Unlock()
 		}
 		resp.send()
 	}

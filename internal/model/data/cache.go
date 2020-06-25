@@ -2,6 +2,7 @@ package data
 
 import (
 	"fmt"
+	"github.com/JanFant/TLServer/internal/model/locations"
 	"sync"
 	"time"
 
@@ -10,6 +11,9 @@ import (
 
 //CacheInfo глобальная переменная для обращения к данным
 var CacheInfo CacheData
+
+//CacheArea глобальная переменная для обращения к данным области
+var CacheArea locations.AreaOnMap
 
 //CacheData Данные для обновления в определенный период
 type CacheData struct {
@@ -45,11 +49,11 @@ type TLSostInfo struct {
 
 //CacheDataUpdate обновление данных из бд, период обновления 1 час
 func CacheDataUpdate() {
+	RoleInfo.Mux.Lock()
 	RoleInfo.MapRoles = make(map[string][]int)
 	RoleInfo.MapPermisson = make(map[int]Permission)
 	RoleInfo.MapRoutes = make(map[string]RouteInfo)
-	//deviceLog.BusyArmInfo.MapBusyArm = make(map[deviceLog.BusyArm]deviceLog.EditCrossInfo)
-	//go deviceLog.FillingDeviceLogTable(GetDB())
+	RoleInfo.Mux.Unlock()
 	for {
 		CacheInfoDataUpdate()
 		//создадим суперпользователя если таблица только была создана
@@ -66,13 +70,36 @@ func CacheDataUpdate() {
 func CacheInfoDataUpdate() {
 	var err error
 	CacheInfo.Mux.Lock()
-	//deviceLog.CleanMapBusyArm()
 	CacheInfo.MapRegion, CacheInfo.MapArea, err = GetRegionInfo()
 	CacheInfo.MapTLSost, err = getTLSost()
 	CacheInfo.Mux.Unlock()
+	FillMapAreaBox()
 	err = getRoleAccess()
 	if err != nil {
 		logger.Error.Println(fmt.Sprintf("|Message: Error reading data cache: %s", err.Error()))
+	}
+}
+
+func FillMapAreaBox() {
+	CacheArea.Mux.Lock()
+	defer CacheArea.Mux.Unlock()
+	CacheInfo.Mux.Lock()
+	defer CacheInfo.Mux.Unlock()
+
+	for numReg, region := range CacheInfo.MapRegion {
+		if region == "*" {
+			continue
+		}
+		for numArea, area := range CacheInfo.MapArea[region] {
+			var temp = locations.AreaBox{Area: area, Region: region}
+			if err := temp.FillBox(GetDB(), numReg, numArea); err != nil {
+				continue
+			}
+			CacheArea.Areas = append(CacheArea.Areas, temp)
+		}
+	}
+	if len(CacheArea.Areas) == 0 {
+		CacheArea.Areas = make([]locations.AreaBox, 0)
 	}
 }
 
