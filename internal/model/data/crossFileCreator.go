@@ -2,6 +2,7 @@ package data
 
 import (
 	"fmt"
+	"github.com/JanFant/TLServer/internal/model/config"
 	"io"
 	"net/http"
 	"os"
@@ -94,7 +95,7 @@ func MainCrossCreator() u.Response {
 func CheckCrossDirFromBD() u.Response {
 	//CacheInfoDataUpdate()
 	tfData := GetAllTrafficLights()
-	path := "static//cross"
+	path := config.GlobalConfig.StaticPath + "//cross"
 	var tempTF []TrafficLights
 	for _, tfLight := range tfData {
 		_, err1 := os.Stat(path + fmt.Sprintf("//%v//%v//%v//map.png", tfLight.Region.Num, tfLight.Area.Num, tfLight.ID))
@@ -114,7 +115,7 @@ func CheckCrossDirFromBD() u.Response {
 
 //CheckCrossFileSelected проверяет региона/районы/перекрестки которые запросил пользователь
 func CheckCrossFileSelected(selectedData map[string]map[string][]CheckData) u.Response {
-	path := "static//cross"
+	path := config.GlobalConfig.StaticPath + "//cross"
 	for numFirst, firstMap := range selectedData {
 		for numSecond, secondMap := range firstMap {
 			for numCheck, check := range secondMap {
@@ -145,7 +146,7 @@ func MakeSelectedDir(selData SelectedData) u.Response {
 	if selData.PngSettings.SizeX == 0 || selData.PngSettings.SizeY == 0 || selData.PngSettings.Z == 0 || sizeX > 450 || sizeX < 0 || sizeY < 0 || sizeY > 450 {
 		selData.PngSettings.stockData()
 	}
-	path := "static//cross"
+	path := config.GlobalConfig.StaticPath + "//cross"
 	for numFirst, firstMap := range selData.SelectedData {
 		for numSecond, secondMap := range firstMap {
 			for numCheck, check := range secondMap {
@@ -184,15 +185,18 @@ func MakeSelectedDir(selData SelectedData) u.Response {
 }
 
 //ShortCreateDirPng создание каталога
-func ShortCreateDirPng(region, area, id int, pointStr string) bool {
+func ShortCreateDirPng(region, area, id, z int, pointStr string) bool {
 	var (
 		pngSettings PngSettings
 		point       locations.Point
 	)
 	pngSettings.stockData()
 	point.StrToFloat(pointStr)
-	path := "static//cross"
+	path := config.GlobalConfig.StaticPath + "//cross"
 	_ = os.MkdirAll(path+fmt.Sprintf("//%v//%v//%v", region, area, id), os.ModePerm)
+	if z > 0 {
+		pngSettings.Z = z
+	}
 	err := createPng(strconv.Itoa(region), strconv.Itoa(area), strconv.Itoa(id), pngSettings, point)
 	if err != nil {
 		logger.Error.Println(fmt.Sprintf("|Message: Can't create map.png path = %v//%v//%v", region, area, id))
@@ -237,7 +241,7 @@ func createPng(numReg, numArea, id string, settings PngSettings, point locations
 		return err
 	}
 	defer response.Body.Close()
-	filePath := "static//cross" + "//" + numReg + "//" + numArea + "//" + id + "//"
+	filePath := config.GlobalConfig.StaticPath + "//cross" + "//" + numReg + "//" + numArea + "//" + id + "//"
 	//open a file for writing
 	file, err := os.Create(filePath + "map.png")
 	if err != nil {

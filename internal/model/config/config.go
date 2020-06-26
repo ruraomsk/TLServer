@@ -23,8 +23,9 @@ type DBConfig struct {
 
 //Config структура с объявлением всех переменных config.toml файла
 type Config struct {
-	TCPConfig tcpConnect.TCPConfig `toml:"tcpServer"` //информация о tcp соединении с сервером устройств
-	DBConfig  DBConfig             `toml:"database"`  //информация о соединении с базой данных
+	TCPConfig  tcpConnect.TCPConfig `toml:"tcpServer"`   //информация о tcp соединении с сервером устройств
+	DBConfig   DBConfig             `toml:"database"`    //информация о соединении с базой данных
+	StaticPath string               `toml:"static_path"` //путь до ресурсов кроса
 }
 
 func (dbConfig *DBConfig) GetDBurl() string {

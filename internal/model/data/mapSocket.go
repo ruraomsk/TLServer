@@ -135,9 +135,14 @@ func MapBroadcast() {
 				oldTFs = SelectTL()
 				resp := newMapMess(typeRepaint, nil, nil)
 				resp.Data["tflight"] = oldTFs
+				FillMapAreaBox()
+				CacheArea.Mux.Lock()
+				resp.Data["areaBox"] = CacheArea.Areas
+				CacheArea.Mux.Unlock()
 				for conn := range connectedUsersOnMap {
 					_ = conn.WriteJSON(resp)
 				}
+
 			}
 		case <-pingTicker.C:
 			{

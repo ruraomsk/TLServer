@@ -85,7 +85,7 @@ func FillMapAreaBox() {
 	defer CacheArea.Mux.Unlock()
 	CacheInfo.Mux.Lock()
 	defer CacheInfo.Mux.Unlock()
-
+	CacheArea.Areas = make([]locations.AreaBox, 0)
 	for numReg, region := range CacheInfo.MapRegion {
 		if region == "*" {
 			continue
@@ -97,9 +97,6 @@ func FillMapAreaBox() {
 			}
 			CacheArea.Areas = append(CacheArea.Areas, temp)
 		}
-	}
-	if len(CacheArea.Areas) == 0 {
-		CacheArea.Areas = make([]locations.AreaBox, 0)
 	}
 }
 

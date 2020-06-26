@@ -154,7 +154,7 @@ func deleteCrossData(state agspudge.Cross, login string) ControlSokResponse {
 }
 
 //createCrossData добавление нового перекрестка
-func createCrossData(state agspudge.Cross, login string) ControlSokResponse {
+func createCrossData(state agspudge.Cross, login string, z int) ControlSokResponse {
 	var (
 		stateMessage tcpConnect.StateMessage
 		userCross    agspudge.UserCross
@@ -198,7 +198,7 @@ func createCrossData(state agspudge.Cross, login string) ControlSokResponse {
 	resp := newControlMess(typeCreateB, nil, nil, CrossInfo{})
 	resp.Data["user"] = login
 	if sendToUDPServer(stateMessage) {
-		if ShortCreateDirPng(state.Region, state.Area, state.ID, state.Dgis) {
+		if ShortCreateDirPng(state.Region, state.Area, state.ID, z, state.Dgis) {
 			resp.Data["message"] = "cross created"
 			resp.Data["ok"] = true
 			return resp

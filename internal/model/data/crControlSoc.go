@@ -3,6 +3,7 @@ package data
 import (
 	"encoding/json"
 	"fmt"
+	agS_pudge "github.com/ruraomsk/ag-server/pudge"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -112,9 +113,13 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 			}
 		case typeCreateB: //создание перекрестка
 			{
-				temp := StateHandler{}
+				temp := struct {
+					Type  string          `json:"type"`
+					State agS_pudge.Cross `json:"state"`
+					Z     int             `json:"z"`
+				}{}
 				_ = json.Unmarshal(p, &temp)
-				resp := createCrossData(temp.State, controlI.Login)
+				resp := createCrossData(temp.State, controlI.Login, temp.Z)
 				resp.info = controlI
 				resp.conn = conn
 				resp.send()
