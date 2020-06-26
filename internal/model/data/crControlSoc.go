@@ -12,9 +12,9 @@ import (
 
 var writeControlMessage chan ControlSokResponse
 var controlConnect map[*websocket.Conn]CrossInfo
-var crArmUsers chan []CrossInfo
+var crArmUsersForDisplay chan []CrossInfo
 var discArmUsers chan []CrossInfo
-var getArmUsers chan bool
+var getArmUsersForDisplay chan bool
 
 //ControlReader обработчик открытия сокета для арма перекрестка
 func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string) {
@@ -180,9 +180,8 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 func ControlBroadcast() {
 	writeControlMessage = make(chan ControlSokResponse)
 	controlConnect = make(map[*websocket.Conn]CrossInfo)
-
-	getArmUsers = make(chan bool)
-	crArmUsers = make(chan []CrossInfo)
+	getArmUsersForDisplay = make(chan bool)
+	crArmUsersForDisplay = make(chan []CrossInfo)
 	discArmUsers = make(chan []CrossInfo)
 	pingTicker := time.NewTicker(pingPeriod)
 
@@ -266,13 +265,13 @@ func ControlBroadcast() {
 					}
 				}
 			}
-		case <-getArmUsers: //ok
+		case <-getArmUsersForDisplay: //ok
 			{
 				var temp []CrossInfo
 				for _, info := range controlConnect {
 					temp = append(temp, info)
 				}
-				crArmUsers <- temp
+				crArmUsersForDisplay <- temp
 			}
 		case dArmInfo := <-discArmUsers:
 			{

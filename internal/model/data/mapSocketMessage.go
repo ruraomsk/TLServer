@@ -57,12 +57,13 @@ type ErrorMessage struct {
 }
 
 var (
-	typeJump    = "jump"
-	typeMapInfo = "mapInfo"
-	typeTFlight = "tflight"
-	typeRepaint = "repaint"
-	typeLogin   = "login"
-	typeLogOut  = "logOut"
+	typeJump           = "jump"
+	typeMapInfo        = "mapInfo"
+	typeTFlight        = "tflight"
+	typeRepaint        = "repaint"
+	typeEditCrossUsers = "editCrossUsers"
+	typeLogin          = "login"
+	typeLogOut         = "logOut"
 	//errNoAccessWithDatabase    = "no access with database"
 	//errCantConvertJSON         = "cant convert JSON"
 	errUnregisteredMessageType = "unregistered message type"

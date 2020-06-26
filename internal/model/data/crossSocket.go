@@ -15,9 +15,10 @@ import (
 var writeCrossMessage chan CrossSokResponse
 var crossConnect map[*websocket.Conn]CrossInfo
 var changeState chan PosInfo
-var crossUsers chan []CrossInfo
+var crossUsersForDisplay chan []CrossInfo
+var crossUsersForMap chan []CrossInfo
 var discCrossUsers chan []CrossInfo
-var getCrossUsers chan bool
+var getCrossUsersForDisplay chan bool
 var armDeleted chan CrossInfo
 
 //CrossReader обработчик открытия сокета для перекрестка
@@ -72,6 +73,10 @@ func CrossReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string) 
 
 	//добавление в пул перекрестка
 	crossConnect[conn] = crossCI
+	if crossCI.Edit {
+		resp := newCrossMess(typeEditCrossUsers, conn, nil, crossCI)
+		resp.send()
+	}
 	fmt.Println("cross: ", crossConnect)
 	for {
 		_, p, err := conn.ReadMessage()
@@ -113,9 +118,10 @@ func CrossBroadcast() {
 	writeCrossMessage = make(chan CrossSokResponse)
 	crossConnect = make(map[*websocket.Conn]CrossInfo)
 	changeState = make(chan PosInfo)
-	crossUsers = make(chan []CrossInfo)
+	crossUsersForDisplay = make(chan []CrossInfo)
+	crossUsersForMap = make(chan []CrossInfo)
 	discCrossUsers = make(chan []CrossInfo)
-	getCrossUsers = make(chan bool)
+	getCrossUsersForDisplay = make(chan bool)
 	armDeleted = make(chan CrossInfo)
 
 	type crossUpdateInfo struct {
@@ -254,6 +260,11 @@ func CrossBroadcast() {
 					}
 				}
 			}
+		case <-getCrossUserForMap:
+			{
+				//отправить на мапу подключенные устройства которые редактируют
+				crossUsersForMap <- formCrossUser()
+			}
 		case pos := <-changeState: //ok
 			{
 				resp := newControlMess(typeStateChange, nil, nil, CrossInfo{})
@@ -265,7 +276,7 @@ func CrossBroadcast() {
 					}
 				}
 			}
-		case msg := <-writeCrossMessage:
+		case msg := <-writeCrossMessage: //ok
 			{
 				switch msg.Type {
 				case typeDButton:
@@ -289,6 +300,12 @@ func CrossBroadcast() {
 								break
 							}
 						}
+						//отправить на мапу подключенные устройства которые редактируют
+						crossUsersForMap <- formCrossUser()
+					}
+				case typeEditCrossUsers:
+					{
+						crossUsersForMap <- formCrossUser()
 					}
 				case typeClose:
 					{
@@ -300,15 +317,15 @@ func CrossBroadcast() {
 					}
 				}
 			}
-		case <-getCrossUsers: //ok
+		case <-getCrossUsersForDisplay: // собрать всех кто есть на перекрестке
 			{
-				var temp []CrossInfo
+				var temp = make([]CrossInfo, 0)
 				for _, info := range crossConnect {
 					temp = append(temp, info)
 				}
-				crossUsers <- temp
+				crossUsersForDisplay <- temp
 			}
-		case dCrInfo := <-discCrossUsers:
+		case dCrInfo := <-discCrossUsers: //ok
 			{
 				for _, dCr := range dCrInfo {
 					for conn, cross := range crossConnect {
@@ -324,7 +341,7 @@ func CrossBroadcast() {
 					_ = conn.WriteMessage(websocket.PingMessage, nil)
 				}
 			}
-		case armInfo := <-armDeleted:
+		case armInfo := <-armDeleted: //ok
 			{
 				for conn, info := range crossConnect {
 					if info.Pos == armInfo.Pos {

@@ -87,3 +87,14 @@ func (p *phaseInfo) get() error {
 	}
 	return nil
 }
+
+//formCrossUser сформировать пользователей которые редактируеют кросы
+func formCrossUser() []CrossInfo {
+	var temp = make([]CrossInfo, 0)
+	for _, info := range crossConnect {
+		if info.Edit {
+			temp = append(temp, info)
+		}
+	}
+	return temp
+}

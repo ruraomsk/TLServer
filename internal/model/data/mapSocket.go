@@ -15,6 +15,7 @@ import (
 var connectedUsersOnMap map[*websocket.Conn]bool
 var writeMap chan MapSokResponse
 var mapRepaint chan bool
+var getCrossUserForMap chan bool
 
 const pingPeriod = time.Second * 30
 
@@ -37,7 +38,7 @@ func MapReader(conn *websocket.Conn, c *gin.Context) {
 		}
 		resp.send()
 	}
-
+	getCrossUserForMap <- true
 	for {
 		_, p, err := conn.ReadMessage()
 		if err != nil {
@@ -95,6 +96,7 @@ func MapBroadcast() {
 	connectedUsersOnMap = make(map[*websocket.Conn]bool)
 	writeMap = make(chan MapSokResponse)
 	mapRepaint = make(chan bool)
+	getCrossUserForMap = make(chan bool)
 
 	crossReadTick := time.NewTicker(time.Second * 5)
 	pingTicker := time.NewTicker(pingPeriod)
@@ -148,6 +150,14 @@ func MapBroadcast() {
 			{
 				for conn := range connectedUsersOnMap {
 					_ = conn.WriteMessage(websocket.PingMessage, nil)
+				}
+			}
+		case crossUsers := <-crossUsersForMap:
+			{
+				resp := newMapMess(typeEditCrossUsers, nil, nil)
+				resp.Data["editCrossUsers"] = crossUsers
+				for conn := range connectedUsersOnMap {
+					_ = conn.WriteJSON(resp)
 				}
 			}
 		case msg := <-writeMap:
