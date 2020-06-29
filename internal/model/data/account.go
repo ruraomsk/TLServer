@@ -19,13 +19,14 @@ import (
 
 //Token (JWT) структура токена доступа
 type Token struct {
-	UserID      int    //Уникальный ID пользователя
-	Login       string //Уникальный логин пользователя
-	IP          string //IP пользователя
-	Description string //какая-то хуйня!!!?!??!?!?!?!?!!?
-	Role        string //Роль
-	Permission  []int  //Привелегии
-	Region      string //Регион пользователя
+	UserID      int      //Уникальный ID пользователя
+	Login       string   //Уникальный логин пользователя
+	IP          string   //IP пользователя
+	Description string   //какая-то хуйня!!!?!??!?!?!?!?!!?
+	Role        string   //Роль
+	Permission  []int    //Привелегии
+	Region      string   //Регион пользователя
+	Area        []string //список доступных регионов
 	jwt.StandardClaims
 }
 
@@ -82,7 +83,16 @@ func Login(login, password, ip string) MapSokResponse {
 	}
 	//Залогинились, создаем токен
 	account.Password = ""
-	tk := &Token{UserID: account.ID, Login: account.Login, IP: ipSplit[0], Role: privilege.Role.Name, Region: privilege.Region, Permission: privilege.Role.Perm, Description: account.Description}
+	tk := &Token{
+		UserID:      account.ID,
+		Login:       account.Login,
+		IP:          ipSplit[0],
+		Role:        privilege.Role.Name,
+		Region:      privilege.Region,
+		Area:        privilege.Area,
+		Permission:  privilege.Role.Perm,
+		Description: account.Description,
+	}
 	//врямя выдачи токена
 	tk.IssuedAt = time.Now().Unix()
 	//время когда закончится действие токена
@@ -106,8 +116,11 @@ func Login(login, password, ip string) MapSokResponse {
 	resp.Data["token"] = tokenString
 	resp.Data["manageFlag"], _ = AccessCheck(login, privilege.Role.Name, 2)
 	resp.Data["logDeviceFlag"], _ = AccessCheck(login, privilege.Role.Name, 5)
+	resp.Data["techArmFlag"], _ = AccessCheck(login, privilege.Role.Name, 7)
 	resp.Data["authorizedFlag"] = true
 	resp.Data["description"] = account.Description
+	resp.Data["region"] = privilege.Region
+	resp.Data["area"] = privilege.Area
 	CacheArea.Mux.Lock()
 	resp.Data["areaBox"] = CacheArea.Areas
 	CacheArea.Mux.Unlock()

@@ -97,7 +97,7 @@ var JwtAuth = func() gin.HandlerFunc {
 		}
 
 		//проверка токен пришел от правильного URL
-		var mapCont = make(map[string]string)
+		var mapCont = make(map[string]interface{})
 		slug := c.Param("slug")
 		if slug != tk.Login {
 			c.HTML(http.StatusForbidden, "accessDenied.html", gin.H{"status": http.StatusForbidden, "message": "token isn't registered for user"})
@@ -118,9 +118,9 @@ var JwtAuth = func() gin.HandlerFunc {
 		mapCont["login"] = tk.Login
 		mapCont["region"] = tk.Region
 		mapCont["role"] = tk.Role
-		mapCont["perm"] = fmt.Sprint(tk.Permission)
+		mapCont["perm"] = tk.Permission
 		mapCont["description"] = tk.Description
-
+		mapCont["area"] = tk.Area
 		c.Set("info", mapCont)
 		c.Next()
 

@@ -1,4 +1,4 @@
-package handlers
+package licenseH
 
 import (
 	"net/http"

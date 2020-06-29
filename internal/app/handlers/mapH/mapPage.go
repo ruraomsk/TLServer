@@ -1,12 +1,18 @@
-package handlers
+package mapH
 
 import (
 	"github.com/JanFant/TLServer/internal/model/data"
+	"github.com/gorilla/websocket"
 	"net/http"
 
 	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/gin-gonic/gin"
 )
+
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
 
 //MapEngine обработчик вебсокета для работы с картой
 var MapEngine = func(c *gin.Context) {

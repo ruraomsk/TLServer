@@ -27,11 +27,15 @@ func MapReader(conn *websocket.Conn, c *gin.Context) {
 	{
 		resp := newMapMess(typeMapInfo, conn, MapOpenInfo())
 		if flag {
-			login = mapContx["login"]
-			resp.Data["manageFlag"], _ = AccessCheck(login, mapContx["role"], 2)
-			resp.Data["logDeviceFlag"], _ = AccessCheck(login, mapContx["role"], 5)
+			login = fmt.Sprint(mapContx["login"])
+			role := fmt.Sprint(mapContx["role"])
+			resp.Data["manageFlag"], _ = AccessCheck(login, role, 2)
+			resp.Data["logDeviceFlag"], _ = AccessCheck(login, role, 5)
+			resp.Data["techArmFlag"], _ = AccessCheck(login, role, 7)
 			resp.Data["description"] = mapContx["description"]
 			resp.Data["authorizedFlag"] = true
+			resp.Data["region"] = mapContx["region"]
+			resp.Data["area"] = mapContx["area"]
 			CacheArea.Mux.Lock()
 			resp.Data["areaBox"] = CacheArea.Areas
 			CacheArea.Mux.Unlock()

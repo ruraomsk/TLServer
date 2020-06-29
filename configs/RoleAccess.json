@@ -8,7 +8,8 @@
         3,
         4,
         5,
-        6
+        6,
+        7
       ]
     },
     {
@@ -19,7 +20,8 @@
         3,
         4,
         5,
-        6
+        6,
+        7
       ]
     },
     {
@@ -68,6 +70,11 @@
       "id": 6,
       "visible": true,
       "description": "Работа с лицензиями программы"
+    },
+    {
+      "id": 7,
+      "visible": true,
+      "description": "Работа на экране Технолога"
     }
   ],
   "routes": [
@@ -100,6 +107,16 @@
       "permission": 4,
       "path": "/cross/controlW",
       "description": "вебсокет АРМа перекрестка"
+    },
+    {
+      "permission": 7,
+      "path": "/techArm",
+      "description": "рабочее место технолога (страничка)"
+    },
+    {
+      "permission": 7,
+      "path": "/techArmW",
+      "description": "рабочее место технолога"
     },
     {
       "permission": 1,

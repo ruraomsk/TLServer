@@ -1,4 +1,4 @@
-package handlers
+package chatH
 
 import (
 	"net/http"

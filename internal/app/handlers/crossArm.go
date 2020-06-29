@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/gorilla/websocket"
 	"net/http"
 	"strconv"
 
@@ -9,6 +10,11 @@ import (
 
 	u "github.com/JanFant/TLServer/internal/utils"
 )
+
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
 
 //CrossEngine обработчик вебсокета для работы с перекрестком
 var CrossEngine = func(c *gin.Context) {

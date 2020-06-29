@@ -70,7 +70,7 @@ var (
 )
 
 //checkToken проверка токена для вебсокета
-func checkToken(c *gin.Context) (flag bool, mapCont map[string]string) {
+func checkToken(c *gin.Context) (flag bool, mapCont map[string]interface{}) {
 	var tokenString string
 	cookie, err := c.Cookie("Authorization")
 	//Проверка куков получили ли их вообще
@@ -121,7 +121,7 @@ func checkToken(c *gin.Context) (flag bool, mapCont map[string]string) {
 	}
 
 	//проверка токен пришел от правильного URL
-	mapCont = make(map[string]string)
+	mapCont = make(map[string]interface{})
 
 	//проверка правильности роли для указанного пользователя
 	_ = userPrivilege.ConvertToJson()
@@ -131,6 +131,8 @@ func checkToken(c *gin.Context) (flag bool, mapCont map[string]string) {
 
 	mapCont["login"] = tk.Login
 	mapCont["role"] = tk.Role
+	mapCont["area"] = tk.Area
+	mapCont["region"] = tk.Region
 	mapCont["description"] = tk.Description
 	return true, mapCont
 }
