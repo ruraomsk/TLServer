@@ -34,6 +34,7 @@ type BusyArm struct {
 	Area        string `json:"area"`        //район
 	ID          int    `json:"ID"`          //ID
 	Description string `json:"description"` //описание
+	Idevice     int    `json:"idevice"`
 }
 
 //toStr конвертировать в структуру
@@ -48,11 +49,9 @@ func (busyArm *BusyArm) toStruct(str string) (err error) {
 //DisplayDeviceLog формирование начальной информации отображения логов устройства
 func DisplayDeviceLog(mapContx map[string]string, db *sqlx.DB) u.Response {
 	var devices []BusyArm
-	var sqlStr string
-	if mapContx["region"] == "*" {
-		sqlStr = fmt.Sprintf("SELECT distinct crossinfo FROM public.logdevice")
-	} else {
-		sqlStr = fmt.Sprintf(`SELECT distinct crossinfo FROM public.logdevice WHERE crossinfo::jsonb @> '{"region": "%v"}'::jsonb`, mapContx["region"])
+	var sqlStr = fmt.Sprintf(`SELECT distinct on (crossinfo->'region', crossinfo->'area', crossinfo->'ID') crossinfo, id FROM public.logdevice`)
+	if mapContx["region"] != "*" {
+		sqlStr += fmt.Sprintf(` WHERE crossinfo::jsonb @> '{"region": "%v"}'::jsonb`, mapContx["region"])
 	}
 	rowsDevice, err := db.Query(sqlStr)
 	if err != nil {
@@ -62,13 +61,15 @@ func DisplayDeviceLog(mapContx map[string]string, db *sqlx.DB) u.Response {
 		var (
 			tempDev BusyArm
 			infoStr string
+			idevice int
 		)
-		err := rowsDevice.Scan(&infoStr)
+		err := rowsDevice.Scan(&infoStr, &idevice)
 		if err != nil {
 			logger.Error.Println("|Message: Incorrect data ", err.Error())
 			return u.Message(http.StatusInternalServerError, "incorrect data. Please report it to Admin")
 		}
 		err = tempDev.toStruct(infoStr)
+		tempDev.Idevice = idevice
 		if err != nil {
 			logger.Error.Println("|Message: Data can't convert ", err.Error())
 			return u.Message(http.StatusInternalServerError, "data can't convert. Please report it to Admin")

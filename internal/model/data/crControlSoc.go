@@ -3,6 +3,7 @@ package data
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/JanFant/TLServer/internal/model/techArm"
 	agS_pudge "github.com/ruraomsk/ag-server/pudge"
 	"time"
 
@@ -203,6 +204,7 @@ func ControlBroadcast() {
 								}
 							}
 							changeState <- msg.info.Pos
+							techArm.TArmNewCrossData <- true
 						} else {
 							// если нету поля отправить ошибку только пользователю
 							_ = msg.conn.WriteJSON(msg)
@@ -213,6 +215,7 @@ func ControlBroadcast() {
 						_ = msg.conn.WriteJSON(msg)
 						if _, ok := msg.Data["ok"]; ok {
 							mapRepaint <- true
+							techArm.TArmNewCrossData <- true
 						}
 					}
 				case typeDeleteB:
@@ -226,6 +229,7 @@ func ControlBroadcast() {
 							}
 							armDeleted <- msg.info
 							mapRepaint <- true
+							techArm.TArmNewCrossData <- true
 						} else {
 							// если нету поля отправить ошибку только пользователю
 							_ = msg.conn.WriteJSON(msg)

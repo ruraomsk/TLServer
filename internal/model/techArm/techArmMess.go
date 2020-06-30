@@ -5,11 +5,15 @@ import (
 	"fmt"
 	"github.com/JanFant/TLServer/logger"
 	"github.com/gorilla/websocket"
+	"github.com/ruraomsk/ag-server/pudge"
 )
 
 var (
 	typeError                  = "error"
 	typeClose                  = "close"
+	typeArmInfo                = "armInfo"
+	typeCrosses                = "crosses"
+	typeDevices                = "devices"
 	errUnregisteredMessageType = "unregistered message type"
 )
 
@@ -63,10 +67,19 @@ type ArmInfo struct {
 	Area   []string `json:"area"`   //район
 }
 
-type crossInfo struct {
-	region  int
-	area    int
-	id      int
-	idevice int
-	describ string
+type CrossInfo struct {
+	Region    int    `json:"region"`
+	Area      int    `json:"area"`
+	ID        int    `json:"id"`
+	Idevice   int    `json:"idevice"`
+	Subarea   int    `json:"subarea"`
+	ArrayType int    `json:"arrayType"`
+	Describe  string `json:"describe"`
+}
+
+type DevInfo struct {
+	Region  int              `json:"region"`
+	Area    int              `json:"area"`
+	Idevice int              `json:"idevice"`
+	Device  pudge.Controller `json:"device"`
 }

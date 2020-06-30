@@ -33,7 +33,6 @@ var TechArmEngine = func(c *gin.Context) {
 		u.SendRespond(c, u.Message(http.StatusBadRequest, "blank field: Area"))
 		return
 	}
-
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		u.SendRespond(c, u.Message(http.StatusInternalServerError, "Bad socket connect"))

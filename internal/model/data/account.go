@@ -120,7 +120,15 @@ func Login(login, password, ip string) MapSokResponse {
 	resp.Data["authorizedFlag"] = true
 	resp.Data["description"] = account.Description
 	resp.Data["region"] = privilege.Region
-	resp.Data["area"] = privilege.Area
+	//собрать в районы с их названиями
+	var areaMap = make(map[string]string)
+	for _, area := range privilege.Area {
+		var tempA AreaInfo
+		tempA.SetAreaInfo(privilege.Region, area)
+		areaMap[tempA.Num] = tempA.NameArea
+	}
+	resp.Data["area"] = areaMap
+
 	CacheArea.Mux.Lock()
 	resp.Data["areaBox"] = CacheArea.Areas
 	CacheArea.Mux.Unlock()
@@ -204,7 +212,7 @@ func (data *Account) Update(privilege Privilege) u.Response {
 	privilege.Role.Perm = append(privilege.Role.Perm, RoleInfo.MapRoles[privilege.Role.Name]...)
 	RoleInfo.Mux.Unlock()
 	privStr, _ := json.Marshal(privilege)
-	_, err := GetDB().Exec(`UPDATE public.accounts SET privilege = $1, work_time = $2, description = $3 WHERE login = $4`, string(privStr), data.WorkTime, data.Description, data.Login)
+	_, err := GetDB().Exec(`UPDATE public.accounts SET privilege = $1, work_time = $2, description = $3, token = $4 WHERE login = $5`, string(privStr), data.WorkTime, data.Description, "", data.Login)
 	if err != nil {
 		resp := u.Message(http.StatusInternalServerError, fmt.Sprintf("Account update error: %s", err.Error()))
 		return resp

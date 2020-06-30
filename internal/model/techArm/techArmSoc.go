@@ -1,22 +1,53 @@
 package techArm
 
 import (
+	"database/sql"
+	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/jmoiron/sqlx"
+	"strconv"
 	"time"
 )
 
 var connectedUsersTechArm map[*websocket.Conn]ArmInfo
 var writeArm chan armResponse
+var TArmNewCrossData chan bool
 
-const pingPeriod = time.Second * 30
+const devUpdate = time.Second * 1
 
 //ArmTechReader обработчик открытия сокета для тех арм
 func ArmTechReader(conn *websocket.Conn, reg int, area []string, db *sqlx.DB) {
 	var armInfo = ArmInfo{Region: reg, Area: area}
-	fmt.Println(armInfo)
 	connectedUsersTechArm[conn] = armInfo
+	//сформировать список перекрестков которые необходимы пользователю
+	{
+		var tempCrosses []CrossInfo
+		crosses := getCross(armInfo.Region, db)
+		for _, cross := range crosses {
+			for _, area := range armInfo.Area {
+				tArea, _ := strconv.Atoi(area)
+				if cross.Area == tArea {
+					tempCrosses = append(tempCrosses, cross)
+				}
+			}
+		}
+		resp := newArmMess(typeArmInfo, conn, nil)
+		resp.Data[typeCrosses] = tempCrosses
+
+		var tempDevises []DevInfo
+		devices := getDevice(db)
+		for _, dev := range devices {
+			for _, area := range armInfo.Area {
+				tArea, _ := strconv.Atoi(area)
+				if dev.Area == tArea && dev.Region == armInfo.Region {
+					tempDevises = append(tempDevises, dev)
+				}
+			}
+		}
+		resp.Data[typeDevices] = tempDevises
+		resp.send()
+	}
 
 	for {
 		_, p, err := conn.ReadMessage()
@@ -46,42 +77,65 @@ func ArmTechReader(conn *websocket.Conn, reg int, area []string, db *sqlx.DB) {
 func ArmTechBroadcast(db *sqlx.DB) {
 	connectedUsersTechArm = make(map[*websocket.Conn]ArmInfo)
 	writeArm = make(chan armResponse)
+	TArmNewCrossData = make(chan bool)
 
-	readTick := time.NewTicker(time.Second * 1)
+	readTick := time.NewTicker(devUpdate)
 	defer readTick.Stop()
-	//var oldCross []crossInfo
+	var oldDevice = getDevice(db)
 	for {
 		select {
 		case <-readTick.C:
 			{
 				if len(connectedUsersTechArm) > 0 {
-					var newRegions map[int][]crossInfo
-					for _, arm := range connectedUsersTechArm {
-						newRegions[arm.Region] = nil
+					newDevice := getDevice(db)
+					var tempDev []DevInfo
+					for _, nDev := range newDevice {
+						for _, oDev := range oldDevice {
+							if oDev.Idevice == nDev.Idevice {
+								if oDev.Device.CK != nDev.Device.CK {
+									tempDev = append(tempDev, nDev)
+									break
+								}
+							}
+						}
 					}
-					//собрал все кросы по полученным регионам
-					for reg := range newRegions {
-						newRegions[reg] = getCross(reg, db)
+					oldDevice = newDevice
+					if len(tempDev) > 0 {
+						for conn, arm := range connectedUsersTechArm {
+							var tDev []DevInfo
+							for _, area := range arm.Area {
+								tArea, _ := strconv.Atoi(area)
+								for _, dev := range tempDev {
+									if dev.Area == tArea && dev.Region == arm.Region {
+										tDev = append(tDev, dev)
+									}
+								}
+							}
+							if len(tDev) > 0 {
+								resp := newArmMess(typeDevices, conn, nil)
+								resp.Data[typeDevices] = tDev
+								_ = conn.WriteJSON(resp)
+							}
+						}
 					}
-
-					for range newRegions {
-
+				}
+			}
+		case <-TArmNewCrossData:
+			{
+				crosses := getCross(-1, db)
+				for conn, arm := range connectedUsersTechArm {
+					var tempCrosses []CrossInfo
+					for _, area := range arm.Area {
+						tArea, _ := strconv.Atoi(area)
+						for _, cross := range crosses {
+							if cross.Region == arm.Region && cross.Area == tArea {
+								tempCrosses = append(tempCrosses, cross)
+							}
+						}
 					}
-
-					//
-					//rows, _ := db.Query(`SELECT region, area, id, idevice, describ FROM public.cross`)
-
-					//rows, _ := db.Query(`SELECT device FROM public.devices`)
-					//for rows.Next() {
-					//	var (
-					//		temp string
-					//		dev  pudge.Controller
-					//	)
-					//	_ = rows.Scan(&temp)
-					//	_ = json.Unmarshal([]byte(temp), &dev)
-					//
-					//}
-
+					resp := newArmMess(typeCrosses, conn, nil)
+					resp.Data[typeCrosses] = tempCrosses
+					_ = resp.conn.WriteJSON(resp)
 				}
 			}
 		case msg := <-writeArm:
@@ -99,15 +153,42 @@ func ArmTechBroadcast(db *sqlx.DB) {
 	}
 }
 
-func getCross(reg int, db *sqlx.DB) []crossInfo {
+func getCross(reg int, db *sqlx.DB) []CrossInfo {
 	var (
-		temp    crossInfo
-		crosses []crossInfo
+		temp    CrossInfo
+		crosses []CrossInfo
+		rows    *sql.Rows
+		sqlStr  = `SELECT region,
+ 					area, 
+ 					id,
+  					idevice, 
+  					describ, 
+  					subarea, 
+  					state->'arrays'->'type' 
+  					FROM public.cross`
 	)
-	rows, _ := db.Query(`SELECT region, area, id, idevice, describ FROM public.cross WHERE region = $1`, reg)
+	if reg != -1 {
+		sqlStr += fmt.Sprintf(` WHERE region = %v`, reg)
+	}
+	rows, _ = db.Query(sqlStr)
 	for rows.Next() {
-		_ = rows.Scan(&temp.region, &temp.area, &temp.id, &temp.idevice, &temp.describ)
+		_ = rows.Scan(&temp.Region, &temp.Area, &temp.ID, &temp.Idevice, &temp.Describe, &temp.Subarea, &temp.ArrayType)
 		crosses = append(crosses, temp)
 	}
 	return crosses
+}
+
+func getDevice(db *sqlx.DB) []DevInfo {
+	var (
+		temp    DevInfo
+		devices []DevInfo
+		dStr    string
+	)
+	rows, _ := db.Query(`SELECT c.region, c.area, c.idevice, d.device FROM public.cross as c, public.devices as d WHERE c.idevice IN(d.id);`)
+	for rows.Next() {
+		_ = rows.Scan(&temp.Region, &temp.Area, &temp.Idevice, &dStr)
+		_ = json.Unmarshal([]byte(dStr), &temp.Device)
+		devices = append(devices, temp)
+	}
+	return devices
 }

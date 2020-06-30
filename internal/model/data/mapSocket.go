@@ -23,19 +23,25 @@ const pingPeriod = time.Second * 30
 func MapReader(conn *websocket.Conn, c *gin.Context) {
 	connectedUsersOnMap[conn] = true
 	login := ""
-	flag, mapContx := checkToken(c)
 	{
+		flag, tk := checkToken(c)
 		resp := newMapMess(typeMapInfo, conn, MapOpenInfo())
 		if flag {
-			login = fmt.Sprint(mapContx["login"])
-			role := fmt.Sprint(mapContx["role"])
+			login = tk.Login
+			role := tk.Role
 			resp.Data["manageFlag"], _ = AccessCheck(login, role, 2)
 			resp.Data["logDeviceFlag"], _ = AccessCheck(login, role, 5)
 			resp.Data["techArmFlag"], _ = AccessCheck(login, role, 7)
-			resp.Data["description"] = mapContx["description"]
+			resp.Data["description"] = tk.Description
 			resp.Data["authorizedFlag"] = true
-			resp.Data["region"] = mapContx["region"]
-			resp.Data["area"] = mapContx["area"]
+			resp.Data["region"] = tk.Region
+			var areaMap = make(map[string]string)
+			for _, area := range tk.Area {
+				var tempA AreaInfo
+				tempA.SetAreaInfo(tk.Region, area)
+				areaMap[tempA.Num] = tempA.NameArea
+			}
+			resp.Data["area"] = areaMap
 			CacheArea.Mux.Lock()
 			resp.Data["areaBox"] = CacheArea.Areas
 			CacheArea.Mux.Unlock()
