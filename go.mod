@@ -12,6 +12,7 @@ require (
 	github.com/go-playground/validator/v10 v10.3.0 // indirect
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/gorilla/websocket v1.4.2
+	github.com/jackc/pgx v3.6.2+incompatible
 	github.com/jcmturner/gokrb5/v8 v8.3.0 // indirect
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/jordan-wright/email v0.0.0-20200531192740-8694daca3fa7

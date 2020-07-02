@@ -75,6 +75,7 @@ type CrossInfo struct {
 	Subarea   int    `json:"subarea"`
 	ArrayType int    `json:"arrayType"`
 	Describe  string `json:"describe"`
+	Phone     string `json:"phone"`
 }
 
 type DevInfo struct {

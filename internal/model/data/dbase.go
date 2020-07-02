@@ -5,8 +5,8 @@ import (
 
 	"github.com/JanFant/TLServer/internal/model/config"
 	"github.com/JanFant/TLServer/logger"
+	_ "github.com/jackc/pgx"
 	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq"
 )
 
 var (

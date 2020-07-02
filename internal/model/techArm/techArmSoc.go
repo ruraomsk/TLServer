@@ -4,8 +4,10 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/JanFant/TLServer/internal/model/config"
 	"github.com/gorilla/websocket"
 	"github.com/jmoiron/sqlx"
+	"reflect"
 	"strconv"
 	"time"
 )
@@ -88,15 +90,24 @@ func ArmTechBroadcast(db *sqlx.DB) {
 			{
 				if len(connectedUsersTechArm) > 0 {
 					newDevice := getDevice(db)
-					var tempDev []DevInfo
+					var (
+						tempDev []DevInfo
+					)
 					for _, nDev := range newDevice {
+						flagNew := true
 						for _, oDev := range oldDevice {
 							if oDev.Idevice == nDev.Idevice {
-								if oDev.Device.CK != nDev.Device.CK {
+								flagNew = false
+								if oDev.Device.LastOperation != nDev.Device.LastOperation ||
+									!reflect.DeepEqual(oDev.Device.GPS, nDev.Device.GPS) ||
+									!reflect.DeepEqual(oDev.Device.Error, nDev.Device.Error) {
 									tempDev = append(tempDev, nDev)
 									break
 								}
 							}
+						}
+						if flagNew {
+							tempDev = append(tempDev, nDev)
 						}
 					}
 					oldDevice = newDevice
@@ -122,6 +133,7 @@ func ArmTechBroadcast(db *sqlx.DB) {
 			}
 		case <-TArmNewCrossData:
 			{
+				time.Sleep(time.Second * time.Duration(config.GlobalConfig.DBConfig.DBWait))
 				crosses := getCross(-1, db)
 				for conn, arm := range connectedUsersTechArm {
 					var tempCrosses []CrossInfo
@@ -164,7 +176,8 @@ func getCross(reg int, db *sqlx.DB) []CrossInfo {
   					idevice, 
   					describ, 
   					subarea, 
-  					state->'arrays'->'type' 
+  					state->'arrays'->'type',
+  					state->'phone' 
   					FROM public.cross`
 	)
 	if reg != -1 {
@@ -172,7 +185,14 @@ func getCross(reg int, db *sqlx.DB) []CrossInfo {
 	}
 	rows, _ = db.Query(sqlStr)
 	for rows.Next() {
-		_ = rows.Scan(&temp.Region, &temp.Area, &temp.ID, &temp.Idevice, &temp.Describe, &temp.Subarea, &temp.ArrayType)
+		_ = rows.Scan(&temp.Region,
+			&temp.Area,
+			&temp.ID,
+			&temp.Idevice,
+			&temp.Describe,
+			&temp.Subarea,
+			&temp.ArrayType,
+			&temp.Phone)
 		crosses = append(crosses, temp)
 	}
 	return crosses
