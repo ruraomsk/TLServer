@@ -102,8 +102,7 @@ func ArmTechBroadcast(db *sqlx.DB) {
 								flagNew = false
 								if oDev.Device.LastOperation != nDev.Device.LastOperation ||
 									!reflect.DeepEqual(oDev.Device.GPS, nDev.Device.GPS) ||
-									!reflect.DeepEqual(oDev.Device.Error, nDev.Device.Error) ||
-									oDev.Status != nDev.Status {
+									!reflect.DeepEqual(oDev.Device.Error, nDev.Device.Error) {
 									tempDev = append(tempDev, nDev)
 									break
 								}
@@ -210,12 +209,12 @@ func getDevice(db *sqlx.DB) []DevInfo {
 	rows, _ := db.Query(`SELECT c.region, 
 									c.area, 
 									c.idevice, 
-									d.device, 
-									(select description from public.status where id = cast (c.state->'status' as int)) as status 
+									d.device 
 									FROM public.cross as c, public.devices as d WHERE c.idevice IN(d.id);`)
 	for rows.Next() {
-		_ = rows.Scan(&temp.Region, &temp.Area, &temp.Idevice, &dStr, &temp.Status)
+		_ = rows.Scan(&temp.Region, &temp.Area, &temp.Idevice, &dStr)
 		_ = json.Unmarshal([]byte(dStr), &temp.Device)
+		temp.ModeRdk = modeRDK[temp.Device.DK.RDK]
 		devices = append(devices, temp)
 	}
 	return devices

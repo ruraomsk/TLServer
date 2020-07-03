@@ -7,6 +7,7 @@ import (
 	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/JanFant/TLServer/internal/sockets/chat"
+	"github.com/JanFant/TLServer/internal/sockets/crossSock"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/jmoiron/sqlx"
@@ -47,7 +48,7 @@ func MapReader(conn *websocket.Conn, c *gin.Context, db *sqlx.DB) {
 		}
 		resp.send()
 	}
-	data.GetCrossUserForMap <- true
+	crossSock.GetCrossUserForMap <- true
 	for {
 		_, p, err := conn.ReadMessage()
 		if err != nil {
@@ -138,7 +139,7 @@ func MapBroadcast(db *sqlx.DB) {
 					}
 				}
 			}
-		case <-data.MapRepaint:
+		case <-crossSock.MapRepaint:
 			{
 				time.Sleep(time.Second * time.Duration(config.GlobalConfig.DBConfig.DBWait))
 				oldTFs = selectTL(db)
@@ -159,7 +160,7 @@ func MapBroadcast(db *sqlx.DB) {
 					_ = conn.WriteMessage(websocket.PingMessage, nil)
 				}
 			}
-		case crossUsers := <-data.CrossUsersForMap:
+		case crossUsers := <-crossSock.CrossUsersForMap:
 			{
 				resp := newMapMess(typeEditCrossUsers, nil, nil)
 				resp.Data["editCrossUsers"] = crossUsers

@@ -1,4 +1,4 @@
-package data
+package crossSock
 
 import (
 	u "github.com/JanFant/TLServer/internal/utils"

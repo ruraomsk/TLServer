@@ -3,9 +3,11 @@ package apiserver
 import (
 	"fmt"
 	"github.com/JanFant/TLServer/internal/app/handlers/chatH"
+	"github.com/JanFant/TLServer/internal/app/handlers/crossH"
 	"github.com/JanFant/TLServer/internal/app/handlers/licenseH"
 	"github.com/JanFant/TLServer/internal/app/handlers/mapH"
 	"github.com/JanFant/TLServer/internal/app/handlers/techArmH"
+	"github.com/JanFant/TLServer/internal/sockets/crossSock"
 	"github.com/JanFant/TLServer/internal/sockets/mapSock"
 	"github.com/JanFant/TLServer/internal/sockets/techArm"
 	"net/http"
@@ -26,8 +28,8 @@ func StartServer(conf *ServerConf) {
 
 	go chat.CBroadcast()
 	go mapSock.MapBroadcast(data.GetDB())
-	go data.CrossBroadcast()
-	go data.ControlBroadcast()
+	go crossSock.CrossBroadcast(data.GetDB())
+	go crossSock.ControlBroadcast()
 	go techArm.ArmTechBroadcast(data.GetDB())
 
 	// Создаем engine для соединений
@@ -74,13 +76,13 @@ func StartServer(conf *ServerConf) {
 	mainRouter.GET("/:slug/cross", func(c *gin.Context) { //работа со странички перекрестков (страничка)
 		c.HTML(http.StatusOK, "cross.html", nil)
 	})
-	mainRouter.GET("/:slug/crossW", handlers.CrossEngine)
+	mainRouter.GET("/:slug/crossW", crossH.CrossEngine)
 
 	//арм перекрестка
 	mainRouter.GET("/:slug/cross/control", func(c *gin.Context) { //расширеная страничка настройки перекрестка (страничка)
 		c.HTML(http.StatusOK, "crossControl.html", nil)
 	})
-	mainRouter.GET("/:slug/cross/controlW", handlers.CrossControlEngine)
+	mainRouter.GET("/:slug/cross/controlW", crossH.CrossControlEngine)
 
 	//арм технолога
 	mainRouter.GET("/:slug/techArm", func(c *gin.Context) {
@@ -116,7 +118,7 @@ func StartServer(conf *ServerConf) {
 	mainRouter.GET("/:slug/manage/stateTest", func(c *gin.Context) { //обработчик проверки всего State (страничка)
 		c.HTML(http.StatusOK, "stateTest.html", nil)
 	})
-	mainRouter.POST("/:slug/manage/stateTest", handlers.ControlTestState) //обработчик проверки структуры State
+	mainRouter.POST("/:slug/manage/stateTest", crossH.ControlTestState) //обработчик проверки структуры State
 
 	//управление логом сервера
 	mainRouter.GET("/:slug/manage/serverLog", func(c *gin.Context) { //обработка лог файлов сервера (страничка)

@@ -1,9 +1,11 @@
-package data
+package crossSock
 
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/model/deviceLog"
+	"github.com/jmoiron/sqlx"
 	"net/http"
 	"strconv"
 	"strings"
@@ -15,7 +17,7 @@ import (
 	agspudge "github.com/ruraomsk/ag-server/pudge"
 )
 
-func TestCrossStateData(mapContx map[string]string) u.Response {
+func TestCrossStateData(mapContx map[string]string, db *sqlx.DB) u.Response {
 	var (
 		stateSql  string
 		stateInfo []deviceLog.BusyArm
@@ -26,14 +28,14 @@ func TestCrossStateData(mapContx map[string]string) u.Response {
 		sqlStr += fmt.Sprintf(`WHERE region = %v `, mapContx["region"])
 	}
 	sqlStr += "order by describ"
-	rows, err := GetDB().Query(sqlStr)
+	rows, err := db.Query(sqlStr)
 	if err != nil {
 		resp := u.Message(http.StatusInternalServerError, "DB not respond")
 		return resp
 	}
 	for rows.Next() {
 		_ = rows.Scan(&stateSql)
-		testState, err := ConvertStateStrToStruct(stateSql)
+		testState, err := convertStateStrToStruct(stateSql)
 		if err != nil {
 			logger.Error.Println("|Message: Failed to parse cross information: ", err.Error())
 			return u.Message(http.StatusInternalServerError, "failed to parse cross information")
@@ -54,11 +56,11 @@ func TestCrossStateData(mapContx map[string]string) u.Response {
 }
 
 //takeControlInfo формарование необходимой информации о арме перекрестка
-func takeControlInfo(pos PosInfo) (resp ControlSokResponse, idev int, desc string) {
+func takeControlInfo(pos PosInfo, db *sqlx.DB) (resp ControlSokResponse, idev int, desc string) {
 	var (
 		stateStr string
 	)
-	rowsTL := GetDB().QueryRow(`SELECT state FROM public.cross WHERE region = $1 and id = $2 and area = $3`, pos.Region, pos.Id, pos.Area)
+	rowsTL := db.QueryRow(`SELECT state FROM public.cross WHERE region = $1 and id = $2 and area = $3`, pos.Region, pos.Id, pos.Area)
 	err := rowsTL.Scan(&stateStr)
 	if err != nil {
 		resp := newControlMess(typeError, nil, nil, CrossInfo{})
@@ -66,7 +68,7 @@ func takeControlInfo(pos PosInfo) (resp ControlSokResponse, idev int, desc strin
 		return resp, 0, ""
 	}
 	//Состояние светофора!
-	rState, err := ConvertStateStrToStruct(stateStr)
+	rState, err := convertStateStrToStruct(stateStr)
 	if err != nil {
 		resp := newControlMess(typeError, nil, nil, CrossInfo{})
 		resp.Data["message"] = "failed to parse cross information"
@@ -154,7 +156,7 @@ func deleteCrossData(state agspudge.Cross, login string) ControlSokResponse {
 }
 
 //createCrossData добавление нового перекрестка
-func createCrossData(state agspudge.Cross, login string, z int) ControlSokResponse {
+func createCrossData(state agspudge.Cross, login string, z int, db *sqlx.DB) ControlSokResponse {
 	var (
 		stateMessage tcpConnect.StateMessage
 		userCross    agspudge.UserCross
@@ -162,7 +164,7 @@ func createCrossData(state agspudge.Cross, login string, z int) ControlSokRespon
 		stateSql     string
 	)
 	sqlStr := fmt.Sprintf(`SELECT state FROM public.cross WHERE state::jsonb @> '{"Idevice":%v}'::jsonb OR (region = %v and area = %v and id = %v)`, state.IDevice, state.Region, state.Area, state.ID)
-	rows, err := GetDB().Query(sqlStr)
+	rows, err := db.Query(sqlStr)
 	if err != nil {
 		logger.Error.Println("|Message: control socket (create Button), DB not respond : ", err.Error())
 		resp := newControlMess(typeError, nil, nil, CrossInfo{})
@@ -198,7 +200,7 @@ func createCrossData(state agspudge.Cross, login string, z int) ControlSokRespon
 	resp := newControlMess(typeCreateB, nil, nil, CrossInfo{})
 	resp.Data["user"] = login
 	if sendToUDPServer(stateMessage) {
-		if ShortCreateDirPng(state.Region, state.Area, state.ID, z, state.Dgis) {
+		if data.ShortCreateDirPng(state.Region, state.Area, state.ID, z, state.Dgis) {
 			resp.Data["message"] = "cross created"
 			resp.Data["ok"] = true
 			return resp

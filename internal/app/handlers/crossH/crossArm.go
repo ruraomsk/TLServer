@@ -1,6 +1,7 @@
-package handlers
+package crossH
 
 import (
+	"github.com/JanFant/TLServer/internal/sockets/crossSock"
 	"github.com/gorilla/websocket"
 	"net/http"
 	"strconv"
@@ -25,7 +26,7 @@ var CrossEngine = func(c *gin.Context) {
 	}
 	defer conn.Close()
 
-	var crEdit data.PosInfo
+	var crEdit crossSock.PosInfo
 	crEdit.Region, crEdit.Area, crEdit.Id, err = queryParser(c)
 	if err != nil {
 		return
@@ -33,7 +34,7 @@ var CrossEngine = func(c *gin.Context) {
 
 	mapContx := u.ParserInterface(c.Value("info"))
 
-	data.CrossReader(conn, crEdit, mapContx)
+	crossSock.CrossReader(conn, crEdit, mapContx, data.GetDB())
 }
 
 //CrossControlEngine обработчик вебсокета для работы с армом перекрестком
@@ -45,7 +46,7 @@ var CrossControlEngine = func(c *gin.Context) {
 	}
 	defer conn.Close()
 
-	var crEdit data.PosInfo
+	var crEdit crossSock.PosInfo
 	crEdit.Region, crEdit.Area, crEdit.Id, err = queryParser(c)
 	if err != nil {
 		return
@@ -53,13 +54,13 @@ var CrossControlEngine = func(c *gin.Context) {
 
 	mapContx := u.ParserInterface(c.Value("info"))
 
-	data.ControlReader(conn, crEdit, mapContx)
+	crossSock.ControlReader(conn, crEdit, mapContx, data.GetDB())
 }
 
 //ControlTestState обработчик проверки State
 var ControlTestState = func(c *gin.Context) {
 	mapContx := u.ParserInterface(c.Value("info"))
-	resp := data.TestCrossStateData(mapContx)
+	resp := crossSock.TestCrossStateData(mapContx, data.GetDB())
 	u.SendRespond(c, resp)
 }
 

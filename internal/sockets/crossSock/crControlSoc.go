@@ -1,10 +1,12 @@
-package data
+package crossSock
 
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/JanFant/TLServer/internal/sockets/techArm"
+	"github.com/jmoiron/sqlx"
 	agS_pudge "github.com/ruraomsk/ag-server/pudge"
 	"time"
 
@@ -19,15 +21,13 @@ var discArmUsers chan []CrossInfo
 var getArmUsersForDisplay chan bool
 var MapRepaint chan bool
 
-const pingPeriod = time.Second * 30
-
 //ControlReader обработчик открытия сокета для арма перекрестка
-func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string) {
+func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string, db *sqlx.DB) {
 	//дропаю соединение, если перекресток уже открыт у пользователя
 	var controlI = CrossInfo{Login: mapContx["login"], Pos: pos, Edit: false}
 
 	//проверка не существование такого перекрестка (сбос если нету)
-	_, err := getNewState(pos)
+	_, err := getNewState(pos, db)
 	if err != nil {
 		_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, errCrossDoesntExist))
 		return
@@ -62,11 +62,11 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 	//сборка начальной информации для отображения перекрестка
 	{
 		resp := newControlMess(typeControlBuild, conn, nil, controlI)
-		resp, controlI.Idevice, controlI.Description = takeControlInfo(controlI.Pos)
+		resp, controlI.Idevice, controlI.Description = takeControlInfo(controlI.Pos, db)
 		resp.conn = conn
-		CacheInfo.Mux.Lock()
-		resp.Data["areaMap"] = CacheInfo.MapArea[CacheInfo.MapRegion[pos.Region]]
-		CacheInfo.Mux.Unlock()
+		data.CacheInfo.Mux.Lock()
+		resp.Data["areaMap"] = data.CacheInfo.MapArea[data.CacheInfo.MapRegion[pos.Region]]
+		data.CacheInfo.Mux.Unlock()
 		resp.Data["edit"] = controlI.Edit
 		resp.send()
 	}
@@ -124,7 +124,7 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 					Z     int             `json:"z"`
 				}{}
 				_ = json.Unmarshal(p, &temp)
-				resp := createCrossData(temp.State, controlI.Login, temp.Z)
+				resp := createCrossData(temp.State, controlI.Login, temp.Z, db)
 				resp.info = controlI
 				resp.conn = conn
 				resp.send()
@@ -142,7 +142,7 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 		case typeUpdateB: //обновление state
 			{
 				resp := newControlMess(typeUpdateB, conn, nil, controlI)
-				resp, _, _ = takeControlInfo(controlI.Pos)
+				resp, _, _ = takeControlInfo(controlI.Pos, db)
 				resp.info = controlI
 				resp.Data["edit"] = controlI.Edit
 				resp.conn = conn

@@ -1,7 +1,8 @@
-package data
+package crossSock
 
 import (
 	"fmt"
+	"github.com/jmoiron/sqlx"
 
 	"github.com/JanFant/TLServer/logger"
 	"github.com/gorilla/websocket"
@@ -82,8 +83,8 @@ type phaseInfo struct {
 }
 
 //get запрос фазы из базы
-func (p *phaseInfo) get() error {
-	err := GetDB().QueryRow(`SELECT Fdk, tdk, pdk FROM public.devices WHERE id = $1`, p.idevice).Scan(&p.Fdk, &p.Tdk, &p.Pdk)
+func (p *phaseInfo) get(db *sqlx.DB) error {
+	err := db.QueryRow(`SELECT Fdk, tdk, pdk FROM public.devices WHERE id = $1`, p.idevice).Scan(&p.Fdk, &p.Tdk, &p.Pdk)
 	if err != nil {
 		return err
 	}

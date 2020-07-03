@@ -13,6 +13,17 @@ var (
 	typeCrosses                = "crosses"
 	typeDevices                = "devices"
 	errUnregisteredMessageType = "unregistered message type"
+	//modeRDK мапа состояний ДК
+	modeRDK = map[int]string{
+		1: "РУ",
+		2: "РУ",
+		3: "ЗУ",
+		4: "ДУ",
+		5: "ДУ",
+		6: "ЛУ",
+		8: "ЛУ",
+		9: "КУ",
+	}
 )
 
 //armResponse структура для отправки сообщений (map)
@@ -71,6 +82,6 @@ type DevInfo struct {
 	Region  int              `json:"region"`
 	Area    int              `json:"area"`
 	Idevice int              `json:"idevice"`
-	Status  string           `json:"status"`
+	ModeRdk string           `json:"modeRdk"`
 	Device  pudge.Controller `json:"device"`
 }

@@ -1,12 +1,10 @@
 package data
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/JanFant/TLServer/internal/model/locations"
 	"github.com/JanFant/TLServer/logger"
-	agspudge "github.com/ruraomsk/ag-server/pudge"
 )
 
 //TrafficLights информация о светофоре
@@ -43,14 +41,6 @@ func GetAllTrafficLights() (tfData []TrafficLights) {
 		tfData = append(tfData, *temp)
 	}
 	return
-}
-
-//ConvertStateStrToStruct разбор данных (Cross) полученных из БД в нужную структуру
-func ConvertStateStrToStruct(str string) (rState agspudge.Cross, err error) {
-	if err := json.Unmarshal([]byte(str), &rState); err != nil {
-		return rState, err
-	}
-	return rState, nil
 }
 
 //MakeBoxPoint расчет координат для перемещения по карте

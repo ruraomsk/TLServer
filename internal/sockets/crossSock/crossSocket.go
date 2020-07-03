@@ -1,8 +1,9 @@
-package data
+package crossSock
 
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/sockets"
 	"time"
 
@@ -23,13 +24,15 @@ var getCrossUsersForDisplay chan bool
 var armDeleted chan CrossInfo
 var GetCrossUserForMap chan bool
 
+const pingPeriod = time.Second * 30
+
 //CrossReader обработчик открытия сокета для перекрестка
-func CrossReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string) {
+func CrossReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string, db *sqlx.DB) {
 	//дропаю соединение, если перекресток уже открыт у пользователя
 	var crossCI = CrossInfo{Login: mapContx["login"], Role: mapContx["role"], Pos: pos, Edit: false}
 
 	//проверка не существование такого перекрестка (сбос если нету)
-	_, err := getNewState(pos)
+	_, err := getNewState(pos, db)
 	if err != nil {
 		_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, errCrossDoesntExist))
 		return
@@ -61,11 +64,11 @@ func CrossReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string) 
 	//сборка начальной информации для отображения перекрестка
 	{
 		resp := newCrossMess(typeCrossBuild, conn, nil, crossCI)
-		resp, crossCI.Idevice, crossCI.Description = takeCrossInfo(crossCI.Pos)
+		resp, crossCI.Idevice, crossCI.Description = takeCrossInfo(crossCI.Pos, db)
 		resp.conn = conn
 		resp.Data["edit"] = crossCI.Edit
 		resp.Data["controlCrossFlag"] = false
-		controlCrossFlag, _ := AccessCheck(crossCI.Login, mapContx["role"], 4)
+		controlCrossFlag, _ := data.AccessCheck(crossCI.Login, mapContx["role"], 4)
 		if (fmt.Sprint(resp.Data["region"]) == mapContx["region"]) || (mapContx["region"] == "*") {
 			resp.Data["controlCrossFlag"] = controlCrossFlag
 		}
@@ -116,7 +119,7 @@ func CrossReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string) 
 }
 
 //CrossBroadcast передатчик для перекрестка (cross)
-func CrossBroadcast() {
+func CrossBroadcast(db *sqlx.DB) {
 	writeCrossMessage = make(chan CrossSokResponse)
 	crossConnect = make(map[*websocket.Conn]CrossInfo)
 	changeState = make(chan PosInfo)
@@ -128,9 +131,9 @@ func CrossBroadcast() {
 	GetCrossUserForMap = make(chan bool)
 
 	type crossUpdateInfo struct {
-		Idevice  int            `json:"idevice"`
-		Status   TLSostInfo     `json:"status"`
-		State    agspudge.Cross `json:"state"`
+		Idevice  int             `json:"idevice"`
+		Status   data.TLSostInfo `json:"status"`
+		State    agspudge.Cross  `json:"state"`
 		stateStr string
 	}
 
@@ -171,8 +174,8 @@ func CrossBroadcast() {
 							logger.Error.Println("|Message: cross socket cant make IN ", err.Error())
 							continue
 						}
-						query = GetDB().Rebind(query)
-						rows, err := GetDB().Queryx(query, args...)
+						query = db.Rebind(query)
+						rows, err := db.Queryx(query, args...)
 						if err != nil {
 							logger.Error.Println("|Message: db not respond", err.Error())
 							continue
@@ -180,8 +183,8 @@ func CrossBroadcast() {
 						for rows.Next() {
 							var tempCR crossUpdateInfo
 							_ = rows.Scan(&tempCR.Idevice, &tempCR.Status.Num, &tempCR.stateStr)
-							tempCR.Status.Description = CacheInfo.MapTLSost[tempCR.Status.Num]
-							tempCR.State, _ = ConvertStateStrToStruct(tempCR.stateStr)
+							tempCR.Status.Description = data.CacheInfo.MapTLSost[tempCR.Status.Num]
+							tempCR.State, _ = convertStateStrToStruct(tempCR.stateStr)
 							arrayCross[tempCR.Idevice] = tempCR
 						}
 						for idevice, newData := range arrayCross {
@@ -219,8 +222,8 @@ func CrossBroadcast() {
 							logger.Error.Println("|Message: cross socket cant make IN ", err.Error())
 							continue
 						}
-						query = GetDB().Rebind(query)
-						rows, err = GetDB().Queryx(query, args...)
+						query = db.Rebind(query)
+						rows, err = db.Queryx(query, args...)
 						if err != nil {
 							logger.Error.Println("|Message: db not respond", err.Error())
 							continue
@@ -270,8 +273,8 @@ func CrossBroadcast() {
 			}
 		case pos := <-changeState: //ok
 			{
-				resp := newControlMess(typeStateChange, nil, nil, CrossInfo{})
-				state, _ := getNewState(pos)
+				resp := newCrossMess(typeStateChange, nil, nil, CrossInfo{})
+				state, _ := getNewState(pos, db)
 				resp.Data["state"] = state
 				for conn, info := range crossConnect {
 					if info.Pos == pos {

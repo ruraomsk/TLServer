@@ -1,11 +1,11 @@
-package data
+package crossSock
 
 import (
 	"fmt"
 
 	"github.com/JanFant/TLServer/logger"
 	"github.com/gorilla/websocket"
-	agS_pudge "github.com/ruraomsk/ag-server/pudge"
+	agspudge "github.com/ruraomsk/ag-server/pudge"
 )
 
 var (
@@ -30,8 +30,8 @@ type ControlSokResponse struct {
 
 //StateHandler структура приема / отправки state
 type StateHandler struct {
-	Type  string          `json:"type"`
-	State agS_pudge.Cross `json:"state"`
+	Type  string         `json:"type"`
+	State agspudge.Cross `json:"state"`
 }
 
 //send отправка с обработкой ошибки
