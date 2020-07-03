@@ -2,7 +2,7 @@ package mapH
 
 import (
 	"github.com/JanFant/TLServer/internal/model/data"
-	mapSocket "github.com/JanFant/TLServer/internal/model/mapSock"
+	mapSocket "github.com/JanFant/TLServer/internal/sockets/mapSock"
 	"github.com/gorilla/websocket"
 	"net/http"
 

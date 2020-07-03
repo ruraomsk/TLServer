@@ -2,7 +2,6 @@ package chat
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/JanFant/TLServer/logger"
 	"github.com/gorilla/websocket"
 	"github.com/jmoiron/sqlx"
@@ -10,16 +9,16 @@ import (
 )
 
 var (
-	typeMessage     = "message"
-	typeArchive     = "archive"
-	typeError       = "error"
-	typeStatus      = "status"
-	typeAllUsers    = "users"
-	typeCheckStatus = "checkStatus"
-	statusOnline    = "online"
-	statusOffline   = "offline"
-	globalMessage   = "Global"
-	typeClose       = "close"
+	typeMessage  = "message"
+	typeArchive  = "archive"
+	typeError    = "error"
+	typeStatus   = "status"
+	typeAllUsers = "users"
+	//typeCheckStatus = "checkStatus"
+	statusOnline  = "online"
+	statusOffline = "offline"
+	globalMessage = "Global"
+	typeClose     = "close"
 
 	errNoAccessWithDatabase    = "no access with database"
 	errCantConvertJSON         = "cant convert JSON"
@@ -119,13 +118,4 @@ type ErrorMessage struct {
 func (e *ErrorMessage) toString() string {
 	raw, _ := json.Marshal(e)
 	return string(raw)
-}
-
-//setTypeMessage определить тип сообщения которое пришло от пользователя
-func setTypeMessage(raw []byte) (string, error) {
-	var temp map[string]interface{}
-	if err := json.Unmarshal(raw, &temp); err != nil {
-		return "", err
-	}
-	return fmt.Sprint(temp["type"]), nil
 }

@@ -1,11 +1,12 @@
-package mapSocket
+package mapSock
 
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/JanFant/TLServer/internal/model/chat"
 	"github.com/JanFant/TLServer/internal/model/config"
 	"github.com/JanFant/TLServer/internal/model/data"
+	"github.com/JanFant/TLServer/internal/sockets"
+	"github.com/JanFant/TLServer/internal/sockets/chat"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/jmoiron/sqlx"
@@ -23,7 +24,7 @@ func MapReader(conn *websocket.Conn, c *gin.Context, db *sqlx.DB) {
 	login := ""
 	{
 		flag, tk := checkToken(c, db)
-		resp := newMapMess(typeMapInfo, conn, MapOpenInfo(db))
+		resp := newMapMess(typeMapInfo, conn, mapOpenInfo(db))
 		if flag {
 			login = tk.Login
 			role := tk.Role
@@ -56,7 +57,7 @@ func MapReader(conn *websocket.Conn, c *gin.Context, db *sqlx.DB) {
 			return
 		}
 
-		typeSelect, err := setTypeMessage(p)
+		typeSelect, err := sockets.ChoseTypeMessage(p)
 		if err != nil {
 			resp := newMapMess(typeError, conn, nil)
 			resp.Data["message"] = ErrorMessage{Error: errUnregisteredMessageType}
@@ -77,7 +78,7 @@ func MapReader(conn *websocket.Conn, c *gin.Context, db *sqlx.DB) {
 				account := &data.Account{}
 				_ = json.Unmarshal(p, &account)
 				resp := newMapMess(typeLogin, conn, nil)
-				resp = Login(account.Login, account.Password, conn.RemoteAddr().String(), db)
+				resp = logIn(account.Login, account.Password, conn.RemoteAddr().String(), db)
 				if resp.Type == typeLogin {
 					login = fmt.Sprint(resp.Data["login"])
 				}
@@ -87,7 +88,7 @@ func MapReader(conn *websocket.Conn, c *gin.Context, db *sqlx.DB) {
 		case typeLogOut:
 			{
 				if login != "" {
-					resp := LogOut(login, db)
+					resp := logOut(login, db)
 					resp.conn = conn
 					resp.Data["authorizedFlag"] = true
 					resp.send()
@@ -111,13 +112,13 @@ func MapBroadcast(db *sqlx.DB) {
 		pingTicker.Stop()
 		crossReadTick.Stop()
 	}()
-	oldTFs := SelectTL(db)
+	oldTFs := selectTL(db)
 	for {
 		select {
 		case <-crossReadTick.C:
 			{
 				if len(connectedUsersOnMap) > 0 {
-					newTFs := SelectTL(db)
+					newTFs := selectTL(db)
 					var tempTF []data.TrafficLights
 					for _, nTF := range newTFs {
 						for _, oTF := range oldTFs {
@@ -140,7 +141,7 @@ func MapBroadcast(db *sqlx.DB) {
 		case <-data.MapRepaint:
 			{
 				time.Sleep(time.Second * time.Duration(config.GlobalConfig.DBConfig.DBWait))
-				oldTFs = SelectTL(db)
+				oldTFs = selectTL(db)
 				resp := newMapMess(typeRepaint, nil, nil)
 				resp.Data["tflight"] = oldTFs
 				data.FillMapAreaBox()

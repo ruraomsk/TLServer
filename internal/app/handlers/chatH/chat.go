@@ -3,8 +3,8 @@ package chatH
 import (
 	"net/http"
 
-	"github.com/JanFant/TLServer/internal/model/chat"
 	"github.com/JanFant/TLServer/internal/model/data"
+	"github.com/JanFant/TLServer/internal/sockets/chat"
 	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"

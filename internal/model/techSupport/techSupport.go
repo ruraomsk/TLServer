@@ -2,8 +2,8 @@ package techSupport
 
 import (
 	"fmt"
-	"github.com/JanFant/TLServer/internal/model/chat"
 	"github.com/JanFant/TLServer/internal/model/license"
+	"github.com/JanFant/TLServer/internal/sockets/chat"
 	"github.com/jmoiron/sqlx"
 	"net/http"
 	"net/smtp"

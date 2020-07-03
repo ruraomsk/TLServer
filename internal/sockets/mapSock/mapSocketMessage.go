@@ -1,8 +1,6 @@
-package mapSocket
+package mapSock
 
 import (
-	"encoding/json"
-	"fmt"
 	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/jmoiron/sqlx"
 	"strings"
@@ -56,15 +54,6 @@ func (m *MapSokResponse) send() {
 		}()
 	}
 	writeMap <- *m
-}
-
-//setTypeMessage определение типа сообщения
-func setTypeMessage(raw []byte) (string, error) {
-	var temp map[string]interface{}
-	if err := json.Unmarshal(raw, &temp); err != nil {
-		return "", err
-	}
-	return fmt.Sprint(temp["type"]), nil
 }
 
 //ErrorMessage структура ошибки

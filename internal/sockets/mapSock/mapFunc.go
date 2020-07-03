@@ -1,4 +1,4 @@
-package mapSocket
+package mapSock
 
 import (
 	"fmt"
@@ -12,8 +12,8 @@ import (
 	"time"
 )
 
-//login обработчик авторизации пользователя в системе
-func Login(login, password, ip string, db *sqlx.DB) MapSokResponse {
+//logIn обработчик авторизации пользователя в системе
+func logIn(login, password, ip string, db *sqlx.DB) MapSokResponse {
 	ipSplit := strings.Split(ip, ":")
 	account := &data.Account{}
 	//Забираю из базы запись с подходящей почтой
@@ -102,8 +102,8 @@ func Login(login, password, ip string, db *sqlx.DB) MapSokResponse {
 	return resp
 }
 
-//LogOut выход из учетной записи
-func LogOut(login string, db *sqlx.DB) MapSokResponse {
+//logOut выход из учетной записи
+func logOut(login string, db *sqlx.DB) MapSokResponse {
 	_, err := db.Exec("UPDATE public.accounts SET token = $1 where login = $2", "", login)
 	if err != nil {
 		resp := newMapMess(typeError, nil, nil)
@@ -113,8 +113,8 @@ func LogOut(login string, db *sqlx.DB) MapSokResponse {
 	return newMapMess(typeLogOut, nil, nil)
 }
 
-//SelectTL возвращает массив в котором содержатся светофоры, которые попали в указанную область
-func SelectTL(db *sqlx.DB) (tfdata []data.TrafficLights) {
+//selectTL возвращает массив в котором содержатся светофоры, которые попали в указанную область
+func selectTL(db *sqlx.DB) (tfdata []data.TrafficLights) {
 	var dgis string
 	temp := &data.TrafficLights{}
 	rowsTL, err := db.Query(`SELECT region, area, subarea, id, idevice, dgis, describ, status FROM public.cross`)
@@ -140,13 +140,13 @@ func SelectTL(db *sqlx.DB) (tfdata []data.TrafficLights) {
 	return tfdata
 }
 
-func MapOpenInfo(db *sqlx.DB) (obj map[string]interface{}) {
+func mapOpenInfo(db *sqlx.DB) (obj map[string]interface{}) {
 	obj = make(map[string]interface{})
 
 	location := &data.Locations{}
 	box, _ := location.MakeBoxPoint()
 	obj["boxPoint"] = &box
-	obj["tflight"] = SelectTL(db)
+	obj["tflight"] = selectTL(db)
 	obj["authorizedFlag"] = false
 
 	//собираю в кучу регионы для отображения

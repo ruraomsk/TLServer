@@ -3,6 +3,7 @@ package data
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/JanFant/TLServer/internal/sockets"
 	"time"
 
 	"github.com/JanFant/TLServer/logger"
@@ -93,7 +94,7 @@ func CrossReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string) 
 			return
 		}
 
-		typeSelect, err := setTypeMessage(p)
+		typeSelect, err := sockets.ChoseTypeMessage(p)
 		if err != nil {
 			resp := newCrossMess(typeError, conn, nil, crossCI)
 			resp.Data["message"] = ErrorMessage{Error: errUnregisteredMessageType}

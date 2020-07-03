@@ -1,8 +1,6 @@
 package techArm
 
 import (
-	"encoding/json"
-	"fmt"
 	"github.com/JanFant/TLServer/logger"
 	"github.com/gorilla/websocket"
 	"github.com/ruraomsk/ag-server/pudge"
@@ -52,15 +50,6 @@ type ErrorMessage struct {
 	Error string `json:"error"`
 }
 
-//setTypeMessage определение типа сообщения
-func setTypeMessage(raw []byte) (string, error) {
-	var temp map[string]interface{}
-	if err := json.Unmarshal(raw, &temp); err != nil {
-		return "", err
-	}
-	return fmt.Sprint(temp["type"]), nil
-}
-
 //ArmInfo информация о запрашиваемом арме
 type ArmInfo struct {
 	Region int      `json:"region"` //регион
@@ -82,5 +71,6 @@ type DevInfo struct {
 	Region  int              `json:"region"`
 	Area    int              `json:"area"`
 	Idevice int              `json:"idevice"`
+	Status  string           `json:"status"`
 	Device  pudge.Controller `json:"device"`
 }

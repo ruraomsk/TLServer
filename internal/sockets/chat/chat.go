@@ -3,6 +3,7 @@ package chat
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/gorilla/websocket"
 	"github.com/jmoiron/sqlx"
 	"time"
@@ -66,7 +67,7 @@ func Reader(conn *websocket.Conn, login string, db *sqlx.DB) {
 			return
 		}
 
-		typeSelect, err := setTypeMessage(p)
+		typeSelect, err := sockets.ChoseTypeMessage(p)
 		if err != nil {
 			resp := newChatMess(typeError, conn, nil, uInfo)
 			resp.Data["message"] = ErrorMessage{Error: errUnregisteredMessageType}

@@ -27,63 +27,6 @@ type Locations struct {
 	Area   []string `json:"area"`   //районы
 }
 
-//SelectTL возвращает массив в котором содержатся светофоры, которые попали в указанную область
-func SelectTL() (tfdata []TrafficLights) {
-	var dgis string
-	temp := &TrafficLights{}
-	rowsTL, err := GetDB().Query(`SELECT region, area, subarea, id, idevice, dgis, describ, status FROM public.cross`)
-	if err != nil {
-		logger.Error.Println("|Message: db not respond", err.Error())
-		return nil
-	}
-	for rowsTL.Next() {
-		err := rowsTL.Scan(&temp.Region.Num, &temp.Area.Num, &temp.Subarea, &temp.ID, &temp.Idevice, &dgis, &temp.Description, &temp.Sost.Num)
-		if err != nil {
-			logger.Error.Println("|Message: No result at these points", err.Error())
-			return nil
-		}
-		temp.Points.StrToFloat(dgis)
-		CacheInfo.Mux.Lock()
-		temp.Region.NameRegion = CacheInfo.MapRegion[temp.Region.Num]
-		temp.Area.NameArea = CacheInfo.MapArea[temp.Region.NameRegion][temp.Area.Num]
-		temp.Sost.Description = CacheInfo.MapTLSost[temp.Sost.Num]
-		CacheInfo.Mux.Unlock()
-		tfdata = append(tfdata, *temp)
-	}
-
-	return tfdata
-}
-
-func MapOpenInfo() (obj map[string]interface{}) {
-	obj = make(map[string]interface{})
-
-	location := &Locations{}
-	box, _ := location.MakeBoxPoint()
-	obj["boxPoint"] = &box
-	obj["tflight"] = SelectTL()
-	obj["authorizedFlag"] = false
-
-	//собираю в кучу регионы для отображения
-	chosenRegion := make(map[string]string)
-	CacheInfo.Mux.Lock()
-	for first, second := range CacheInfo.MapRegion {
-		chosenRegion[first] = second
-	}
-	delete(chosenRegion, "*")
-	obj["regionInfo"] = chosenRegion
-
-	//собираю в кучу районы для отображения
-	chosenArea := make(map[string]map[string]string)
-	for first, second := range CacheInfo.MapArea {
-		chosenArea[first] = make(map[string]string)
-		chosenArea[first] = second
-	}
-	delete(chosenArea, "Все регионы")
-	CacheInfo.Mux.Unlock()
-	obj["areaInfo"] = chosenArea
-	return
-}
-
 //GetAllTrafficLights запрос информации об всех сфетофорах из БД
 func GetAllTrafficLights() (tfData []TrafficLights) {
 	var dgis string

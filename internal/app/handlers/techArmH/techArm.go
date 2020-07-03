@@ -2,7 +2,7 @@ package techArmH
 
 import (
 	"github.com/JanFant/TLServer/internal/model/data"
-	"github.com/JanFant/TLServer/internal/model/techArm"
+	"github.com/JanFant/TLServer/internal/sockets/techArm"
 	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"

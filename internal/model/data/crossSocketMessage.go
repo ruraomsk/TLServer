@@ -1,7 +1,6 @@
 package data
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/JanFant/TLServer/logger"
@@ -105,13 +104,4 @@ func formCrossUser() []CrossInfo {
 //ErrorMessage структура ошибки
 type ErrorMessage struct {
 	Error string `json:"error"`
-}
-
-//setTypeMessage определение типа сообщения
-func setTypeMessage(raw []byte) (string, error) {
-	var temp map[string]interface{}
-	if err := json.Unmarshal(raw, &temp); err != nil {
-		return "", err
-	}
-	return fmt.Sprint(temp["type"]), nil
 }

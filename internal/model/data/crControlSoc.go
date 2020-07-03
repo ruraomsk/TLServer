@@ -3,7 +3,8 @@ package data
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/JanFant/TLServer/internal/model/techArm"
+	"github.com/JanFant/TLServer/internal/sockets"
+	"github.com/JanFant/TLServer/internal/sockets/techArm"
 	agS_pudge "github.com/ruraomsk/ag-server/pudge"
 	"time"
 
@@ -89,7 +90,7 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 			return
 		}
 
-		typeSelect, err := setTypeMessage(p)
+		typeSelect, err := sockets.ChoseTypeMessage(p)
 		if err != nil {
 			resp := newControlMess(typeError, conn, nil, controlI)
 			resp.Data["message"] = ErrorMessage{Error: errUnregisteredMessageType}

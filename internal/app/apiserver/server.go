@@ -6,8 +6,8 @@ import (
 	"github.com/JanFant/TLServer/internal/app/handlers/licenseH"
 	"github.com/JanFant/TLServer/internal/app/handlers/mapH"
 	"github.com/JanFant/TLServer/internal/app/handlers/techArmH"
-	mapSocket "github.com/JanFant/TLServer/internal/model/mapSock"
-	"github.com/JanFant/TLServer/internal/model/techArm"
+	"github.com/JanFant/TLServer/internal/sockets/mapSock"
+	"github.com/JanFant/TLServer/internal/sockets/techArm"
 	"net/http"
 
 	"github.com/JanFant/TLServer/internal/model/data"
@@ -16,7 +16,7 @@ import (
 
 	"github.com/JanFant/TLServer/internal/app/handlers"
 	"github.com/JanFant/TLServer/internal/app/middleWare"
-	"github.com/JanFant/TLServer/internal/model/chat"
+	"github.com/JanFant/TLServer/internal/sockets/chat"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
@@ -25,7 +25,7 @@ import (
 func StartServer(conf *ServerConf) {
 
 	go chat.CBroadcast()
-	go mapSocket.MapBroadcast(data.GetDB())
+	go mapSock.MapBroadcast(data.GetDB())
 	go data.CrossBroadcast()
 	go data.ControlBroadcast()
 	go techArm.ArmTechBroadcast(data.GetDB())

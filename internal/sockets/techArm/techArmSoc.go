@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/JanFant/TLServer/internal/model/config"
+	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/gorilla/websocket"
 	"github.com/jmoiron/sqlx"
 	"reflect"
@@ -51,6 +52,7 @@ func ArmTechReader(conn *websocket.Conn, reg int, area []string, db *sqlx.DB) {
 		resp.send()
 	}
 
+	fmt.Println("tech : ", connectedUsersTechArm)
 	for {
 		_, p, err := conn.ReadMessage()
 		if err != nil {
@@ -60,7 +62,7 @@ func ArmTechReader(conn *websocket.Conn, reg int, area []string, db *sqlx.DB) {
 			return
 		}
 
-		typeSelect, err := setTypeMessage(p)
+		typeSelect, err := sockets.ChoseTypeMessage(p)
 		if err != nil {
 			resp := newArmMess(typeError, conn, nil)
 			resp.Data["message"] = ErrorMessage{Error: errUnregisteredMessageType}
@@ -100,7 +102,8 @@ func ArmTechBroadcast(db *sqlx.DB) {
 								flagNew = false
 								if oDev.Device.LastOperation != nDev.Device.LastOperation ||
 									!reflect.DeepEqual(oDev.Device.GPS, nDev.Device.GPS) ||
-									!reflect.DeepEqual(oDev.Device.Error, nDev.Device.Error) {
+									!reflect.DeepEqual(oDev.Device.Error, nDev.Device.Error) ||
+									oDev.Status != nDev.Status {
 									tempDev = append(tempDev, nDev)
 									break
 								}
@@ -204,9 +207,14 @@ func getDevice(db *sqlx.DB) []DevInfo {
 		devices []DevInfo
 		dStr    string
 	)
-	rows, _ := db.Query(`SELECT c.region, c.area, c.idevice, d.device FROM public.cross as c, public.devices as d WHERE c.idevice IN(d.id);`)
+	rows, _ := db.Query(`SELECT c.region, 
+									c.area, 
+									c.idevice, 
+									d.device, 
+									(select description from public.status where id = cast (c.state->'status' as int)) as status 
+									FROM public.cross as c, public.devices as d WHERE c.idevice IN(d.id);`)
 	for rows.Next() {
-		_ = rows.Scan(&temp.Region, &temp.Area, &temp.Idevice, &dStr)
+		_ = rows.Scan(&temp.Region, &temp.Area, &temp.Idevice, &dStr, &temp.Status)
 		_ = json.Unmarshal([]byte(dStr), &temp.Device)
 		devices = append(devices, temp)
 	}
