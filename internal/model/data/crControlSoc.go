@@ -16,6 +16,9 @@ var controlConnect map[*websocket.Conn]CrossInfo
 var crArmUsersForDisplay chan []CrossInfo
 var discArmUsers chan []CrossInfo
 var getArmUsersForDisplay chan bool
+var MapRepaint chan bool
+
+const pingPeriod = time.Second * 30
 
 //ControlReader обработчик открытия сокета для арма перекрестка
 func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string) {
@@ -184,6 +187,8 @@ func ControlBroadcast() {
 	getArmUsersForDisplay = make(chan bool)
 	crArmUsersForDisplay = make(chan []CrossInfo)
 	discArmUsers = make(chan []CrossInfo)
+	MapRepaint = make(chan bool)
+
 	pingTicker := time.NewTicker(pingPeriod)
 
 	defer func() {
@@ -214,7 +219,7 @@ func ControlBroadcast() {
 					{
 						_ = msg.conn.WriteJSON(msg)
 						if _, ok := msg.Data["ok"]; ok {
-							mapRepaint <- true
+							MapRepaint <- true
 							techArm.TArmNewCrossData <- true
 						}
 					}
@@ -228,7 +233,7 @@ func ControlBroadcast() {
 								}
 							}
 							armDeleted <- msg.info
-							mapRepaint <- true
+							MapRepaint <- true
 							techArm.TArmNewCrossData <- true
 						} else {
 							// если нету поля отправить ошибку только пользователю

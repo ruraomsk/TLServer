@@ -2,6 +2,7 @@ package mapH
 
 import (
 	"github.com/JanFant/TLServer/internal/model/data"
+	mapSocket "github.com/JanFant/TLServer/internal/model/mapSock"
 	"github.com/gorilla/websocket"
 	"net/http"
 
@@ -22,5 +23,5 @@ var MapEngine = func(c *gin.Context) {
 		return
 	}
 	defer conn.Close()
-	data.MapReader(conn, c)
+	mapSocket.MapReader(conn, c, data.GetDB())
 }

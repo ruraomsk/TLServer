@@ -99,6 +99,7 @@ github.com/kr/text v0.1.0/go.mod h1:4Jbv+DJW3UT/LiOwJeYQe1efqtUx/iVham/4vfdArNI=
 github.com/leodido/go-urn v1.1.0/go.mod h1:+cyI34gQWZcE1eQU7NVgKkkzdXDQHr1dBMtdAPozLkw=
 github.com/leodido/go-urn v1.2.0 h1:hpXL4XnriNwQ/ABnpepYM/1vCLWNDfUNts8dX3xTG6Y=
 github.com/leodido/go-urn v1.2.0/go.mod h1:+8+nEpDfqqsY+g338gtMEUOtuK+4dEMhiQEgxpxOKII=
+github.com/lib/pq v1.0.0 h1:X5PMW56eZitiTeO7tKzZxFCSpbFZJtkMMooicw2us9A=
 github.com/lib/pq v1.0.0/go.mod h1:5WUZQaWbwv1U+lTReE5YruASi9Al49XbQIvNi/34Woo=
 github.com/lib/pq v1.1.1 h1:sJZmqHoEaY7f+NPP8pgLB/WxulyR3fewgCM2qaSlBb4=
 github.com/lib/pq v1.1.1/go.mod h1:5WUZQaWbwv1U+lTReE5YruASi9Al49XbQIvNi/34Woo=
@@ -125,6 +126,8 @@ github.com/ruraomsk/ag-server v0.0.0-20200529085110-ebade6a28098 h1:dgP4465mBHv6
 github.com/ruraomsk/ag-server v0.0.0-20200529085110-ebade6a28098/go.mod h1:kDkkBE++mPwNAxJrRMOX4Z87AA5XqR7QTpSiKT3XiTU=
 github.com/ruraomsk/ag-server v0.0.0-20200602041011-30b1f0ca6f70 h1:DwbNkxcMC4DUy13UKgywJzAYnTPyEwfCUz9JLKsx+bA=
 github.com/ruraomsk/ag-server v0.0.0-20200602041011-30b1f0ca6f70/go.mod h1:kDkkBE++mPwNAxJrRMOX4Z87AA5XqR7QTpSiKT3XiTU=
+github.com/ruraomsk/ag-server v0.0.0-20200702090759-ab55fef72758 h1:CNZSdseTqkIvM5KlLFbJY6ixaSC94f3WM4xDAWow1M0=
+github.com/ruraomsk/ag-server v0.0.0-20200702090759-ab55fef72758/go.mod h1:kDkkBE++mPwNAxJrRMOX4Z87AA5XqR7QTpSiKT3XiTU=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=

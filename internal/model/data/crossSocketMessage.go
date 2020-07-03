@@ -1,6 +1,7 @@
 package data
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/JanFant/TLServer/logger"
@@ -8,17 +9,19 @@ import (
 )
 
 var (
-	typeError       = "error"
-	typeClose       = "close"
-	typeDButton     = "dispatch"
-	typeChangeEdit  = "changeEdit"
-	typeCrossBuild  = "crossBuild"
-	typePhase       = "phase"
-	typeCrossUpdate = "crossUpdate"
-	typeStateChange = "stateChange"
+	typeError          = "error"
+	typeClose          = "close"
+	typeDButton        = "dispatch"
+	typeChangeEdit     = "changeEdit"
+	typeCrossBuild     = "crossBuild"
+	typePhase          = "phase"
+	typeCrossUpdate    = "crossUpdate"
+	typeStateChange    = "stateChange"
+	typeEditCrossUsers = "editCrossUsers"
 
-	errDoubleOpeningDevice = "запрашиваемый перекресток уже открыт"
-	errCrossDoesntExist    = "запрашиваемый перекресток не существует"
+	errDoubleOpeningDevice     = "запрашиваемый перекресток уже открыт"
+	errCrossDoesntExist        = "запрашиваемый перекресток не существует"
+	errUnregisteredMessageType = "unregistered message type"
 )
 
 //CrossSokResponse структура для отправки сообщений (cross)
@@ -97,4 +100,18 @@ func formCrossUser() []CrossInfo {
 		}
 	}
 	return temp
+}
+
+//ErrorMessage структура ошибки
+type ErrorMessage struct {
+	Error string `json:"error"`
+}
+
+//setTypeMessage определение типа сообщения
+func setTypeMessage(raw []byte) (string, error) {
+	var temp map[string]interface{}
+	if err := json.Unmarshal(raw, &temp); err != nil {
+		return "", err
+	}
+	return fmt.Sprint(temp["type"]), nil
 }

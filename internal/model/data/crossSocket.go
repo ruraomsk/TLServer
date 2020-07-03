@@ -16,10 +16,11 @@ var writeCrossMessage chan CrossSokResponse
 var crossConnect map[*websocket.Conn]CrossInfo
 var changeState chan PosInfo
 var crossUsersForDisplay chan []CrossInfo
-var crossUsersForMap chan []CrossInfo
+var CrossUsersForMap chan []CrossInfo
 var discCrossUsers chan []CrossInfo
 var getCrossUsersForDisplay chan bool
 var armDeleted chan CrossInfo
+var GetCrossUserForMap chan bool
 
 //CrossReader обработчик открытия сокета для перекрестка
 func CrossReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string) {
@@ -119,10 +120,11 @@ func CrossBroadcast() {
 	crossConnect = make(map[*websocket.Conn]CrossInfo)
 	changeState = make(chan PosInfo)
 	crossUsersForDisplay = make(chan []CrossInfo)
-	crossUsersForMap = make(chan []CrossInfo)
+	CrossUsersForMap = make(chan []CrossInfo)
 	discCrossUsers = make(chan []CrossInfo)
 	getCrossUsersForDisplay = make(chan bool)
 	armDeleted = make(chan CrossInfo)
+	GetCrossUserForMap = make(chan bool)
 
 	type crossUpdateInfo struct {
 		Idevice  int            `json:"idevice"`
@@ -260,10 +262,10 @@ func CrossBroadcast() {
 					}
 				}
 			}
-		case <-getCrossUserForMap:
+		case <-GetCrossUserForMap:
 			{
 				//отправить на мапу подключенные устройства которые редактируют
-				crossUsersForMap <- formCrossUser()
+				CrossUsersForMap <- formCrossUser()
 			}
 		case pos := <-changeState: //ok
 			{
@@ -301,11 +303,11 @@ func CrossBroadcast() {
 							}
 						}
 						//отправить на мапу подключенные устройства которые редактируют
-						crossUsersForMap <- formCrossUser()
+						CrossUsersForMap <- formCrossUser()
 					}
 				case typeEditCrossUsers:
 					{
-						crossUsersForMap <- formCrossUser()
+						CrossUsersForMap <- formCrossUser()
 					}
 				case typeClose:
 					{
