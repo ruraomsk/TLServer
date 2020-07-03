@@ -1,9 +1,9 @@
 package handlers
 
 import (
+	"github.com/JanFant/TLServer/internal/model/crossCreator"
 	"net/http"
 
-	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/gin-gonic/gin"
 
 	u "github.com/JanFant/TLServer/internal/utils"
@@ -11,36 +11,36 @@ import (
 
 //MainCrossCreator сборка информации для странички создания каталогов перекрестков
 var MainCrossCreator = func(c *gin.Context) {
-	resp := data.MainCrossCreator()
+	resp := crossCreator.MainCrossCreator()
 	u.SendRespond(c, resp)
 }
 
 //CheckAllCross обработчик проверки всех перекрестков из БД
 var CheckAllCross = func(c *gin.Context) {
-	resp := data.CheckCrossDirFromBD()
+	resp := crossCreator.CheckCrossDirFromBD()
 	u.SendRespond(c, resp)
 }
 
 //CheckSelectedDirCross обработчик проверки регионов, районов и перекрестков, выбранных пользователем
 var CheckSelectedDirCross = func(c *gin.Context) {
-	var selectedData data.SelectedData
+	var selectedData crossCreator.SelectedData
 	err := c.ShouldBindJSON(&selectedData)
 	if err != nil {
 		u.SendRespond(c, u.Message(http.StatusBadRequest, "Invalid request"))
 		return
 	}
-	resp := data.CheckCrossFileSelected(selectedData.SelectedData)
+	resp := crossCreator.CheckCrossFileSelected(selectedData.SelectedData)
 	u.SendRespond(c, resp)
 }
 
 //MakeSelectedDirCross обработчик проверки регионов, районов и перекрестков, выбранных пользователем
 var MakeSelectedDirCross = func(c *gin.Context) {
-	var selectedData data.SelectedData
+	var selectedData crossCreator.SelectedData
 	err := c.ShouldBindJSON(&selectedData)
 	if err != nil {
 		u.SendRespond(c, u.Message(http.StatusBadRequest, "Invalid request"))
 		return
 	}
-	resp := data.MakeSelectedDir(selectedData)
+	resp := crossCreator.MakeSelectedDir(selectedData)
 	u.SendRespond(c, resp)
 }

@@ -1,8 +1,9 @@
-package data
+package crossCreator
 
 import (
 	"fmt"
 	"github.com/JanFant/TLServer/internal/model/config"
+	"github.com/JanFant/TLServer/internal/model/data"
 	"io"
 	"net/http"
 	"os"
@@ -57,20 +58,20 @@ func (set *PngSettings) stockData() {
 //MainCrossCreator формирование необходимых данных для начальной странички с деревом
 func MainCrossCreator() u.Response {
 	//CacheInfoDataUpdate()
-	tfData := GetAllTrafficLights()
-	mapRegAreaCross := make(map[string]map[string][]TrafficLights)
-	CacheInfo.Mux.Lock()
-	defer CacheInfo.Mux.Unlock()
-	for numReg, nameReg := range CacheInfo.MapRegion {
+	tfData := data.GetAllTrafficLights()
+	mapRegAreaCross := make(map[string]map[string][]data.TrafficLights)
+	data.CacheInfo.Mux.Lock()
+	defer data.CacheInfo.Mux.Unlock()
+	for numReg, nameReg := range data.CacheInfo.MapRegion {
 		if strings.Contains(numReg, "*") {
 			continue
 		}
-		for numArea, nameArea := range CacheInfo.MapArea[nameReg] {
+		for numArea, nameArea := range data.CacheInfo.MapArea[nameReg] {
 			if strings.Contains(numArea, "Все регионы") {
 				continue
 			}
 			if _, ok := mapRegAreaCross[nameReg]; !ok {
-				mapRegAreaCross[nameReg] = make(map[string][]TrafficLights)
+				mapRegAreaCross[nameReg] = make(map[string][]data.TrafficLights)
 			}
 			for _, tempTF := range tfData {
 				if (tempTF.Region.Num == numReg) && (tempTF.Area.Num == numArea) {
@@ -86,25 +87,25 @@ func MainCrossCreator() u.Response {
 	resp := u.Message(http.StatusOK, "cross creator main page, formed a crosses map")
 	resp.Obj["crossMap"] = mapRegAreaCross
 	resp.Obj["pngSettings"] = settings
-	resp.Obj["region"] = CacheInfo.MapRegion
-	resp.Obj["area"] = CacheInfo.MapArea
+	resp.Obj["region"] = data.CacheInfo.MapRegion
+	resp.Obj["area"] = data.CacheInfo.MapArea
 	return resp
 }
 
 //CheckCrossDirFromBD проверяет ВСЕ перекрестки из БД на наличие каталогов для них
 func CheckCrossDirFromBD() u.Response {
 	//CacheInfoDataUpdate()
-	tfData := GetAllTrafficLights()
+	tfData := data.GetAllTrafficLights()
 	path := config.GlobalConfig.StaticPath + "//cross"
-	var tempTF []TrafficLights
+	var tempTF []data.TrafficLights
 	for _, tfLight := range tfData {
 		_, err1 := os.Stat(path + fmt.Sprintf("//%v//%v//%v//map.png", tfLight.Region.Num, tfLight.Area.Num, tfLight.ID))
 		_, err2 := os.Stat(path + fmt.Sprintf("//%v//%v//%v//cross.svg", tfLight.Region.Num, tfLight.Area.Num, tfLight.ID))
 		if os.IsNotExist(err1) || os.IsNotExist(err2) {
-			CacheInfo.Mux.Lock()
-			tfLight.Region.NameRegion = CacheInfo.MapRegion[tfLight.Region.Num]
-			tfLight.Area.NameArea = CacheInfo.MapArea[tfLight.Region.NameRegion][tfLight.Area.Num]
-			CacheInfo.Mux.Unlock()
+			data.CacheInfo.Mux.Lock()
+			tfLight.Region.NameRegion = data.CacheInfo.MapRegion[tfLight.Region.Num]
+			tfLight.Area.NameArea = data.CacheInfo.MapArea[tfLight.Region.NameRegion][tfLight.Area.Num]
+			data.CacheInfo.Mux.Unlock()
 			tempTF = append(tempTF, tfLight)
 		}
 	}
@@ -156,7 +157,7 @@ func MakeSelectedDir(selData SelectedData) u.Response {
 					continue
 				}
 				if !selData.SelectedData[numFirst][numSecond][numCheck].PngStatus {
-					point, err := locations.TakePointFromBD(numFirst, numSecond, check.ID, GetDB())
+					point, err := locations.TakePointFromBD(numFirst, numSecond, check.ID, data.GetDB())
 					if err != nil {
 						logger.Error.Println(fmt.Sprintf("|Message: No result at point: (%v//%v//%v)", numFirst, numSecond, check.ID))
 						if count == 0 {

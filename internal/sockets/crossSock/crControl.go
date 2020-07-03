@@ -3,7 +3,7 @@ package crossSock
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/JanFant/TLServer/internal/model/data"
+	"github.com/JanFant/TLServer/internal/model/crossCreator"
 	"github.com/JanFant/TLServer/internal/model/deviceLog"
 	"github.com/jmoiron/sqlx"
 	"net/http"
@@ -200,7 +200,7 @@ func createCrossData(state agspudge.Cross, login string, z int, db *sqlx.DB) Con
 	resp := newControlMess(typeCreateB, nil, nil, CrossInfo{})
 	resp.Data["user"] = login
 	if sendToUDPServer(stateMessage) {
-		if data.ShortCreateDirPng(state.Region, state.Area, state.ID, z, state.Dgis) {
+		if crossCreator.ShortCreateDirPng(state.Region, state.Area, state.ID, z, state.Dgis) {
 			resp.Data["message"] = "cross created"
 			resp.Data["ok"] = true
 			return resp
