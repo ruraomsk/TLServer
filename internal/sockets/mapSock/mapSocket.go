@@ -8,6 +8,7 @@ import (
 	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/JanFant/TLServer/internal/sockets/chat"
 	"github.com/JanFant/TLServer/internal/sockets/crossSock"
+	"github.com/JanFant/TLServer/internal/sockets/techArm"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/jmoiron/sqlx"
@@ -94,6 +95,9 @@ func MapReader(conn *websocket.Conn, c *gin.Context, db *sqlx.DB) {
 					resp.Data["authorizedFlag"] = true
 					resp.send()
 					chat.UserLogoutChat <- login
+					crossSock.UserLogoutCrControl <- login
+					crossSock.UserLogoutCross <- login
+					techArm.UserLogoutTech <- login
 				}
 			}
 

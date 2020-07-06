@@ -16,12 +16,13 @@ import (
 var connectedUsersTechArm map[*websocket.Conn]ArmInfo
 var writeArm chan armResponse
 var TArmNewCrossData chan bool
+var UserLogoutTech chan string
 
 const devUpdate = time.Second * 1
 
 //ArmTechReader обработчик открытия сокета для тех арм
-func ArmTechReader(conn *websocket.Conn, reg int, area []string, db *sqlx.DB) {
-	var armInfo = ArmInfo{Region: reg, Area: area}
+func ArmTechReader(conn *websocket.Conn, reg int, area []string, login string, db *sqlx.DB) {
+	var armInfo = ArmInfo{Region: reg, Area: area, Login: login}
 	connectedUsersTechArm[conn] = armInfo
 	//сформировать список перекрестков которые необходимы пользователю
 	{
@@ -82,6 +83,7 @@ func ArmTechBroadcast(db *sqlx.DB) {
 	connectedUsersTechArm = make(map[*websocket.Conn]ArmInfo)
 	writeArm = make(chan armResponse)
 	TArmNewCrossData = make(chan bool)
+	UserLogoutTech = make(chan string)
 
 	readTick := time.NewTicker(devUpdate)
 	defer readTick.Stop()
@@ -152,6 +154,14 @@ func ArmTechBroadcast(db *sqlx.DB) {
 					_ = resp.conn.WriteJSON(resp)
 				}
 			}
+		case login := <-UserLogoutTech:
+			{
+				for conn, armInfo := range connectedUsersTechArm {
+					if armInfo.Login == login {
+						_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "пользователь вышел из системы"))
+					}
+				}
+			}
 		case msg := <-writeArm:
 			switch msg.Type {
 			case typeClose:
@@ -215,6 +225,7 @@ func getDevice(db *sqlx.DB) []DevInfo {
 		_ = rows.Scan(&temp.Region, &temp.Area, &temp.Idevice, &dStr)
 		_ = json.Unmarshal([]byte(dStr), &temp.Device)
 		temp.ModeRdk = modeRDK[temp.Device.DK.RDK]
+		temp.TexMode = texMode[temp.Device.TechMode]
 		devices = append(devices, temp)
 	}
 	return devices

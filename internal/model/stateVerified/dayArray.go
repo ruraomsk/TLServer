@@ -2,9 +2,10 @@ package stateVerified
 
 import (
 	"fmt"
-
+	valid "github.com/go-ozzo/ozzo-validation"
 	"github.com/pkg/errors"
-	agS_pudge "github.com/ruraomsk/ag-server/pudge"
+	agspudge "github.com/ruraomsk/ag-server/pudge"
+	"strings"
 )
 
 //StateResult информация о прорке данных
@@ -14,7 +15,7 @@ type StateResult struct {
 }
 
 //DaySetsVerified проверка суточных карт
-func DaySetsVerified(cross *agS_pudge.Cross) (result StateResult) {
+func DaySetsVerified(cross *agspudge.Cross) (result StateResult) {
 	daySets := cross.Arrays.DaySets
 	dkSets := cross.Arrays.SetDK
 	result.SumResult = append(result.SumResult, "Проверка: Суточные карты")
@@ -24,21 +25,28 @@ func DaySetsVerified(cross *agS_pudge.Cross) (result StateResult) {
 		return
 	}
 	for numDay, day := range daySets.DaySets {
-		if day.Number > 12 || day.Number < 1 {
+		if valid.Validate(&day.Number, valid.Min(1), valid.Max(12)) != nil {
 			result.SumResult = append(result.SumResult, fmt.Sprintf("Не верный номер суточной карты: %v", day.Number))
 			result.Err = errors.New("detected")
 		}
 		lineCount := 0
 		flagZero := false
 		for numLine, line := range day.Lines {
-			if line.Hour > 24 || line.Hour < 0 {
-				result.SumResult = append(result.SumResult, fmt.Sprintf("Карта № (%v) стр. № (%v): значение часа = %v", numDay+1, numLine+1, line.Hour))
+
+			valRes := valid.ValidateStruct(&line,
+				valid.Field(&line.Hour, valid.Min(0), valid.Max(24)),
+				valid.Field(&line.Min, valid.Min(0), valid.Max(59)),
+			)
+			if valRes != nil {
+				if strings.Contains(valRes.Error(), "hour") {
+					result.SumResult = append(result.SumResult, fmt.Sprintf("Карта № (%v) стр. № (%v): значение часа = %v", numDay+1, numLine+1, line.Hour))
+				}
+				if strings.Contains(valRes.Error(), "min") {
+					result.SumResult = append(result.SumResult, fmt.Sprintf("Карта № (%v) стр. № (%v): значение минуты = %v", numDay+1, numLine+1, line.Min))
+				}
 				result.Err = errors.New("detected")
 			}
-			if line.Min > 59 || line.Min < 0 {
-				result.SumResult = append(result.SumResult, fmt.Sprintf("Карта № (%v) стр. № (%v): значение минуты = %v", numDay+1, numLine+1, line.Min))
-				result.Err = errors.New("detected")
-			}
+
 			if line.Hour == 24 && line.Min != 0 {
 				result.SumResult = append(result.SumResult, fmt.Sprintf("Карта № (%v) стр. № (%v): значение минуты = %v должно быть 0", numDay+1, numLine+1, line.Min))
 				result.Err = errors.New("detected")
@@ -47,6 +55,7 @@ func DaySetsVerified(cross *agS_pudge.Cross) (result StateResult) {
 				result.SumResult = append(result.SumResult, fmt.Sprintf("Карта № (%v) стр. № (%v): №ПК = %v, время должно быть 00:00", numDay+1, numLine+1, line.PKNom))
 				result.Err = errors.New("detected")
 			}
+
 			if line.PKNom < 0 || line.PKNom > 12 {
 				result.SumResult = append(result.SumResult, fmt.Sprintf("Карта № (%v) стр. № (%v): №ПК должен быть от 0 до 12", numDay+1, numLine+1))
 				result.Err = errors.New("detected")

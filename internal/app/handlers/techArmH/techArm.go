@@ -40,6 +40,6 @@ var TechArmEngine = func(c *gin.Context) {
 	}
 	defer conn.Close()
 
-	//mapContx := u.ParserInterface(c.Value("info"))
-	techArm.ArmTechReader(conn, reg, area, data.GetDB())
+	mapContx := u.ParserInterface(c.Value("info"))
+	techArm.ArmTechReader(conn, reg, area, mapContx["login"], data.GetDB())
 }

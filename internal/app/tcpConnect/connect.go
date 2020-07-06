@@ -1,12 +1,8 @@
 package tcpConnect
 
 import (
-	"encoding/json"
-	"fmt"
 	"net"
 	"time"
-
-	"github.com/JanFant/TLServer/internal/model/license"
 
 	"github.com/JanFant/TLServer/logger"
 )
@@ -28,33 +24,9 @@ type ArmCommandMessage struct {
 
 //TCPConfig настройки для тсп соединения
 type TCPConfig struct {
-	ServerAddr      string `toml:"tcpServerAddress"` //адресс сервера
-	PortState       string `toml:"portState"`        //порт для обмена Стате
-	PortArmComm     string `toml:"portArmCommand"`   //порт для обмена арм командами
-	PortMessageInfo string `toml:"portMessageInfo"`  //порт для запроса сохранения информации о состоянии сервера
-}
-
-//MessageInfo информация о устройствах (архив)
-type MessageInfo struct {
-	Id   int    //номер сервера
-	Text string //информация о запросе (время)
-}
-
-//messageInfoMarshal преобразовать структуру в строку
-func (mInfo *MessageInfo) messageInfoMarshal() (str string, err error) {
-	newByte, err := json.Marshal(mInfo)
-	if err != nil {
-		return "", err
-	}
-	return string(newByte), err
-}
-
-//fillInfo Заполнить поле id из ключа
-func (mInfo *MessageInfo) fillInfo() {
-	license.LicenseFields.Mux.Lock()
-	defer license.LicenseFields.Mux.Unlock()
-	mInfo.Id = license.LicenseFields.Id
-	mInfo.Text = time.Now().String()
+	ServerAddr  string `toml:"tcpServerAddress"` //адресс сервера
+	PortState   string `toml:"portState"`        //порт для обмена Стате
+	PortArmComm string `toml:"portArmCommand"`   //порт для обмена арм командами
 }
 
 //getStateIP возвращает ip+port для State соединения
@@ -67,11 +39,6 @@ func (tcpConfig *TCPConfig) getArmIP() string {
 	return tcpConfig.ServerAddr + tcpConfig.PortArmComm
 }
 
-//getMessageIP возвращает ip+port для Message соединения
-func (tcpConfig *TCPConfig) getMessageIP() string {
-	return tcpConfig.ServerAddr + tcpConfig.PortMessageInfo
-}
-
 //StateChan канал для передачи информации связанной со state
 var StateChan = make(chan StateMessage)
 
@@ -82,54 +49,6 @@ var ArmCommandChan = make(chan ArmCommandMessage)
 func TCPClientStart(tcpConfig TCPConfig) {
 	go TCPForState(tcpConfig.getStateIP())
 	go TCPForARM(tcpConfig.getArmIP())
-	//go TCPForMessage(tcpConfig.getMessageIP())
-}
-
-//TCPForMessage обмен с сервером  о устройствах (архив)
-func TCPForMessage(IP string) {
-	var (
-		conn    net.Conn
-		message MessageInfo
-		err     error
-	)
-	timeTick := time.NewTicker(time.Second * 5)
-	defer timeTick.Stop()
-	FlagConnect := false
-	for {
-		select {
-		case <-timeTick.C:
-			{
-				for {
-					if !FlagConnect {
-						conn, err = net.Dial("tcp", IP)
-						if err != nil {
-							time.Sleep(time.Second * 5)
-							continue
-						}
-						FlagConnect = true
-					}
-					_ = conn.SetWriteDeadline(time.Now().Add(time.Second))
-					_, err := conn.Write([]byte("0\n"))
-					if err != nil {
-						FlagConnect = false
-					}
-					break
-				}
-				message.fillInfo()
-				messageStr, _ := message.messageInfoMarshal()
-				messageStr += "\n"
-				fmt.Println(messageStr)
-				_ = conn.SetWriteDeadline(time.Now().Add(time.Second * 5))
-				_, err := conn.Write([]byte(messageStr))
-				if err != nil {
-					FlagConnect = false
-					_ = conn.Close()
-					break
-				}
-				timeTick = time.NewTicker(time.Hour * 24)
-			}
-		}
-	}
 }
 
 //TCPForState обмен с сервером данными State

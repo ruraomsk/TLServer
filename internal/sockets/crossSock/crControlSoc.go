@@ -20,6 +20,7 @@ var crArmUsersForDisplay chan []CrossInfo
 var discArmUsers chan []CrossInfo
 var getArmUsersForDisplay chan bool
 var MapRepaint chan bool
+var UserLogoutCrControl chan string
 
 //ControlReader обработчик открытия сокета для арма перекрестка
 func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string, db *sqlx.DB) {
@@ -189,6 +190,7 @@ func ControlBroadcast() {
 	crArmUsersForDisplay = make(chan []CrossInfo)
 	discArmUsers = make(chan []CrossInfo)
 	MapRepaint = make(chan bool)
+	UserLogoutCrControl = make(chan string)
 
 	pingTicker := time.NewTicker(pingPeriod)
 
@@ -297,6 +299,14 @@ func ControlBroadcast() {
 			{
 				for conn := range controlConnect {
 					_ = conn.WriteMessage(websocket.PingMessage, nil)
+				}
+			}
+		case login := <-UserLogoutCrControl:
+			{
+				for conn, crossInfo := range controlConnect {
+					if crossInfo.Login == login {
+						_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "пользователь вышел из системы"))
+					}
 				}
 			}
 		}

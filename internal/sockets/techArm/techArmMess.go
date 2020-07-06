@@ -24,6 +24,20 @@ var (
 		8: "ЛУ",
 		9: "КУ",
 	}
+	texMode = map[int]string{
+		1:  "выбор ПК по времени по суточной карте ВР-СК",
+		2:  "выбор ПК по недельной карте ВР-НК",
+		3:  "выбор ПК по времени по суточной карте, назначенной оператором ДУ-СК",
+		4:  "выбор ПК по недельной карте, назначенной оператором ДУ-НК",
+		5:  "план по запросу оператора ДУ-ПК",
+		6:  "резервный план (отсутствие точного времени) РП",
+		7:  "коррекция привязки с ИП",
+		8:  "коррекция привязки с сервера",
+		9:  "выбор ПК по годовой карте",
+		10: "выбор ПК по ХТ",
+		11: "выбор ПК по картограмме",
+		12: "противозаторовое управление",
+	}
 )
 
 //armResponse структура для отправки сообщений (map)
@@ -63,6 +77,7 @@ type ErrorMessage struct {
 
 //ArmInfo информация о запрашиваемом арме
 type ArmInfo struct {
+	Login  string   `json:"login"`  //логин
 	Region int      `json:"region"` //регион
 	Area   []string `json:"area"`   //район
 }
@@ -82,6 +97,7 @@ type DevInfo struct {
 	Region  int              `json:"region"`
 	Area    int              `json:"area"`
 	Idevice int              `json:"idevice"`
+	TexMode string           `json:"texMode"`
 	ModeRdk string           `json:"modeRdk"`
 	Device  pudge.Controller `json:"device"`
 }

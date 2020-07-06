@@ -3,29 +3,40 @@ package stateVerified
 import (
 	"errors"
 	"fmt"
-	agS_pudge "github.com/ruraomsk/ag-server/pudge"
+	validation "github.com/go-ozzo/ozzo-validation"
+	agspudge "github.com/ruraomsk/ag-server/pudge"
+	"strings"
 )
 
-// CtrlVerified проверка недельных карт
-func CtrlVerified(cross *agS_pudge.Cross) (result StateResult) {
+// CtrlVerified проверка контроль входов
+func CtrlVerified(cross *agspudge.Cross) (result StateResult) {
 	Ctrl := cross.Arrays.SetCtrl
 	result.SumResult = append(result.SumResult, "Проверка: Контроль входов")
 	for _, stage := range Ctrl.Stage {
-		if stage.End.Hour > 24 || stage.End.Hour < 0 {
-			result.SumResult = append(result.SumResult, fmt.Sprintf("Поле (%v): час должен быть от 0 до 24", stage.Nline))
+		validRes := validation.ValidateStruct(&stage.End,
+			validation.Field(&stage.End.Hour, validation.Min(0), validation.Max(24)),
+			validation.Field(&stage.End.Minute, validation.Min(0), validation.Max(59)),
+		)
+		if validRes != nil {
+			if strings.Contains(validRes.Error(), "hour") {
+				result.SumResult = append(result.SumResult, fmt.Sprintf("Поле (%v): час должен быть от 0 до 24", stage.Nline))
+			}
+			if strings.Contains(validRes.Error(), "min") {
+				result.SumResult = append(result.SumResult, fmt.Sprintf("Поле (%v): минуты должны быть от 0 до 59", stage.Nline))
+			}
 			result.Err = errors.New("detected")
-
 		}
-		if stage.End.Minute > 59 || stage.End.Minute < 0 {
-			result.SumResult = append(result.SumResult, fmt.Sprintf("Поле (%v): минуты должны быть от 0 до 59", stage.Nline))
-			result.Err = errors.New("detected")
-		}
-		if stage.MGRLen < 0 || stage.MGRLen > 255 {
-			result.SumResult = append(result.SumResult, fmt.Sprintf("Поле (%v): Т конт МГР должно быть от 0 до 255", stage.Nline))
-			result.Err = errors.New("detected")
-		}
-		if stage.TVPLen < 0 || stage.TVPLen > 255 {
-			result.SumResult = append(result.SumResult, fmt.Sprintf("Поле (%v): Т конт ТВП должно быть от 0 до 255", stage.Nline))
+		validRes = validation.ValidateStruct(&stage,
+			validation.Field(&stage.MGRLen, validation.Min(0), validation.Max(255)),
+			validation.Field(&stage.TVPLen, validation.Min(0), validation.Max(255)),
+		)
+		if validRes != nil {
+			if strings.Contains(validRes.Error(), "lenMGR") {
+				result.SumResult = append(result.SumResult, fmt.Sprintf("Поле (%v): Т конт МГР должно быть от 0 до 255", stage.Nline))
+			}
+			if strings.Contains(validRes.Error(), "lenTVP") {
+				result.SumResult = append(result.SumResult, fmt.Sprintf("Поле (%v): Т конт ТВП должно быть от 0 до 255", stage.Nline))
+			}
 			result.Err = errors.New("detected")
 		}
 	}

@@ -2,12 +2,13 @@ package stateVerified
 
 import (
 	"fmt"
+	valid "github.com/go-ozzo/ozzo-validation"
 	"github.com/pkg/errors"
-	agS_pudge "github.com/ruraomsk/ag-server/pudge"
+	agspudge "github.com/ruraomsk/ag-server/pudge"
 )
 
 // MouthSetsVerified проверка месячных(годовых) карт
-func MouthSetsVerified(cross *agS_pudge.Cross, empty IsEmpty) (result StateResult) {
+func MouthSetsVerified(cross *agspudge.Cross, empty IsEmpty) (result StateResult) {
 	mouthSets := cross.Arrays.MonthSets
 	weekSets := cross.Arrays.WeekSets
 	result.SumResult = append(result.SumResult, "Проверка: Годовых карты")
@@ -19,9 +20,10 @@ func MouthSetsVerified(cross *agS_pudge.Cross, empty IsEmpty) (result StateResul
 
 	for _, mouth := range mouthSets.MonthSets {
 
-		if mouth.Number > 12 || mouth.Number < 0 {
+		if valid.Validate(&mouth.Number, valid.Min(0), valid.Max(12)) != nil {
 			result.SumResult = append(result.SumResult, fmt.Sprintf("Карта № (%v): № недельной карты должен быть от 1 до 12", mouth.Number))
 			result.Err = errors.New("detected")
+
 		}
 		flagFill := false
 

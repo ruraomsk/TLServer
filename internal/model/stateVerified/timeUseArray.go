@@ -2,27 +2,33 @@ package stateVerified
 
 import (
 	"fmt"
+	valid "github.com/go-ozzo/ozzo-validation"
 	"github.com/pkg/errors"
-	agS_pudge "github.com/ruraomsk/ag-server/pudge"
+	agspudge "github.com/ruraomsk/ag-server/pudge"
 	"strconv"
 	"strings"
 )
 
 // TimeUseVerified проверка недельных карт
-func TimeUseVerified(cross *agS_pudge.Cross) (result StateResult) {
+func TimeUseVerified(cross *agspudge.Cross) (result StateResult) {
 	timeUse := cross.Arrays.SetTimeUse
 	result.SumResult = append(result.SumResult, "Проверка: Внешние выходы")
 	for numUses, uses := range timeUse.Uses {
-		if uses.Type > 1 || uses.Type < 0 {
-			result.SumResult = append(result.SumResult, fmt.Sprintf("Поле (%v): тип стат. должен быть 0 или 1", uses.Name))
-			result.Err = errors.New("detected")
-		}
-		if uses.Tvps > 9 || uses.Tvps < 0 {
-			result.SumResult = append(result.SumResult, fmt.Sprintf("Поле (%v): ТВП1,2, МГР, ВПУ должен быть от 0 до 9", uses.Name))
-			result.Err = errors.New("detected")
-		}
-		if uses.Dk > 1 || uses.Dk < 0 {
-			result.SumResult = append(result.SumResult, fmt.Sprintf("Поле (%v): № ДК должен быть 0 или 1", uses.Name))
+		validRes := valid.ValidateStruct(&uses,
+			valid.Field(&uses.Type, valid.Min(0), valid.Max(1)),
+			valid.Field(&uses.Tvps, valid.Min(0), valid.Max(9)),
+			valid.Field(&uses.Dk, valid.Min(0), valid.Max(1)),
+		)
+		if validRes != nil {
+			if strings.Contains(validRes.Error(), "type") {
+				result.SumResult = append(result.SumResult, fmt.Sprintf("Поле (%v): тип стат. должен быть 0 или 1", uses.Name))
+			}
+			if strings.Contains(validRes.Error(), "tvps") {
+				result.SumResult = append(result.SumResult, fmt.Sprintf("Поле (%v): ТВП1,2, МГР, ВПУ должен быть от 0 до 9", uses.Name))
+			}
+			if strings.Contains(validRes.Error(), "dk") {
+				result.SumResult = append(result.SumResult, fmt.Sprintf("Поле (%v): № ДК должен быть 0 или 1", uses.Name))
+			}
 			result.Err = errors.New("detected")
 		}
 

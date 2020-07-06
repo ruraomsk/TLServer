@@ -23,6 +23,7 @@ var discCrossUsers chan []CrossInfo
 var getCrossUsersForDisplay chan bool
 var armDeleted chan CrossInfo
 var GetCrossUserForMap chan bool
+var UserLogoutCross chan string
 
 const pingPeriod = time.Second * 30
 
@@ -129,6 +130,7 @@ func CrossBroadcast(db *sqlx.DB) {
 	getCrossUsersForDisplay = make(chan bool)
 	armDeleted = make(chan CrossInfo)
 	GetCrossUserForMap = make(chan bool)
+	UserLogoutCross = make(chan string)
 
 	type crossUpdateInfo struct {
 		Idevice  int             `json:"idevice"`
@@ -352,6 +354,14 @@ func CrossBroadcast(db *sqlx.DB) {
 				for conn, info := range crossConnect {
 					if info.Pos == armInfo.Pos {
 						_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "перекресток удален"))
+					}
+				}
+			}
+		case login := <-UserLogoutCross:
+			{
+				for conn, info := range crossConnect {
+					if info.Login == login {
+						_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "пользователь вышел из системы"))
 					}
 				}
 			}

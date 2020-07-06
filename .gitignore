@@ -16,4 +16,5 @@ release/**
 resources
 resources/**
 
+copyToServ.bat
 TLServer.exe

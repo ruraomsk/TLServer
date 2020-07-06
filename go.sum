@@ -128,6 +128,10 @@ github.com/ruraomsk/ag-server v0.0.0-20200602041011-30b1f0ca6f70 h1:DwbNkxcMC4DU
 github.com/ruraomsk/ag-server v0.0.0-20200602041011-30b1f0ca6f70/go.mod h1:kDkkBE++mPwNAxJrRMOX4Z87AA5XqR7QTpSiKT3XiTU=
 github.com/ruraomsk/ag-server v0.0.0-20200702090759-ab55fef72758 h1:CNZSdseTqkIvM5KlLFbJY6ixaSC94f3WM4xDAWow1M0=
 github.com/ruraomsk/ag-server v0.0.0-20200702090759-ab55fef72758/go.mod h1:kDkkBE++mPwNAxJrRMOX4Z87AA5XqR7QTpSiKT3XiTU=
+github.com/ruraomsk/ag-server v0.0.0-20200706085535-d89db236fe4f h1:id98aoEm/3h/TOT8fHafYf3WL5NZQzfaCPoK7+1HQlo=
+github.com/ruraomsk/ag-server v0.0.0-20200706085535-d89db236fe4f/go.mod h1:kDkkBE++mPwNAxJrRMOX4Z87AA5XqR7QTpSiKT3XiTU=
+github.com/ruraomsk/ag-server v0.0.0-20200706094749-5344c1e1274d h1:mkv3sN7MxCxydXIc5B8RiupL7A/6SsYRjAO2oJwTNks=
+github.com/ruraomsk/ag-server v0.0.0-20200706094749-5344c1e1274d/go.mod h1:kDkkBE++mPwNAxJrRMOX4Z87AA5XqR7QTpSiKT3XiTU=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=

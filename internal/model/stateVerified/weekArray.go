@@ -2,8 +2,9 @@ package stateVerified
 
 import (
 	"fmt"
+	valid "github.com/go-ozzo/ozzo-validation"
 	"github.com/pkg/errors"
-	agS_pudge "github.com/ruraomsk/ag-server/pudge"
+	agspudge "github.com/ruraomsk/ag-server/pudge"
 )
 
 //IsEmpty инфорация о пустых картах
@@ -12,7 +13,7 @@ type IsEmpty struct {
 }
 
 // WeekSetsVerified проверка недельных карт
-func WeekSetsVerified(cross *agS_pudge.Cross) (result StateResult, Empty IsEmpty) {
+func WeekSetsVerified(cross *agspudge.Cross) (result StateResult, Empty IsEmpty) {
 	Empty.Week = make(map[int]bool)
 	weekSets := cross.Arrays.WeekSets
 	daySets := cross.Arrays.DaySets
@@ -23,7 +24,7 @@ func WeekSetsVerified(cross *agS_pudge.Cross) (result StateResult, Empty IsEmpty
 		return
 	}
 	for _, week := range weekSets.WeekSets {
-		if week.Number > 12 || week.Number < 0 {
+		if valid.Validate(&week.Number, valid.Min(0), valid.Max(12)) != nil {
 			result.SumResult = append(result.SumResult, fmt.Sprintf("Карта № (%v): № недельной карты должен быть от 1 до 12", week.Number))
 			result.Err = errors.New("detected")
 		}
