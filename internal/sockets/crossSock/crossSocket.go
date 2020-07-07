@@ -110,9 +110,8 @@ func CrossReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string, 
 				arm := comm.CommandARM{}
 				_ = json.Unmarshal(p, &arm)
 				arm.User = crossCI.Login
-				resp := dispatchControl(arm)
-				resp.info = crossCI
-				resp.conn = conn
+				resp := newCrossMess(typeDButton, conn, nil, crossCI)
+				resp.Data = sockets.DispatchControl(arm)
 				resp.send()
 			}
 		}
@@ -365,7 +364,14 @@ func CrossBroadcast(db *sqlx.DB) {
 					}
 				}
 			}
+		case msg := <-sockets.DispatchMessageFromTechArm:
+			{
+				for conn, info := range crossConnect {
+					if info.Idevice == msg.Idevice {
+						_ = conn.WriteJSON(msg.Data)
+					}
+				}
+			}
 		}
-
 	}
 }

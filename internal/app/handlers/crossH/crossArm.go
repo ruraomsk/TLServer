@@ -19,18 +19,21 @@ var upgrader = websocket.Upgrader{
 
 //CrossEngine обработчик вебсокета для работы с перекрестком
 var CrossEngine = func(c *gin.Context) {
+	var (
+		crEdit crossSock.PosInfo
+		err    error
+	)
+	crEdit.Region, crEdit.Area, crEdit.Id, err = queryParser(c)
+	if err != nil {
+		return
+	}
+
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		u.SendRespond(c, u.Message(http.StatusInternalServerError, "Bad socket connect"))
 		return
 	}
 	defer conn.Close()
-
-	var crEdit crossSock.PosInfo
-	crEdit.Region, crEdit.Area, crEdit.Id, err = queryParser(c)
-	if err != nil {
-		return
-	}
 
 	mapContx := u.ParserInterface(c.Value("info"))
 
@@ -39,18 +42,20 @@ var CrossEngine = func(c *gin.Context) {
 
 //CrossControlEngine обработчик вебсокета для работы с армом перекрестком
 var CrossControlEngine = func(c *gin.Context) {
+	var (
+		crEdit crossSock.PosInfo
+		err    error
+	)
+	crEdit.Region, crEdit.Area, crEdit.Id, err = queryParser(c)
+	if err != nil {
+		return
+	}
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		u.SendRespond(c, u.Message(http.StatusInternalServerError, "Bad socket connect"))
 		return
 	}
 	defer conn.Close()
-
-	var crEdit crossSock.PosInfo
-	crEdit.Region, crEdit.Area, crEdit.Id, err = queryParser(c)
-	if err != nil {
-		return
-	}
 
 	mapContx := u.ParserInterface(c.Value("info"))
 

@@ -10,6 +10,7 @@ var (
 	typeError                  = "error"
 	typeClose                  = "close"
 	typeArmInfo                = "armInfo"
+	typeDButton                = "dispatch"
 	typeCrosses                = "crosses"
 	typeDevices                = "devices"
 	errUnregisteredMessageType = "unregistered message type"

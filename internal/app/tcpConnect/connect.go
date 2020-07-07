@@ -7,6 +7,12 @@ import (
 	"github.com/JanFant/TLServer/logger"
 )
 
+//StateChan канал для передачи информации связанной со state
+var StateChan = make(chan StateMessage)
+
+//ArmCommandChan канал для передачи информации связанной с командами арма
+var ArmCommandChan = make(chan ArmCommandMessage)
+
 //StateMessage state информация для отправки на сервер
 type StateMessage struct {
 	User     string //пользователь отправляющий данные (логин)
@@ -39,16 +45,12 @@ func (tcpConfig *TCPConfig) getArmIP() string {
 	return tcpConfig.ServerAddr + tcpConfig.PortArmComm
 }
 
-//StateChan канал для передачи информации связанной со state
-var StateChan = make(chan StateMessage)
-
-//ArmCommandChan канал для передачи информации связанной с командами арма
-var ArmCommandChan = make(chan ArmCommandMessage)
-
 //TCPClientStart запуск соединений
 func TCPClientStart(tcpConfig TCPConfig) {
-	go TCPForState(tcpConfig.getStateIP())
-	go TCPForARM(tcpConfig.getArmIP())
+	typeInfo = make(map[string]string)
+	typeInfo[TypeDispatch] = tcpConfig.getArmIP()
+	typeInfo[TypeState] = tcpConfig.getStateIP()
+	go TCPBroadcast(typeInfo)
 }
 
 //TCPForState обмен с сервером данными State

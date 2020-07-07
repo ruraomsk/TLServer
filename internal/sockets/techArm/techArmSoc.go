@@ -8,6 +8,7 @@ import (
 	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/gorilla/websocket"
 	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/ag-server/comm"
 	"reflect"
 	"strconv"
 	"time"
@@ -70,9 +71,16 @@ func ArmTechReader(conn *websocket.Conn, reg int, area []string, login string, d
 			resp.send()
 		}
 		switch typeSelect {
-		case "nothing":
+		case typeDButton: //отправка сообщения о изменениии режима работы
 			{
-
+				arm := comm.CommandARM{}
+				_ = json.Unmarshal(p, &arm)
+				arm.User = armInfo.Login
+				resp := newArmMess(typeDButton, conn, nil)
+				resp.Data = sockets.DispatchControl(arm)
+				resp.send()
+				var message = sockets.DBMessage{Data: resp, Idevice: arm.ID}
+				sockets.DispatchMessageFromTechArm <- message
 			}
 		}
 	}
@@ -84,6 +92,7 @@ func ArmTechBroadcast(db *sqlx.DB) {
 	writeArm = make(chan armResponse)
 	TArmNewCrossData = make(chan bool)
 	UserLogoutTech = make(chan string)
+	sockets.DispatchMessageFromTechArm = make(chan sockets.DBMessage)
 
 	readTick := time.NewTicker(devUpdate)
 	defer readTick.Stop()

@@ -33,7 +33,7 @@ func DaySetsVerified(cross *agspudge.Cross) (result StateResult) {
 		flagZero := false
 		for numLine, line := range day.Lines {
 
-			valRes := valid.ValidateStruct(&line,
+			valRes := valid.ValidateStruct(line,
 				valid.Field(&line.Hour, valid.Min(0), valid.Max(24)),
 				valid.Field(&line.Min, valid.Min(0), valid.Max(59)),
 			)

@@ -7,7 +7,7 @@ import (
 	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/JanFant/TLServer/internal/sockets/techArm"
 	"github.com/jmoiron/sqlx"
-	agS_pudge "github.com/ruraomsk/ag-server/pudge"
+	agspudge "github.com/ruraomsk/ag-server/pudge"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -120,9 +120,9 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 		case typeCreateB: //создание перекрестка
 			{
 				temp := struct {
-					Type  string          `json:"type"`
-					State agS_pudge.Cross `json:"state"`
-					Z     int             `json:"z"`
+					Type  string         `json:"type"`
+					State agspudge.Cross `json:"state"`
+					Z     int            `json:"z"`
 				}{}
 				_ = json.Unmarshal(p, &temp)
 				resp := createCrossData(temp.State, controlI.Login, temp.Z, db)
@@ -173,9 +173,8 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 				arm := comm.CommandARM{}
 				_ = json.Unmarshal(p, &arm)
 				arm.User = controlI.Login
-				resp := dispatchControl(arm)
-				resp.info = controlI
-				resp.conn = conn
+				resp := newControlMess(typeDButton, conn, nil, controlI)
+				resp.Data = sockets.DispatchControl(arm)
 				resp.send()
 			}
 		}
