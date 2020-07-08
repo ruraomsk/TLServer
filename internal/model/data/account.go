@@ -13,7 +13,6 @@ import (
 	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/dgrijalva/jwt-go"
 	validation "github.com/go-ozzo/ozzo-validation"
-	"github.com/go-ozzo/ozzo-validation/is"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -48,9 +47,9 @@ var errorConnectDB = "соединение с БД потеряно"
 //Validate проверка аккаунда в бд
 func (data *Account) Validate() error {
 	err := validation.ValidateStruct(data,
-		validation.Field(&data.Login, validation.Required, is.ASCII, validation.Length(4, 100)),
-		validation.Field(&data.Password, validation.Required, is.ASCII, validation.Length(6, 100)),
-		validation.Field(&data.Description, validation.Required, is.ASCII, validation.Length(1, 255)),
+		validation.Field(&data.Login, validation.Required, validation.Length(4, 100)),
+		validation.Field(&data.Password, validation.Required, validation.Length(6, 100)),
+		validation.Field(&data.Description, validation.Required, validation.Length(1, 255)),
 	)
 	if data.Login == "Global" {
 		return errors.New("этот логин не может быть создан")

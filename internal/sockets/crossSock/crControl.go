@@ -108,7 +108,7 @@ func sendCrossData(state agspudge.Cross, login string) map[string]interface{} {
 }
 
 //deleteCrossData удаление перекрестка на сервере
-func deleteCrossData(state agspudge.Cross, login string) map[string]interface{} {
+func deleteCrossData(state agspudge.Cross, login string, pos PosInfo) map[string]interface{} {
 	state.IDevice = -1
 	var (
 		userCross = agspudge.UserCross{User: login, State: state}
@@ -119,6 +119,7 @@ func deleteCrossData(state agspudge.Cross, login string) map[string]interface{} 
 	resp["status"] = status
 	if status {
 		resp["ok"] = true
+		resp["pos"] = pos
 	}
 	return resp
 }

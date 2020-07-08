@@ -80,23 +80,42 @@ func CacheInfoDataUpdate() {
 	}
 }
 
+//FillMapAreaBox заполнение мапы районов и регионов с координатами
 func FillMapAreaBox() {
 	CacheArea.Mux.Lock()
 	defer CacheArea.Mux.Unlock()
 	CacheInfo.Mux.Lock()
 	defer CacheInfo.Mux.Unlock()
 	CacheArea.Areas = make([]locations.AreaBox, 0)
-	for numReg, region := range CacheInfo.MapRegion {
-		if region == "*" {
-			continue
-		}
-		for numArea, area := range CacheInfo.MapArea[region] {
-			var temp = locations.AreaBox{Area: area, Region: region}
-			if err := temp.FillBox(GetDB(), numReg, numArea); err != nil {
-				continue
+	//запрос уникальных регионов и районов
+	rows, _ := GetDB().Query("SELECT distinct on (region, area) region, area, Min(dgis[0]) as \"Y0\", Min(convTo360(dgis[1])) as \"X0\", Max(dgis[0]) as \"Y1\", Max(convTo360(dgis[1])) as \"X1\"  FROM public.\"cross\"  group by region, area")
+	for rows.Next() {
+		var temp locations.AreaBox
+		_ = rows.Scan(&temp.Region, &temp.Area, &temp.Box.Point0.Y, &temp.Box.Point0.X, &temp.Box.Point1.Y, &temp.Box.Point1.X)
+		temp.Sub = make([]locations.SybAreaBox, 0)
+		CacheArea.Areas = append(CacheArea.Areas, temp)
+	}
+
+	//запрос уникальных подрайонов
+	rows, _ = GetDB().Query("SELECT distinct on (region, area, subarea) region, area, subarea, Min(dgis[0]) as \"Y0\", Min(convTo360(dgis[1])) as \"X0\", Max(dgis[0]) as \"Y1\", Max(convTo360(dgis[1])) as \"X1\"  FROM public.\"cross\"  group by region, area, subarea")
+	for rows.Next() {
+		var (
+			tempSyb locations.SybAreaBox
+			reg     string
+			area    string
+		)
+		_ = rows.Scan(&reg, &area, &tempSyb.SubArea, &tempSyb.Box.Point0.Y, &tempSyb.Box.Point0.X, &tempSyb.Box.Point1.Y, &tempSyb.Box.Point1.X)
+		for num, areaBox := range CacheArea.Areas {
+			if areaBox.Region == reg && areaBox.Area == area {
+				CacheArea.Areas[num].Sub = append(CacheArea.Areas[num].Sub, tempSyb)
 			}
-			CacheArea.Areas = append(CacheArea.Areas, temp)
 		}
+
+	}
+	//заполним поля названиями
+	for num := range CacheArea.Areas {
+		CacheArea.Areas[num].Region = CacheInfo.MapRegion[CacheArea.Areas[num].Region]
+		CacheArea.Areas[num].Area = CacheInfo.MapArea[CacheArea.Areas[num].Region][CacheArea.Areas[num].Area]
 	}
 }
 

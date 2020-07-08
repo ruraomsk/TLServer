@@ -131,10 +131,14 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 			}
 		case typeDeleteB: //удаление state
 			{
-				temp := StateHandler{}
+				temp := struct {
+					Type  string         `json:"type"`
+					State agspudge.Cross `json:"state"`
+					Pos   PosInfo        `json:"pos"`
+				}{}
 				_ = json.Unmarshal(p, &temp)
 				resp := newControlMess(typeDeleteB, conn, nil, controlI)
-				resp.Data = deleteCrossData(temp.State, controlI.Login)
+				resp.Data = deleteCrossData(temp.State, controlI.Login, temp.Pos)
 				resp.send()
 			}
 		case typeUpdateB: //обновление state
@@ -235,7 +239,7 @@ func ControlBroadcast() {
 							//если есть поле отправить всем кто слушает
 							for conn, info := range controlConnect {
 								if info.Pos == msg.info.Pos {
-									_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "перекресток удален"))
+									_ = conn.WriteJSON(msg)
 								}
 							}
 							armDeleted <- msg.info
@@ -269,10 +273,12 @@ func ControlBroadcast() {
 								break
 							}
 						}
+						fmt.Println("control cok edit :", controlConnect)
 					}
 				case typeClose:
 					{
 						delete(controlConnect, msg.conn)
+						fmt.Println("control cok close :", controlConnect)
 					}
 				default:
 					{

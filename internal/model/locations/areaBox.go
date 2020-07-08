@@ -16,7 +16,15 @@ type AreaBox struct {
 	Region string
 	Area   string
 	Box    BoxPoint
+	Sub    []SybAreaBox
 }
+
+type SybAreaBox struct {
+	SubArea int
+	Box     BoxPoint
+}
+
+//SELECT distinct on (region,area, subarea) region, area, subarea, Min(dgis[0]) as "Y0", Min(convTo360(dgis[1])) as "X0", Max(dgis[0]) as "Y1", Max(convTo360(dgis[1])) as "X1"   FROM public."cross" Group by region, area, subarea;
 
 func (a *AreaBox) FillBox(db *sqlx.DB, region, area string) error {
 	row := db.QueryRow(`SELECT Min(dgis[0]) as "Y0", Min(convTo360(dgis[1])) as "X0", Max(dgis[0]) as "Y1", Max(convTo360(dgis[1])) as "X1"  FROM public."cross" WHERE region = $1 AND area = $2`, region, area)
