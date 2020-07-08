@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/model/config"
 	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/gorilla/websocket"
@@ -76,8 +77,15 @@ func ArmTechReader(conn *websocket.Conn, reg int, area []string, login string, d
 				arm := comm.CommandARM{}
 				_ = json.Unmarshal(p, &arm)
 				arm.User = armInfo.Login
-				resp := newArmMess(typeDButton, conn, nil)
-				resp.Data = sockets.DispatchControl(arm)
+				var (
+					resp = newArmMess(typeDButton, conn, nil)
+					mess = tcpConnect.TCPMessage{User: arm.User, Type: tcpConnect.TypeDispatch, Id: arm.ID, Data: arm}
+				)
+				status := mess.SendToTCPServer()
+				resp.Data["status"] = status
+				if status {
+					resp.Data["command"] = arm
+				}
 				resp.send()
 				var message = sockets.DBMessage{Data: resp, Idevice: arm.ID}
 				sockets.DispatchMessageFromTechArm <- message

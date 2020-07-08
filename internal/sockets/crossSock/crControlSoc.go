@@ -3,6 +3,7 @@ package crossSock
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/JanFant/TLServer/internal/sockets/techArm"
@@ -103,9 +104,8 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 			{
 				temp := StateHandler{}
 				_ = json.Unmarshal(p, &temp)
-				resp := sendCrossData(temp.State, controlI.Login)
-				resp.conn = conn
-				resp.info = controlI
+				resp := newControlMess(typeSendB, conn, nil, controlI)
+				resp.Data = sendCrossData(temp.State, controlI.Login)
 				resp.send()
 			}
 		case typeCheckB: //проверка state
@@ -125,19 +125,16 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 					Z     int            `json:"z"`
 				}{}
 				_ = json.Unmarshal(p, &temp)
-				resp := createCrossData(temp.State, controlI.Login, temp.Z, db)
-				resp.info = controlI
-				resp.conn = conn
+				resp := newControlMess(typeCreateB, conn, nil, controlI)
+				resp.Data = createCrossData(temp.State, controlI.Login, temp.Z, db)
 				resp.send()
-
 			}
 		case typeDeleteB: //удаление state
 			{
 				temp := StateHandler{}
 				_ = json.Unmarshal(p, &temp)
-				resp := deleteCrossData(temp.State, controlI.Login)
-				resp.info = controlI
-				resp.conn = conn
+				resp := newControlMess(typeDeleteB, conn, nil, controlI)
+				resp.Data = deleteCrossData(temp.State, controlI.Login)
 				resp.send()
 			}
 		case typeUpdateB: //обновление state
@@ -173,8 +170,15 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 				arm := comm.CommandARM{}
 				_ = json.Unmarshal(p, &arm)
 				arm.User = controlI.Login
-				resp := newControlMess(typeDButton, conn, nil, controlI)
-				resp.Data = sockets.DispatchControl(arm)
+				var (
+					resp = newControlMess(typeDButton, conn, nil, controlI)
+					mess = tcpConnect.TCPMessage{User: arm.User, Type: tcpConnect.TypeDispatch, Id: arm.ID, Data: arm}
+				)
+				status := mess.SendToTCPServer()
+				resp.Data["status"] = status
+				if status {
+					resp.Data["command"] = arm
+				}
 				resp.send()
 			}
 		}

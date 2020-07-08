@@ -1,7 +1,6 @@
 package crossSock
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/JanFant/TLServer/internal/model/crossCreator"
 	"github.com/JanFant/TLServer/internal/model/deviceLog"
@@ -94,81 +93,51 @@ func checkCrossData(state agspudge.Cross) ControlSokResponse {
 }
 
 //sendCrossData получение данных от пользователя проверка и отправка серверу(устройств)
-func sendCrossData(state agspudge.Cross, login string) ControlSokResponse {
+func sendCrossData(state agspudge.Cross, login string) map[string]interface{} {
 	var (
-		stateMessage tcpConnect.StateMessage
-		err          error
-		userCross    agspudge.UserCross
+		userCross = agspudge.UserCross{User: login, State: state}
+		mess      = tcpConnect.TCPMessage{User: login, Type: tcpConnect.TypeState, Id: userCross.State.IDevice, Data: userCross}
 	)
-
-	userCross.State = state
-	userCross.User = login
-	stateMessage.StateStr, err = stateMarshal(userCross)
-	if err != nil {
-		logger.Error.Println("|Message: control socket, failed to Marshal state information: ", err.Error())
-		resp := newControlMess(typeError, nil, nil, CrossInfo{})
-		resp.Data["message"] = "failed to Marshal state information"
-		return resp
+	status := mess.SendToTCPServer()
+	resp := make(map[string]interface{})
+	resp["status"] = status
+	if status {
+		resp["state"] = state
 	}
-	stateMessage.User = login
-	resp := newControlMess(typeSendB, nil, nil, CrossInfo{})
-	resp.Data["user"] = login
-	if sendToUDPServer(stateMessage) {
-		resp.Data["message"] = "cross send to server"
-		resp.Data["state"] = state
-		return resp
-	} else {
-		resp.Data["message"] = "TCP Server not responding"
-		return resp
-	}
-
+	return resp
 }
 
 //deleteCrossData удаление перекрестка на сервере
-func deleteCrossData(state agspudge.Cross, login string) ControlSokResponse {
-	var (
-		stateMessage tcpConnect.StateMessage
-		userCross    agspudge.UserCross
-		err          error
-	)
-	stateMessage.Info = fmt.Sprintf("Idevice: %v, position : %v//%v//%v", state.IDevice, state.Region, state.Area, state.ID)
+func deleteCrossData(state agspudge.Cross, login string) map[string]interface{} {
 	state.IDevice = -1
-	userCross.State = state
-	userCross.User = login
-	stateMessage.StateStr, err = stateMarshal(userCross)
-	if err != nil {
-		logger.Error.Println("|Message: control socket, failed to Marshal state information: ", err.Error())
-		resp := newControlMess(typeError, nil, nil, CrossInfo{})
-		resp.Data["message"] = "failed to Marshal state information"
-		return resp
+	var (
+		userCross = agspudge.UserCross{User: login, State: state}
+		mess      = tcpConnect.TCPMessage{User: login, Type: tcpConnect.TypeState, Id: userCross.State.IDevice, Data: userCross}
+	)
+	status := mess.SendToTCPServer()
+	resp := make(map[string]interface{})
+	resp["status"] = status
+	if status {
+		resp["ok"] = true
 	}
-	stateMessage.User = login
-	resp := newControlMess(typeDeleteB, nil, nil, CrossInfo{})
-	resp.Data["user"] = login
-	if sendToUDPServer(stateMessage) {
-		resp.Data["message"] = fmt.Sprintf("cross data deleted. Info (%v)", stateMessage.Info)
-		resp.Data["ok"] = true
-		return resp
-	} else {
-		resp.Data["message"] = "TCP Server not responding"
-		return resp
-	}
+	return resp
 }
 
 //createCrossData добавление нового перекрестка
-func createCrossData(state agspudge.Cross, login string, z int, db *sqlx.DB) ControlSokResponse {
+func createCrossData(state agspudge.Cross, login string, z int, db *sqlx.DB) map[string]interface{} {
 	var (
-		stateMessage tcpConnect.StateMessage
-		userCross    agspudge.UserCross
-		verRes       []string
-		stateSql     string
+		userCross = agspudge.UserCross{User: login, State: state}
+		mess      = tcpConnect.TCPMessage{User: login, Type: tcpConnect.TypeState, Id: userCross.State.IDevice, Data: userCross}
+		verRes    []string
+		stateSql  string
 	)
 	sqlStr := fmt.Sprintf(`SELECT state FROM public.cross WHERE state::jsonb @> '{"Idevice":%v}'::jsonb OR (region = %v and area = %v and id = %v)`, state.IDevice, state.Region, state.Area, state.ID)
 	rows, err := db.Query(sqlStr)
 	if err != nil {
 		logger.Error.Println("|Message: control socket (create Button), DB not respond : ", err.Error())
-		resp := newControlMess(typeError, nil, nil, CrossInfo{})
-		resp.Data["message"] = "DB not respond"
+		resp := make(map[string]interface{})
+		resp["status"] = false
+		resp["message"] = "DB not respond"
 		return resp
 	}
 
@@ -182,61 +151,24 @@ func createCrossData(state agspudge.Cross, login string, z int, db *sqlx.DB) Con
 		}
 	}
 	if len(verRes) > 0 {
-		resp := newControlMess(typeCreateB, nil, nil, CrossInfo{})
-		resp.Data["result"] = verRes
+		resp := make(map[string]interface{})
+		resp["status"] = false
+		resp["result"] = verRes
 		return resp
 	}
 
-	userCross.State = state
-	userCross.User = login
-	stateMessage.StateStr, err = stateMarshal(userCross)
-	if err != nil {
-		logger.Error.Println("|Message: control socket, failed to Marshal state information: ", err.Error())
-		resp := newControlMess(typeError, nil, nil, CrossInfo{})
-		resp.Data["message"] = "failed to Marshal state information"
-		return resp
-	}
-	stateMessage.User = login
-	resp := newControlMess(typeCreateB, nil, nil, CrossInfo{})
-	resp.Data["user"] = login
-	if sendToUDPServer(stateMessage) {
+	status := mess.SendToTCPServer()
+	resp := make(map[string]interface{})
+	resp["status"] = status
+	if status {
+		resp["ok"] = true
 		if crossCreator.ShortCreateDirPng(state.Region, state.Area, state.ID, z, state.Dgis) {
-			resp.Data["message"] = "cross created"
-			resp.Data["ok"] = true
-			return resp
+			resp["message"] = "cross created"
 		} else {
-			resp.Data["message"] = "cross created without Map.png - contact admin"
-			resp.Data["ok"] = true
-			return resp
-		}
-	} else {
-		resp.Data["message"] = "TCP Server not responding"
-		return resp
-	}
-}
-
-//sendToUDPServer отправление данных в канал
-func sendToUDPServer(message tcpConnect.StateMessage) bool {
-	tcpConnect.StateChan <- message
-	for {
-		chanRespond := <-tcpConnect.StateChan
-		if chanRespond.User == message.User {
-			if chanRespond.Message == "ok" {
-				return true
-			} else {
-				return false
-			}
+			resp["message"] = "cross created without Map.png - contact admin"
 		}
 	}
-}
-
-//stateMarshal преобразовать структуру в строку
-func stateMarshal(cross agspudge.UserCross) (str string, err error) {
-	newByte, err := json.Marshal(cross)
-	if err != nil {
-		return "", err
-	}
-	return string(newByte), err
+	return resp
 }
 
 //verifiedState набор проверкок для стейта

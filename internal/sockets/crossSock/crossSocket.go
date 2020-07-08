@@ -3,6 +3,7 @@ package crossSock
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/sockets"
 	"time"
@@ -110,8 +111,15 @@ func CrossReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string, 
 				arm := comm.CommandARM{}
 				_ = json.Unmarshal(p, &arm)
 				arm.User = crossCI.Login
-				resp := newCrossMess(typeDButton, conn, nil, crossCI)
-				resp.Data = sockets.DispatchControl(arm)
+				var (
+					resp = newCrossMess(typeDButton, conn, nil, crossCI)
+					mess = tcpConnect.TCPMessage{User: arm.User, Type: tcpConnect.TypeDispatch, Id: arm.ID, Data: arm}
+				)
+				status := mess.SendToTCPServer()
+				resp.Data["status"] = status
+				if status {
+					resp.Data["command"] = arm
+				}
 				resp.send()
 			}
 		}

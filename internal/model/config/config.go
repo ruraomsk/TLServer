@@ -9,6 +9,7 @@ import (
 //GlobalConfig глобальная переменная для структуры конфиг
 var GlobalConfig *Config
 
+//DBConfig структура с полями для ДБ
 type DBConfig struct {
 	Name            string `toml:"db_name"`            //имя БД
 	Password        string `toml:"db_password"`        //пароль доступа к БД
