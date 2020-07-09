@@ -66,7 +66,7 @@ func MapReader(conn *websocket.Conn, c *gin.Context, db *sqlx.DB) {
 			resp.send()
 		}
 		switch typeSelect {
-		case typeJump:
+		case typeJump: //отправка default
 			{
 				location := &data.Locations{}
 				_ = json.Unmarshal(p, &location)
@@ -75,7 +75,7 @@ func MapReader(conn *websocket.Conn, c *gin.Context, db *sqlx.DB) {
 				resp.Data["boxPoint"] = box
 				resp.send()
 			}
-		case typeLogin:
+		case typeLogin: //отправка default
 			{
 				account := &data.Account{}
 				_ = json.Unmarshal(p, &account)
@@ -87,7 +87,7 @@ func MapReader(conn *websocket.Conn, c *gin.Context, db *sqlx.DB) {
 				resp.conn = conn
 				resp.send()
 			}
-		case typeLogOut:
+		case typeLogOut: //отправка default
 			{
 				if login != "" {
 					resp := logOut(login, db)
@@ -100,7 +100,12 @@ func MapReader(conn *websocket.Conn, c *gin.Context, db *sqlx.DB) {
 					techArm.UserLogoutTech <- login
 				}
 			}
-
+		case typeCheckConn: //отправка default
+			{
+				resp := newMapMess(typeCheckConn, conn, nil)
+				resp.Data[typeCheckConn] = checkConnect(db)
+				resp.send()
+			}
 		}
 	}
 }
@@ -183,6 +188,7 @@ func MapBroadcast(db *sqlx.DB) {
 					_ = msg.conn.WriteJSON(msg)
 				}
 			}
+
 		}
 	}
 }

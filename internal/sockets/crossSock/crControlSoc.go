@@ -131,14 +131,10 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 			}
 		case typeDeleteB: //удаление state
 			{
-				temp := struct {
-					Type  string         `json:"type"`
-					State agspudge.Cross `json:"state"`
-					Pos   PosInfo        `json:"pos"`
-				}{}
+				temp := StateHandler{}
 				_ = json.Unmarshal(p, &temp)
 				resp := newControlMess(typeDeleteB, conn, nil, controlI)
-				resp.Data = deleteCrossData(temp.State, controlI.Login, temp.Pos)
+				resp.Data = deleteCrossData(temp.State, controlI.Login)
 				resp.send()
 			}
 		case typeUpdateB: //обновление state

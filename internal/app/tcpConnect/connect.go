@@ -99,6 +99,7 @@ func TCPBroadcast(typeIP map[string]string) {
 					_, err := connInfo.conn.Write([]byte("0\n"))
 					if err != nil {
 						connInfo.flagConnect = false
+						poolTCPConnect[ip] = connInfo
 					}
 				}
 			}

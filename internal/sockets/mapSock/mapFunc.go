@@ -2,6 +2,7 @@ package mapSock
 
 import (
 	"fmt"
+	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/model/license"
 	"github.com/JanFant/TLServer/logger"
@@ -140,6 +141,7 @@ func selectTL(db *sqlx.DB) (tfdata []data.TrafficLights) {
 	return tfdata
 }
 
+//mapOpenInfo сбор всех данных для отображения информации на карте
 func mapOpenInfo(db *sqlx.DB) (obj map[string]interface{}) {
 	obj = make(map[string]interface{})
 
@@ -168,4 +170,24 @@ func mapOpenInfo(db *sqlx.DB) (obj map[string]interface{}) {
 	data.CacheInfo.Mux.Unlock()
 	obj["areaInfo"] = chosenArea
 	return
+}
+
+//checkConnect проверка соединения с БД и Сервером
+func checkConnect(db *sqlx.DB) interface{} {
+	var tempStatus = struct {
+		StatusBD bool `json:"statusBD"`
+		StatusS  bool `json:"statusS"`
+	}{
+		StatusBD: false,
+		StatusS:  false,
+	}
+
+	_, err := db.Exec(`SELECT * FROM public.accounts;`)
+	if err == nil {
+		tempStatus.StatusBD = true
+	}
+
+	var tcpPackage = tcpConnect.TCPMessage{Type: tcpConnect.TypeState, User: "TestConn", Id: -1, Data: 0}
+	tempStatus.StatusS = tcpPackage.SendToTCPServer()
+	return tempStatus
 }

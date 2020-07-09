@@ -13,16 +13,16 @@ import (
 )
 
 var (
-	typeJump           = "jump"
-	typeMapInfo        = "mapInfo"
-	typeTFlight        = "tflight"
-	typeRepaint        = "repaint"
-	typeEditCrossUsers = "editCrossUsers"
-	typeLogin          = "login"
-	typeLogOut         = "logOut"
-	typeError          = "error"
-	typeClose          = "close"
-
+	typeJump                   = "jump"
+	typeMapInfo                = "mapInfo"
+	typeTFlight                = "tflight"
+	typeRepaint                = "repaint"
+	typeEditCrossUsers         = "editCrossUsers"
+	typeLogin                  = "login"
+	typeLogOut                 = "logOut"
+	typeError                  = "error"
+	typeClose                  = "close"
+	typeCheckConn              = "checkConn"
 	errUnregisteredMessageType = "unregistered message type"
 )
 
