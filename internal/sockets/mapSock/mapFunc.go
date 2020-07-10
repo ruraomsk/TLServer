@@ -14,19 +14,20 @@ import (
 )
 
 //logIn обработчик авторизации пользователя в системе
-func logIn(login, password, ip string, db *sqlx.DB) MapSokResponse {
+func logIn(login, password, ip string, db *sqlx.DB) map[string]interface{} {
+	resp := make(map[string]interface{})
 	ipSplit := strings.Split(ip, ":")
 	account := &data.Account{}
 	//Забираю из базы запись с подходящей почтой
 	rows, err := db.Query(`SELECT id, login, password, work_time, description FROM public.accounts WHERE login=$1`, login)
 	if rows == nil {
-		resp := newMapMess(typeError, nil, nil)
-		resp.Data["message"] = fmt.Sprintf("Invalid login credentials. login(%s)", login)
+		resp["status"] = false
+		resp["message"] = fmt.Sprintf("Неверно указан логин или пароль")
 		return resp
 	}
 	if err != nil {
-		resp := newMapMess(typeError, nil, nil)
-		resp.Data["message"] = "connection to DB error. Please try again"
+		resp["status"] = false
+		resp["message"] = "Потеряно соединение с сервером БД"
 		return resp
 	}
 	for rows.Next() {
@@ -37,16 +38,16 @@ func logIn(login, password, ip string, db *sqlx.DB) MapSokResponse {
 	privilege := data.Privilege{}
 	err = privilege.ReadFromBD(account.Login)
 	if err != nil {
-		resp := newMapMess(typeError, nil, nil)
-		resp.Data["message"] = fmt.Sprintf("Invalid login credentials. login(%s)", login)
+		resp["status"] = false
+		resp["message"] = fmt.Sprintf("Неверно указан логин или пароль")
 		return resp
 	}
 
 	//Сравниваю хэши полученного пароля и пароля взятого из БД
 	err = bcrypt.CompareHashAndPassword([]byte(account.Password), []byte(password))
 	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
-		resp := newMapMess(typeError, nil, nil)
-		resp.Data["message"] = fmt.Sprintf("Invalid login credentials. login(%s)", account.Login)
+		resp["status"] = false
+		resp["message"] = fmt.Sprintf("Неверно указан логин или пароль")
 		return resp
 	}
 	//Залогинились, создаем токен
@@ -73,21 +74,21 @@ func logIn(login, password, ip string, db *sqlx.DB) MapSokResponse {
 
 	_, err = db.Exec(`UPDATE public.accounts SET token = $1 WHERE login = $2`, account.Token, account.Login)
 	if err != nil {
-		resp := newMapMess(typeError, nil, nil)
-		resp.Data["message"] = "connection to DB error. Please try again"
+		resp["status"] = false
+		resp["message"] = "Потеряно соединение с сервером БД"
 		return resp
 	}
 
 	//Формируем ответ
-	resp := newMapMess(typeLogin, nil, nil)
-	resp.Data["login"] = account.Login
-	resp.Data["token"] = tokenString
-	resp.Data["manageFlag"], _ = data.AccessCheck(login, privilege.Role.Name, 2)
-	resp.Data["logDeviceFlag"], _ = data.AccessCheck(login, privilege.Role.Name, 5)
-	resp.Data["techArmFlag"], _ = data.AccessCheck(login, privilege.Role.Name, 7)
-	resp.Data["authorizedFlag"] = true
-	resp.Data["description"] = account.Description
-	resp.Data["region"] = privilege.Region
+	resp["status"] = true
+	resp["login"] = account.Login
+	resp["token"] = tokenString
+	resp["manageFlag"], _ = data.AccessCheck(login, privilege.Role.Name, 2)
+	resp["logDeviceFlag"], _ = data.AccessCheck(login, privilege.Role.Name, 5)
+	resp["techArmFlag"], _ = data.AccessCheck(login, privilege.Role.Name, 7)
+	resp["authorizedFlag"] = true
+	resp["description"] = account.Description
+	resp["region"] = privilege.Region
 	//собрать в районы с их названиями
 	var areaMap = make(map[string]string)
 	for _, area := range privilege.Area {
@@ -95,23 +96,21 @@ func logIn(login, password, ip string, db *sqlx.DB) MapSokResponse {
 		tempA.SetAreaInfo(privilege.Region, area)
 		areaMap[tempA.Num] = tempA.NameArea
 	}
-	resp.Data["area"] = areaMap
+	resp["area"] = areaMap
 
 	data.CacheArea.Mux.Lock()
-	resp.Data["areaBox"] = data.CacheArea.Areas
+	resp["areaBox"] = data.CacheArea.Areas
 	data.CacheArea.Mux.Unlock()
 	return resp
 }
 
 //logOut выход из учетной записи
-func logOut(login string, db *sqlx.DB) MapSokResponse {
+func logOut(login string, db *sqlx.DB) bool {
 	_, err := db.Exec("UPDATE public.accounts SET token = $1 where login = $2", "", login)
 	if err != nil {
-		resp := newMapMess(typeError, nil, nil)
-		resp.Data["message"] = "connection to DB error. Please try again"
-		return resp
+		return false
 	}
-	return newMapMess(typeLogOut, nil, nil)
+	return true
 }
 
 //selectTL возвращает массив в котором содержатся светофоры, которые попали в указанную область

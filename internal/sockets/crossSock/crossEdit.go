@@ -5,11 +5,13 @@ import (
 	"net/http"
 )
 
+//CrossDisc информация о занятых на редактирования страницах
 type CrossDisc struct {
 	Arms    []CrossInfo `json:"arms"`
 	Crosses []CrossInfo `json:"crosses"`
 }
 
+//DisplayCrossEditInfo сбор информации для отображения информации о редактируемых страницах
 func DisplayCrossEditInfo(mapContx map[string]string) u.Response {
 	resp := u.Message(http.StatusOK, "edit info")
 
@@ -48,6 +50,7 @@ func DisplayCrossEditInfo(mapContx map[string]string) u.Response {
 	return resp
 }
 
+//CrossEditFree сброс редактирования занях армов
 func CrossEditFree(disc CrossDisc) u.Response {
 	resp := u.Message(http.StatusOK, "free")
 	if len(disc.Arms) > 0 {

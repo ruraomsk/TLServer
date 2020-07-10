@@ -80,24 +80,40 @@ func MapReader(conn *websocket.Conn, c *gin.Context, db *sqlx.DB) {
 				account := &data.Account{}
 				_ = json.Unmarshal(p, &account)
 				resp := newMapMess(typeLogin, conn, nil)
-				resp = logIn(account.Login, account.Password, conn.RemoteAddr().String(), db)
-				if resp.Type == typeLogin {
+				resp.Data = logIn(account.Login, account.Password, conn.RemoteAddr().String(), db)
+				if _, ok := resp.Data["message"]; !ok {
 					login = fmt.Sprint(resp.Data["login"])
 				}
-				resp.conn = conn
+				resp.send()
+			}
+		case typeChangeAccount:
+			{
+				account := &data.Account{}
+				_ = json.Unmarshal(p, &account)
+				resp := newMapMess(typeLogin, conn, nil)
+				resp.Data = logIn(account.Login, account.Password, conn.RemoteAddr().String(), db)
+				if _, ok := resp.Data["message"]; !ok {
+					//делаем выход из аккаунта
+					respLO := newMapMess(typeLogOut, conn, nil)
+					status := logOut(login, db)
+					if status {
+						respLO.Data["login"] = login //сохраним а потом удалим из отправки чтобы нормально закрыть все сокеты
+						login = fmt.Sprint(resp.Data["login"])
+					}
+					respLO.send()
+				}
 				resp.send()
 			}
 		case typeLogOut: //отправка default
 			{
 				if login != "" {
-					resp := logOut(login, db)
-					resp.conn = conn
-					resp.Data["authorizedFlag"] = true
+					resp := newMapMess(typeLogOut, conn, nil)
+					status := logOut(login, db)
+					if status {
+						resp.Data["authorizedFlag"] = false
+						resp.Data["login"] = login //сохраним а потом удалим из отправки чтобы нормально закрыть все сокеты
+					}
 					resp.send()
-					chat.UserLogoutChat <- login
-					crossSock.UserLogoutCrControl <- login
-					crossSock.UserLogoutCross <- login
-					techArm.UserLogoutTech <- login
 				}
 			}
 		case typeCheckConn: //отправка default
@@ -179,6 +195,16 @@ func MapBroadcast(db *sqlx.DB) {
 			}
 		case msg := <-writeMap:
 			switch msg.Type {
+			case typeLogOut:
+				{
+					login := fmt.Sprint(msg.Data["login"])
+					delete(msg.Data, "login")
+					_ = msg.conn.WriteJSON(msg)
+					chat.UserLogoutChat <- login
+					crossSock.UserLogoutCrControl <- login
+					crossSock.UserLogoutCross <- login
+					techArm.UserLogoutTech <- login
+				}
 			case typeClose:
 				{
 					delete(connectedUsersOnMap, msg.conn)
@@ -188,7 +214,6 @@ func MapBroadcast(db *sqlx.DB) {
 					_ = msg.conn.WriteJSON(msg)
 				}
 			}
-
 		}
 	}
 }

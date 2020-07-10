@@ -20,6 +20,7 @@ var (
 	typeEditCrossUsers         = "editCrossUsers"
 	typeLogin                  = "login"
 	typeLogOut                 = "logOut"
+	typeChangeAccount          = "changeAcc"
 	typeError                  = "error"
 	typeClose                  = "close"
 	typeCheckConn              = "checkConn"

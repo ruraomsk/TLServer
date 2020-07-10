@@ -16,6 +16,7 @@ import (
 	agspudge "github.com/ruraomsk/ag-server/pudge"
 )
 
+//TestCrossStateData проверить все стрейты на наличие ошибок
 func TestCrossStateData(mapContx map[string]string, db *sqlx.DB) u.Response {
 	var (
 		stateSql  string
