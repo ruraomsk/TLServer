@@ -95,10 +95,10 @@ type CrossInfo struct {
 }
 
 type DevInfo struct {
-	Region  int              `json:"region"`
-	Area    int              `json:"area"`
-	Idevice int              `json:"idevice"`
-	TexMode string           `json:"texMode"`
-	ModeRdk string           `json:"modeRdk"`
-	Device  pudge.Controller `json:"device"`
+	Region   int              `json:"region"`
+	Area     int              `json:"area"`
+	Idevice  int              `json:"idevice"`
+	TechMode string           `json:"techMode"`
+	ModeRdk  string           `json:"modeRdk"`
+	Device   pudge.Controller `json:"device"`
 }

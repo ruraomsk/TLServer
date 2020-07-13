@@ -26,6 +26,9 @@ var TechArmEngine = func(c *gin.Context) {
 			u.SendRespond(c, u.Message(http.StatusBadRequest, "blank field: Region"))
 			return
 		}
+	} else {
+		u.SendRespond(c, u.Message(http.StatusBadRequest, "blank field: Region"))
+		return
 	}
 
 	area := c.QueryArray("Area")
