@@ -171,6 +171,7 @@ func MapBroadcast(db *sqlx.DB) {
 				resp := newMapMess(typeRepaint, nil, nil)
 				resp.Data["tflight"] = oldTFs
 				data.FillMapAreaBox()
+				GSRepaint <- true
 				data.CacheArea.Mux.Lock()
 				resp.Data["areaBox"] = data.CacheArea.Areas
 				data.CacheArea.Mux.Unlock()
@@ -204,6 +205,7 @@ func MapBroadcast(db *sqlx.DB) {
 					crossSock.UserLogoutCrControl <- login
 					crossSock.UserLogoutCross <- login
 					techArm.UserLogoutTech <- login
+					userLogout <- login
 				}
 			case typeClose:
 				{

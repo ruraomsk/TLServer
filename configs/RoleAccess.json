@@ -9,7 +9,8 @@
         4,
         5,
         6,
-        7
+        7,
+        8
       ]
     },
     {
@@ -21,7 +22,8 @@
         4,
         5,
         6,
-        7
+        7,
+        8
       ]
     },
     {
@@ -29,7 +31,8 @@
       "permissions": [
         1,
         3,
-        4
+        4,
+        8
       ]
     },
     {
@@ -75,6 +78,11 @@
       "id": 7,
       "visible": true,
       "description": "Работа на экране Технолога"
+    },
+    {
+      "id": 8,
+      "visible": false,
+      "description": "Работа в режиме Зеленой Улицы"
     }
   ],
   "routes": [
@@ -117,6 +125,16 @@
       "permission": 7,
       "path": "/techArmW",
       "description": "рабочее место технолога"
+    },
+    {
+      "permission": 7,
+      "path": "/greenStreet",
+      "description": "режим Зеленой Улицы"
+    },
+    {
+      "permission": 7,
+      "path": "/greenStreetW",
+      "description": "режим Зеленой Улицы (сокет)"
     },
     {
       "permission": 1,

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/JanFant/TLServer/internal/app/handlers/chatH"
 	"github.com/JanFant/TLServer/internal/app/handlers/crossH"
+	"github.com/JanFant/TLServer/internal/app/handlers/greenStreet"
 	"github.com/JanFant/TLServer/internal/app/handlers/licenseH"
 	"github.com/JanFant/TLServer/internal/app/handlers/mapH"
 	"github.com/JanFant/TLServer/internal/app/handlers/techArmH"
@@ -31,6 +32,7 @@ func StartServer(conf *ServerConf) {
 	go crossSock.CrossBroadcast(data.GetDB())
 	go crossSock.ControlBroadcast()
 	go techArm.ArmTechBroadcast(data.GetDB())
+	go mapSock.GSBroadcast(data.GetDB())
 
 	// Создаем engine для соединений
 	router := gin.Default()
@@ -89,6 +91,12 @@ func StartServer(conf *ServerConf) {
 		c.HTML(http.StatusOK, "techControl.html", nil)
 	})
 	mainRouter.GET("/:slug/techArmW", techArmH.TechArmEngine)
+
+	//зеленая улица
+	mainRouter.GET("/:slug/greenStreet", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "greenStreet.html", gin.H{"yaKey": license.LicenseFields.YaKey})
+	})
+	mainRouter.GET("/:slug/greenStreetW", greenStreet.GSEngine)
 	//--------- SocketS--------------
 
 	//тех. поддержка

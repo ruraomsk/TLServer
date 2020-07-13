@@ -33,6 +33,15 @@ var (
 	WITH (
 		autovacuum_enabled = true		
 	);`
+	modesTable = `
+	CREATE TABLE modes (
+		id serial PRIMARY KEY,
+		description text,
+		listTL jsonb
+	)
+	WITH (
+		autovacuum_enabled = true		
+	);`
 	createFuncSQL = `Create or replace function convTo360(x double precision) returns double precision as $$
 		begin
 		if x < 0 then
@@ -67,7 +76,6 @@ func ConnectDB() (*sqlx.DB, error) {
 		db.MustExec(accountsTable)
 		db.MustExec(createFuncSQL)
 		FirstCreate = true
-
 	}
 
 	_, err = db.Exec(`SELECT * FROM public.chat;`)
@@ -75,6 +83,13 @@ func ConnectDB() (*sqlx.DB, error) {
 		fmt.Println("chat table not found - created")
 		logger.Info.Println("|Message: chat table not found - created")
 		db.MustExec(chatTable)
+	}
+
+	_, err = db.Exec(`SELECT * FROM public.modes;`)
+	if err != nil {
+		fmt.Println("modes table not found - created")
+		logger.Info.Println("|Message: modes table not found - created")
+		db.MustExec(modesTable)
 	}
 	return db, nil
 }
