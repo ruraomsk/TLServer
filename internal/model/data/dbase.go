@@ -37,6 +37,7 @@ var (
 	CREATE TABLE modes (
 		id serial PRIMARY KEY,
 		description text,
+		box jsonb,
 		listTL jsonb
 	)
 	WITH (

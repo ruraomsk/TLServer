@@ -46,9 +46,13 @@ func GSReader(conn *websocket.Conn, mapContx map[string]string, db *sqlx.DB) {
 			{
 				temp := Mode{}
 				_ = json.Unmarshal(p, &temp)
-				temp.create(db)
 				resp := newGSMess(typeCreateMode, conn, nil)
-				resp.Data["mode"] = temp
+				err := temp.create(db)
+				if err != nil {
+					resp.Data[typeError] = errCantWriteInBD
+				} else {
+					resp.Data["mode"] = temp
+				}
 				resp.send()
 			}
 		case typeJump: //отправка default
@@ -138,8 +142,12 @@ func GSBroadcast(db *sqlx.DB) {
 				}
 			case typeCreateMode:
 				{
-					for conn := range connectOnGS {
-						_ = conn.WriteJSON(msg)
+					if _, ok := msg.Data[typeError]; !ok {
+						for conn := range connectOnGS {
+							_ = conn.WriteJSON(msg)
+						}
+					} else {
+						_ = msg.conn.WriteJSON(msg)
 					}
 				}
 			default:

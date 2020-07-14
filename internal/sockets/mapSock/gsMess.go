@@ -6,7 +6,8 @@ import (
 )
 
 var (
-	typeCreateMode = "createMode"
+	typeCreateMode   = "createMode"
+	errCantWriteInBD = "Запись в БД не удалась"
 )
 
 //GSSokResponse структура для отправки сообщений (GS)
