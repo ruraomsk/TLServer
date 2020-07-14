@@ -118,7 +118,6 @@ func logOut(login string, db *sqlx.DB) bool {
 //selectTL возвращает массив в котором содержатся светофоры, которые попали в указанную область
 func selectTL(db *sqlx.DB) (tfdata []data.TrafficLights) {
 	var dgis string
-
 	rowsTL, err := db.Query(`SELECT region, area, subarea, id, idevice, dgis, describ, status, state->'arrays'->'SetDK' FROM public.cross`)
 	if err != nil {
 		logger.Error.Println("|Message: db not respond", err.Error())

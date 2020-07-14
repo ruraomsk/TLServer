@@ -88,7 +88,7 @@ func ArmTechReader(conn *websocket.Conn, reg int, area []string, login string, d
 				}
 				resp.send()
 				var message = sockets.DBMessage{Data: resp, Idevice: arm.ID}
-				sockets.DispatchMessageFromTechArm <- message
+				sockets.DispatchMessageFromAnotherPlace <- message
 			}
 		}
 	}
@@ -100,7 +100,7 @@ func ArmTechBroadcast(db *sqlx.DB) {
 	writeArm = make(chan armResponse)
 	TArmNewCrossData = make(chan bool)
 	UserLogoutTech = make(chan string)
-	sockets.DispatchMessageFromTechArm = make(chan sockets.DBMessage)
+	sockets.DispatchMessageFromAnotherPlace = make(chan sockets.DBMessage)
 
 	readTick := time.NewTicker(devUpdate)
 	defer readTick.Stop()

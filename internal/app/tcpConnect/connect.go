@@ -53,6 +53,7 @@ func TCPClientStart(tcpConfig TCPConfig) {
 	typeInfo = make(map[string]string)
 	typeInfo[TypeDispatch] = tcpConfig.getArmIP()
 	typeInfo[TypeState] = tcpConfig.getStateIP()
+	typeInfo[TypeChangeProtocol] = tcpConfig.getChangeProtocolIP()
 	go TCPBroadcast(typeInfo)
 }
 

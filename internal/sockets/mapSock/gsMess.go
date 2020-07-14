@@ -6,7 +6,10 @@ import (
 )
 
 var (
-	typeCreateMode   = "createMode"
+	typeCreateRout   = "createRoute"
+	typeUpdateRout   = "updateRoute"
+	typeDeleteRout   = "deleteRoute"
+	typeDButton      = "dispatch"
 	errCantWriteInBD = "Запись в БД не удалась"
 )
 

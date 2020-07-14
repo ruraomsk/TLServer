@@ -1,7 +1,7 @@
 package sockets
 
 //DispatchMessageFromTechArm канал для оправки сообщений с тех арма
-var DispatchMessageFromTechArm chan DBMessage
+var DispatchMessageFromAnotherPlace chan DBMessage
 
 //DBMessage структура для отправки информации о переключение режимов с тех арма
 type DBMessage struct {

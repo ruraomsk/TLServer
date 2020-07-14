@@ -2,11 +2,14 @@ package mapSock
 
 import (
 	"encoding/json"
+	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/model/config"
 	"github.com/JanFant/TLServer/internal/model/data"
+	"github.com/JanFant/TLServer/internal/model/routeGS"
 	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/gorilla/websocket"
 	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/ag-server/comm"
 	"time"
 )
 
@@ -17,7 +20,8 @@ var userLogout chan string
 
 //GSReader обработчик открытия сокета для режима зеленой улицы
 func GSReader(conn *websocket.Conn, mapContx map[string]string, db *sqlx.DB) {
-	connectOnGS[conn] = mapContx["login"]
+	login := mapContx["login"]
+	connectOnGS[conn] = login
 	{
 		resp := newGSMess(typeMapInfo, conn, mapOpenInfo(db))
 		resp.Data["modes"] = getAllModes(db)
@@ -42,16 +46,42 @@ func GSReader(conn *websocket.Conn, mapContx map[string]string, db *sqlx.DB) {
 			resp.send()
 		}
 		switch typeSelect {
-		case typeCreateMode:
+		case typeCreateRout:
 			{
-				temp := Mode{}
+				temp := routeGS.Route{}
 				_ = json.Unmarshal(p, &temp)
-				resp := newGSMess(typeCreateMode, conn, nil)
-				err := temp.create(db)
+				resp := newGSMess(typeCreateRout, conn, nil)
+				err := temp.Create(db)
 				if err != nil {
 					resp.Data[typeError] = errCantWriteInBD
 				} else {
-					resp.Data["mode"] = temp
+					resp.Data["route"] = temp
+				}
+				resp.send()
+			}
+		case typeUpdateRout:
+			{
+				temp := routeGS.Route{}
+				_ = json.Unmarshal(p, &temp)
+				resp := newGSMess(typeUpdateRout, conn, nil)
+				err := temp.Update(db)
+				if err != nil {
+					resp.Data[typeError] = errCantWriteInBD
+				} else {
+					resp.Data["route"] = temp
+				}
+				resp.send()
+			}
+		case typeDeleteRout:
+			{
+				temp := routeGS.Route{}
+				_ = json.Unmarshal(p, &temp)
+				resp := newGSMess(typeDeleteRout, conn, nil)
+				err := temp.Delete(db)
+				if err != nil {
+					resp.Data[typeError] = errCantWriteInBD
+				} else {
+					resp.Data["route"] = temp
 				}
 				resp.send()
 			}
@@ -63,6 +93,24 @@ func GSReader(conn *websocket.Conn, mapContx map[string]string, db *sqlx.DB) {
 				resp := newGSMess(typeJump, conn, nil)
 				resp.Data["boxPoint"] = box
 				resp.send()
+			}
+		case typeDButton: //отправка сообщения о изменениии режима работы
+			{
+				arm := comm.CommandARM{}
+				_ = json.Unmarshal(p, &arm)
+				arm.User = login
+				var (
+					resp = newGSMess(typeDButton, conn, nil)
+					mess = tcpConnect.TCPMessage{User: arm.User, Type: tcpConnect.TypeDispatch, Id: arm.ID, Data: arm}
+				)
+				status := mess.SendToTCPServer()
+				resp.Data["status"] = status
+				if status {
+					resp.Data["command"] = arm
+				}
+				resp.send()
+				var message = sockets.DBMessage{Data: resp, Idevice: arm.ID}
+				sockets.DispatchMessageFromAnotherPlace <- message
 			}
 		}
 	}
@@ -140,15 +188,17 @@ func GSBroadcast(db *sqlx.DB) {
 				{
 					delete(connectOnGS, msg.conn)
 				}
-			case typeCreateMode:
+			case typeCreateRout:
 				{
-					if _, ok := msg.Data[typeError]; !ok {
-						for conn := range connectOnGS {
-							_ = conn.WriteJSON(msg)
-						}
-					} else {
-						_ = msg.conn.WriteJSON(msg)
-					}
+					sendCDU(msg)
+				}
+			case typeDeleteRout:
+				{
+					sendCDU(msg)
+				}
+			case typeUpdateRout:
+				{
+					sendCDU(msg)
 				}
 			default:
 				{
@@ -156,5 +206,16 @@ func GSBroadcast(db *sqlx.DB) {
 				}
 			}
 		}
+	}
+}
+
+//sendCDU ответ на создание, удаление и обновление
+func sendCDU(msg GSSokResponse) {
+	if _, ok := msg.Data[typeError]; !ok {
+		for conn := range connectOnGS {
+			_ = conn.WriteJSON(msg)
+		}
+	} else {
+		_ = msg.conn.WriteJSON(msg)
 	}
 }

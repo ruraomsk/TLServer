@@ -9,9 +9,10 @@ var SendRespTCPMess chan RespTCPMess
 var SendToUserResp chan RespTCPMess
 
 var (
-	TypeDispatch = "dispatch"      //команды арм
-	TypeState    = "state"         //команды стате
-	typeInfo     map[string]string //ключ тип сервера, значение ip сервера
+	TypeDispatch       = "dispatch" //команды арм
+	TypeState          = "state"    //команды стате
+	TypeChangeProtocol = "changeProtocol"
+	typeInfo           map[string]string //ключ тип сервера, значение ip сервера
 )
 
 //RespTCPMess ответ сервера со статусом

@@ -372,7 +372,7 @@ func CrossBroadcast(db *sqlx.DB) {
 					}
 				}
 			}
-		case msg := <-sockets.DispatchMessageFromTechArm:
+		case msg := <-sockets.DispatchMessageFromAnotherPlace:
 			{
 				for conn, info := range crossConnect {
 					if info.Idevice == msg.Idevice {
