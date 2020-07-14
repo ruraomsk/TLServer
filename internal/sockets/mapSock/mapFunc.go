@@ -1,6 +1,7 @@
 package mapSock
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/model/data"
@@ -8,6 +9,7 @@ import (
 	"github.com/JanFant/TLServer/logger"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/ag-server/binding"
 	"golang.org/x/crypto/bcrypt"
 	"strings"
 	"time"
@@ -116,27 +118,33 @@ func logOut(login string, db *sqlx.DB) bool {
 //selectTL возвращает массив в котором содержатся светофоры, которые попали в указанную область
 func selectTL(db *sqlx.DB) (tfdata []data.TrafficLights) {
 	var dgis string
-	temp := &data.TrafficLights{}
-	rowsTL, err := db.Query(`SELECT region, area, subarea, id, idevice, dgis, describ, status FROM public.cross`)
+
+	rowsTL, err := db.Query(`SELECT region, area, subarea, id, idevice, dgis, describ, status, state->'arrays'->'SetDK' FROM public.cross`)
 	if err != nil {
 		logger.Error.Println("|Message: db not respond", err.Error())
 		return nil
 	}
 	for rowsTL.Next() {
-		err := rowsTL.Scan(&temp.Region.Num, &temp.Area.Num, &temp.Subarea, &temp.ID, &temp.Idevice, &dgis, &temp.Description, &temp.Sost.Num)
+		var (
+			temp      = data.TrafficLights{}
+			tempSetDK binding.SetDK
+			dkStr     string
+		)
+		err := rowsTL.Scan(&temp.Region.Num, &temp.Area.Num, &temp.Subarea, &temp.ID, &temp.Idevice, &dgis, &temp.Description, &temp.Sost.Num, &dkStr)
 		if err != nil {
 			logger.Error.Println("|Message: No result at these points", err.Error())
 			return nil
 		}
+		_ = json.Unmarshal([]byte(dkStr), &tempSetDK)
+		temp.Phases = tempSetDK.GetPhases()
 		temp.Points.StrToFloat(dgis)
 		data.CacheInfo.Mux.Lock()
 		temp.Region.NameRegion = data.CacheInfo.MapRegion[temp.Region.Num]
 		temp.Area.NameArea = data.CacheInfo.MapArea[temp.Region.NameRegion][temp.Area.Num]
 		temp.Sost.Description = data.CacheInfo.MapTLSost[temp.Sost.Num]
 		data.CacheInfo.Mux.Unlock()
-		tfdata = append(tfdata, *temp)
+		tfdata = append(tfdata, temp)
 	}
-
 	return tfdata
 }
 

@@ -16,6 +16,7 @@ type TrafficLights struct {
 	Idevice     int             `json:"idevice"`     //Реальный номер устройства
 	Sost        TLSostInfo      `json:"tlsost"`      //Состояние светофора
 	Description string          `json:"description"` //Описание светофора
+	Phases      []int           `json:"phases"`      //Доступные фазы
 	Points      locations.Point `json:"points"`      //Координата где находится светофор
 }
 
