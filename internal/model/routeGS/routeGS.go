@@ -28,7 +28,7 @@ func (r *Route) Create(db *sqlx.DB) error {
 	r.setBox()
 	list, _ := json.Marshal(r.List)
 	box, _ := json.Marshal(r.Box)
-	row := db.QueryRow(`INSERT INTO  public.modes (description, box, listtl) VALUES ($1, $2, $3) RETURNING id`, r.Description, string(box), string(list))
+	row := db.QueryRow(`INSERT INTO  public.routes (description, box, listtl) VALUES ($1, $2, $3) RETURNING id`, r.Description, string(box), string(list))
 	err := row.Scan(&r.Id)
 	if err != nil {
 		return err
@@ -41,7 +41,7 @@ func (r *Route) Update(db *sqlx.DB) error {
 	r.setBox()
 	list, _ := json.Marshal(r.List)
 	box, _ := json.Marshal(r.Box)
-	_, err := db.Exec(`UPDATE public.modes SET description = $1, box = $2, listtl = $3 WHERE id = $4`, r.Description, string(box), string(list), r.Id)
+	_, err := db.Exec(`UPDATE public.routes SET description = $1, box = $2, listtl = $3 WHERE id = $4`, r.Description, string(box), string(list), r.Id)
 	if err != nil {
 		return err
 	}
@@ -50,7 +50,7 @@ func (r *Route) Update(db *sqlx.DB) error {
 
 //Delete удаление маршрута из БД
 func (r *Route) Delete(db *sqlx.DB) error {
-	_, err := db.Exec(`DELETE FROM public.modes WHERE id = $1`, r.Id)
+	_, err := db.Exec(`DELETE FROM public.routes WHERE id = $1`, r.Id)
 	if err != nil {
 		return err
 	}

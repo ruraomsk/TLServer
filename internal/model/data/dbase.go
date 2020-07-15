@@ -33,8 +33,8 @@ var (
 	WITH (
 		autovacuum_enabled = true		
 	);`
-	modesTable = `
-	CREATE TABLE modes (
+	routesTable = `
+	CREATE TABLE routes (
 		id serial PRIMARY KEY,
 		description text,
 		box jsonb,
@@ -86,11 +86,11 @@ func ConnectDB() (*sqlx.DB, error) {
 		db.MustExec(chatTable)
 	}
 
-	_, err = db.Exec(`SELECT * FROM public.modes;`)
+	_, err = db.Exec(`SELECT * FROM public.routes;`)
 	if err != nil {
-		fmt.Println("modes table not found - created")
-		logger.Info.Println("|Message: modes table not found - created")
-		db.MustExec(modesTable)
+		fmt.Println("routes table not found - created")
+		logger.Info.Println("|Message: routes table not found - created")
+		db.MustExec(routesTable)
 	}
 	return db, nil
 }

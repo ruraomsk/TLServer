@@ -161,21 +161,23 @@ func ArmTechBroadcast(db *sqlx.DB) {
 			}
 		case <-TArmNewCrossData:
 			{
-				time.Sleep(time.Second * time.Duration(config.GlobalConfig.DBConfig.DBWait))
-				crosses := getCross(-1, db)
-				for conn, arm := range connectedUsersTechArm {
-					var tempCrosses []CrossInfo
-					for _, area := range arm.Area {
-						tArea, _ := strconv.Atoi(area)
-						for _, cross := range crosses {
-							if cross.Region == arm.Region && cross.Area == tArea {
-								tempCrosses = append(tempCrosses, cross)
+				if len(connectedUsersTechArm) > 0 {
+					time.Sleep(time.Second * time.Duration(config.GlobalConfig.DBConfig.DBWait))
+					crosses := getCross(-1, db)
+					for conn, arm := range connectedUsersTechArm {
+						var tempCrosses []CrossInfo
+						for _, area := range arm.Area {
+							tArea, _ := strconv.Atoi(area)
+							for _, cross := range crosses {
+								if cross.Region == arm.Region && cross.Area == tArea {
+									tempCrosses = append(tempCrosses, cross)
+								}
 							}
 						}
+						resp := newArmMess(typeCrosses, conn, nil)
+						resp.Data[typeCrosses] = tempCrosses
+						_ = resp.conn.WriteJSON(resp)
 					}
-					resp := newArmMess(typeCrosses, conn, nil)
-					resp.Data[typeCrosses] = tempCrosses
-					_ = resp.conn.WriteJSON(resp)
 				}
 			}
 		case login := <-UserLogoutTech:

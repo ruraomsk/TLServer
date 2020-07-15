@@ -166,19 +166,20 @@ func MapBroadcast(db *sqlx.DB) {
 			}
 		case <-crossSock.MapRepaint:
 			{
-				time.Sleep(time.Second * time.Duration(config.GlobalConfig.DBConfig.DBWait))
-				oldTFs = selectTL(db)
-				resp := newMapMess(typeRepaint, nil, nil)
-				resp.Data["tflight"] = oldTFs
-				data.FillMapAreaBox()
-				GSRepaint <- true
-				data.CacheArea.Mux.Lock()
-				resp.Data["areaBox"] = data.CacheArea.Areas
-				data.CacheArea.Mux.Unlock()
-				for conn := range connectedUsersOnMap {
-					_ = conn.WriteJSON(resp)
+				if len(connectedUsersOnMap) > 0 {
+					time.Sleep(time.Second * time.Duration(config.GlobalConfig.DBConfig.DBWait))
+					oldTFs = selectTL(db)
+					resp := newMapMess(typeRepaint, nil, nil)
+					resp.Data["tflight"] = oldTFs
+					data.FillMapAreaBox()
+					GSRepaint <- true
+					data.CacheArea.Mux.Lock()
+					resp.Data["areaBox"] = data.CacheArea.Areas
+					data.CacheArea.Mux.Unlock()
+					for conn := range connectedUsersOnMap {
+						_ = conn.WriteJSON(resp)
+					}
 				}
-
 			}
 		case <-pingTicker.C:
 			{
