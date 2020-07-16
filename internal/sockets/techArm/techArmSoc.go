@@ -52,6 +52,7 @@ func ArmTechReader(conn *websocket.Conn, reg int, area []string, login string, d
 			}
 		}
 		resp.Data[typeDevices] = tempDevises
+		resp.Data["gps"] = GPSInfo
 		resp.send()
 	}
 
@@ -89,6 +90,18 @@ func ArmTechReader(conn *websocket.Conn, reg int, area []string, login string, d
 				resp.send()
 				var message = sockets.DBMessage{Data: resp, Idevice: arm.ID}
 				sockets.DispatchMessageFromAnotherPlace <- message
+			}
+		case typeGPS:
+			{
+				gps := comm.ChangeProtocol{}
+				_ = json.Unmarshal(p, &gps)
+				//gps.User = armInfo.Login
+				var (
+					resp = newArmMess(typeGPS, conn, nil)
+					mess = tcpConnect.TCPMessage{User: armInfo.Login, Type: tcpConnect.TypeChangeProtocol, Id: gps.ID, Data: gps}
+				)
+				resp.Data["status"] = mess.SendToTCPServer()
+				resp.send()
 			}
 		}
 	}

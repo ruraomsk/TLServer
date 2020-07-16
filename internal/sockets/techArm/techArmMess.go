@@ -11,6 +11,7 @@ var (
 	typeClose                  = "close"
 	typeArmInfo                = "armInfo"
 	typeDButton                = "dispatch"
+	typeGPS                    = "gps"
 	typeCrosses                = "crosses"
 	typeDevices                = "devices"
 	errUnregisteredMessageType = "unregistered message type"
@@ -39,6 +40,10 @@ var (
 		11: "выбор ПК по картограмме",
 		12: "противозаторовое управление",
 	}
+	GPSInfo = struct {
+		IP   string `json:"ip",toml:"tcpServerAddress"`
+		Port string `json:"port",toml:"portGPS"`
+	}{}
 )
 
 //armResponse структура для отправки сообщений (map)

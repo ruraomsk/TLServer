@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/JanFant/TLServer/internal/sockets/techArm"
 	"os"
 
 	"github.com/BurntSushi/toml"
@@ -33,6 +34,8 @@ func init() {
 		fmt.Println("Can't load config file - ", err.Error())
 		os.Exit(1)
 	}
+	techArm.GPSInfo.IP = config.GlobalConfig.TCPConfig.ServerAddr
+	techArm.GPSInfo.Port = config.GlobalConfig.TCPConfig.PortGPS
 	if _, err := toml.DecodeFile(configPath, &logger.LogGlobalConf); err != nil {
 		fmt.Println("Can't load config file - ", err.Error())
 		os.Exit(1)
