@@ -27,6 +27,7 @@ func GSReader(conn *websocket.Conn, mapContx map[string]string, db *sqlx.DB) {
 		resp.Data["routes"] = getAllModes(db)
 		data.CacheArea.Mux.Lock()
 		resp.Data["areaBox"] = data.CacheArea.Areas
+		resp.Data["hull"] = data.CacheALB
 		data.CacheArea.Mux.Unlock()
 		resp.send()
 	}

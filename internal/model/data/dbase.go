@@ -33,16 +33,6 @@ var (
 	WITH (
 		autovacuum_enabled = true		
 	);`
-	routesTable = `
-	CREATE TABLE routes (
-		id serial PRIMARY KEY,
-		description text,
-		box jsonb,
-		listTL jsonb
-	)
-	WITH (
-		autovacuum_enabled = true		
-	);`
 	createFuncSQL = `Create or replace function convTo360(x double precision) returns double precision as $$
 		begin
 		if x < 0 then
@@ -86,12 +76,6 @@ func ConnectDB() (*sqlx.DB, error) {
 		db.MustExec(chatTable)
 	}
 
-	_, err = db.Exec(`SELECT * FROM public.routes;`)
-	if err != nil {
-		fmt.Println("routes table not found - created")
-		logger.Info.Println("|Message: routes table not found - created")
-		db.MustExec(routesTable)
-	}
 	return db, nil
 }
 

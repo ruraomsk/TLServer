@@ -10,6 +10,7 @@ import (
 //Route маршрут движения
 type Route struct {
 	Id          int                `json:"id"`          //уникальный номер в бд
+	Region      string             `json:"region"`      //регион
 	Description string             `json:"description"` //описание маршрута
 	Box         locations.BoxPoint `json:"box"`         //координаты на которые перемещаться при выборе маршрута
 	List        []RouteTL          `json:"listTL"`      //список светофоров входящих в маршрут
@@ -28,7 +29,7 @@ func (r *Route) Create(db *sqlx.DB) error {
 	r.setBox()
 	list, _ := json.Marshal(r.List)
 	box, _ := json.Marshal(r.Box)
-	row := db.QueryRow(`INSERT INTO  public.routes (description, box, listtl) VALUES ($1, $2, $3) RETURNING id`, r.Description, string(box), string(list))
+	row := db.QueryRow(`INSERT INTO  public.routes (description, box, listtl, region) VALUES ($1, $2, $3, $4) RETURNING id`, r.Description, string(box), string(list), r.Region)
 	err := row.Scan(&r.Id)
 	if err != nil {
 		return err
@@ -41,7 +42,7 @@ func (r *Route) Update(db *sqlx.DB) error {
 	r.setBox()
 	list, _ := json.Marshal(r.List)
 	box, _ := json.Marshal(r.Box)
-	_, err := db.Exec(`UPDATE public.routes SET description = $1, box = $2, listtl = $3 WHERE id = $4`, r.Description, string(box), string(list), r.Id)
+	_, err := db.Exec(`UPDATE public.routes SET description = $1, box = $2, listtl = $3 WHERE id = $4 AND region = $5`, r.Description, string(box), string(list), r.Id, r.Region)
 	if err != nil {
 		return err
 	}
@@ -50,7 +51,7 @@ func (r *Route) Update(db *sqlx.DB) error {
 
 //Delete удаление маршрута из БД
 func (r *Route) Delete(db *sqlx.DB) error {
-	_, err := db.Exec(`DELETE FROM public.routes WHERE id = $1`, r.Id)
+	_, err := db.Exec(`DELETE FROM public.routes WHERE id = $1 AND region = $2`, r.Id, r.Region)
 	if err != nil {
 		return err
 	}

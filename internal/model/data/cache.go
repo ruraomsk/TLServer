@@ -73,6 +73,7 @@ func CacheInfoDataUpdate() {
 	CacheInfo.MapRegion, CacheInfo.MapArea, err = GetRegionInfo()
 	CacheInfo.MapTLSost, err = getTLSost()
 	CacheInfo.Mux.Unlock()
+	FillCacheALB()
 	FillMapAreaBox()
 	err = getRoleAccess()
 	if err != nil {

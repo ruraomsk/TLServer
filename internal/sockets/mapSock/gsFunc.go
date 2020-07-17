@@ -12,7 +12,7 @@ func getAllModes(db *sqlx.DB) interface{} {
 	var (
 		modes = make([]routeGS.Route, 0)
 	)
-	rows, err := db.Query(`SELECT id, description, box, listtl FROM public.routes`)
+	rows, err := db.Query(`SELECT id, description, box, listtl, region FROM public.routes`)
 	if err != nil {
 		logger.Error.Printf("|IP: - |Login: - |Resource: /greenStreet |Message: %v", err.Error())
 		return modes
@@ -22,7 +22,7 @@ func getAllModes(db *sqlx.DB) interface{} {
 			temp            routeGS.Route
 			listSrt, boxStr string
 		)
-		err := rows.Scan(&temp.Id, &temp.Description, &boxStr, &listSrt)
+		err := rows.Scan(&temp.Id, &temp.Description, &boxStr, &listSrt, &temp.Region)
 		if err != nil {
 			logger.Error.Printf("|IP: - |Login: - |Resource: /greenStreet |Message: %v", err.Error())
 			return modes
