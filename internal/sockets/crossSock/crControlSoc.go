@@ -31,20 +31,26 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 	//проверка не существование такого перекрестка (сбос если нету)
 	_, err := getNewState(pos, db)
 	if err != nil {
-		_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, errCrossDoesntExist))
+		msg := closeMessage{Type: typeClose, Message: errCrossDoesntExist}
+		_ = conn.WriteJSON(msg)
+		//_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, errCrossDoesntExist))
 		return
 	}
 
 	//проверка на полномочия редактирования
 	if !((pos.Region == mapContx["region"]) || (mapContx["region"] == "*")) {
-		_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, typeNotEdit))
+		msg := closeMessage{Type: typeClose, Message: typeNotEdit}
+		_ = conn.WriteJSON(msg)
+		//_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, typeNotEdit))
 		return
 	}
 
 	//есть ли уже открытый арм у этого пользователя
 	for _, info := range controlConnect {
 		if info.Pos == pos && info.Login == controlI.Login {
-			_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, errDoubleOpeningDevice))
+			msg := closeMessage{Type: typeClose, Message: errDoubleOpeningDevice}
+			_ = conn.WriteJSON(msg)
+			//_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, errDoubleOpeningDevice))
 			return
 		}
 	}
@@ -295,7 +301,9 @@ func ControlBroadcast() {
 				for _, dArm := range dArmInfo {
 					for conn, cross := range controlConnect {
 						if cross.Pos == dArm.Pos && cross.Login == dArm.Login {
-							_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "закрытие администратором"))
+							msg := closeMessage{Type: typeClose, Message: "закрытие администратором"}
+							_ = conn.WriteJSON(msg)
+							//_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "закрытие администратором"))
 						}
 					}
 				}
@@ -310,7 +318,9 @@ func ControlBroadcast() {
 			{
 				for conn, crossInfo := range controlConnect {
 					if crossInfo.Login == login {
-						_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "пользователь вышел из системы"))
+						msg := closeMessage{Type: typeClose, Message: "пользователь вышел из системы"}
+						_ = conn.WriteJSON(msg)
+						//_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "пользователь вышел из системы"))
 					}
 				}
 			}

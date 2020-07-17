@@ -119,3 +119,9 @@ func (e *ErrorMessage) toString() string {
 	raw, _ := json.Marshal(e)
 	return string(raw)
 }
+
+//closeMessage структура для закрытия
+type closeMessage struct {
+	Type    string `json:"type"`
+	Message string `json:"message"`
+}

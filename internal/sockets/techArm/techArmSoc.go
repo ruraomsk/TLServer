@@ -1,12 +1,12 @@
 package techArm
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/model/config"
 	"github.com/JanFant/TLServer/internal/sockets"
+	"github.com/JanFant/TLServer/logger"
 	"github.com/gorilla/websocket"
 	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/ag-server/comm"
@@ -95,7 +95,7 @@ func ArmTechReader(conn *websocket.Conn, reg int, area []string, login string, d
 			{
 				gps := comm.ChangeProtocol{}
 				_ = json.Unmarshal(p, &gps)
-				//gps.User = armInfo.Login
+				gps.User = armInfo.Login
 				var (
 					resp = newArmMess(typeGPS, conn, nil)
 					mess = tcpConnect.TCPMessage{User: armInfo.Login, Type: tcpConnect.TypeChangeProtocol, Id: gps.ID, Data: gps}
@@ -197,7 +197,9 @@ func ArmTechBroadcast(db *sqlx.DB) {
 			{
 				for conn, armInfo := range connectedUsersTechArm {
 					if armInfo.Login == login {
-						_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "пользователь вышел из системы"))
+						msg := closeMessage{Type: typeClose, Message: "пользователь вышел из системы"}
+						_ = conn.WriteJSON(msg)
+						//_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "пользователь вышел из системы"))
 					}
 				}
 			}
@@ -220,7 +222,6 @@ func getCross(reg int, db *sqlx.DB) []CrossInfo {
 	var (
 		temp    CrossInfo
 		crosses []CrossInfo
-		rows    *sql.Rows
 		sqlStr  = `SELECT region,
  					area, 
  					id,
@@ -234,7 +235,11 @@ func getCross(reg int, db *sqlx.DB) []CrossInfo {
 	if reg != -1 {
 		sqlStr += fmt.Sprintf(` WHERE region = %v`, reg)
 	}
-	rows, _ = db.Query(sqlStr)
+	rows, err := db.Query(sqlStr)
+	if err != nil {
+		logger.Error.Println("|Message: Error get Cross from BD ", err.Error())
+		return make([]CrossInfo, 0)
+	}
 	for rows.Next() {
 		_ = rows.Scan(&temp.Region,
 			&temp.Area,
@@ -255,11 +260,15 @@ func getDevice(db *sqlx.DB) []DevInfo {
 		devices []DevInfo
 		dStr    string
 	)
-	rows, _ := db.Query(`SELECT c.region, 
+	rows, err := db.Query(`SELECT c.region, 
 									c.area, 
 									c.idevice, 
 									d.device 
 									FROM public.cross as c, public.devices as d WHERE c.idevice IN(d.id);`)
+	if err != nil {
+		logger.Error.Println("|Message: Error get Device from BD ", err.Error())
+		return make([]DevInfo, 0)
+	}
 	for rows.Next() {
 		_ = rows.Scan(&temp.Region, &temp.Area, &temp.Idevice, &dStr)
 		_ = json.Unmarshal([]byte(dStr), &temp.Device)
