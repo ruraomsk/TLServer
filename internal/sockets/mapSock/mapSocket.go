@@ -3,6 +3,7 @@ package mapSock
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/model/config"
 	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/sockets"
@@ -119,7 +120,15 @@ func MapReader(conn *websocket.Conn, c *gin.Context, db *sqlx.DB) {
 		case typeCheckConn: //отправка default
 			{
 				resp := newMapMess(typeCheckConn, conn, nil)
-				resp.Data[typeCheckConn] = checkConnect(db)
+				statusDB := false
+				_, err := db.Exec(`SELECT * FROM public.accounts;`)
+				if err == nil {
+					statusDB = true
+				}
+				resp.Data["statusBD"] = statusDB
+				var tcpPackage = tcpConnect.TCPMessage{Type: tcpConnect.TypeState, User: "TestConn", Id: -1, Data: 0, From: tcpConnect.MapSoc}
+				tcpPackage.SendToTCPServer()
+
 				resp.send()
 			}
 		}
@@ -129,7 +138,7 @@ func MapReader(conn *websocket.Conn, c *gin.Context, db *sqlx.DB) {
 //MapBroadcast передатчик для карты (map)
 func MapBroadcast(db *sqlx.DB) {
 	connectedUsersOnMap = make(map[*websocket.Conn]bool)
-	writeMap = make(chan MapSokResponse)
+	writeMap = make(chan MapSokResponse, 50)
 
 	crossReadTick := time.NewTicker(time.Second * 5)
 	pingTicker := time.NewTicker(pingPeriod)
@@ -191,6 +200,14 @@ func MapBroadcast(db *sqlx.DB) {
 			{
 				resp := newMapMess(typeEditCrossUsers, nil, nil)
 				resp.Data["editCrossUsers"] = crossUsers
+				for conn := range connectedUsersOnMap {
+					_ = conn.WriteJSON(resp)
+				}
+			}
+		case msg := <-tcpConnect.MapGetTCPResp:
+			{
+				resp := newMapMess(typeCheckConn, nil, nil)
+				resp.Data["statusS"] = msg.Status
 				for conn := range connectedUsersOnMap {
 					_ = conn.WriteJSON(resp)
 				}

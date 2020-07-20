@@ -110,9 +110,7 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 			{
 				temp := StateHandler{}
 				_ = json.Unmarshal(p, &temp)
-				resp := newControlMess(typeSendB, conn, nil, controlI)
-				resp.Data = sendCrossData(temp.State, controlI.Login)
-				resp.send()
+				sendCrossData(temp.State, controlI.Login)
 			}
 		case typeCheckB: //проверка state
 			{
@@ -139,9 +137,7 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 			{
 				temp := StateHandler{}
 				_ = json.Unmarshal(p, &temp)
-				resp := newControlMess(typeDeleteB, conn, nil, controlI)
-				resp.Data = deleteCrossData(temp.State, controlI.Login)
-				resp.send()
+				deleteCrossData(temp.State, controlI.Login)
 			}
 		case typeUpdateB: //обновление state
 			{
@@ -176,16 +172,9 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 				arm := comm.CommandARM{}
 				_ = json.Unmarshal(p, &arm)
 				arm.User = controlI.Login
-				var (
-					resp = newControlMess(typeDButton, conn, nil, controlI)
-					mess = tcpConnect.TCPMessage{User: arm.User, Type: tcpConnect.TypeDispatch, Id: arm.ID, Data: arm}
-				)
-				status := mess.SendToTCPServer()
-				resp.Data["status"] = status
-				if status {
-					resp.Data["command"] = arm
-				}
-				resp.send()
+				var mess = tcpConnect.TCPMessage{User: arm.User, Type: tcpConnect.TypeDispatch, Id: arm.ID, Data: arm, From: tcpConnect.CrControlSoc}
+				mess.SendToTCPServer()
+
 			}
 		}
 	}
@@ -193,8 +182,9 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 
 //ControlBroadcast передатчик для арма перекрестка (crossControl)
 func ControlBroadcast() {
-	writeControlMessage = make(chan ControlSokResponse)
+	writeControlMessage = make(chan ControlSokResponse, 50)
 	controlConnect = make(map[*websocket.Conn]CrossInfo)
+
 	getArmUsersForDisplay = make(chan bool)
 	crArmUsersForDisplay = make(chan []CrossInfo)
 	discArmUsers = make(chan []CrossInfo)
@@ -211,57 +201,11 @@ func ControlBroadcast() {
 		case msg := <-writeControlMessage: //ok
 			{
 				switch msg.Type {
-				case typeSendB:
-					{
-						if _, ok := msg.Data["state"]; ok {
-							//если есть поле отправить всем кто слушает
-							for conn, info := range controlConnect {
-								if info.Pos == msg.info.Pos {
-									_ = conn.WriteJSON(msg)
-								}
-							}
-							changeState <- msg.info.Pos
-							techArm.TArmNewCrossData <- true
-						} else {
-							// если нету поля отправить ошибку только пользователю
-							_ = msg.conn.WriteJSON(msg)
-						}
-					}
 				case typeCreateB:
 					{
 						_ = msg.conn.WriteJSON(msg)
-						if _, ok := msg.Data["ok"]; ok {
-							MapRepaint <- true
-							techArm.TArmNewCrossData <- true
-						}
-					}
-				case typeDeleteB:
-					{
-						if _, ok := msg.Data["ok"]; ok {
-							//если есть поле отправить всем кто слушает
-							for conn, info := range controlConnect {
-								if info.Pos == msg.info.Pos {
-									_ = conn.WriteJSON(msg)
-								}
-							}
-							armDeleted <- msg.info
-							MapRepaint <- true
-							techArm.TArmNewCrossData <- true
-						} else {
-							// если нету поля отправить ошибку только пользователю
-							_ = msg.conn.WriteJSON(msg)
-						}
-
 					}
 
-				case typeDButton:
-					{
-						for conn, info := range controlConnect {
-							if info.Pos == msg.info.Pos {
-								_ = conn.WriteJSON(msg)
-							}
-						}
-					}
 				case typeChangeEdit:
 					{
 						delC := controlConnect[msg.conn]
@@ -312,6 +256,95 @@ func ControlBroadcast() {
 			{
 				for conn := range controlConnect {
 					_ = conn.WriteMessage(websocket.PingMessage, nil)
+				}
+			}
+		case msg := <-tcpConnect.CrControlSocGetTCPResp:
+			{
+				resp := newControlMess("", nil, nil, CrossInfo{})
+				switch msg.Type {
+				case typeDButton:
+					{
+						resp.Type = typeDButton
+						resp.Data["status"] = msg.Status
+						if msg.Status {
+							resp.Data["command"] = msg.Data
+						}
+						for conn, cInfo := range controlConnect {
+							if cInfo.Idevice == msg.Id {
+								_ = conn.WriteJSON(resp)
+							}
+						}
+					}
+				case tcpConnect.TypeState:
+					{
+						switch msg.StateType {
+						case typeSendB:
+							{
+								resp.Type = typeSendB
+								resp.Data["status"] = msg.Status
+								if msg.Status {
+									resp.Data["state"] = msg.Data
+									resp.Data["user"] = msg.User
+								}
+								if msg.Status {
+									//если есть поле отправить всем кто слушает
+									for conn, info := range controlConnect {
+										if info.Idevice == msg.Id {
+											_ = conn.WriteJSON(resp)
+										}
+									}
+									changeState <- msg
+									techArm.TArmNewCrossData <- true
+								} else {
+									// если нету поля отправить ошибку только пользователю
+									for conn, info := range controlConnect {
+										if info.Login == msg.User && info.Idevice == msg.Id {
+											_ = conn.WriteJSON(resp)
+										}
+									}
+								}
+							}
+						case typeCreateB:
+							{
+								resp.Type = typeCreateB
+								resp.Data["status"] = msg.Status
+								for conn, info := range controlConnect {
+									if info.Login == msg.User && info.Idevice == msg.Id {
+										_ = conn.WriteJSON(resp)
+									}
+								}
+								if msg.Status {
+									MapRepaint <- true
+									techArm.TArmNewCrossData <- true
+								}
+
+							}
+						case typeDeleteB:
+							{
+								resp.Type = typeDeleteB
+								resp.Data["status"] = msg.Status
+								if msg.Status {
+									//если есть поле отправить всем кто слушает
+									for conn, info := range controlConnect {
+										if info.Idevice == msg.Id {
+											_ = conn.WriteJSON(resp)
+										}
+									}
+									armDeleted <- msg
+									MapRepaint <- true
+									techArm.TArmNewCrossData <- true
+								} else {
+									// если нету поля отправить ошибку только пользователю
+									for conn, info := range controlConnect {
+										if info.Login == msg.User && info.Idevice == msg.Id {
+											_ = conn.WriteJSON(resp)
+										}
+									}
+								}
+							}
+						}
+					}
+
 				}
 			}
 		case login := <-UserLogoutCrControl:

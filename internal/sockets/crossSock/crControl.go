@@ -2,6 +2,7 @@ package crossSock
 
 import (
 	"fmt"
+	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/model/crossCreator"
 	"github.com/JanFant/TLServer/internal/model/deviceLog"
 	"github.com/jmoiron/sqlx"
@@ -9,7 +10,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/model/stateVerified"
 	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/JanFant/TLServer/logger"
@@ -94,42 +94,45 @@ func checkCrossData(state agspudge.Cross) ControlSokResponse {
 }
 
 //sendCrossData получение данных от пользователя проверка и отправка серверу(устройств)
-func sendCrossData(state agspudge.Cross, login string) map[string]interface{} {
+func sendCrossData(state agspudge.Cross, login string) {
 	var (
 		userCross = agspudge.UserCross{User: login, State: state}
-		mess      = tcpConnect.TCPMessage{User: login, Type: tcpConnect.TypeState, Id: userCross.State.IDevice, Data: userCross}
+		mess      = tcpConnect.TCPMessage{User: login, Type: tcpConnect.TypeState, Id: userCross.State.IDevice, Data: userCross, From: tcpConnect.CrControlSoc, StateType: typeSendB}
 	)
-	status := mess.SendToTCPServer()
-	resp := make(map[string]interface{})
-	resp["status"] = status
-	if status {
-		resp["state"] = state
-		resp["user"] = login
-	}
-	return resp
+	mess.SendToTCPServer()
+	//status := true
+	//resp := make(map[string]interface{})
+	//resp["status"] = status
+	//if status {
+	//	resp["state"] = state
+	//	resp["user"] = login
+	//}
+	//return resp
 }
 
 //deleteCrossData удаление перекрестка на сервере
-func deleteCrossData(state agspudge.Cross, login string) map[string]interface{} {
+func deleteCrossData(state agspudge.Cross, login string) {
 	state.IDevice = -1
 	var (
 		userCross = agspudge.UserCross{User: login, State: state}
-		mess      = tcpConnect.TCPMessage{User: login, Type: tcpConnect.TypeState, Id: userCross.State.IDevice, Data: userCross}
+		mess      = tcpConnect.TCPMessage{User: login, Type: tcpConnect.TypeState, Id: userCross.State.IDevice, Data: userCross, From: tcpConnect.CrControlSoc, StateType: typeDeleteB}
 	)
-	status := mess.SendToTCPServer()
-	resp := make(map[string]interface{})
-	resp["status"] = status
-	if status {
-		resp["ok"] = true
-	}
-	return resp
+	mess.SendToTCPServer()
+
+	//status := true
+	//resp := make(map[string]interface{})
+	//resp["status"] = status
+	//if status {
+	//	resp["ok"] = true
+	//}
+	//return resp
 }
 
 //createCrossData добавление нового перекрестка
 func createCrossData(state agspudge.Cross, login string, z int, db *sqlx.DB) map[string]interface{} {
 	var (
 		userCross = agspudge.UserCross{User: login, State: state}
-		mess      = tcpConnect.TCPMessage{User: login, Type: tcpConnect.TypeState, Id: userCross.State.IDevice, Data: userCross}
+		mess      = tcpConnect.TCPMessage{User: login, Type: tcpConnect.TypeState, Id: userCross.State.IDevice, Data: userCross, From: tcpConnect.CrControlSoc, StateType: typeCreateB}
 		verRes    []string
 		stateSql  string
 	)
@@ -159,17 +162,26 @@ func createCrossData(state agspudge.Cross, login string, z int, db *sqlx.DB) map
 		return resp
 	}
 
-	status := mess.SendToTCPServer()
+	mess.SendToTCPServer()
+
 	resp := make(map[string]interface{})
-	resp["status"] = status
-	if status {
-		resp["ok"] = true
-		if crossCreator.ShortCreateDirPng(state.Region, state.Area, state.ID, z, state.Dgis) {
-			resp["message"] = "cross created"
-		} else {
-			resp["message"] = "cross created without Map.png - contact admin"
-		}
+	if crossCreator.ShortCreateDirPng(state.Region, state.Area, state.ID, z, state.Dgis) {
+		resp["message"] = "cross created"
+	} else {
+		resp["message"] = "cross created without Map.png - contact admin"
 	}
+
+	//status := true
+	//resp := make(map[string]interface{})
+	//resp["status"] = status
+	//if status {
+	//	resp["ok"] = true
+	//	if crossCreator.ShortCreateDirPng(state.Region, state.Area, state.ID, z, state.Dgis) {
+	//		resp["message"] = "cross created"
+	//	} else {
+	//		resp["message"] = "cross created without Map.png - contact admin"
+	//	}
+	//}
 	return resp
 }
 

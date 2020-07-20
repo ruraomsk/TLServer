@@ -78,30 +78,16 @@ func ArmTechReader(conn *websocket.Conn, reg int, area []string, login string, d
 				arm := comm.CommandARM{}
 				_ = json.Unmarshal(p, &arm)
 				arm.User = armInfo.Login
-				var (
-					resp = newArmMess(typeDButton, conn, nil)
-					mess = tcpConnect.TCPMessage{User: arm.User, Type: tcpConnect.TypeDispatch, Id: arm.ID, Data: arm}
-				)
-				status := mess.SendToTCPServer()
-				resp.Data["status"] = status
-				if status {
-					resp.Data["command"] = arm
-				}
-				resp.send()
-				var message = sockets.DBMessage{Data: resp, Idevice: arm.ID}
-				sockets.DispatchMessageFromAnotherPlace <- message
+				var mess = tcpConnect.TCPMessage{User: arm.User, Type: tcpConnect.TypeDispatch, Id: arm.ID, Data: arm, From: tcpConnect.TechArmSoc}
+				mess.SendToTCPServer()
 			}
 		case typeGPS:
 			{
 				gps := comm.ChangeProtocol{}
 				_ = json.Unmarshal(p, &gps)
 				gps.User = armInfo.Login
-				var (
-					resp = newArmMess(typeGPS, conn, nil)
-					mess = tcpConnect.TCPMessage{User: armInfo.Login, Type: tcpConnect.TypeChangeProtocol, Id: gps.ID, Data: gps}
-				)
-				resp.Data["status"] = mess.SendToTCPServer()
-				resp.send()
+				var mess = tcpConnect.TCPMessage{User: armInfo.Login, Type: tcpConnect.TypeChangeProtocol, Id: gps.ID, Data: gps, From: tcpConnect.TechArmSoc}
+				mess.SendToTCPServer()
 			}
 		}
 	}
@@ -110,7 +96,8 @@ func ArmTechReader(conn *websocket.Conn, reg int, area []string, login string, d
 //ArmTechBroadcast передатчик для тех арм (techArm)
 func ArmTechBroadcast(db *sqlx.DB) {
 	connectedUsersTechArm = make(map[*websocket.Conn]ArmInfo)
-	writeArm = make(chan armResponse)
+	writeArm = make(chan armResponse, 50)
+
 	TArmNewCrossData = make(chan bool)
 	UserLogoutTech = make(chan string)
 	sockets.DispatchMessageFromAnotherPlace = make(chan sockets.DBMessage)
@@ -200,6 +187,33 @@ func ArmTechBroadcast(db *sqlx.DB) {
 						msg := closeMessage{Type: typeClose, Message: "пользователь вышел из системы"}
 						_ = conn.WriteJSON(msg)
 						//_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "пользователь вышел из системы"))
+					}
+				}
+			}
+		case msg := <-tcpConnect.TArmGetTCPResp:
+			{
+				resp := newArmMess("", nil, nil)
+				switch msg.Type {
+				case typeDButton:
+					{
+						resp.Type = typeDButton
+						resp.Data["status"] = msg.Status
+						if msg.Status {
+							resp.Data["command"] = msg.Data
+						}
+						var message = sockets.DBMessage{Data: resp, Idevice: msg.Id}
+						sockets.DispatchMessageFromAnotherPlace <- message
+					}
+				case typeGPS:
+					{
+						resp.Type = typeGPS
+						resp.Data["status"] = msg.Status
+					}
+				}
+
+				for conn, armInfo := range connectedUsersTechArm {
+					if armInfo.Login == msg.User {
+						_ = conn.WriteJSON(resp)
 					}
 				}
 			}

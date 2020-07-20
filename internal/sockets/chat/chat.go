@@ -119,7 +119,8 @@ func Reader(conn *websocket.Conn, login string, db *sqlx.DB) {
 //Broadcast обработчик сообщений (работа с чатом)
 func CBroadcast() {
 	chatConnUsers = make(map[*websocket.Conn]userInfo)
-	writeChatMess = make(chan chatSokResponse, 1)
+	writeChatMess = make(chan chatSokResponse, 50)
+
 	UserLogoutChat = make(chan string)
 
 	pingTicker := time.NewTicker(pingPeriod)

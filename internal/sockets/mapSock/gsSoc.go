@@ -99,18 +99,8 @@ func GSReader(conn *websocket.Conn, mapContx map[string]string, db *sqlx.DB) {
 				arm := comm.CommandARM{}
 				_ = json.Unmarshal(p, &arm)
 				arm.User = login
-				var (
-					resp = newGSMess(typeDButton, conn, nil)
-					mess = tcpConnect.TCPMessage{User: arm.User, Type: tcpConnect.TypeDispatch, Id: arm.ID, Data: arm}
-				)
-				status := mess.SendToTCPServer()
-				resp.Data["status"] = status
-				if status {
-					resp.Data["command"] = arm
-				}
-				resp.send()
-				var message = sockets.DBMessage{Data: resp, Idevice: arm.ID}
-				sockets.DispatchMessageFromAnotherPlace <- message
+				var mess = tcpConnect.TCPMessage{User: arm.User, Type: tcpConnect.TypeDispatch, Id: arm.ID, Data: arm, From: tcpConnect.GsSoc}
+				mess.SendToTCPServer()
 			}
 		}
 	}
@@ -119,7 +109,8 @@ func GSReader(conn *websocket.Conn, mapContx map[string]string, db *sqlx.DB) {
 //GSBroadcast передатчик для ЗУ
 func GSBroadcast(db *sqlx.DB) {
 	connectOnGS = make(map[*websocket.Conn]string)
-	writeGS = make(chan GSSokResponse)
+	writeGS = make(chan GSSokResponse, 50)
+
 	userLogout = make(chan string)
 	crossReadTick := time.NewTicker(time.Second * 5)
 	pingTicker := time.NewTicker(pingPeriod)
@@ -185,6 +176,21 @@ func GSBroadcast(db *sqlx.DB) {
 						//_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "пользователь вышел из системы"))
 					}
 				}
+			}
+		case msg := <-tcpConnect.GSGetTCPResp:
+			{
+				resp := newGSMess(typeDButton, nil, nil)
+				resp.Data["status"] = msg.Status
+				if msg.Status {
+					resp.Data["command"] = msg.Data
+				}
+				for conn, user := range connectOnGS {
+					if user == msg.User {
+						_ = conn.WriteJSON(resp)
+					}
+				}
+				var message = sockets.DBMessage{Data: resp, Idevice: msg.Id}
+				sockets.DispatchMessageFromAnotherPlace <- message
 			}
 		case msg := <-writeGS:
 			switch msg.Type {

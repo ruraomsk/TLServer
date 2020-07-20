@@ -3,9 +3,10 @@ package tcpConnect
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/JanFant/TLServer/logger"
 	"net"
 	"time"
+
+	"github.com/JanFant/TLServer/logger"
 )
 
 //poolTCPConnect хранилише подключений (ключ ip, значение информация о соединении)
@@ -23,23 +24,26 @@ type tcpInfo struct {
 
 //TCPMessage структура данных для обработки и отправки ТСП сообщений
 type TCPMessage struct {
-	Type string      //тип сообщения
-	User string      //пользователь который отправил сообщение
-	Id   int         //id устройства на которое отправляется сообщение
-	Data interface{} //данные для отправки
+	Type      string      //тип сообщения
+	User      string      //пользователь который отправил сообщение
+	From      string      //откуда отправили
+	Id        int         //id устройства на которое отправляется сообщение
+	Data      interface{} //данные для отправки
+	Status    bool        `json:"-"` //статус выполнения команды
+	StateType string
 }
 
 //SendToTCPServer отправка сообщения на сервер
-func (m *TCPMessage) SendToTCPServer() bool {
+func (m *TCPMessage) SendToTCPServer() {
 	SendMessageToTCPServer <- *m
-	for {
-		tcpResp := <-SendToUserResp
-		if tcpResp.User == m.User && tcpResp.Id == m.Id && tcpResp.Type == m.Type {
-			return tcpResp.Status
-		} else {
-			SendRespTCPMess <- tcpResp
-		}
-	}
+	//for {
+	//	tcpResp := <-SendToUserResp
+	//	if tcpResp.User == m.User && tcpResp.Id == m.Id && tcpResp.Type == m.Type {
+	//		return tcpResp.Status
+	//	} else {
+	//		SendRespTCPMess <- tcpResp
+	//	}
+	//}
 }
 
 //dataToString превратить данные в строку и добавить \n для понимания сервера
@@ -60,9 +64,16 @@ func TCPClientStart(tcpConfig TCPConfig) {
 //TCPBroadcast обработка подключений к сервера ТСП и отправка сообщений на него
 func TCPBroadcast(typeIP map[string]string) {
 	poolTCPConnect = make(map[string]tcpInfo)
-	SendMessageToTCPServer = make(chan TCPMessage, 5)
-	SendRespTCPMess = make(chan RespTCPMess, 20)
-	SendToUserResp = make(chan RespTCPMess, 20)
+	SendMessageToTCPServer = make(chan TCPMessage, 10)
+	SendRespTCPMess = make(chan TCPMessage, 20)
+	//SendToUserResp = make(chan RespTCPMess, 20)
+
+	CrossSocGetTCPResp = make(chan TCPMessage, 10)
+	CrControlSocGetTCPResp = make(chan TCPMessage, 10)
+	GSGetTCPResp = make(chan TCPMessage, 10)
+	MapGetTCPResp = make(chan TCPMessage, 10)
+	TArmGetTCPResp = make(chan TCPMessage, 10)
+
 	go tcpRespBroadcast()
 
 	for _, ip := range typeIP {
@@ -107,7 +118,7 @@ func TCPBroadcast(typeIP map[string]string) {
 		case msg := <-SendMessageToTCPServer:
 			{
 				info, _ := poolTCPConnect[typeIP[msg.Type]]
-				var resp = RespTCPMess{Type: msg.Type, User: msg.User, Status: false, Id: msg.Id}
+				var resp = msg
 				if !info.flagConnect {
 					//соединение почемуто не открыто, пусть попробует в следующий раз
 					resp.Status = false
