@@ -2,6 +2,7 @@ package locations
 
 import (
 	"sort"
+	"strings"
 )
 
 type Points []Point
@@ -46,4 +47,15 @@ func (p Points) Less(i, j int) bool {
 		return p[i].Y < p[i].Y
 	}
 	return p[i].X < p[j].X
+}
+
+func (p *Points) ParseFromStr(str string) {
+	str = strings.TrimLeft(str, `{"`)
+	str = strings.TrimRight(str, `"}`)
+	tempPointsStr := strings.Split(str, `","`)
+	for _, tp := range tempPointsStr {
+		var point Point
+		point.StrToFloat(tp)
+		*p = append(*p, point)
+	}
 }

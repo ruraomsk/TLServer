@@ -101,7 +101,7 @@ func logIn(login, password, ip string, db *sqlx.DB) map[string]interface{} {
 	resp["area"] = areaMap
 
 	data.CacheArea.Mux.Lock()
-	resp["areaBox"] = data.CacheArea.Areas
+	resp["areaZone"] = data.CacheArea.Areas
 	data.CacheArea.Mux.Unlock()
 	return resp
 }

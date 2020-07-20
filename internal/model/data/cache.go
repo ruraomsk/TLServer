@@ -73,7 +73,7 @@ func CacheInfoDataUpdate() {
 	CacheInfo.MapRegion, CacheInfo.MapArea, err = GetRegionInfo()
 	CacheInfo.MapTLSost, err = getTLSost()
 	CacheInfo.Mux.Unlock()
-	FillMapAreaBox()
+	FillMapAreaZone()
 	err = getRoleAccess()
 	if err != nil {
 		logger.Error.Println(fmt.Sprintf("|Message: Error reading data cache: %s", err.Error()))
@@ -81,31 +81,42 @@ func CacheInfoDataUpdate() {
 }
 
 //FillMapAreaBox заполнение мапы районов и регионов с координатами
-func FillMapAreaBox() {
-	FillCacheALB()
+func FillMapAreaZone() {
+	//FillCacheALB()
 	CacheArea.Mux.Lock()
 	defer CacheArea.Mux.Unlock()
 	CacheInfo.Mux.Lock()
 	defer CacheInfo.Mux.Unlock()
-	CacheArea.Areas = make([]locations.AreaBox, 0)
+	CacheArea.Areas = make([]locations.AreaZone, 0)
+
 	//запрос уникальных регионов и районов
-	rows, _ := GetDB().Query("SELECT distinct on (region, area) region, area, Min(dgis[0]) as \"Y0\", Min(convTo360(dgis[1])) as \"X0\", Max(dgis[0]) as \"Y1\", Max(convTo360(dgis[1])) as \"X1\"  FROM public.\"cross\"  group by region, area")
+	rows, _ := GetDB().Query(`SELECT distinct on (region, area) region, area, array_agg(dgis) as aDgis   FROM public.cross  group by region, area`)
 	for rows.Next() {
-		var temp locations.AreaBox
-		_ = rows.Scan(&temp.Region, &temp.Area, &temp.Box.Point0.Y, &temp.Box.Point0.X, &temp.Box.Point1.Y, &temp.Box.Point1.X)
-		temp.Sub = make([]locations.SybAreaBox, 0)
+		var (
+			temp     locations.AreaZone
+			arrayStr string
+		)
+		_ = rows.Scan(&temp.Region, &temp.Area, &arrayStr)
+		temp.Zone.ParseFromStr(arrayStr)
+		temp.Zone = temp.Zone.ConvexHull()
+		temp.Sub = make([]locations.SybAreaZone, 0)
 		CacheArea.Areas = append(CacheArea.Areas, temp)
 	}
 
 	//запрос уникальных подрайонов
-	rows, _ = GetDB().Query("SELECT distinct on (region, area, subarea) region, area, subarea, Min(dgis[0]) as \"Y0\", Min(convTo360(dgis[1])) as \"X0\", Max(dgis[0]) as \"Y1\", Max(convTo360(dgis[1])) as \"X1\"  FROM public.\"cross\"  group by region, area, subarea")
+	rows, _ = GetDB().Query(`SELECT distinct on (region, area, subarea) region, area, subarea, array_agg(dgis) as aDgis FROM public.cross  group by region, area, subarea`)
 	for rows.Next() {
 		var (
-			tempSyb locations.SybAreaBox
-			reg     string
-			area    string
+			tempSyb  locations.SybAreaZone
+			reg      string
+			area     string
+			arrayStr string
 		)
-		_ = rows.Scan(&reg, &area, &tempSyb.SubArea, &tempSyb.Box.Point0.Y, &tempSyb.Box.Point0.X, &tempSyb.Box.Point1.Y, &tempSyb.Box.Point1.X)
+		_ = rows.Scan(&reg, &area, &tempSyb.SubArea, &arrayStr)
+		tempSyb.Zone.ParseFromStr(arrayStr)
+		if len(tempSyb.Zone) > 1 {
+			tempSyb.Zone = tempSyb.Zone.ConvexHull()
+		}
 		for num, areaBox := range CacheArea.Areas {
 			if areaBox.Region == reg && areaBox.Area == area {
 				CacheArea.Areas[num].Sub = append(CacheArea.Areas[num].Sub, tempSyb)
@@ -113,6 +124,7 @@ func FillMapAreaBox() {
 		}
 
 	}
+
 	//заполним поля названиями
 	for num := range CacheArea.Areas {
 		CacheArea.Areas[num].Region = CacheInfo.MapRegion[CacheArea.Areas[num].Region]

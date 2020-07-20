@@ -26,8 +26,7 @@ func GSReader(conn *websocket.Conn, mapContx map[string]string, db *sqlx.DB) {
 		resp := newGSMess(typeMapInfo, conn, mapOpenInfo(db))
 		resp.Data["routes"] = getAllModes(db)
 		data.CacheArea.Mux.Lock()
-		resp.Data["areaBox"] = data.CacheArea.Areas
-		resp.Data["hull"] = data.CacheALB
+		resp.Data["areaZone"] = data.CacheArea.Areas
 		data.CacheArea.Mux.Unlock()
 		resp.send()
 	}
@@ -162,9 +161,9 @@ func GSBroadcast(db *sqlx.DB) {
 					oldTFs = selectTL(db)
 					resp := newGSMess(typeRepaint, nil, nil)
 					resp.Data["tflight"] = oldTFs
-					data.FillMapAreaBox()
+					data.FillMapAreaZone()
 					data.CacheArea.Mux.Lock()
-					resp.Data["areaBox"] = data.CacheArea.Areas
+					resp.Data["areaZone"] = data.CacheArea.Areas
 					data.CacheArea.Mux.Unlock()
 					for conn := range connectOnGS {
 						_ = conn.WriteJSON(resp)

@@ -44,7 +44,7 @@ func MapReader(conn *websocket.Conn, c *gin.Context, db *sqlx.DB) {
 			}
 			resp.Data["area"] = areaMap
 			data.CacheArea.Mux.Lock()
-			resp.Data["areaBox"] = data.CacheArea.Areas
+			resp.Data["areaZone"] = data.CacheArea.Areas
 			data.CacheArea.Mux.Unlock()
 		}
 		resp.send()
@@ -171,10 +171,10 @@ func MapBroadcast(db *sqlx.DB) {
 					oldTFs = selectTL(db)
 					resp := newMapMess(typeRepaint, nil, nil)
 					resp.Data["tflight"] = oldTFs
-					data.FillMapAreaBox()
+					data.FillMapAreaZone()
 					GSRepaint <- true
 					data.CacheArea.Mux.Lock()
-					resp.Data["areaBox"] = data.CacheArea.Areas
+					resp.Data["areaZone"] = data.CacheArea.Areas
 					data.CacheArea.Mux.Unlock()
 					for conn := range connectedUsersOnMap {
 						_ = conn.WriteJSON(resp)
