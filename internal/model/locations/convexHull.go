@@ -4,6 +4,8 @@ import (
 	"sort"
 )
 
+type Points []Point
+
 // ConvexHull returns the set of points that define the
 // convex hull of p in CCW order starting from the left most.
 func (p Points) ConvexHull() Points {
@@ -36,8 +38,6 @@ func (p Points) ConvexHull() Points {
 func ccw(a, b, c Point) bool {
 	return ((b.X - a.X) * (c.Y - a.Y)) > ((b.Y - a.Y) * (c.X - a.X))
 }
-
-type Points []Point
 
 func (p Points) Len() int      { return len(p) }
 func (p Points) Swap(i, j int) { p[i], p[j] = p[j], p[i] }

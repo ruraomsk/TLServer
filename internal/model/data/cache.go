@@ -73,7 +73,6 @@ func CacheInfoDataUpdate() {
 	CacheInfo.MapRegion, CacheInfo.MapArea, err = GetRegionInfo()
 	CacheInfo.MapTLSost, err = getTLSost()
 	CacheInfo.Mux.Unlock()
-	FillCacheALB()
 	FillMapAreaBox()
 	err = getRoleAccess()
 	if err != nil {
@@ -83,6 +82,7 @@ func CacheInfoDataUpdate() {
 
 //FillMapAreaBox заполнение мапы районов и регионов с координатами
 func FillMapAreaBox() {
+	FillCacheALB()
 	CacheArea.Mux.Lock()
 	defer CacheArea.Mux.Unlock()
 	CacheInfo.Mux.Lock()
