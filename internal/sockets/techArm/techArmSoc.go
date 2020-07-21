@@ -114,7 +114,7 @@ func ArmTechBroadcast(db *sqlx.DB) {
 
 	TArmNewCrossData = make(chan bool)
 	UserLogoutTech = make(chan string)
-	sockets.DispatchMessageFromAnotherPlace = make(chan sockets.DBMessage)
+	sockets.DispatchMessageFromAnotherPlace = make(chan sockets.DBMessage, 5)
 
 	readTick := time.NewTicker(devUpdate)
 	defer readTick.Stop()

@@ -145,11 +145,11 @@ func StartServer(conf *ServerConf) {
 	mainRouter.POST("/:slug/manage/crossCreator/makeSelected", handlers.MakeSelectedDirCross)   //обработка создания каталога карты перекрестков
 
 	//лог устройств
-	mainRouter.GET("/:slug/map/deviceLog", func(c *gin.Context) { //обработка лога устройства (страничка)
+	mainRouter.GET("/:slug/deviceLog", func(c *gin.Context) { //обработка лога устройства (страничка)
 		c.HTML(http.StatusOK, "deviceLog.html", nil)
 	})
-	mainRouter.POST("/:slug/map/deviceLog", handlers.DisplayDeviceLogFile) //обработка лога устройства
-	mainRouter.POST("/:slug/map/deviceLog/info", handlers.LogDeviceInfo)   //обработка лога устройства по выбранному интеревалу времени
+	mainRouter.POST("/:slug/deviceLog", handlers.DisplayDeviceLogFile) //обработка лога устройства
+	mainRouter.POST("/:slug/deviceLog/info", handlers.LogDeviceInfo)   //обработка лога устройства по выбранному интеревалу времени
 
 	//работа с лицензией
 	mainRouter.GET("/:slug/license", func(c *gin.Context) { //обработка работы с лицензиями (страничка)

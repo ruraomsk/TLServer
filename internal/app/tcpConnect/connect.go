@@ -32,11 +32,11 @@ func TCPBroadcast(typeIP map[string]string) {
 	SendMessageToTCPServer = make(chan TCPMessage, 20)
 	SendRespTCPMess = make(chan TCPMessage, 20)
 
-	CrossSocGetTCPResp = make(chan TCPMessage, 10)
-	CrControlSocGetTCPResp = make(chan TCPMessage, 10)
-	GSGetTCPResp = make(chan TCPMessage, 10)
-	MapGetTCPResp = make(chan TCPMessage, 10)
-	TArmGetTCPResp = make(chan TCPMessage, 10)
+	CrossSocGetTCPResp = make(chan TCPMessage, 5)
+	CrControlSocGetTCPResp = make(chan TCPMessage, 5)
+	GSGetTCPResp = make(chan TCPMessage, 5)
+	MapGetTCPResp = make(chan TCPMessage, 5)
+	TArmGetTCPResp = make(chan TCPMessage, 5)
 
 	go tcpRespBroadcast()
 

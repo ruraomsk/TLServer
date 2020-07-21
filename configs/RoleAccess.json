@@ -218,12 +218,12 @@
     },
     {
       "permission": 5,
-      "path": "/map/deviceLog",
+      "path": "/deviceLog",
       "description": "обработка лога от устройства"
     },
     {
       "permission": 5,
-      "path": "/map/deviceLog/info",
+      "path": "/deviceLog/info",
       "description": "обработка лога устройства по выбранному интеревалу времени"
     },
     {
