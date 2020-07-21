@@ -78,7 +78,14 @@ func ArmTechReader(conn *websocket.Conn, reg int, area []string, login string, d
 				arm := comm.CommandARM{}
 				_ = json.Unmarshal(p, &arm)
 				arm.User = armInfo.Login
-				var mess = tcpConnect.TCPMessage{User: arm.User, Type: tcpConnect.TypeDispatch, Id: arm.ID, Data: arm, From: tcpConnect.TechArmSoc}
+				var mess = tcpConnect.TCPMessage{
+					User:        armInfo.Login,
+					TCPType:     tcpConnect.TypeDispatch,
+					Idevice:     arm.ID,
+					Data:        arm,
+					From:        tcpConnect.TechArmSoc,
+					CommandType: typeDButton,
+				}
 				mess.SendToTCPServer()
 			}
 		case typeGPS:
@@ -86,7 +93,14 @@ func ArmTechReader(conn *websocket.Conn, reg int, area []string, login string, d
 				gps := comm.ChangeProtocol{}
 				_ = json.Unmarshal(p, &gps)
 				gps.User = armInfo.Login
-				var mess = tcpConnect.TCPMessage{User: armInfo.Login, Type: tcpConnect.TypeChangeProtocol, Id: gps.ID, Data: gps, From: tcpConnect.TechArmSoc}
+				var mess = tcpConnect.TCPMessage{
+					User:        armInfo.Login,
+					TCPType:     tcpConnect.TypeChangeProtocol,
+					Idevice:     gps.ID,
+					Data:        gps,
+					From:        tcpConnect.TechArmSoc,
+					CommandType: typeGPS,
+				}
 				mess.SendToTCPServer()
 			}
 		}
@@ -193,7 +207,7 @@ func ArmTechBroadcast(db *sqlx.DB) {
 		case msg := <-tcpConnect.TArmGetTCPResp:
 			{
 				resp := newArmMess("", nil, nil)
-				switch msg.Type {
+				switch msg.CommandType {
 				case typeDButton:
 					{
 						resp.Type = typeDButton
@@ -201,7 +215,7 @@ func ArmTechBroadcast(db *sqlx.DB) {
 						if msg.Status {
 							resp.Data["command"] = msg.Data
 						}
-						var message = sockets.DBMessage{Data: resp, Idevice: msg.Id}
+						var message = sockets.DBMessage{Data: resp, Idevice: msg.Idevice}
 						sockets.DispatchMessageFromAnotherPlace <- message
 					}
 				case typeGPS:

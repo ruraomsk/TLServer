@@ -99,7 +99,15 @@ func GSReader(conn *websocket.Conn, mapContx map[string]string, db *sqlx.DB) {
 				arm := comm.CommandARM{}
 				_ = json.Unmarshal(p, &arm)
 				arm.User = login
-				var mess = tcpConnect.TCPMessage{User: arm.User, Type: tcpConnect.TypeDispatch, Id: arm.ID, Data: arm, From: tcpConnect.GsSoc}
+				var mess = tcpConnect.TCPMessage{
+					User:        arm.User,
+					TCPType:     tcpConnect.TypeDispatch,
+					Idevice:     arm.ID,
+					Data:        arm,
+					From:        tcpConnect.GsSoc,
+					CommandType: typeDButton,
+					Pos:         sockets.PosInfo{},
+				}
 				mess.SendToTCPServer()
 			}
 		}
@@ -111,6 +119,7 @@ func GSBroadcast(db *sqlx.DB) {
 	connectOnGS = make(map[*websocket.Conn]string)
 	writeGS = make(chan GSSokResponse, 50)
 
+	GSRepaint = make(chan bool)
 	userLogout = make(chan string)
 	crossReadTick := time.NewTicker(time.Second * 5)
 	pingTicker := time.NewTicker(pingPeriod)
@@ -183,14 +192,14 @@ func GSBroadcast(db *sqlx.DB) {
 				resp.Data["status"] = msg.Status
 				if msg.Status {
 					resp.Data["command"] = msg.Data
+					var message = sockets.DBMessage{Data: resp, Idevice: msg.Idevice}
+					sockets.DispatchMessageFromAnotherPlace <- message
 				}
 				for conn, user := range connectOnGS {
 					if user == msg.User {
 						_ = conn.WriteJSON(resp)
 					}
 				}
-				var message = sockets.DBMessage{Data: resp, Idevice: msg.Id}
-				sockets.DispatchMessageFromAnotherPlace <- message
 			}
 		case msg := <-writeGS:
 			switch msg.Type {

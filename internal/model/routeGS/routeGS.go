@@ -3,7 +3,7 @@ package routeGS
 import (
 	"encoding/json"
 	"github.com/JanFant/TLServer/internal/model/locations"
-	"github.com/JanFant/TLServer/internal/sockets/crossSock"
+	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -18,10 +18,10 @@ type Route struct {
 
 //RouteTL информация о перекрестке
 type RouteTL struct {
-	Num   int               `json:"num"`   //порятковый новер светофора в маршруте
-	Phase int               `json:"phase"` //фаза заданная для данного перекрестка
-	Point locations.Point   `json:"point"` //координаты перекретска
-	Pos   crossSock.PosInfo `json:"pos"`   //информация о перекрестка (где находится)
+	Num   int             `json:"num"`   //порятковый новер светофора в маршруте
+	Phase int             `json:"phase"` //фаза заданная для данного перекрестка
+	Point locations.Point `json:"point"` //координаты перекретска
+	Pos   sockets.PosInfo `json:"pos"`   //информация о перекрестка (где находится)
 }
 
 //Create создание/запись маршрута в БД

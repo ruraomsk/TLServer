@@ -29,7 +29,7 @@ var UserLogoutCross chan string
 const pingPeriod = time.Second * 30
 
 //CrossReader обработчик открытия сокета для перекрестка
-func CrossReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string, db *sqlx.DB) {
+func CrossReader(conn *websocket.Conn, pos sockets.PosInfo, mapContx map[string]string, db *sqlx.DB) {
 	//дропаю соединение, если перекресток уже открыт у пользователя
 	var crossCI = CrossInfo{Login: mapContx["login"], Role: mapContx["role"], Pos: pos, Edit: false}
 
@@ -115,7 +115,15 @@ func CrossReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string, 
 				arm := comm.CommandARM{}
 				_ = json.Unmarshal(p, &arm)
 				arm.User = crossCI.Login
-				var mess = tcpConnect.TCPMessage{User: arm.User, Type: tcpConnect.TypeDispatch, Id: arm.ID, Data: arm, From: tcpConnect.CrossSoc}
+				var mess = tcpConnect.TCPMessage{
+					User:        crossCI.Login,
+					TCPType:     tcpConnect.TypeDispatch,
+					Idevice:     arm.ID,
+					Data:        arm,
+					From:        tcpConnect.CrossSoc,
+					CommandType: typeDButton,
+					Pos:         crossCI.Pos,
+				}
 				mess.SendToTCPServer()
 			}
 		}
@@ -282,7 +290,7 @@ func CrossBroadcast(db *sqlx.DB) {
 				resp := newCrossMess(typeStateChange, nil, nil, CrossInfo{})
 				resp.Data["state"] = msg.Data
 				for conn, info := range crossConnect {
-					if info.Idevice == msg.Id {
+					if info.Pos == msg.Pos {
 						_ = conn.WriteJSON(resp)
 					}
 				}
@@ -290,16 +298,6 @@ func CrossBroadcast(db *sqlx.DB) {
 		case msg := <-writeCrossMessage: //ok
 			{
 				switch msg.Type {
-				case typeDButton:
-					{
-						fmt.Println(msg)
-
-						for conn, info := range crossConnect {
-							if info.Pos == msg.info.Pos {
-								_ = conn.WriteJSON(msg)
-							}
-						}
-					}
 				case typeChangeEdit:
 					{
 						delC := crossConnect[msg.conn]
@@ -359,7 +357,7 @@ func CrossBroadcast(db *sqlx.DB) {
 		case msgD := <-armDeleted: //ok
 			{
 				for conn, info := range crossConnect {
-					if info.Idevice == msgD.Id {
+					if info.Pos == msgD.Pos {
 						msg := closeMessage{Type: typeClose, Message: "перекресток удален"}
 						_ = conn.WriteJSON(msg)
 						//_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "перекресток удален"))
@@ -392,7 +390,7 @@ func CrossBroadcast(db *sqlx.DB) {
 					resp.Data["command"] = msg.Data
 				}
 				for conn, crossInfo := range crossConnect {
-					if crossInfo.Idevice == msg.Id {
+					if crossInfo.Idevice == msg.Idevice {
 						_ = conn.WriteJSON(resp)
 					}
 				}

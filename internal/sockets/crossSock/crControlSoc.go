@@ -24,7 +24,7 @@ var MapRepaint chan bool
 var UserLogoutCrControl chan string
 
 //ControlReader обработчик открытия сокета для арма перекрестка
-func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string, db *sqlx.DB) {
+func ControlReader(conn *websocket.Conn, pos sockets.PosInfo, mapContx map[string]string, db *sqlx.DB) {
 	//дропаю соединение, если перекресток уже открыт у пользователя
 	var controlI = CrossInfo{Login: mapContx["login"], Pos: pos, Edit: false}
 
@@ -110,7 +110,19 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 			{
 				temp := StateHandler{}
 				_ = json.Unmarshal(p, &temp)
-				sendCrossData(temp.State, controlI.Login)
+				var (
+					userCross = agspudge.UserCross{User: controlI.Login, State: temp.State}
+					mess      = tcpConnect.TCPMessage{
+						User:        controlI.Login,
+						TCPType:     tcpConnect.TypeState,
+						Idevice:     temp.State.IDevice,
+						Data:        userCross,
+						From:        tcpConnect.CrControlSoc,
+						CommandType: typeSendB,
+						Pos:         controlI.Pos,
+					}
+				)
+				mess.SendToTCPServer()
 			}
 		case typeCheckB: //проверка state
 			{
@@ -130,14 +142,25 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 				}{}
 				_ = json.Unmarshal(p, &temp)
 				resp := newControlMess(typeCreateB, conn, nil, controlI)
-				resp.Data = createCrossData(temp.State, controlI.Login, temp.Z, db)
+				resp.Data = createCrossData(temp.State, controlI.Pos, controlI.Login, temp.Z, db)
 				resp.send()
 			}
 		case typeDeleteB: //удаление state
 			{
 				temp := StateHandler{}
 				_ = json.Unmarshal(p, &temp)
-				deleteCrossData(temp.State, controlI.Login)
+				userCross := agspudge.UserCross{User: controlI.Login, State: temp.State}
+				userCross.State.IDevice = -1
+				mess := tcpConnect.TCPMessage{
+					User:        controlI.Login,
+					TCPType:     tcpConnect.TypeState,
+					Idevice:     temp.State.IDevice,
+					Data:        userCross,
+					From:        tcpConnect.CrControlSoc,
+					CommandType: typeDeleteB,
+					Pos:         controlI.Pos,
+				}
+				mess.SendToTCPServer()
 			}
 		case typeUpdateB: //обновление state
 			{
@@ -172,7 +195,15 @@ func ControlReader(conn *websocket.Conn, pos PosInfo, mapContx map[string]string
 				arm := comm.CommandARM{}
 				_ = json.Unmarshal(p, &arm)
 				arm.User = controlI.Login
-				var mess = tcpConnect.TCPMessage{User: arm.User, Type: tcpConnect.TypeDispatch, Id: arm.ID, Data: arm, From: tcpConnect.CrControlSoc}
+				var mess = tcpConnect.TCPMessage{
+					User:        controlI.Login,
+					TCPType:     tcpConnect.TypeDispatch,
+					Idevice:     arm.ID,
+					Data:        arm,
+					From:        tcpConnect.CrControlSoc,
+					CommandType: typeDButton,
+					Pos:         controlI.Pos,
+				}
 				mess.SendToTCPServer()
 
 			}
@@ -205,7 +236,6 @@ func ControlBroadcast() {
 					{
 						_ = msg.conn.WriteJSON(msg)
 					}
-
 				case typeChangeEdit:
 					{
 						delC := controlConnect[msg.conn]
@@ -219,12 +249,10 @@ func ControlBroadcast() {
 								break
 							}
 						}
-						fmt.Println("control cok edit :", controlConnect)
 					}
 				case typeClose:
 					{
 						delete(controlConnect, msg.conn)
-						fmt.Println("control cok close :", controlConnect)
 					}
 				default:
 					{
@@ -261,7 +289,7 @@ func ControlBroadcast() {
 		case msg := <-tcpConnect.CrControlSocGetTCPResp:
 			{
 				resp := newControlMess("", nil, nil, CrossInfo{})
-				switch msg.Type {
+				switch msg.CommandType {
 				case typeDButton:
 					{
 						resp.Type = typeDButton
@@ -270,81 +298,78 @@ func ControlBroadcast() {
 							resp.Data["command"] = msg.Data
 						}
 						for conn, cInfo := range controlConnect {
-							if cInfo.Idevice == msg.Id {
+							if cInfo.Idevice == msg.Idevice {
 								_ = conn.WriteJSON(resp)
 							}
 						}
 					}
-				case tcpConnect.TypeState:
+				case typeSendB:
 					{
-						switch msg.StateType {
-						case typeSendB:
-							{
-								resp.Type = typeSendB
-								resp.Data["status"] = msg.Status
-								if msg.Status {
-									resp.Data["state"] = msg.Data
-									resp.Data["user"] = msg.User
-								}
-								if msg.Status {
-									//если есть поле отправить всем кто слушает
-									for conn, info := range controlConnect {
-										if info.Idevice == msg.Id {
-											_ = conn.WriteJSON(resp)
-										}
-									}
-									changeState <- msg
-									techArm.TArmNewCrossData <- true
-								} else {
-									// если нету поля отправить ошибку только пользователю
-									for conn, info := range controlConnect {
-										if info.Login == msg.User && info.Idevice == msg.Id {
-											_ = conn.WriteJSON(resp)
-										}
-									}
+						resp.Type = typeSendB
+						resp.Data["status"] = msg.Status
+						if msg.Status {
+							var uState agspudge.UserCross
+							raw, _ := json.Marshal(msg.Data)
+							_ = json.Unmarshal(raw, &uState)
+							resp.Data["state"] = uState.State
+							resp.Data["user"] = msg.User
+						}
+						if msg.Status {
+							//если есть поле отправить всем кто слушает
+							for conn, info := range controlConnect {
+								if info.Pos == msg.Pos {
+									_ = conn.WriteJSON(resp)
 								}
 							}
-						case typeCreateB:
-							{
-								resp.Type = typeCreateB
-								resp.Data["status"] = msg.Status
-								for conn, info := range controlConnect {
-									if info.Login == msg.User && info.Idevice == msg.Id {
-										_ = conn.WriteJSON(resp)
-									}
-								}
-								if msg.Status {
-									MapRepaint <- true
-									techArm.TArmNewCrossData <- true
-								}
-
-							}
-						case typeDeleteB:
-							{
-								resp.Type = typeDeleteB
-								resp.Data["status"] = msg.Status
-								if msg.Status {
-									//если есть поле отправить всем кто слушает
-									for conn, info := range controlConnect {
-										if info.Idevice == msg.Id {
-											_ = conn.WriteJSON(resp)
-										}
-									}
-									armDeleted <- msg
-									MapRepaint <- true
-									techArm.TArmNewCrossData <- true
-								} else {
-									// если нету поля отправить ошибку только пользователю
-									for conn, info := range controlConnect {
-										if info.Login == msg.User && info.Idevice == msg.Id {
-											_ = conn.WriteJSON(resp)
-										}
-									}
+							changeState <- msg
+							techArm.TArmNewCrossData <- true
+						} else {
+							// если нету поля отправить ошибку только пользователю
+							for conn, info := range controlConnect {
+								if info.Login == msg.User && info.Pos == msg.Pos {
+									_ = conn.WriteJSON(resp)
 								}
 							}
 						}
 					}
+				case typeCreateB:
+					{
+						resp.Type = typeCreateB
+						resp.Data["status"] = msg.Status
+						for conn, info := range controlConnect {
+							if info.Login == msg.User && info.Pos == msg.Pos {
+								_ = conn.WriteJSON(resp)
+							}
+						}
+						if msg.Status {
+							MapRepaint <- true
+							techArm.TArmNewCrossData <- true
+						}
 
+					}
+				case typeDeleteB:
+					{
+						resp.Type = typeDeleteB
+						resp.Data["status"] = msg.Status
+						if msg.Status {
+							//если есть поле отправить всем кто слушает
+							for conn, info := range controlConnect {
+								if info.Pos == msg.Pos {
+									_ = conn.WriteJSON(resp)
+								}
+							}
+							armDeleted <- msg
+							MapRepaint <- true
+							techArm.TArmNewCrossData <- true
+						} else {
+							// если нету поля отправить ошибку только пользователю
+							for conn, info := range controlConnect {
+								if info.Login == msg.User && info.Pos == msg.Pos {
+									_ = conn.WriteJSON(resp)
+								}
+							}
+						}
+					}
 				}
 			}
 		case login := <-UserLogoutCrControl:

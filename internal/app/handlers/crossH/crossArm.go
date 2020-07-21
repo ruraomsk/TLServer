@@ -1,6 +1,7 @@
 package crossH
 
 import (
+	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/JanFant/TLServer/internal/sockets/crossSock"
 	"github.com/gorilla/websocket"
 	"net/http"
@@ -20,7 +21,7 @@ var upgrader = websocket.Upgrader{
 //CrossEngine обработчик вебсокета для работы с перекрестком
 var CrossEngine = func(c *gin.Context) {
 	var (
-		crEdit crossSock.PosInfo
+		crEdit sockets.PosInfo
 		err    error
 	)
 	crEdit.Region, crEdit.Area, crEdit.Id, err = queryParser(c)
@@ -43,7 +44,7 @@ var CrossEngine = func(c *gin.Context) {
 //CrossControlEngine обработчик вебсокета для работы с армом перекрестком
 var CrossControlEngine = func(c *gin.Context) {
 	var (
-		crEdit crossSock.PosInfo
+		crEdit sockets.PosInfo
 		err    error
 	)
 	crEdit.Region, crEdit.Area, crEdit.Id, err = queryParser(c)

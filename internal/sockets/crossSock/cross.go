@@ -3,12 +3,13 @@ package crossSock
 import (
 	"encoding/json"
 	"github.com/JanFant/TLServer/internal/model/data"
+	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/jmoiron/sqlx"
 	agspudge "github.com/ruraomsk/ag-server/pudge"
 )
 
 //takeCrossInfo формарование необходимой информации о перекрестке
-func takeCrossInfo(pos PosInfo, db *sqlx.DB) (resp CrossSokResponse, idev int, desc string) {
+func takeCrossInfo(pos sockets.PosInfo, db *sqlx.DB) (resp CrossSokResponse, idev int, desc string) {
 	var (
 		dgis     string
 		stateStr string
@@ -52,7 +53,7 @@ func takeCrossInfo(pos PosInfo, db *sqlx.DB) (resp CrossSokResponse, idev int, d
 }
 
 //getNewState получение обновленного state
-func getNewState(pos PosInfo, db *sqlx.DB) (agspudge.Cross, error) {
+func getNewState(pos sockets.PosInfo, db *sqlx.DB) (agspudge.Cross, error) {
 	var stateStr string
 	rowsTL := db.QueryRow(`SELECT state FROM public.cross WHERE region = $1 and id = $2 and area = $3`, pos.Region, pos.Id, pos.Area)
 	_ = rowsTL.Scan(&stateStr)

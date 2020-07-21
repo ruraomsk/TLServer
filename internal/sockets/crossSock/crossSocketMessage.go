@@ -2,6 +2,7 @@ package crossSock
 
 import (
 	"fmt"
+	"github.com/JanFant/TLServer/internal/sockets"
 
 	"github.com/jmoiron/sqlx"
 
@@ -35,19 +36,12 @@ type CrossSokResponse struct {
 
 //crossInfo информация о перекрестке для которого открыт сокет
 type CrossInfo struct {
-	Login       string  `json:"login"`
-	Role        string  `json:"-"`
-	Edit        bool    `json:"edit"`
-	Idevice     int     `json:"idevice"`
-	Description string  `json:"description"` //описание
-	Pos         PosInfo `json:"pos"`
-}
-
-//PosInfo положение перекрестка
-type PosInfo struct {
-	Region string `json:"region"` //регион
-	Area   string `json:"area"`   //район
-	Id     int    `json:"id"`     //ID
+	Login       string          `json:"login"`
+	Role        string          `json:"-"`
+	Edit        bool            `json:"edit"`
+	Idevice     int             `json:"idevice"`
+	Description string          `json:"description"` //описание
+	Pos         sockets.PosInfo `json:"pos"`
 }
 
 //newCrossMess создание нового сообщения

@@ -5,6 +5,7 @@ import (
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/model/crossCreator"
 	"github.com/JanFant/TLServer/internal/model/deviceLog"
+	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/jmoiron/sqlx"
 	"net/http"
 	"strconv"
@@ -56,7 +57,7 @@ func TestCrossStateData(mapContx map[string]string, db *sqlx.DB) u.Response {
 }
 
 //takeControlInfo формарование необходимой информации о арме перекрестка
-func takeControlInfo(pos PosInfo, db *sqlx.DB) (resp ControlSokResponse, idev int, desc string) {
+func takeControlInfo(pos sockets.PosInfo, db *sqlx.DB) (resp ControlSokResponse, idev int, desc string) {
 	var (
 		stateStr string
 	)
@@ -93,48 +94,21 @@ func checkCrossData(state agspudge.Cross) ControlSokResponse {
 	return resp
 }
 
-//sendCrossData получение данных от пользователя проверка и отправка серверу(устройств)
-func sendCrossData(state agspudge.Cross, login string) {
-	var (
-		userCross = agspudge.UserCross{User: login, State: state}
-		mess      = tcpConnect.TCPMessage{User: login, Type: tcpConnect.TypeState, Id: userCross.State.IDevice, Data: userCross, From: tcpConnect.CrControlSoc, StateType: typeSendB}
-	)
-	mess.SendToTCPServer()
-	//status := true
-	//resp := make(map[string]interface{})
-	//resp["status"] = status
-	//if status {
-	//	resp["state"] = state
-	//	resp["user"] = login
-	//}
-	//return resp
-}
-
-//deleteCrossData удаление перекрестка на сервере
-func deleteCrossData(state agspudge.Cross, login string) {
-	state.IDevice = -1
-	var (
-		userCross = agspudge.UserCross{User: login, State: state}
-		mess      = tcpConnect.TCPMessage{User: login, Type: tcpConnect.TypeState, Id: userCross.State.IDevice, Data: userCross, From: tcpConnect.CrControlSoc, StateType: typeDeleteB}
-	)
-	mess.SendToTCPServer()
-
-	//status := true
-	//resp := make(map[string]interface{})
-	//resp["status"] = status
-	//if status {
-	//	resp["ok"] = true
-	//}
-	//return resp
-}
-
 //createCrossData добавление нового перекрестка
-func createCrossData(state agspudge.Cross, login string, z int, db *sqlx.DB) map[string]interface{} {
+func createCrossData(state agspudge.Cross, pos sockets.PosInfo, login string, z int, db *sqlx.DB) map[string]interface{} {
 	var (
 		userCross = agspudge.UserCross{User: login, State: state}
-		mess      = tcpConnect.TCPMessage{User: login, Type: tcpConnect.TypeState, Id: userCross.State.IDevice, Data: userCross, From: tcpConnect.CrControlSoc, StateType: typeCreateB}
-		verRes    []string
-		stateSql  string
+		mess      = tcpConnect.TCPMessage{
+			User:        login,
+			TCPType:     tcpConnect.TypeState,
+			Idevice:     userCross.State.IDevice,
+			Data:        userCross,
+			From:        tcpConnect.CrControlSoc,
+			CommandType: typeCreateB,
+			Pos:         pos,
+		}
+		verRes   []string
+		stateSql string
 	)
 	sqlStr := fmt.Sprintf(`SELECT state FROM public.cross WHERE state::jsonb @> '{"Idevice":%v}'::jsonb OR (region = %v and area = %v and id = %v)`, state.IDevice, state.Region, state.Area, state.ID)
 	rows, err := db.Query(sqlStr)
@@ -170,18 +144,6 @@ func createCrossData(state agspudge.Cross, login string, z int, db *sqlx.DB) map
 	} else {
 		resp["message"] = "cross created without Map.png - contact admin"
 	}
-
-	//status := true
-	//resp := make(map[string]interface{})
-	//resp["status"] = status
-	//if status {
-	//	resp["ok"] = true
-	//	if crossCreator.ShortCreateDirPng(state.Region, state.Area, state.ID, z, state.Dgis) {
-	//		resp["message"] = "cross created"
-	//	} else {
-	//		resp["message"] = "cross created without Map.png - contact admin"
-	//	}
-	//}
 	return resp
 }
 

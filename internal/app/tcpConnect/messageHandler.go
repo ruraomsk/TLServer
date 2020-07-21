@@ -1,33 +1,30 @@
 package tcpConnect
 
+import (
+	"encoding/json"
+	"fmt"
+	"github.com/JanFant/TLServer/internal/sockets"
+)
+
 //SendRespTCPMess канал приема сообщений от сервера
 var SendRespTCPMess chan TCPMessage
 
-//SendToUserResp канал отправки сообщения пользователям
-//var SendToUserResp chan RespTCPMess
+//SendMessageToTCPServer канал для приема сообщений для отправки на сервер
+var SendMessageToTCPServer chan TCPMessage
 
 var (
+	CrossSocGetTCPResp     chan TCPMessage
+	CrControlSocGetTCPResp chan TCPMessage
+	GSGetTCPResp           chan TCPMessage
+	MapGetTCPResp          chan TCPMessage
+	TArmGetTCPResp         chan TCPMessage
+
 	TypeDispatch       = "dispatch" //команды арм
 	TypeState          = "state"    //команды стате
 	TypeChangeProtocol = "changeProtocol"
 	typeInfo           map[string]string //ключ тип сервера, значение ip сервера
 )
 
-//RespTCPMess ответ сервера со статусом
-//type RespTCPMess struct {
-//	User   string      `json:"user"` //пользователь который отправил сообщение
-//	From   string      `json:"-"`    //от какого соекета пришел запрос
-//	Id     int         `json:"id"`   //id устройства
-//	Data   interface{} `json:"-"`    //отправленные данные
-//	Type   string      `json:"-"`    //тип команды отправки
-//	Status bool        `json:"-"`    //статус выполнения команды
-//}
-
-var CrossSocGetTCPResp chan TCPMessage
-var CrControlSocGetTCPResp chan TCPMessage
-var GSGetTCPResp chan TCPMessage
-var MapGetTCPResp chan TCPMessage
-var TArmGetTCPResp chan TCPMessage
 var (
 	GsSoc        = "gsSoc"
 	CrossSoc     = "crossSoc"
@@ -35,6 +32,30 @@ var (
 	MapSoc       = "mapSoc"
 	TechArmSoc   = "techArmSoc"
 )
+
+//TCPMessage структура данных для обработки и отправки ТСП сообщений
+type TCPMessage struct {
+	TCPType string      //тип тсп сообщения указывается из messageHandle
+	User    string      //пользователь который отправил сообщение
+	From    string      //указания в какой сокет вернуть сообщение
+	Data    interface{} //данные для отправки
+
+	CommandType string          //тип команды указывается на "месте"
+	Pos         sockets.PosInfo //информация о перекрестке
+	Idevice     int             //id устройства на которое отправляется сообщение
+	Status      bool            //статус выполнения команды
+}
+
+//SendToTCPServer отправка сообщения на сервер
+func (m *TCPMessage) SendToTCPServer() {
+	SendMessageToTCPServer <- *m
+}
+
+//dataToString превратить данные в строку и добавить \n для понимания сервера
+func (m *TCPMessage) dataToString() string {
+	raw, _ := json.Marshal(m.Data)
+	return fmt.Sprint(string(raw), "\n")
+}
 
 //tcpRespBroadcast рассылка сообщении
 func tcpRespBroadcast() {

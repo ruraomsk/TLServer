@@ -126,7 +126,14 @@ func MapReader(conn *websocket.Conn, c *gin.Context, db *sqlx.DB) {
 					statusDB = true
 				}
 				resp.Data["statusBD"] = statusDB
-				var tcpPackage = tcpConnect.TCPMessage{Type: tcpConnect.TypeState, User: "TestConn", Id: -1, Data: 0, From: tcpConnect.MapSoc}
+				var tcpPackage = tcpConnect.TCPMessage{
+					TCPType:     tcpConnect.TypeState,
+					User:        login,
+					Idevice:     -1,
+					Data:        0,
+					From:        tcpConnect.MapSoc,
+					CommandType: typeDButton,
+				}
 				tcpPackage.SendToTCPServer()
 
 				resp.send()
