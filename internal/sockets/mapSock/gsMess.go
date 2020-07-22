@@ -15,9 +15,9 @@ var (
 
 //GSSokResponse структура для отправки сообщений (GS)
 type GSSokResponse struct {
-	Type string                 `json:"type"`
-	Data map[string]interface{} `json:"data"`
-	conn *websocket.Conn        `json:"-"`
+	Type string                 `json:"type"` //тип сообщения
+	Data map[string]interface{} `json:"data"` //данные
+	conn *websocket.Conn        `json:"-"`    //соединение
 }
 
 //newGSMess создание нового сообщения

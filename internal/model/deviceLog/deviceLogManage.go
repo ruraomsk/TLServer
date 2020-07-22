@@ -34,7 +34,7 @@ type BusyArm struct {
 	Area        string `json:"area"`        //район
 	ID          int    `json:"ID"`          //ID
 	Description string `json:"description"` //описание
-	Idevice     int    `json:"idevice"`
+	Idevice     int    `json:"idevice"`     //уникальный номер устройства
 }
 
 //toStr конвертировать в структуру

@@ -29,6 +29,7 @@ type Config struct {
 	StaticPath string               `toml:"static_path"` //путь до ресурсов кроса
 }
 
+//GetDBurl сформировать url для подключения к БД
 func (dbConfig *DBConfig) GetDBurl() string {
 	return fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable password=%s", dbConfig.Host, dbConfig.User, dbConfig.Name, dbConfig.Password)
 }

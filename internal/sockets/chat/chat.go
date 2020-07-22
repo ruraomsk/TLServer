@@ -9,9 +9,9 @@ import (
 	"time"
 )
 
-var writeChatMess chan chatSokResponse
-var chatConnUsers map[*websocket.Conn]userInfo
-var UserLogoutChat chan string
+var writeChatMess chan chatSokResponse         //канал для обработки сообщений
+var chatConnUsers map[*websocket.Conn]userInfo //пулл соединений с информацией о соединении
+var UserLogoutChat chan string                 //канал для закрытия сокетов, пользователя который вышел из системы
 
 const pingPeriod = time.Second * 30
 

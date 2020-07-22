@@ -22,10 +22,10 @@ var (
 
 //ControlSokResponse структура для отправки сообщений (cross control)
 type ControlSokResponse struct {
-	Type string                 `json:"type"`
-	Data map[string]interface{} `json:"data"`
-	conn *websocket.Conn        `json:"-"`
-	info CrossInfo              `json:"-"`
+	Type string                 `json:"type"` //тип сообщения
+	Data map[string]interface{} `json:"data"` //данные
+	conn *websocket.Conn        `json:"-"`    //соединение
+	info CrossInfo              `json:"-"`    //информация о соединении
 }
 
 //StateHandler структура приема / отправки state

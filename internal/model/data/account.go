@@ -41,8 +41,8 @@ type Account struct {
 	Token       string             `json:"token",sql:"-"`                 //Токен пользователя
 }
 
-var AutomaticLogin = "TechAutomatic"
-var errorConnectDB = "соединение с БД потеряно"
+var AutomaticLogin = "TechAutomatic"            //Пользователь для суперпользователя :D
+var errorConnectDB = "соединение с БД потеряно" //стандартная ошибка
 
 //Validate проверка аккаунда в бд
 func (data *Account) Validate() error {

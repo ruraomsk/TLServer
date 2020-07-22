@@ -16,8 +16,8 @@ import (
 	"time"
 )
 
-var connectedUsersOnMap map[*websocket.Conn]bool
-var writeMap chan MapSokResponse
+var connectedUsersOnMap map[*websocket.Conn]bool //пулл соединений
+var writeMap chan MapSokResponse                 //канал для отправки сообщений
 
 const pingPeriod = time.Second * 30
 
@@ -25,6 +25,7 @@ const pingPeriod = time.Second * 30
 func MapReader(conn *websocket.Conn, c *gin.Context, db *sqlx.DB) {
 	connectedUsersOnMap[conn] = true
 	login := ""
+	//подготовка начальной информации
 	{
 		flag, tk := checkToken(c, db)
 		resp := newMapMess(typeMapInfo, conn, mapOpenInfo(db))
@@ -131,7 +132,7 @@ func MapReader(conn *websocket.Conn, c *gin.Context, db *sqlx.DB) {
 					User:        login,
 					Idevice:     -1,
 					Data:        0,
-					From:        tcpConnect.MapSoc,
+					From:        tcpConnect.FromMapSoc,
 					CommandType: typeDButton,
 				}
 				tcpPackage.SendToTCPServer()
@@ -211,7 +212,7 @@ func MapBroadcast(db *sqlx.DB) {
 					_ = conn.WriteJSON(resp)
 				}
 			}
-		case msg := <-tcpConnect.MapGetTCPResp:
+		case msg := <-tcpConnect.TCPRespMap:
 			{
 				resp := newMapMess(typeCheckConn, nil, nil)
 				resp.Data["statusS"] = msg.Status

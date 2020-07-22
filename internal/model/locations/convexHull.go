@@ -5,6 +5,9 @@ import (
 	"strings"
 )
 
+//честно спизженный алгоритм нахождения области по точкам
+
+//Points массив точек
 type Points []Point
 
 // ConvexHull returns the set of points that define the
@@ -40,8 +43,13 @@ func ccw(a, b, c Point) bool {
 	return ((b.X - a.X) * (c.Y - a.Y)) > ((b.Y - a.Y) * (c.X - a.X))
 }
 
-func (p Points) Len() int      { return len(p) }
+//Len длинна slice
+func (p Points) Len() int { return len(p) }
+
+//Swap меняем местами значение
 func (p Points) Swap(i, j int) { p[i], p[j] = p[j], p[i] }
+
+//Less определение кто меньше
 func (p Points) Less(i, j int) bool {
 	if p[i].X == p[j].X {
 		return p[i].Y < p[i].Y
@@ -49,6 +57,7 @@ func (p Points) Less(i, j int) bool {
 	return p[i].X < p[j].X
 }
 
+//ParseFromStr разбор строки взятой из БД и формирование slice
 func (p *Points) ParseFromStr(str string) {
 	str = strings.TrimLeft(str, `{"`)
 	str = strings.TrimRight(str, `"}`)

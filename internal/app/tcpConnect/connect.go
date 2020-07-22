@@ -32,17 +32,19 @@ func TCPBroadcast(typeIP map[string]string) {
 	SendMessageToTCPServer = make(chan TCPMessage, 20)
 	SendRespTCPMess = make(chan TCPMessage, 20)
 
-	CrossSocGetTCPResp = make(chan TCPMessage, 5)
-	CrControlSocGetTCPResp = make(chan TCPMessage, 5)
-	GSGetTCPResp = make(chan TCPMessage, 5)
-	MapGetTCPResp = make(chan TCPMessage, 5)
-	TArmGetTCPResp = make(chan TCPMessage, 5)
+	TCPRespCrossSoc = make(chan TCPMessage, 5)
+	TCPRespCrControlSoc = make(chan TCPMessage, 5)
+	TCPRespGS = make(chan TCPMessage, 5)
+	TCPRespMap = make(chan TCPMessage, 5)
+	TCPRespTArm = make(chan TCPMessage, 5)
 
 	go tcpRespBroadcast()
 
+	//заполняем пулл соединений по TCP
 	for _, ip := range typeIP {
 		poolTCPConnect[ip] = tcpInfo{conn: nil, errCount: 0, flagConnect: false}
 	}
+	//таймер времени опроса соединений
 	timeTick := time.NewTicker(time.Second * 5)
 	defer timeTick.Stop()
 
@@ -81,7 +83,9 @@ func TCPBroadcast(typeIP map[string]string) {
 			}
 		case msg := <-SendMessageToTCPServer:
 			{
+				//определим кокое соединение нужно взять для отправки сообщения
 				info, _ := poolTCPConnect[typeIP[msg.TCPType]]
+				//сохраним экземпляр в ответное сообщение
 				var resp = msg
 				if !info.flagConnect {
 					//соединение почемуто не открыто, пусть попробует в следующий раз
@@ -91,7 +95,6 @@ func TCPBroadcast(typeIP map[string]string) {
 				}
 				//ошибки нет подготовим данные и отправим
 				sendStr := msg.dataToString()
-
 				_ = info.conn.SetWriteDeadline(time.Now().Add(time.Second * 5))
 				_, err := info.conn.Write([]byte(sendStr))
 				if err != nil {

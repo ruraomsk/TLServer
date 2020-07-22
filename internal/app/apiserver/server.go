@@ -48,24 +48,24 @@ func StartServer(conf *ServerConf) {
 		c.HTML(http.StatusNotFound, "notFound.html", nil)
 	})
 
-	//начальная страница
+	//начальная страница перенаправление  / -> /map
 	router.GET("/", func(c *gin.Context) {
 		c.Redirect(http.StatusPermanentRedirect, "/map")
 	})
 
-	// основная карта
+	//основная страничка с картой
 	router.GET("/map", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "map.html", gin.H{"yaKey": license.LicenseFields.YaKey})
 	})
 
-	//карта сокет
+	//сокет карты
 	router.GET("/mapW", mapH.MapEngine)
 
 	//------------------------------------------------------------------------------------------------------------------
 	//обязательный общий путь
 	mainRouter := router.Group("/user")
-	mainRouter.Use(middleWare.JwtAuth())
-	mainRouter.Use(middleWare.AccessControl())
+	mainRouter.Use(middleWare.JwtAuth())       //мидл проверки токена
+	mainRouter.Use(middleWare.AccessControl()) //мидл проверки url пути
 
 	//--------- SocketS--------------
 	//чат

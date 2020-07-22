@@ -1,7 +1,6 @@
 package chat
 
 import (
-	"encoding/json"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -12,8 +11,8 @@ type AllUsersStatus struct {
 
 //userInfo информация о статусе юзера
 type userInfo struct {
-	User   string `json:"user"`
-	Status string `json:"status"`
+	User   string `json:"user"`   //пользователь
+	Status string `json:"status"` //статус
 }
 
 //checkOnline проверка есть ли еще подключенный сокет
@@ -54,10 +53,4 @@ func (a *AllUsersStatus) getAllUsers(db *sqlx.DB) error {
 	}
 	a.setStatus()
 	return nil
-}
-
-//toString преобразовать в строку
-func (a *AllUsersStatus) toString() string {
-	raw, _ := json.Marshal(a)
-	return string(raw)
 }

@@ -82,7 +82,6 @@ func CacheInfoDataUpdate() {
 
 //FillMapAreaBox заполнение мапы районов и регионов с координатами
 func FillMapAreaZone() {
-	//FillCacheALB()
 	CacheArea.Mux.Lock()
 	defer CacheArea.Mux.Unlock()
 	CacheInfo.Mux.Lock()

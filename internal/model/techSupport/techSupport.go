@@ -2,6 +2,7 @@ package techSupport
 
 import (
 	"fmt"
+	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/model/license"
 	"github.com/JanFant/TLServer/internal/sockets/chat"
 	"github.com/jmoiron/sqlx"
@@ -31,7 +32,7 @@ func SendEmail(emailInfo EmailJS, login, companyName string, db *sqlx.DB) u.Resp
 		return u.Message(http.StatusInternalServerError, fmt.Sprint("Failed send email: ", err.Error()))
 	}
 
-	mess := chat.Message{From: login, Time: time.Now(), To: "Admin"}
+	mess := chat.Message{From: login, Time: time.Now(), To: data.AutomaticLogin}
 	mess.Message = fmt.Sprintf("Пользователь %v обратился в техподдержку, время обращения ( %v ), с вопросом: %v", mess.From, mess.Time.Format("2006-01-02 15:04:05"), emailInfo.Text)
 	_ = mess.SaveMessage(db)
 	resp := u.Message(http.StatusOK, "email sent")

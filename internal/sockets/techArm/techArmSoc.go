@@ -83,7 +83,7 @@ func ArmTechReader(conn *websocket.Conn, reg int, area []string, login string, d
 					TCPType:     tcpConnect.TypeDispatch,
 					Idevice:     arm.ID,
 					Data:        arm,
-					From:        tcpConnect.TechArmSoc,
+					From:        tcpConnect.FromTechArmSoc,
 					CommandType: typeDButton,
 				}
 				mess.SendToTCPServer()
@@ -98,7 +98,7 @@ func ArmTechReader(conn *websocket.Conn, reg int, area []string, login string, d
 					TCPType:     tcpConnect.TypeChangeProtocol,
 					Idevice:     gps.ID,
 					Data:        gps,
-					From:        tcpConnect.TechArmSoc,
+					From:        tcpConnect.FromTechArmSoc,
 					CommandType: typeGPS,
 				}
 				mess.SendToTCPServer()
@@ -204,7 +204,7 @@ func ArmTechBroadcast(db *sqlx.DB) {
 					}
 				}
 			}
-		case msg := <-tcpConnect.TArmGetTCPResp:
+		case msg := <-tcpConnect.TCPRespTArm:
 			{
 				resp := newArmMess("", nil, nil)
 				switch msg.CommandType {

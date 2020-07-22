@@ -19,7 +19,7 @@ func (tcpConfig *TCPConfig) getArmIP() string {
 	return tcpConfig.ServerAddr + ":" + tcpConfig.PortArmComm
 }
 
-//getChangeProtocolIP возвращает ip+port для State соединения
+//getChangeProtocolIP возвращает ip+port для gps? соединения
 func (tcpConfig *TCPConfig) getChangeProtocolIP() string {
 	return tcpConfig.ServerAddr + ":" + tcpConfig.PortChangeProtocol
 }

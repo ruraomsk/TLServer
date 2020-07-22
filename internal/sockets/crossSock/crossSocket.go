@@ -15,8 +15,9 @@ import (
 	agspudge "github.com/ruraomsk/ag-server/pudge"
 )
 
-var writeCrossMessage chan CrossSokResponse
-var crossConnect map[*websocket.Conn]CrossInfo
+var writeCrossMessage chan CrossSokResponse    //канал отправки сообщений
+var crossConnect map[*websocket.Conn]CrossInfo //пулл соединений
+
 var changeState chan tcpConnect.TCPMessage
 var crossUsersForDisplay chan []CrossInfo
 var CrossUsersForMap chan []CrossInfo
@@ -120,7 +121,7 @@ func CrossReader(conn *websocket.Conn, pos sockets.PosInfo, mapContx map[string]
 					TCPType:     tcpConnect.TypeDispatch,
 					Idevice:     arm.ID,
 					Data:        arm,
-					From:        tcpConnect.CrossSoc,
+					From:        tcpConnect.FromCrossSoc,
 					CommandType: typeDButton,
 					Pos:         crossCI.Pos,
 				}
@@ -382,7 +383,7 @@ func CrossBroadcast(db *sqlx.DB) {
 					}
 				}
 			}
-		case msg := <-tcpConnect.CrossSocGetTCPResp:
+		case msg := <-tcpConnect.TCPRespCrossSoc:
 			{
 				resp := newCrossMess(typeDButton, nil, nil, CrossInfo{})
 				resp.Data["status"] = msg.Status

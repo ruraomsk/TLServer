@@ -103,7 +103,7 @@ func createCrossData(state agspudge.Cross, pos sockets.PosInfo, login string, z 
 			TCPType:     tcpConnect.TypeState,
 			Idevice:     userCross.State.IDevice,
 			Data:        userCross,
-			From:        tcpConnect.CrControlSoc,
+			From:        tcpConnect.FromCrControlSoc,
 			CommandType: typeCreateB,
 			Pos:         pos,
 		}

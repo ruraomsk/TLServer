@@ -13,8 +13,8 @@ import (
 	"time"
 )
 
-var connectOnGS map[*websocket.Conn]string
-var writeGS chan GSSokResponse
+var connectOnGS map[*websocket.Conn]string //пулл соединени
+var writeGS chan GSSokResponse             //канал для отправки сообщений
 var GSRepaint chan bool
 var userLogout chan string
 
@@ -22,6 +22,7 @@ var userLogout chan string
 func GSReader(conn *websocket.Conn, mapContx map[string]string, db *sqlx.DB) {
 	login := mapContx["login"]
 	connectOnGS[conn] = login
+	//начальная информация
 	{
 		resp := newGSMess(typeMapInfo, conn, mapOpenInfo(db))
 		resp.Data["routes"] = getAllModes(db)
@@ -104,7 +105,7 @@ func GSReader(conn *websocket.Conn, mapContx map[string]string, db *sqlx.DB) {
 					TCPType:     tcpConnect.TypeDispatch,
 					Idevice:     arm.ID,
 					Data:        arm,
-					From:        tcpConnect.GsSoc,
+					From:        tcpConnect.FromGsSoc,
 					CommandType: typeDButton,
 					Pos:         sockets.PosInfo{},
 				}
@@ -186,7 +187,7 @@ func GSBroadcast(db *sqlx.DB) {
 					}
 				}
 			}
-		case msg := <-tcpConnect.GSGetTCPResp:
+		case msg := <-tcpConnect.TCPRespGS:
 			{
 				resp := newGSMess(typeDButton, nil, nil)
 				resp.Data["status"] = msg.Status

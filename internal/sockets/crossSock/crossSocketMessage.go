@@ -36,12 +36,12 @@ type CrossSokResponse struct {
 
 //crossInfo информация о перекрестке для которого открыт сокет
 type CrossInfo struct {
-	Login       string          `json:"login"`
-	Role        string          `json:"-"`
-	Edit        bool            `json:"edit"`
-	Idevice     int             `json:"idevice"`
+	Login       string          `json:"login"`       //пользователь
+	Role        string          `json:"-"`           //роль
+	Edit        bool            `json:"edit"`        //признак редактирования
+	Idevice     int             `json:"idevice"`     //идентификатор утройства
 	Description string          `json:"description"` //описание
-	Pos         sockets.PosInfo `json:"pos"`
+	Pos         sockets.PosInfo `json:"pos"`         //расположение перекрестка
 }
 
 //newCrossMess создание нового сообщения
@@ -69,12 +69,12 @@ func (m *CrossSokResponse) send() {
 	writeCrossMessage <- *m
 }
 
-//phaseInfo инофрмация о фазах3123123123
+//phaseInfo инофрмация о фазах
 type phaseInfo struct {
-	idevice int  `json:"-"`
-	Fdk     int  `json:"fdk"`
-	Tdk     int  `json:"tdk"`
-	Pdk     bool `json:"pdk"`
+	idevice int  `json:"-"`   //идентификатор утройства
+	Fdk     int  `json:"fdk"` //фаза
+	Tdk     int  `json:"tdk"` //время обработки
+	Pdk     bool `json:"pdk"` //переходный период
 }
 
 //get запрос фазы из базы

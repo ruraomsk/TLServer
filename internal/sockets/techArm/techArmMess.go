@@ -48,9 +48,9 @@ var (
 
 //armResponse структура для отправки сообщений (map)
 type armResponse struct {
-	Type string                 `json:"type"`
-	Data map[string]interface{} `json:"data"`
-	conn *websocket.Conn        `json:"-"`
+	Type string                 `json:"type"` //тип сообщения
+	Data map[string]interface{} `json:"data"` //данные
+	conn *websocket.Conn        `json:"-"`    //соединение
 }
 
 //newMapMess создание нового сообщения
@@ -88,24 +88,26 @@ type ArmInfo struct {
 	Area   []string `json:"area"`   //район
 }
 
+//CrossInfo информация о перекрестке для техАРМ
 type CrossInfo struct {
-	Region    int    `json:"region"`
-	Area      int    `json:"area"`
-	ID        int    `json:"id"`
-	Idevice   int    `json:"idevice"`
-	Subarea   int    `json:"subarea"`
-	ArrayType int    `json:"arrayType"`
-	Describe  string `json:"describe"`
-	Phone     string `json:"phone"`
+	Region    int    `json:"region"`    //регион
+	Area      int    `json:"area"`      //район
+	ID        int    `json:"id"`        //id
+	Idevice   int    `json:"idevice"`   //идентификатор устройства
+	Subarea   int    `json:"subarea"`   //подрайон
+	ArrayType int    `json:"arrayType"` //тип устройства
+	Describe  string `json:"describe"`  //описание
+	Phone     string `json:"phone"`     //телефон
 }
 
+//DevInfo информация о устройства для техАРМ
 type DevInfo struct {
-	Region   int              `json:"region"`
-	Area     int              `json:"area"`
-	Idevice  int              `json:"idevice"`
-	TechMode string           `json:"techMode"`
-	ModeRdk  string           `json:"modeRdk"`
-	Device   pudge.Controller `json:"device"`
+	Region   int              `json:"region"`   //регион
+	Area     int              `json:"area"`     //район
+	Idevice  int              `json:"idevice"`  //идентификатор устройства
+	TechMode string           `json:"techMode"` //тех мод
+	ModeRdk  string           `json:"modeRdk"`  //мод РДК
+	Device   pudge.Controller `json:"device"`   //контроллер...
 }
 
 //closeMessage структура для закрытия

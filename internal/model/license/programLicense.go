@@ -46,6 +46,7 @@ type licenseInfo struct {
 	TokenPass   string   //пароль для шифрования токена https запросов
 }
 
+//CheckLicenseKey проверка токена лицензии
 func CheckLicenseKey(tokenSTR string) (*LicenseToken, error) {
 	tk := &LicenseToken{}
 	token, err := jwt.ParseWithClaims(tokenSTR, tk, func(token *jwt.Token) (interface{}, error) {
@@ -62,16 +63,12 @@ func CheckLicenseKey(tokenSTR string) (*LicenseToken, error) {
 	return tk, nil
 }
 
+//ControlLicenseKey процесс проверки токена раз в час
 func ControlLicenseKey() {
-	var temp = make(chan bool)
 	timeTick := time.NewTicker(time.Hour * 1)
 	defer timeTick.Stop()
 	for {
 		select {
-		case <-temp:
-			{
-
-			}
 		case <-timeTick.C:
 			{
 				key, err := readFile()
@@ -90,6 +87,7 @@ func ControlLicenseKey() {
 	}
 }
 
+//ParseFields разбираем поля полученного токена в структуру для работы
 func (licInfo *licenseInfo) ParseFields(token *LicenseToken) {
 	licInfo.Mux.Lock()
 	defer licInfo.Mux.Unlock()
@@ -102,6 +100,7 @@ func (licInfo *licenseInfo) ParseFields(token *LicenseToken) {
 	licInfo.TechEmail = token.TechEmail
 }
 
+//LicenseCheck проверка лицензи на старте
 func LicenseCheck() {
 	key, err := readFile()
 	if err != nil {
@@ -119,6 +118,7 @@ func LicenseCheck() {
 	}
 }
 
+//LicenseInfo запрос информации о лицензии
 func LicenseInfo() u.Response {
 	keyStr, err := readFile()
 	if err != nil {
@@ -135,6 +135,7 @@ func LicenseInfo() u.Response {
 	return resp
 }
 
+//LicenseNewKey запись нового ключа лицензии
 func LicenseNewKey(keyStr string) u.Response {
 	tk, err := CheckLicenseKey(keyStr)
 	if err != nil {
@@ -149,6 +150,7 @@ func LicenseNewKey(keyStr string) u.Response {
 	return resp
 }
 
+//readFile прочитать файл лицензии
 func readFile() (string, error) {
 	byteFile, err := ioutil.ReadFile("configs/license.key")
 	if err != nil {
@@ -158,6 +160,7 @@ func readFile() (string, error) {
 	return string(byteFile), nil
 }
 
+//writeFile записать файл лицензии
 func writeFile(tokenStr string) error {
 	err := ioutil.WriteFile("./configs/license.key", []byte(tokenStr), os.ModePerm)
 	if err != nil {

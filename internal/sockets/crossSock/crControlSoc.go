@@ -15,8 +15,8 @@ import (
 	"github.com/ruraomsk/ag-server/comm"
 )
 
-var writeControlMessage chan ControlSokResponse
-var controlConnect map[*websocket.Conn]CrossInfo
+var writeControlMessage chan ControlSokResponse  //канал для отправки сообщений
+var controlConnect map[*websocket.Conn]CrossInfo //пулл соединений
 var crArmUsersForDisplay chan []CrossInfo
 var discArmUsers chan []CrossInfo
 var getArmUsersForDisplay chan bool
@@ -117,7 +117,7 @@ func ControlReader(conn *websocket.Conn, pos sockets.PosInfo, mapContx map[strin
 						TCPType:     tcpConnect.TypeState,
 						Idevice:     temp.State.IDevice,
 						Data:        userCross,
-						From:        tcpConnect.CrControlSoc,
+						From:        tcpConnect.FromCrControlSoc,
 						CommandType: typeSendB,
 						Pos:         controlI.Pos,
 					}
@@ -156,7 +156,7 @@ func ControlReader(conn *websocket.Conn, pos sockets.PosInfo, mapContx map[strin
 					TCPType:     tcpConnect.TypeState,
 					Idevice:     temp.State.IDevice,
 					Data:        userCross,
-					From:        tcpConnect.CrControlSoc,
+					From:        tcpConnect.FromCrControlSoc,
 					CommandType: typeDeleteB,
 					Pos:         controlI.Pos,
 				}
@@ -200,7 +200,7 @@ func ControlReader(conn *websocket.Conn, pos sockets.PosInfo, mapContx map[strin
 					TCPType:     tcpConnect.TypeDispatch,
 					Idevice:     arm.ID,
 					Data:        arm,
-					From:        tcpConnect.CrControlSoc,
+					From:        tcpConnect.FromCrControlSoc,
 					CommandType: typeDButton,
 					Pos:         controlI.Pos,
 				}
@@ -232,10 +232,6 @@ func ControlBroadcast() {
 		case msg := <-writeControlMessage: //ok
 			{
 				switch msg.Type {
-				case typeCreateB:
-					{
-						_ = msg.conn.WriteJSON(msg)
-					}
 				case typeChangeEdit:
 					{
 						delC := controlConnect[msg.conn]
@@ -286,7 +282,7 @@ func ControlBroadcast() {
 					_ = conn.WriteMessage(websocket.PingMessage, nil)
 				}
 			}
-		case msg := <-tcpConnect.CrControlSocGetTCPResp:
+		case msg := <-tcpConnect.TCPRespCrControlSoc:
 			{
 				resp := newControlMess("", nil, nil, CrossInfo{})
 				switch msg.CommandType {

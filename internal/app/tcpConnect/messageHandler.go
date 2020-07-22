@@ -13,24 +13,24 @@ var SendRespTCPMess chan TCPMessage
 var SendMessageToTCPServer chan TCPMessage
 
 var (
-	CrossSocGetTCPResp     chan TCPMessage
-	CrControlSocGetTCPResp chan TCPMessage
-	GSGetTCPResp           chan TCPMessage
-	MapGetTCPResp          chan TCPMessage
-	TArmGetTCPResp         chan TCPMessage
+	TCPRespCrossSoc     chan TCPMessage //канал для отправки ответа в сокет Cross
+	TCPRespCrControlSoc chan TCPMessage //канал для отправки ответа в сокет CrossControl
+	TCPRespGS           chan TCPMessage //канал для отправки ответа в сокет GreenStreet
+	TCPRespMap          chan TCPMessage //канал для отправки ответа в сокет Map
+	TCPRespTArm         chan TCPMessage //канал для отправки ответа в сокет TechArm
 
-	TypeDispatch       = "dispatch" //команды арм
-	TypeState          = "state"    //команды стате
-	TypeChangeProtocol = "changeProtocol"
-	typeInfo           map[string]string //ключ тип сервера, значение ip сервера
+	TypeDispatch       = "dispatch"       //команды арм
+	TypeState          = "state"          //команды стате
+	TypeChangeProtocol = "changeProtocol" //команды gps protocol
+	typeInfo           map[string]string  //ключ тип сервера, значение ip сервера
 )
 
 var (
-	GsSoc        = "gsSoc"
-	CrossSoc     = "crossSoc"
-	CrControlSoc = "crControlSoc"
-	MapSoc       = "mapSoc"
-	TechArmSoc   = "techArmSoc"
+	FromGsSoc        = "gsSoc"        //обозначение сокета GreenStreet
+	FromCrossSoc     = "crossSoc"     //обозначение сокета Cross
+	FromCrControlSoc = "crControlSoc" //обозначение сокета CrossControl
+	FromMapSoc       = "mapSoc"       //обозначение сокета Map
+	FromTechArmSoc   = "techArmSoc"   //обозначение сокета TechArm
 )
 
 //TCPMessage структура данных для обработки и отправки ТСП сообщений
@@ -64,25 +64,25 @@ func tcpRespBroadcast() {
 		case msg := <-SendRespTCPMess:
 			{
 				switch msg.From {
-				case CrossSoc:
+				case FromCrossSoc:
 					{
-						CrossSocGetTCPResp <- msg
+						TCPRespCrossSoc <- msg
 					}
-				case CrControlSoc:
+				case FromCrControlSoc:
 					{
-						CrControlSocGetTCPResp <- msg
+						TCPRespCrControlSoc <- msg
 					}
-				case GsSoc:
+				case FromGsSoc:
 					{
-						GSGetTCPResp <- msg
+						TCPRespGS <- msg
 					}
-				case MapSoc:
+				case FromMapSoc:
 					{
-						MapGetTCPResp <- msg
+						TCPRespMap <- msg
 					}
-				case TechArmSoc:
+				case FromTechArmSoc:
 					{
-						TArmGetTCPResp <- msg
+						TCPRespTArm <- msg
 					}
 				}
 			}
