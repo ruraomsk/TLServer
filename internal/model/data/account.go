@@ -45,6 +45,7 @@ var (
 	AutomaticLogin = "TechAutomatic"            //Пользователь для суперпользователя :D
 	errorConnectDB = "соединение с БД потеряно" //стандартная ошибка
 	passLong       = 10
+	AccAction      chan string
 )
 
 //Validate проверка аккаунда в бд
@@ -120,6 +121,7 @@ func (data *Account) Update(privilege Privilege) u.Response {
 		return resp
 	}
 	resp := u.Message(http.StatusOK, "аккаунт обновлен")
+	AccAction <- data.Login
 	return resp
 }
 
@@ -131,6 +133,7 @@ func (data *Account) Delete() u.Response {
 		return resp
 	}
 	resp := u.Message(http.StatusOK, "аккаунт удален")
+	AccAction <- data.Login
 	return resp
 }
 
@@ -147,6 +150,7 @@ func (data *Account) ResetPass() u.Response {
 		return resp
 	}
 	resp := u.Message(http.StatusOK, "Пароль изменен")
+	AccAction <- data.Login
 	resp.Obj["pass"] = pass
 	resp.Obj["login"] = data.Login
 	return resp
@@ -164,6 +168,7 @@ func (data *Account) ChangePW() u.Response {
 		return resp
 	}
 	resp := u.Message(http.StatusOK, "password changed")
+	AccAction <- data.Login
 	return resp
 }
 

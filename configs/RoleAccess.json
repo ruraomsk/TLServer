@@ -127,12 +127,12 @@
       "description": "рабочее место технолога"
     },
     {
-      "permission": 7,
+      "permission": 8,
       "path": "/greenStreet",
       "description": "режим Зеленой Улицы"
     },
     {
-      "permission": 7,
+      "permission": 8,
       "path": "/greenStreetW",
       "description": "режим Зеленой Улицы (сокет)"
     },

@@ -88,6 +88,7 @@ func logIn(login, password, ip string, db *sqlx.DB) map[string]interface{} {
 	resp["manageFlag"], _ = data.AccessCheck(login, privilege.Role.Name, 2)
 	resp["logDeviceFlag"], _ = data.AccessCheck(login, privilege.Role.Name, 5)
 	resp["techArmFlag"], _ = data.AccessCheck(login, privilege.Role.Name, 7)
+	resp["gsFlag"], _ = data.AccessCheck(login, privilege.Role.Name, 8)
 	resp["authorizedFlag"] = true
 	resp["description"] = account.Description
 	resp["region"] = privilege.Region

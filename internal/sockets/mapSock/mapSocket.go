@@ -16,14 +16,14 @@ import (
 	"time"
 )
 
-var connectedUsersOnMap map[*websocket.Conn]bool //пулл соединений
-var writeMap chan MapSokResponse                 //канал для отправки сообщений
+var connectedUsersOnMap map[*websocket.Conn]string //пулл соединений
+var writeMap chan MapSokResponse                   //канал для отправки сообщений
 
 const pingPeriod = time.Second * 30
 
 //MapReader обработчик открытия сокета для карты
 func MapReader(conn *websocket.Conn, c *gin.Context, db *sqlx.DB) {
-	connectedUsersOnMap[conn] = true
+	connectedUsersOnMap[conn] = ""
 	login := ""
 	//подготовка начальной информации
 	{
@@ -36,6 +36,7 @@ func MapReader(conn *websocket.Conn, c *gin.Context, db *sqlx.DB) {
 			resp.Data["manageFlag"], _ = data.AccessCheck(login, role, 2)
 			resp.Data["logDeviceFlag"], _ = data.AccessCheck(login, role, 5)
 			resp.Data["techArmFlag"], _ = data.AccessCheck(login, role, 7)
+			resp.Data["gsFlag"], _ = data.AccessCheck(login, role, 8)
 			resp.Data["description"] = tk.Description
 			resp.Data["authorizedFlag"] = true
 			resp.Data["region"] = tk.Region
@@ -49,6 +50,7 @@ func MapReader(conn *websocket.Conn, c *gin.Context, db *sqlx.DB) {
 			data.CacheArea.Mux.Lock()
 			resp.Data["areaZone"] = data.CacheArea.Areas
 			data.CacheArea.Mux.Unlock()
+			connectedUsersOnMap[conn] = login
 		}
 		resp.send()
 	}
@@ -86,6 +88,7 @@ func MapReader(conn *websocket.Conn, c *gin.Context, db *sqlx.DB) {
 				resp.Data = logIn(account.Login, account.Password, conn.RemoteAddr().String(), db)
 				if _, ok := resp.Data["message"]; !ok {
 					login = fmt.Sprint(resp.Data["login"])
+					connectedUsersOnMap[conn] = login
 				}
 				resp.send()
 			}
@@ -116,6 +119,7 @@ func MapReader(conn *websocket.Conn, c *gin.Context, db *sqlx.DB) {
 						resp.Data["authorizedFlag"] = false
 						resp.Data["login"] = login //сохраним а потом удалим из отправки чтобы нормально закрыть все сокеты
 					}
+					connectedUsersOnMap[conn] = ""
 					resp.send()
 				}
 			}
@@ -146,9 +150,10 @@ func MapReader(conn *websocket.Conn, c *gin.Context, db *sqlx.DB) {
 
 //MapBroadcast передатчик для карты (map)
 func MapBroadcast(db *sqlx.DB) {
-	connectedUsersOnMap = make(map[*websocket.Conn]bool)
+	connectedUsersOnMap = make(map[*websocket.Conn]string)
 	writeMap = make(chan MapSokResponse, 50)
 
+	data.AccAction = make(chan string)
 	crossReadTick := time.NewTicker(time.Second * 5)
 	pingTicker := time.NewTicker(pingPeriod)
 
@@ -221,6 +226,20 @@ func MapBroadcast(db *sqlx.DB) {
 					_ = conn.WriteJSON(resp)
 				}
 			}
+		case login := <-data.AccAction:
+			{
+				respLO := newMapMess(typeLogOut, nil, nil)
+				status := logOut(login, db)
+				if status {
+					respLO.Data["authorizedFlag"] = false
+				}
+				for conn, sockLogin := range connectedUsersOnMap {
+					if sockLogin == login {
+						_ = conn.WriteJSON(respLO)
+					}
+				}
+				logOutSockets(login)
+			}
 		case msg := <-writeMap:
 			switch msg.Type {
 			case typeLogOut:
@@ -228,11 +247,7 @@ func MapBroadcast(db *sqlx.DB) {
 					login := fmt.Sprint(msg.Data["login"])
 					delete(msg.Data, "login")
 					_ = msg.conn.WriteJSON(msg)
-					chat.UserLogoutChat <- login
-					crossSock.UserLogoutCrControl <- login
-					crossSock.UserLogoutCross <- login
-					techArm.UserLogoutTech <- login
-					userLogout <- login
+					logOutSockets(login)
 				}
 			case typeClose:
 				{
@@ -245,4 +260,12 @@ func MapBroadcast(db *sqlx.DB) {
 			}
 		}
 	}
+}
+
+func logOutSockets(login string) {
+	chat.UserLogoutChat <- login
+	crossSock.UserLogoutCrControl <- login
+	crossSock.UserLogoutCross <- login
+	techArm.UserLogoutTech <- login
+	userLogout <- login
 }
