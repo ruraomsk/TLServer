@@ -83,3 +83,22 @@ var ActChangePw = func(c *gin.Context) {
 	resp := account.ChangePW()
 	u.SendRespond(c, resp)
 }
+
+//ActChangePw обработчик запроса смены пароля для пользователя
+var ActResetPw = func(c *gin.Context) {
+	mapContx := u.ParserInterface(c.Value("info"))
+	var shortAcc = &data.ShortAccount{}
+	err := c.ShouldBindJSON(&shortAcc)
+	if err != nil {
+		u.SendRespond(c, u.Message(http.StatusBadRequest, "Не правильно заполненные данные"))
+		return
+	}
+	account, err := shortAcc.ValidChangePW(mapContx["role"], mapContx["region"])
+	if err != nil {
+		u.SendRespond(c, u.Message(http.StatusBadRequest, fmt.Sprintf("Не правильно заполненные данные: %s", err.Error())))
+		return
+	}
+	//account, _ := shortAcc.ConvertShortToAcc()
+	resp := account.ResetPass()
+	u.SendRespond(c, resp)
+}

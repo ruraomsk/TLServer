@@ -32,6 +32,7 @@ func MapReader(conn *websocket.Conn, c *gin.Context, db *sqlx.DB) {
 		if flag {
 			login = tk.Login
 			role := tk.Role
+			resp.Data["role"] = tk.Role
 			resp.Data["manageFlag"], _ = data.AccessCheck(login, role, 2)
 			resp.Data["logDeviceFlag"], _ = data.AccessCheck(login, role, 5)
 			resp.Data["techArmFlag"], _ = data.AccessCheck(login, role, 7)

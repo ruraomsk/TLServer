@@ -41,14 +41,16 @@ type Account struct {
 	Token       string             `json:"token",sql:"-"`                 //Токен пользователя
 }
 
-var AutomaticLogin = "TechAutomatic"            //Пользователь для суперпользователя :D
-var errorConnectDB = "соединение с БД потеряно" //стандартная ошибка
+var (
+	AutomaticLogin = "TechAutomatic"            //Пользователь для суперпользователя :D
+	errorConnectDB = "соединение с БД потеряно" //стандартная ошибка
+	passLong       = 10
+)
 
 //Validate проверка аккаунда в бд
 func (data *Account) Validate() error {
 	err := validation.ValidateStruct(data,
 		validation.Field(&data.Login, validation.Required, validation.Length(4, 100)),
-		validation.Field(&data.Password, validation.Required, validation.Length(6, 100)),
 		validation.Field(&data.Description, validation.Required, validation.Length(1, 255)),
 	)
 	if data.Login == "Global" {
@@ -81,6 +83,8 @@ func (data *Account) Create(privilege Privilege) u.Response {
 	if err := data.Validate(); err != nil {
 		return u.Message(http.StatusBadRequest, err.Error())
 	}
+	pass := u.GenerateRandomKey(passLong)
+	data.Password = pass
 	//Отдаем ключ для yandex map
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(data.Password), bcrypt.DefaultCost)
 	data.Password = string(hashedPassword)
@@ -98,8 +102,8 @@ func (data *Account) Create(privilege Privilege) u.Response {
 	if err := privilege.WriteRoleInBD(data.Login); err != nil {
 		return u.Message(http.StatusBadRequest, errorConnectDB)
 	}
-	data.Password = ""
 	resp := u.Message(http.StatusOK, "аккаунт создан")
+	resp.Obj["pass"] = pass
 	resp.Obj["login"] = data.Login
 	return resp
 }
@@ -115,7 +119,7 @@ func (data *Account) Update(privilege Privilege) u.Response {
 		resp := u.Message(http.StatusInternalServerError, fmt.Sprintf("Account update error: %s", err.Error()))
 		return resp
 	}
-	resp := u.Message(http.StatusOK, "Account has updated")
+	resp := u.Message(http.StatusOK, "аккаунт обновлен")
 	return resp
 }
 
@@ -126,7 +130,25 @@ func (data *Account) Delete() u.Response {
 		resp := u.Message(http.StatusInternalServerError, "data deletion error "+err.Error())
 		return resp
 	}
-	resp := u.Message(http.StatusOK, "account deleted")
+	resp := u.Message(http.StatusOK, "аккаунт удален")
+	return resp
+}
+
+//ResetPass сброс пароля
+func (data *Account) ResetPass() u.Response {
+	pass := u.GenerateRandomKey(passLong)
+	data.Password = pass
+	//Отдаем ключ для yandex map
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(data.Password), bcrypt.DefaultCost)
+	data.Password = string(hashedPassword)
+	_, err := GetDB().Exec(`UPDATE public.accounts SET password = $1, token = $2 WHERE login = $3`, data.Password, "", data.Login)
+	if err != nil {
+		resp := u.Message(http.StatusInternalServerError, fmt.Sprintf("Ошибка сброса пароля: %s", err.Error()))
+		return resp
+	}
+	resp := u.Message(http.StatusOK, "Пароль изменен")
+	resp.Obj["pass"] = pass
+	resp.Obj["login"] = data.Login
 	return resp
 }
 

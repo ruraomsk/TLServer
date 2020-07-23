@@ -125,32 +125,31 @@ func (shortAcc *ShortAccount) ValidDelete(role string, region string) (account *
 //ValidChangePW проверка данных полученных от админа для смены паролей пользователя
 func (shortAcc *ShortAccount) ValidChangePW(role string, region string) (account *Account, err error) {
 	account = &Account{}
-	//Забираю из базы запись с подходящей почтой
-	rows, err := GetDB().Query(`SELECT id, login, password, token, work_time FROM public.accounts WHERE login=$2`, shortAcc.Login)
+	//Забираю из базы запись с подходящим логином
+	rows, err := GetDB().Query(`SELECT id, login, password, token, work_time FROM public.accounts WHERE login=$1`, shortAcc.Login)
 	if rows == nil {
-		return nil, errors.New(fmt.Sprintf("Login: %s, not found", shortAcc.Login))
+		return nil, errors.New(fmt.Sprintf("Пользователь: %s, не найден", shortAcc.Login))
 	}
 	if err != nil {
-		return nil, errors.New("Connection to DB error")
+		return nil, errors.New("Ошибка соединения с базой")
 	}
 	for rows.Next() {
 		_ = rows.Scan(&account.ID, &account.Login, &account.Password, &account.Token, &account.WorkTime)
 	}
-	account.Password = shortAcc.Password
 	//Авторизировались добираем полномочия
 	privilege := Privilege{}
 	err = privilege.ReadFromBD(account.Login)
 	if err != nil {
 		//logger.Info.Println("Account: Bad privilege")
-		return nil, errors.New(fmt.Sprintf("Privilege error. Login(%s)", account.Login))
+		return nil, errors.New(fmt.Sprintf("Ошибка чтения полномочий из БД. Пользователь(%s)", account.Login))
 	}
 
 	if role == "RegAdmin" {
 		if privilege.Role.Name == "Admin" || privilege.Role.Name == role {
-			return nil, errors.New("Cannot change the password for this user")
+			return nil, errors.New("Вы не можете сбросить пароль для этого пользователя")
 		}
 		if !strings.EqualFold(shortAcc.Region.Num, region) {
-			return nil, errors.New("Regions don't match")
+			return nil, errors.New("Вы не можете сбросить пароль пользователю другого региона")
 		}
 	}
 

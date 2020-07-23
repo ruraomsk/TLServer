@@ -173,6 +173,11 @@
     },
     {
       "permission": 2,
+      "path": "/manage/resetpw",
+      "description": "обработчик для сброса пароля администратором"
+    },
+    {
+      "permission": 2,
       "path": "/manage/crossEditControl",
       "description": "обработчик по управлению занятых перекрестков"
     },

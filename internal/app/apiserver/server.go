@@ -114,6 +114,7 @@ func StartServer(conf *ServerConf) {
 	mainRouter.POST("/:slug/manage/delete", handlers.ActDeleteAccount) //обработчик для удаления аккаунтов
 	mainRouter.POST("/:slug/manage/add", handlers.ActAddAccount)       //обработчик для добавления аккаунтов
 	mainRouter.POST("/:slug/manage/update", handlers.ActUpdateAccount) //обработчик для редактирования данных аккаунта
+	mainRouter.POST("/:slug/manage/resetpw", handlers.ActResetPw)      //обработчик для сброса пароля администратором
 
 	//управление занятыми перекрестками
 	mainRouter.GET("/:slug/manage/crossEditControl", func(c *gin.Context) { //обработчик по управлению занятых перекрестков (страничка)
