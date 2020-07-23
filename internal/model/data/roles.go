@@ -76,9 +76,12 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) u.Re
 	if err != nil {
 		return u.Message(http.StatusInternalServerError, "display info: Privilege error")
 	}
-	sqlStr = fmt.Sprintf("select login, work_time, privilege, description from public.accounts where login != '%s'", mapContx["login"])
+	//если нужно из списка исключить пользователя раскомментировать строчки
+	//sqlStr = fmt.Sprintf("select login, work_time, privilege, description from public.accounts where login != '%s'", mapContx["login"])
+	sqlStr = fmt.Sprintf("select login, work_time, privilege, description from public.accounts ")
 	if !strings.EqualFold(privilege.Region, "*") {
-		sqlStr += fmt.Sprintf(`and privilege::jsonb @> '{"region":"%s"}'::jsonb`, privilege.Region)
+		//sqlStr += fmt.Sprintf(`and privilege::jsonb @> '{"region":"%s"}'::jsonb`, privilege.Region)
+		sqlStr += fmt.Sprintf(`where privilege::jsonb @> '{"region":"%s"}'::jsonb`, privilege.Region)
 	}
 	rowsTL, _ := GetDB().Query(sqlStr)
 	for rowsTL.Next() {
