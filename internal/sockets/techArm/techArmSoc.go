@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
-	"github.com/JanFant/TLServer/internal/model/config"
 	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/JanFant/TLServer/logger"
 	"github.com/gorilla/websocket"
@@ -17,7 +16,6 @@ import (
 
 var connectedUsersTechArm map[*websocket.Conn]ArmInfo
 var writeArm chan armResponse
-var TArmNewCrossData chan bool
 var UserLogoutTech chan string
 
 const devUpdate = time.Second * 1
@@ -112,16 +110,23 @@ func ArmTechBroadcast(db *sqlx.DB) {
 	connectedUsersTechArm = make(map[*websocket.Conn]ArmInfo)
 	writeArm = make(chan armResponse, 50)
 
-	TArmNewCrossData = make(chan bool)
 	UserLogoutTech = make(chan string)
 	sockets.DispatchMessageFromAnotherPlace = make(chan sockets.DBMessage, 5)
 
-	readTick := time.NewTicker(devUpdate)
-	defer readTick.Stop()
-	var oldDevice = getDevice(db)
+	readDeviceTick := time.NewTicker(devUpdate)
+	readCrossTick := time.NewTicker(devUpdate)
+
+	defer func() {
+		readDeviceTick.Stop()
+		readCrossTick.Stop()
+	}()
+	var (
+		oldDevice = getDevice(db)
+		oldCross  = getCross(-1, db)
+	)
 	for {
 		select {
-		case <-readTick.C:
+		case <-readDeviceTick.C:
 			{
 				if len(connectedUsersTechArm) > 0 {
 					newDevice := getDevice(db)
@@ -173,27 +178,63 @@ func ArmTechBroadcast(db *sqlx.DB) {
 					}
 				}
 			}
-		case <-TArmNewCrossData:
+		case <-readCrossTick.C:
 			{
 				if len(connectedUsersTechArm) > 0 {
-					time.Sleep(time.Second * time.Duration(config.GlobalConfig.DBConfig.DBWait))
-					crosses := getCross(-1, db)
-					for conn, arm := range connectedUsersTechArm {
-						var tempCrosses []CrossInfo
-						for _, area := range arm.Area {
-							tArea, _ := strconv.Atoi(area)
-							for _, cross := range crosses {
-								if cross.Region == arm.Region && cross.Area == tArea {
-									tempCrosses = append(tempCrosses, cross)
+					newCross := getCross(-1, db)
+					if len(oldCross) != len(newCross) {
+						for conn, arm := range connectedUsersTechArm {
+							var tempCrosses []CrossInfo
+							for _, area := range arm.Area {
+								tArea, _ := strconv.Atoi(area)
+								for _, cross := range newCross {
+									if cross.Region == arm.Region && cross.Area == tArea {
+										tempCrosses = append(tempCrosses, cross)
+									}
+								}
+							}
+							resp := newArmMess(typeCrosses, conn, nil)
+							resp.Data[typeCrosses] = tempCrosses
+							_ = resp.conn.WriteJSON(resp)
+						}
+					} else {
+						flagNew := false
+						for _, nCr := range newCross {
+							for _, oCr := range oldCross {
+								if nCr.Idevice == oCr.Idevice {
+									if !reflect.DeepEqual(nCr, oCr) {
+										flagNew = true
+										break
+									}
+								}
+							}
+							if flagNew {
+								break
+							}
+						}
+						if flagNew {
+							for conn, arm := range connectedUsersTechArm {
+								var tCross []CrossInfo
+								for _, area := range arm.Area {
+									tArea, _ := strconv.Atoi(area)
+									for _, cross := range newCross {
+										if cross.Area == tArea && cross.Region == arm.Region {
+											tCross = append(tCross, cross)
+										}
+									}
+								}
+								if len(tCross) > 0 {
+									resp := newArmMess(typeCrosses, conn, nil)
+									resp.Data[typeCrosses] = tCross
+									_ = conn.WriteJSON(resp)
 								}
 							}
 						}
-						resp := newArmMess(typeCrosses, conn, nil)
-						resp.Data[typeCrosses] = tempCrosses
-						_ = resp.conn.WriteJSON(resp)
 					}
+					oldCross = newCross
 				}
 			}
+
 		case login := <-UserLogoutTech:
 			{
 				for conn, armInfo := range connectedUsersTechArm {

@@ -6,7 +6,6 @@ import (
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/sockets"
-	"github.com/JanFant/TLServer/internal/sockets/techArm"
 	"github.com/jmoiron/sqlx"
 	agspudge "github.com/ruraomsk/ag-server/pudge"
 	"time"
@@ -20,7 +19,8 @@ var controlConnect map[*websocket.Conn]CrossInfo //пулл соединений
 var crArmUsersForDisplay chan []CrossInfo
 var discArmUsers chan []CrossInfo
 var getArmUsersForDisplay chan bool
-var MapRepaint chan bool
+
+//var MapRepaint chan bool
 var UserLogoutCrControl chan string
 
 //ControlReader обработчик открытия сокета для арма перекрестка
@@ -219,7 +219,7 @@ func ControlBroadcast() {
 	getArmUsersForDisplay = make(chan bool)
 	crArmUsersForDisplay = make(chan []CrossInfo)
 	discArmUsers = make(chan []CrossInfo)
-	MapRepaint = make(chan bool)
+	//MapRepaint = make(chan bool)
 	UserLogoutCrControl = make(chan string)
 
 	pingTicker := time.NewTicker(pingPeriod)
@@ -318,7 +318,6 @@ func ControlBroadcast() {
 								}
 							}
 							changeState <- msg
-							techArm.TArmNewCrossData <- true
 						} else {
 							// если нету поля отправить ошибку только пользователю
 							for conn, info := range controlConnect {
@@ -337,10 +336,6 @@ func ControlBroadcast() {
 								_ = conn.WriteJSON(resp)
 							}
 						}
-						if msg.Status {
-							MapRepaint <- true
-							techArm.TArmNewCrossData <- true
-						}
 
 					}
 				case typeDeleteB:
@@ -355,8 +350,6 @@ func ControlBroadcast() {
 								}
 							}
 							armDeleted <- msg
-							MapRepaint <- true
-							techArm.TArmNewCrossData <- true
 						} else {
 							// если нету поля отправить ошибку только пользователю
 							for conn, info := range controlConnect {

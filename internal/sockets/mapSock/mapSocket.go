@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
-	"github.com/JanFant/TLServer/internal/model/config"
 	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/JanFant/TLServer/internal/sockets/chat"
@@ -168,42 +167,73 @@ func MapBroadcast(db *sqlx.DB) {
 			{
 				if len(connectedUsersOnMap) > 0 {
 					newTFs := selectTL(db)
-					var tempTF []data.TrafficLights
-					for _, nTF := range newTFs {
-						for _, oTF := range oldTFs {
-							if oTF.Idevice == nTF.Idevice && oTF.Sost.Num != nTF.Sost.Num {
-								tempTF = append(tempTF, nTF)
-								break
+					if len(newTFs) != len(oldTFs) {
+						resp := newMapMess(typeRepaint, nil, nil)
+						resp.Data["tflight"] = newTFs
+						data.FillMapAreaZone()
+						data.CacheArea.Mux.Lock()
+						resp.Data["areaZone"] = data.CacheArea.Areas
+						data.CacheArea.Mux.Unlock()
+						for conn := range connectedUsersOnMap {
+							_ = conn.WriteJSON(resp)
+						}
+					} else {
+						var (
+							tempTF   []data.TrafficLights
+							flagFill = false
+						)
+						for _, nTF := range newTFs {
+							for _, oTF := range oldTFs {
+								if oTF.Idevice == nTF.Idevice {
+									var flagAdd = false
+									if oTF.Sost.Num != nTF.Sost.Num {
+										flagAdd = true
+									}
+									if oTF.Subarea != nTF.Subarea {
+										flagAdd = true
+										flagFill = true
+									}
+									if flagAdd {
+										tempTF = append(tempTF, nTF)
+										break
+									}
+								}
+							}
+						}
+						if len(tempTF) > 0 {
+							resp := newMapMess(typeTFlight, nil, nil)
+							if flagFill {
+								data.FillMapAreaZone()
+								data.CacheArea.Mux.Lock()
+								resp.Data["areaZone"] = data.CacheArea.Areas
+								data.CacheArea.Mux.Unlock()
+							}
+							resp.Data["tflight"] = tempTF
+							for conn := range connectedUsersOnMap {
+								_ = conn.WriteJSON(resp)
 							}
 						}
 					}
 					oldTFs = newTFs
-					if len(tempTF) > 0 {
-						resp := newMapMess(typeTFlight, nil, nil)
-						resp.Data["tflight"] = tempTF
-						for conn := range connectedUsersOnMap {
-							_ = conn.WriteJSON(resp)
-						}
-					}
 				}
 			}
-		case <-crossSock.MapRepaint:
-			{
-				if len(connectedUsersOnMap) > 0 {
-					time.Sleep(time.Second * time.Duration(config.GlobalConfig.DBConfig.DBWait))
-					oldTFs = selectTL(db)
-					resp := newMapMess(typeRepaint, nil, nil)
-					resp.Data["tflight"] = oldTFs
-					data.FillMapAreaZone()
-					GSRepaint <- true
-					data.CacheArea.Mux.Lock()
-					resp.Data["areaZone"] = data.CacheArea.Areas
-					data.CacheArea.Mux.Unlock()
-					for conn := range connectedUsersOnMap {
-						_ = conn.WriteJSON(resp)
-					}
-				}
-			}
+		//case <-crossSock.MapRepaint:
+		//	{
+		//		if len(connectedUsersOnMap) > 0 {
+		//			time.Sleep(time.Second * time.Duration(config.GlobalConfig.DBConfig.DBWait))
+		//			oldTFs = selectTL(db)
+		//			resp := newMapMess(typeRepaint, nil, nil)
+		//			resp.Data["tflight"] = oldTFs
+		//			data.FillMapAreaZone()
+		//			GSRepaint <- true
+		//			data.CacheArea.Mux.Lock()
+		//			resp.Data["areaZone"] = data.CacheArea.Areas
+		//			data.CacheArea.Mux.Unlock()
+		//			for conn := range connectedUsersOnMap {
+		//				_ = conn.WriteJSON(resp)
+		//			}
+		//		}
+		//	}
 		case <-pingTicker.C:
 			{
 				for conn := range connectedUsersOnMap {

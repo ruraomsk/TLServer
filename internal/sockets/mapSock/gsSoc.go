@@ -3,7 +3,6 @@ package mapSock
 import (
 	"encoding/json"
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
-	"github.com/JanFant/TLServer/internal/model/config"
 	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/model/routeGS"
 	"github.com/JanFant/TLServer/internal/sockets"
@@ -15,7 +14,7 @@ import (
 
 var connectOnGS map[*websocket.Conn]string //пулл соединени
 var writeGS chan GSSokResponse             //канал для отправки сообщений
-var GSRepaint chan bool
+//var GSRepaint chan bool
 var userLogout chan string
 
 //GSReader обработчик открытия сокета для режима зеленой улицы
@@ -120,7 +119,7 @@ func GSBroadcast(db *sqlx.DB) {
 	connectOnGS = make(map[*websocket.Conn]string)
 	writeGS = make(chan GSSokResponse, 50)
 
-	GSRepaint = make(chan bool)
+	//GSRepaint = make(chan bool)
 	userLogout = make(chan string)
 	crossReadTick := time.NewTicker(time.Second * 5)
 	pingTicker := time.NewTicker(pingPeriod)
@@ -136,41 +135,70 @@ func GSBroadcast(db *sqlx.DB) {
 			{
 				if len(connectOnGS) > 0 {
 					newTFs := selectTL(db)
-					var tempTF []data.TrafficLights
-					for _, nTF := range newTFs {
-						for _, oTF := range oldTFs {
-							if oTF.Idevice == nTF.Idevice && oTF.Sost.Num != nTF.Sost.Num {
-								tempTF = append(tempTF, nTF)
-								break
+					if len(newTFs) != len(oldTFs) {
+						resp := newMapMess(typeRepaint, nil, nil)
+						resp.Data["tflight"] = newTFs
+						data.CacheArea.Mux.Lock()
+						resp.Data["areaZone"] = data.CacheArea.Areas
+						data.CacheArea.Mux.Unlock()
+						for conn := range connectOnGS {
+							_ = conn.WriteJSON(resp)
+						}
+					} else {
+						var (
+							tempTF   []data.TrafficLights
+							flagFill = false
+						)
+						for _, nTF := range newTFs {
+							for _, oTF := range oldTFs {
+								if oTF.Idevice == nTF.Idevice {
+									var flagAdd = false
+									if oTF.Sost.Num != nTF.Sost.Num {
+										flagAdd = true
+									}
+									if oTF.Subarea != nTF.Subarea {
+										flagAdd = true
+										flagFill = true
+									}
+									if flagAdd {
+										tempTF = append(tempTF, nTF)
+										break
+									}
+								}
+							}
+						}
+						if len(tempTF) > 0 {
+							resp := newGSMess(typeTFlight, nil, nil)
+							if flagFill {
+								data.FillMapAreaZone()
+								data.CacheArea.Mux.Lock()
+								resp.Data["areaZone"] = data.CacheArea.Areas
+								data.CacheArea.Mux.Unlock()
+							}
+							resp.Data["tflight"] = tempTF
+							for conn := range connectOnGS {
+								_ = conn.WriteJSON(resp)
 							}
 						}
 					}
 					oldTFs = newTFs
-					if len(tempTF) > 0 {
-						resp := newGSMess(typeTFlight, nil, nil)
-						resp.Data["tflight"] = tempTF
-						for conn := range connectOnGS {
-							_ = conn.WriteJSON(resp)
-						}
-					}
 				}
 			}
-		case <-GSRepaint:
-			{
-				if len(connectOnGS) > 0 {
-					time.Sleep(time.Second * time.Duration(config.GlobalConfig.DBConfig.DBWait))
-					oldTFs = selectTL(db)
-					resp := newGSMess(typeRepaint, nil, nil)
-					resp.Data["tflight"] = oldTFs
-					data.FillMapAreaZone()
-					data.CacheArea.Mux.Lock()
-					resp.Data["areaZone"] = data.CacheArea.Areas
-					data.CacheArea.Mux.Unlock()
-					for conn := range connectOnGS {
-						_ = conn.WriteJSON(resp)
-					}
-				}
-			}
+		//case <-GSRepaint:
+		//	{
+		//		if len(connectOnGS) > 0 {
+		//			time.Sleep(time.Second * time.Duration(config.GlobalConfig.DBConfig.DBWait))
+		//			oldTFs = selectTL(db)
+		//			resp := newGSMess(typeRepaint, nil, nil)
+		//			resp.Data["tflight"] = oldTFs
+		//			data.CacheArea.Mux.Lock()
+		//			resp.Data["areaZone"] = data.CacheArea.Areas
+		//			data.CacheArea.Mux.Unlock()
+		//			for conn := range connectOnGS {
+		//				_ = conn.WriteJSON(resp)
+		//			}
+		//		}
+		//	}
 		case <-pingTicker.C:
 			{
 				for conn := range connectOnGS {
