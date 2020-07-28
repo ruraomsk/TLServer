@@ -31,26 +31,26 @@ func ControlReader(conn *websocket.Conn, pos sockets.PosInfo, mapContx map[strin
 	//проверка не существование такого перекрестка (сбос если нету)
 	_, err := getNewState(pos, db)
 	if err != nil {
-		msg := closeMessage{Type: typeClose, Message: errCrossDoesntExist}
-		_ = conn.WriteJSON(msg)
-		//_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, errCrossDoesntExist))
+		//msg := closeMessage{Type: typeClose, Message: errCrossDoesntExist}
+		//_ = conn.WriteJSON(msg)
+		_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, errCrossDoesntExist))
 		return
 	}
 
 	//проверка на полномочия редактирования
 	if !((pos.Region == mapContx["region"]) || (mapContx["region"] == "*")) {
-		msg := closeMessage{Type: typeClose, Message: typeNotEdit}
-		_ = conn.WriteJSON(msg)
-		//_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, typeNotEdit))
+		//msg := closeMessage{Type: typeClose, Message: typeNotEdit}
+		//_ = conn.WriteJSON(msg)
+		_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, typeNotEdit))
 		return
 	}
 
 	//есть ли уже открытый арм у этого пользователя
 	for _, info := range controlConnect {
 		if info.Pos == pos && info.Login == controlI.Login {
-			msg := closeMessage{Type: typeClose, Message: errDoubleOpeningDevice}
-			_ = conn.WriteJSON(msg)
-			//_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, errDoubleOpeningDevice))
+			//msg := closeMessage{Type: typeClose, Message: errDoubleOpeningDevice}
+			//_ = conn.WriteJSON(msg)
+			_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, errDoubleOpeningDevice))
 			return
 		}
 	}
@@ -219,7 +219,6 @@ func ControlBroadcast() {
 	getArmUsersForDisplay = make(chan bool)
 	crArmUsersForDisplay = make(chan []CrossInfo)
 	discArmUsers = make(chan []CrossInfo)
-	//MapRepaint = make(chan bool)
 	UserLogoutCrControl = make(chan string)
 
 	pingTicker := time.NewTicker(pingPeriod)

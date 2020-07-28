@@ -26,7 +26,7 @@ func ArmTechReader(conn *websocket.Conn, reg int, area []string, login string, d
 	connectedUsersTechArm[conn] = armInfo
 	//сформировать список перекрестков которые необходимы пользователю
 	{
-		var tempCrosses []CrossInfo
+		var tempCrosses = make([]CrossInfo, 0)
 		crosses := getCross(armInfo.Region, db)
 		for _, cross := range crosses {
 			for _, area := range armInfo.Area {
@@ -39,7 +39,7 @@ func ArmTechReader(conn *websocket.Conn, reg int, area []string, login string, d
 		resp := newArmMess(typeArmInfo, conn, nil)
 		resp.Data[typeCrosses] = tempCrosses
 
-		var tempDevises []DevInfo
+		var tempDevises = make([]DevInfo, 0)
 		devices := getDevice(db)
 		for _, dev := range devices {
 			for _, area := range armInfo.Area {
@@ -234,7 +234,6 @@ func ArmTechBroadcast(db *sqlx.DB) {
 					oldCross = newCross
 				}
 			}
-
 		case login := <-UserLogoutTech:
 			{
 				for conn, armInfo := range connectedUsersTechArm {

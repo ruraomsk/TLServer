@@ -37,18 +37,18 @@ func CrossReader(conn *websocket.Conn, pos sockets.PosInfo, mapContx map[string]
 	//проверка не существование такого перекрестка (сбос если нету)
 	_, err := getNewState(pos, db)
 	if err != nil {
-		msg := closeMessage{Type: typeClose, Message: errCrossDoesntExist}
-		_ = conn.WriteJSON(msg)
-		//_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, errCrossDoesntExist))
+		//msg := closeMessage{Type: typeClose, Message: errCrossDoesntExist}
+		//_ = conn.WriteJSON(msg)
+		_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, errCrossDoesntExist))
 		return
 	}
 
 	//проверка открыт ли у этого пользователя такой перекресток
 	for _, info := range crossConnect {
 		if info.Pos == pos && info.Login == crossCI.Login {
-			msg := closeMessage{Type: typeClose, Message: errDoubleOpeningDevice}
-			_ = conn.WriteJSON(msg)
-			//_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, errDoubleOpeningDevice))
+			//msg := closeMessage{Type: typeClose, Message: errDoubleOpeningDevice}
+			//_ = conn.WriteJSON(msg)
+			_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, errDoubleOpeningDevice))
 			return
 		}
 	}

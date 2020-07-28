@@ -217,23 +217,6 @@ func MapBroadcast(db *sqlx.DB) {
 					oldTFs = newTFs
 				}
 			}
-		//case <-crossSock.MapRepaint:
-		//	{
-		//		if len(connectedUsersOnMap) > 0 {
-		//			time.Sleep(time.Second * time.Duration(config.GlobalConfig.DBConfig.DBWait))
-		//			oldTFs = selectTL(db)
-		//			resp := newMapMess(typeRepaint, nil, nil)
-		//			resp.Data["tflight"] = oldTFs
-		//			data.FillMapAreaZone()
-		//			GSRepaint <- true
-		//			data.CacheArea.Mux.Lock()
-		//			resp.Data["areaZone"] = data.CacheArea.Areas
-		//			data.CacheArea.Mux.Unlock()
-		//			for conn := range connectedUsersOnMap {
-		//				_ = conn.WriteJSON(resp)
-		//			}
-		//		}
-		//	}
 		case <-pingTicker.C:
 			{
 				for conn := range connectedUsersOnMap {

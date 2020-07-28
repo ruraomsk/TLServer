@@ -184,21 +184,6 @@ func GSBroadcast(db *sqlx.DB) {
 					oldTFs = newTFs
 				}
 			}
-		//case <-GSRepaint:
-		//	{
-		//		if len(connectOnGS) > 0 {
-		//			time.Sleep(time.Second * time.Duration(config.GlobalConfig.DBConfig.DBWait))
-		//			oldTFs = selectTL(db)
-		//			resp := newGSMess(typeRepaint, nil, nil)
-		//			resp.Data["tflight"] = oldTFs
-		//			data.CacheArea.Mux.Lock()
-		//			resp.Data["areaZone"] = data.CacheArea.Areas
-		//			data.CacheArea.Mux.Unlock()
-		//			for conn := range connectOnGS {
-		//				_ = conn.WriteJSON(resp)
-		//			}
-		//		}
-		//	}
 		case <-pingTicker.C:
 			{
 				for conn := range connectOnGS {
