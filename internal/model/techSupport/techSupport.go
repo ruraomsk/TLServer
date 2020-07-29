@@ -19,12 +19,12 @@ type EmailJS struct {
 }
 
 //SendEmail подготовка и отправка сообщения на почту, с сохранением в бд
-func SendEmail(emailInfo EmailJS, login, companyName string, db *sqlx.DB) u.Response {
+func SendEmail(emailInfo EmailJS, login, companyName, companyLoc string, db *sqlx.DB) u.Response {
 	e := email.NewEmail()
 
 	e.From = fmt.Sprintf("%s <%s>", login, "AsudServ@gmail.com")
 	e.To = license.LicenseFields.TechEmail
-	e.Subject = fmt.Sprintf("Tech Support from server: %s", companyName)
+	e.Subject = fmt.Sprintf("Tech Support from server: %v of %v ", companyName, companyLoc)
 	e.Text = []byte(emailInfo.Text)
 
 	err := e.Send("smtp.gmail.com:587", smtp.PlainAuth("", "AsudServ@gmail.com", "H49qFgUDTzSUQFYmoVwf", "smtp.gmail.com"))

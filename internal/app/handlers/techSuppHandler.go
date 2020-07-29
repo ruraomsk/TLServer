@@ -19,6 +19,6 @@ var TechSupp = func(c *gin.Context) {
 		return
 	}
 	mapContx := u.ParserInterface(c.Value("info"))
-	resp := techSupport.SendEmail(emailInfo, mapContx["login"], license.LicenseFields.CompanyName, data.GetDB())
+	resp := techSupport.SendEmail(emailInfo, mapContx["login"], license.LicenseFields.CompanyName, license.LicenseFields.Address, data.GetDB())
 	u.SendRespond(c, resp)
 }
