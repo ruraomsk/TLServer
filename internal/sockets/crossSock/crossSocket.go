@@ -289,7 +289,11 @@ func CrossBroadcast(db *sqlx.DB) {
 		case msg := <-changeState: //ok
 			{
 				resp := newCrossMess(typeStateChange, nil, nil, CrossInfo{})
-				resp.Data["state"] = msg.Data
+				var uState agspudge.UserCross
+				raw, _ := json.Marshal(msg.Data)
+				_ = json.Unmarshal(raw, &uState)
+				resp.Data["state"] = uState.State
+				resp.Data["user"] = msg.User
 				for conn, info := range crossConnect {
 					if info.Pos == msg.Pos {
 						_ = conn.WriteJSON(resp)
