@@ -37,7 +37,7 @@ func StartServer(conf *ServerConf, db *sqlx.DB) {
 	go mapSock.GSBroadcast(data.GetDB())
 
 	xctrlHub := xctrl.NewXctrlHub()
-	go xctrlHub.Run()
+	go xctrlHub.Run(db)
 
 	// Создаем engine для соединений
 	router := gin.Default()

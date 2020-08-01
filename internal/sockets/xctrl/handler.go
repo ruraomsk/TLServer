@@ -13,16 +13,17 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
-func HXctrl(c *gin.Context, hub *CPHub, db *sqlx.DB) {
+//HXctrl обработчик открытия сокета
+func HXctrl(c *gin.Context, hub *HubXctrl, db *sqlx.DB) {
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		u.SendRespond(c, u.Message(http.StatusBadRequest, "bad socket connect"))
 		return
 	}
 
-	client := &CPClient{hub: hub, conn: conn, send: make(chan CPMess, 256)}
+	client := &ClientXctrl{hub: hub, conn: conn, send: make(chan MessXctrl, 256)}
 	client.hub.register <- client
 
-	go client.writePump()
-	go client.readPump()
+	go client.writePump(db)
+	go client.readPump(db)
 }

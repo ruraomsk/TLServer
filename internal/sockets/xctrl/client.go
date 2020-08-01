@@ -3,10 +3,9 @@ package xctrl
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/gorilla/websocket"
-	"github.com/ruraomsk/ag-server/xcontrol"
+	"github.com/jmoiron/sqlx"
 	"time"
 )
 
@@ -24,13 +23,15 @@ const (
 	maxMessageSize = 1024
 )
 
-type XctrlClient struct {
-	hub  *XctrlHub
+//ClientXctrl информация о подключившемся пользователе
+type ClientXctrl struct {
+	hub  *HubXctrl
 	conn *websocket.Conn
-	send chan CPMess
+	send chan MessXctrl
 }
 
-func (c *XctrlClient) readPump() {
+//readPump обработчик чтения сокета
+func (c *ClientXctrl) readPump(db *sqlx.DB) {
 	defer func() {
 		c.hub.unregister <- c
 		_ = c.conn.Close()
@@ -40,38 +41,53 @@ func (c *XctrlClient) readPump() {
 	_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error { _ = c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	{
-		resp := newCPMess(typeCPStart, nil)
-		rows, err := data.GetDB().Query(`SELECT state FROM public.xctrl`)
+		allXctrl, err := getXctrl(db)
 		if err != nil {
-			fmt.Println(err.Error())
+			resp := newXctrlMess(typeError, nil)
+			resp.Data["message"] = ErrorMessage{Error: errGetXctrl}
+			c.send <- resp
 		}
-		var allS []xcontrol.State
-		for rows.Next() {
-			var (
-				strState string
-				temp     xcontrol.State
-			)
-			_ = rows.Scan(&strState)
-			_ = json.Unmarshal([]byte(strState), &temp)
-			allS = append(allS, temp)
-		}
-		resp.Data[typeCPStart] = allS
+		resp := newXctrlMess(typeXctrlInfo, nil)
+		resp.Data[typeXctrlInfo] = allXctrl
 		c.send <- resp
 	}
 
 	for {
 		_, p, err := c.conn.ReadMessage()
 		if err != nil {
+			resp := newXctrlMess(typeClose, nil)
+			c.send <- resp
 			break
 		}
 		//ну отправка и отправка
 		typeSelect, err := sockets.ChoseTypeMessage(p)
 		if err != nil {
-			//resp := newCustomerMess(typeError, nil)
-			//resp.Data["message"] = ErrorMessage{Error: errParseType}
-			//c.send <- resp
+			resp := newXctrlMess(typeError, nil)
+			resp.Data["message"] = ErrorMessage{Error: errParseType}
+			c.send <- resp
 		}
 		switch typeSelect {
+		case typeXctrlGet:
+			{
+				allXctrl, err := getXctrl(db)
+				if err != nil {
+					resp := newXctrlMess(typeError, nil)
+					resp.Data["message"] = ErrorMessage{Error: errGetXctrl}
+					c.send <- resp
+				}
+				allXctrl = allXctrl[4:8]
+				i := 0
+				for num, ddd := range allXctrl {
+					ddd.PKNow = i
+					ddd.PKLast = i
+					ddd.XNumber = i
+					i++
+					allXctrl[num] = ddd
+				}
+				resp := newXctrlMess(typeXctrlUpdate, nil)
+				resp.Data[typeXctrlUpdate] = allXctrl
+				c.send <- resp
+			}
 		default:
 			{
 				fmt.Println("asdasd")
@@ -83,7 +99,8 @@ func (c *XctrlClient) readPump() {
 	}
 }
 
-func (c *XctrlClient) writePump() {
+//writePump обработчик записи в сокет
+func (c *ClientXctrl) writePump(db *sqlx.DB) {
 	pingTick := time.NewTicker(pingPeriod)
 	defer func() {
 		pingTick.Stop()

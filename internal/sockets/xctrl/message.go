@@ -1,24 +1,25 @@
 package xctrl
 
 var (
-	typeCPStart        = "CPStart"
-	typeError          = "error"
-	typeClose          = "close"
-	typeCustInfo       = "custInfo"
-	typeCustUpdate     = "custUpdate"
-	typeCreateCustomer = "createCustomer"
-	typeDeleteCustomer = "deleteCustomer"
-	typeUpdateCustomer = "updateCustomer"
-	errParseType       = "сервер не смог обработать запрос"
+	typeXctrlGet    = "xctrlGet"
+	typeXctrlInfo   = "xctrlInfo"
+	typeXctrlUpdate = "xctrlUpdate"
+	typeError       = "error"
+	typeClose       = "close"
+
+	errParseType = "Сервер не смог обработать запрос"
+	errGetXctrl  = "Ошибка запроса данных из БД"
 )
 
-type CPMess struct {
+//MessXctrl структура пакета сообщения для xctrl
+type MessXctrl struct {
 	Type string                 `json:"type"`
 	Data map[string]interface{} `json:"data"`
 }
 
-func newCPMess(mType string, data map[string]interface{}) CPMess {
-	var resp CPMess
+//newXctrlMess создание
+func newXctrlMess(mType string, data map[string]interface{}) MessXctrl {
+	var resp MessXctrl
 	resp.Type = mType
 	if data != nil {
 		resp.Data = data
