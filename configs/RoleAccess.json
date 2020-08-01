@@ -10,7 +10,8 @@
         5,
         6,
         7,
-        8
+        8,
+        9
       ]
     },
     {
@@ -23,7 +24,8 @@
         5,
         6,
         7,
-        8
+        8,
+        9
       ]
     },
     {
@@ -83,6 +85,11 @@
       "id": 8,
       "visible": false,
       "description": "Работа в режиме Зеленой Улицы"
+    },
+    {
+      "id": 9,
+      "visible": false,
+      "description": "Работа с характерными точками"
     }
   ],
   "routes": [
@@ -135,6 +142,16 @@
       "permission": 8,
       "path": "/greenStreetW",
       "description": "режим Зеленой Улицы (сокет)"
+    },
+    {
+      "permission": 9,
+      "path": "/charPoints",
+      "description": "работа с характерными точками"
+    },
+    {
+      "permission": 9,
+      "path": "/charPointsW",
+      "description": "работа с характерными точками (вебсокет)"
     },
     {
       "permission": 1,

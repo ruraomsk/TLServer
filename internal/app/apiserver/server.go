@@ -11,6 +11,8 @@ import (
 	"github.com/JanFant/TLServer/internal/sockets/crossSock"
 	"github.com/JanFant/TLServer/internal/sockets/mapSock"
 	"github.com/JanFant/TLServer/internal/sockets/techArm"
+	"github.com/JanFant/TLServer/internal/sockets/xctrl"
+	"github.com/jmoiron/sqlx"
 	"net/http"
 
 	"github.com/JanFant/TLServer/internal/model/data"
@@ -25,7 +27,7 @@ import (
 )
 
 //StartServer запуск сервера
-func StartServer(conf *ServerConf) {
+func StartServer(conf *ServerConf, db *sqlx.DB) {
 
 	go chat.CBroadcast()
 	go mapSock.MapBroadcast(data.GetDB())
@@ -33,6 +35,9 @@ func StartServer(conf *ServerConf) {
 	go crossSock.ControlBroadcast()
 	go techArm.ArmTechBroadcast(data.GetDB())
 	go mapSock.GSBroadcast(data.GetDB())
+
+	xctrlHub := xctrl.NewXctrlHub()
+	go xctrlHub.Run()
 
 	// Создаем engine для соединений
 	router := gin.Default()
@@ -97,6 +102,15 @@ func StartServer(conf *ServerConf) {
 		c.HTML(http.StatusOK, "greenStreet.html", gin.H{"yaKey": license.LicenseFields.YaKey})
 	})
 	mainRouter.GET("/:slug/greenStreetW", greenStreet.GSEngine)
+
+	//CharPoints
+	mainRouter.GET("/:slug/charPoints", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "charPoints.html", gin.H{"yaKey": license.LicenseFields.YaKey})
+	})
+	mainRouter.GET("/:slug/charPointsW", func(c *gin.Context) {
+		xctrl.HXctrl(c, xctrlHub, db)
+	})
+
 	//--------- SocketS--------------
 
 	//тех. поддержка

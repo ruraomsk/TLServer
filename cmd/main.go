@@ -70,7 +70,7 @@ func main() {
 	////----------------------------------------------------------------------
 	//
 	//запуск сервера
-	apiserver.StartServer(apiserver.ServerConfig)
+	apiserver.StartServer(apiserver.ServerConfig, dbConn)
 
 	logger.Info.Println("|Message: Exit working...")
 	fmt.Println("Exit working...")
