@@ -346,7 +346,8 @@ func CrossBroadcast(db *sqlx.DB) {
 				for _, dCr := range dCrInfo {
 					for conn, cross := range crossConnect {
 						if cross.Pos == dCr.Pos && cross.Login == dCr.Login {
-							msg := closeMessage{Type: typeClose, Message: "закрытие администратором"}
+							msg := newCrossMess(typeClose, nil, nil, cross)
+							msg.Data["message"] = "закрытие администратором"
 							_ = conn.WriteJSON(msg)
 							//_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "закрытие администратором"))
 						}
@@ -363,7 +364,8 @@ func CrossBroadcast(db *sqlx.DB) {
 			{
 				for conn, info := range crossConnect {
 					if info.Pos == msgD.Pos {
-						msg := closeMessage{Type: typeClose, Message: "перекресток удален"}
+						msg := newCrossMess(typeClose, nil, nil, info)
+						msg.Data["message"] = "перекресток удален"
 						_ = conn.WriteJSON(msg)
 						//_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "перекресток удален"))
 					}
@@ -373,7 +375,8 @@ func CrossBroadcast(db *sqlx.DB) {
 			{
 				for conn, info := range crossConnect {
 					if info.Login == login {
-						msg := closeMessage{Type: typeClose, Message: "пользователь вышел из системы"}
+						msg := newCrossMess(typeClose, nil, nil, info)
+						msg.Data["message"] = "пользователь вышел из системы"
 						_ = conn.WriteJSON(msg)
 						//_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "пользователь вышел из системы"))
 					}

@@ -79,9 +79,3 @@ func (m *Message) SaveMessage(db *sqlx.DB) error {
 type ErrorMessage struct {
 	Error string `json:"error"`
 }
-
-//closeMessage структура для закрытия
-type closeMessage struct {
-	Type    string `json:"type"`
-	Message string `json:"message"`
-}

@@ -9,6 +9,7 @@ import (
 	"github.com/JanFant/TLServer/internal/sockets/chat"
 	"github.com/JanFant/TLServer/internal/sockets/crossSock"
 	"github.com/JanFant/TLServer/internal/sockets/techArm"
+	"github.com/JanFant/TLServer/internal/sockets/xctrl"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/jmoiron/sqlx"
@@ -281,4 +282,5 @@ func logOutSockets(login string) {
 	crossSock.UserLogoutCross <- login
 	techArm.UserLogoutTech <- login
 	userLogout <- login
+	xctrl.UserLogoutXctrl <- login
 }

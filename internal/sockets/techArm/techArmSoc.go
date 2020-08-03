@@ -238,7 +238,8 @@ func ArmTechBroadcast(db *sqlx.DB) {
 			{
 				for conn, armInfo := range connectedUsersTechArm {
 					if armInfo.Login == login {
-						msg := closeMessage{Type: typeClose, Message: "пользователь вышел из системы"}
+						msg := newArmMess(typeClose, nil, nil)
+						msg.Data["message"] = "пользователь вышел из системы"
 						_ = conn.WriteJSON(msg)
 						//_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "пользователь вышел из системы"))
 					}

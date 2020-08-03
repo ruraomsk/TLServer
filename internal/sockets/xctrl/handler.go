@@ -21,7 +21,8 @@ func HXctrl(c *gin.Context, hub *HubXctrl, db *sqlx.DB) {
 		return
 	}
 
-	client := &ClientXctrl{hub: hub, conn: conn, send: make(chan MessXctrl, 256)}
+	mapContx := u.ParserInterface(c.Value("info"))
+	client := &ClientXctrl{hub: hub, conn: conn, send: make(chan MessXctrl, 256), login: mapContx["login"]}
 	client.hub.register <- client
 
 	go client.writePump(db)

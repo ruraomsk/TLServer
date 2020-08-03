@@ -109,9 +109,3 @@ type DevInfo struct {
 	ModeRdk  string           `json:"modeRdk"`  //мод РДК
 	Device   pudge.Controller `json:"device"`   //контроллер...
 }
-
-//closeMessage структура для закрытия
-type closeMessage struct {
-	Type    string `json:"type"`
-	Message string `json:"message"`
-}

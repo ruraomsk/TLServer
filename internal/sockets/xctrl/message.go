@@ -1,14 +1,15 @@
 package xctrl
 
 var (
-	typeXctrlGet    = "xctrlGet"
+	typeXctrlChange = "xctrlChange"
 	typeXctrlInfo   = "xctrlInfo"
 	typeXctrlUpdate = "xctrlUpdate"
 	typeError       = "error"
 	typeClose       = "close"
 
-	errParseType = "Сервер не смог обработать запрос"
-	errGetXctrl  = "Ошибка запроса данных из БД"
+	errParseType   = "Сервер не смог обработать запрос"
+	errGetXctrl    = "Ошибка запроса данных из БД"
+	errChangeXctrl = "Ошибка записи данных в БД"
 )
 
 //MessXctrl структура пакета сообщения для xctrl

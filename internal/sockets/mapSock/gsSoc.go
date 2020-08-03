@@ -194,7 +194,8 @@ func GSBroadcast(db *sqlx.DB) {
 			{
 				for conn, user := range connectOnGS {
 					if user == login {
-						msg := closeMessage{Type: typeClose, Message: "пользователь вышел из системы"}
+						msg := newGSMess(typeClose, nil, nil)
+						msg.Data["message"] = "пользователь вышел из системы"
 						_ = conn.WriteJSON(msg)
 						//_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "пользователь вышел из системы"))
 					}

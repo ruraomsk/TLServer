@@ -42,9 +42,3 @@ func (m *GSSokResponse) send() {
 	}
 	writeGS <- *m
 }
-
-//closeMessage структура для закрытия
-type closeMessage struct {
-	Type    string `json:"type"`
-	Message string `json:"message"`
-}

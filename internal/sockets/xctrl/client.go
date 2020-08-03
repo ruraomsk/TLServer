@@ -6,6 +6,7 @@ import (
 	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/gorilla/websocket"
 	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/ag-server/xcontrol"
 	"time"
 )
 
@@ -20,24 +21,30 @@ const (
 	pingPeriod = (pongWait * 9) / 10
 
 	// Maximum message size allowed from peer.
-	maxMessageSize = 1024
+	maxMessageSize = 1024 * 100
 )
+
+var UserLogoutXctrl chan string //канал для закрытия сокетов, пользователя который вышел из системы
 
 //ClientXctrl информация о подключившемся пользователе
 type ClientXctrl struct {
 	hub  *HubXctrl
 	conn *websocket.Conn
 	send chan MessXctrl
+
+	login string
 }
 
 //readPump обработчик чтения сокета
 func (c *ClientXctrl) readPump(db *sqlx.DB) {
-	defer func() {
-		c.hub.unregister <- c
-		_ = c.conn.Close()
-	}()
+	//defer func() {
+	//	c.hub.unregister <- c
+	//	_ = c.conn.Close()
+	//}()
 
-	c.conn.SetReadLimit(maxMessageSize)
+	//если нужно указать лимит пакета
+	//c.conn.SetReadLimit(maxMessageSize)
+
 	_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error { _ = c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	{
@@ -55,8 +62,9 @@ func (c *ClientXctrl) readPump(db *sqlx.DB) {
 	for {
 		_, p, err := c.conn.ReadMessage()
 		if err != nil {
-			resp := newXctrlMess(typeClose, nil)
-			c.send <- resp
+			//resp := newXctrlMess(typeClose, nil)
+			//c.send <- resp
+			c.hub.unregister <- c
 			break
 		}
 		//ну отправка и отправка
@@ -67,33 +75,29 @@ func (c *ClientXctrl) readPump(db *sqlx.DB) {
 			c.send <- resp
 		}
 		switch typeSelect {
-		case typeXctrlGet:
+		case typeXctrlChange:
 			{
-				allXctrl, err := getXctrl(db)
+				temp := struct {
+					SType string           `json:"type"`
+					State []xcontrol.State `json:"state"`
+				}{}
+				_ = json.Unmarshal(p, &temp)
+				err := writeXctrl(temp.State, db)
 				if err != nil {
 					resp := newXctrlMess(typeError, nil)
-					resp.Data["message"] = ErrorMessage{Error: errGetXctrl}
+					resp.Data["message"] = ErrorMessage{Error: errChangeXctrl}
 					c.send <- resp
 				}
-				allXctrl = allXctrl[4:8]
-				i := 0
-				for num, ddd := range allXctrl {
-					ddd.PKNow = i
-					ddd.PKLast = i
-					ddd.XNumber = i
-					i++
-					allXctrl[num] = ddd
-				}
-				resp := newXctrlMess(typeXctrlUpdate, nil)
-				resp.Data[typeXctrlUpdate] = allXctrl
+				resp := newXctrlMess(typeXctrlChange, nil)
+				resp.Data["message"] = "ok"
 				c.send <- resp
 			}
 		default:
 			{
 				fmt.Println("asdasd")
-				//resp := newCustomerMess("type", nil)
-				//resp.Data["type"] = typeSelect
-				//c.send <- resp
+				resp := newXctrlMess("type", nil)
+				resp.Data["type"] = typeSelect
+				c.send <- resp
 			}
 		}
 	}

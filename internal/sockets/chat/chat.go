@@ -184,7 +184,8 @@ func CBroadcast() {
 			{
 				for conn, infoUser := range chatConnUsers {
 					if infoUser.User == login {
-						msg := closeMessage{Type: typeClose, Message: "пользователь вышел из системы"}
+						msg := newChatMess(typeClose, nil, nil, infoUser)
+						msg.Data["message"] = "пользователь вышел из системы"
 						_ = conn.WriteJSON(msg)
 						//_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "пользователь вышел из системы"))
 					}

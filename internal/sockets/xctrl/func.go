@@ -27,3 +27,25 @@ func getXctrl(db *sqlx.DB) ([]xcontrol.State, error) {
 	}
 	return allXctrl, nil
 }
+
+//writeXctrl запис массива state в базу
+func writeXctrl(states []xcontrol.State, db *sqlx.DB) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	for _, state := range states {
+		strState, _ := json.Marshal(state)
+		_, err := tx.Exec(`UPDATE public.xctrl SET state = $1 WHERE region = $2 AND area = $3 AND subarea = $4`, string(strState), state.Region, state.Area, state.SubArea)
+		if err != nil {
+			err = tx.Rollback()
+			return err
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return nil
+}

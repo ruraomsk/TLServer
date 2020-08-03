@@ -27,7 +27,9 @@ func NewXctrlHub() *HubXctrl {
 
 //Run запуск хаба для xctrl
 func (h *HubXctrl) Run(db *sqlx.DB) {
-	updateTicker := time.NewTicker(time.Second * 1)
+	UserLogoutXctrl = make(chan string)
+
+	updateTicker := time.NewTicker(time.Second * 60)
 	defer updateTicker.Stop()
 	oldXctrl, _ := getXctrl(db)
 
@@ -43,7 +45,13 @@ func (h *HubXctrl) Run(db *sqlx.DB) {
 						for _, oX := range oldXctrl {
 							if oX.Region == nX.Region && oX.Area == nX.Area && oX.SubArea == nX.SubArea {
 								flagNew = false
-								if !reflect.DeepEqual(nX, oX) {
+								if !reflect.DeepEqual(nX.Calculates, oX.Calculates) ||
+									!reflect.DeepEqual(nX.Status, oX.Status) ||
+									!reflect.DeepEqual(nX.Strategys, oX.Strategys) ||
+									!reflect.DeepEqual(nX.XNumber, oX.XNumber) ||
+									!reflect.DeepEqual(nX.PKLast, oX.PKLast) ||
+									!reflect.DeepEqual(nX.PKNow, oX.PKNow) ||
+									!reflect.DeepEqual(nX.LastTime, oX.LastTime) {
 									tempXctrl = append(tempXctrl, nX)
 								}
 								break
@@ -72,6 +80,7 @@ func (h *HubXctrl) Run(db *sqlx.DB) {
 				if _, ok := h.clients[client]; ok {
 					delete(h.clients, client)
 					close(client.send)
+					_ = client.conn.Close()
 				}
 			}
 		case mess := <-h.broadcast:
@@ -80,8 +89,18 @@ func (h *HubXctrl) Run(db *sqlx.DB) {
 					select {
 					case client.send <- mess:
 					default:
-						close(client.send)
 						delete(h.clients, client)
+						close(client.send)
+					}
+				}
+			}
+		case login := <-UserLogoutXctrl:
+			{
+				resp := newXctrlMess(typeClose, nil)
+				resp.Data["message"] = "пользователь вышел из системы"
+				for client := range h.clients {
+					if client.login == login {
+						client.send <- resp
 					}
 				}
 			}

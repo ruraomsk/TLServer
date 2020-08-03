@@ -268,7 +268,8 @@ func ControlBroadcast() {
 				for _, dArm := range dArmInfo {
 					for conn, cross := range controlConnect {
 						if cross.Pos == dArm.Pos && cross.Login == dArm.Login {
-							msg := closeMessage{Type: typeClose, Message: "закрытие администратором"}
+							msg := newControlMess(typeClose, nil, nil, cross)
+							msg.Data["message"] = "закрытие администратором"
 							_ = conn.WriteJSON(msg)
 							//_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "закрытие администратором"))
 						}
@@ -364,7 +365,8 @@ func ControlBroadcast() {
 			{
 				for conn, crossInfo := range controlConnect {
 					if crossInfo.Login == login {
-						msg := closeMessage{Type: typeClose, Message: "пользователь вышел из системы"}
+						msg := newControlMess(typeClose, nil, nil, crossInfo)
+						msg.Data["message"] = "пользователь вышел из системы"
 						_ = conn.WriteJSON(msg)
 						//_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "пользователь вышел из системы"))
 					}
