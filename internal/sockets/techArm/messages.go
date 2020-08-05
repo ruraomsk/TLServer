@@ -1,20 +1,20 @@
 package techArm
 
 import (
-	"github.com/JanFant/TLServer/logger"
-	"github.com/gorilla/websocket"
 	"github.com/ruraomsk/ag-server/pudge"
 )
 
 var (
-	typeError                  = "error"
-	typeClose                  = "close"
-	typeArmInfo                = "armInfo"
-	typeDButton                = "dispatch"
-	typeGPS                    = "gps"
-	typeCrosses                = "crosses"
-	typeDevices                = "devices"
-	errUnregisteredMessageType = "unregistered message type"
+	typeError   = "error"
+	typeClose   = "close"
+	typeArmInfo = "armInfo"
+	typeDButton = "dispatch"
+	typeGPS     = "gps"
+	typeCrosses = "crosses"
+	typeDevices = "devices"
+
+	errParseType = "Сервер не смог обработать запрос"
+
 	//modeRDK мапа состояний ДК
 	modeRDK = map[int]string{
 		1: "РУ",
@@ -41,8 +41,8 @@ var (
 		12: "противозаторовое управление",
 	}
 	GPSInfo = struct {
-		IP   string `json:"ip",toml:"tcpServerAddress"`
-		Port string `json:"port",toml:"portGPS"`
+		IP   string `json:"ip", toml:"tcpServerAddress"`
+		Port string `json:"port", toml:"portGPS"`
 	}{}
 )
 
@@ -50,30 +50,18 @@ var (
 type armResponse struct {
 	Type string                 `json:"type"` //тип сообщения
 	Data map[string]interface{} `json:"data"` //данные
-	conn *websocket.Conn        `json:"-"`    //соединение
 }
 
 //newMapMess создание нового сообщения
-func newArmMess(mType string, conn *websocket.Conn, data map[string]interface{}) armResponse {
+func newArmMess(mType string, data map[string]interface{}) armResponse {
 	var resp armResponse
 	resp.Type = mType
-	resp.conn = conn
 	if data != nil {
 		resp.Data = data
 	} else {
 		resp.Data = make(map[string]interface{})
 	}
 	return resp
-}
-
-//send отправка сообщения с обработкой ошибки
-func (m *armResponse) send() {
-	if m.Type == typeError {
-		go func() {
-			logger.Warning.Printf("|IP: %s |Login: %s |Resource: %s |Message: %v", m.conn.RemoteAddr(), "arm socket", "/techArm", m.Data["message"])
-		}()
-	}
-	writeArm <- *m
 }
 
 //ErrorMessage структура ошибки

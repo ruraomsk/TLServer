@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/JanFant/TLServer/internal/sockets"
+	"github.com/JanFant/TLServer/logger"
 	"github.com/gorilla/websocket"
 	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/ag-server/xcontrol"
@@ -50,6 +51,7 @@ func (c *ClientXctrl) readPump(db *sqlx.DB) {
 	{
 		allXctrl, err := getXctrl(db)
 		if err != nil {
+			logger.Error.Printf("|IP: - |Login: %v |Resource: /charPoint |Message: %v \n", c.login, err.Error())
 			resp := newXctrlMess(typeError, nil)
 			resp.Data["message"] = ErrorMessage{Error: errGetXctrl}
 			c.send <- resp
@@ -70,6 +72,7 @@ func (c *ClientXctrl) readPump(db *sqlx.DB) {
 		//ну отправка и отправка
 		typeSelect, err := sockets.ChoseTypeMessage(p)
 		if err != nil {
+			logger.Error.Printf("|IP: - |Login: %v |Resource: /charPoint |Message: %v \n", c.login, err.Error())
 			resp := newXctrlMess(typeError, nil)
 			resp.Data["message"] = ErrorMessage{Error: errParseType}
 			c.send <- resp
@@ -84,6 +87,7 @@ func (c *ClientXctrl) readPump(db *sqlx.DB) {
 				_ = json.Unmarshal(p, &temp)
 				err := writeXctrl(temp.State, db)
 				if err != nil {
+					logger.Error.Printf("|IP: - |Login: %v |Resource: /charPoint |Message: %v \n", c.login, err.Error())
 					resp := newXctrlMess(typeError, nil)
 					resp.Data["message"] = ErrorMessage{Error: errChangeXctrl}
 					c.send <- resp

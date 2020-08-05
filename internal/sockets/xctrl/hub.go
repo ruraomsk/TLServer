@@ -29,7 +29,7 @@ func NewXctrlHub() *HubXctrl {
 func (h *HubXctrl) Run(db *sqlx.DB) {
 	UserLogoutXctrl = make(chan string)
 
-	updateTicker := time.NewTicker(time.Second * 60)
+	updateTicker := time.NewTicker(time.Second * 20)
 	defer updateTicker.Stop()
 	oldXctrl, _ := getXctrl(db)
 
@@ -51,7 +51,10 @@ func (h *HubXctrl) Run(db *sqlx.DB) {
 									!reflect.DeepEqual(nX.XNumber, oX.XNumber) ||
 									!reflect.DeepEqual(nX.PKLast, oX.PKLast) ||
 									!reflect.DeepEqual(nX.PKNow, oX.PKNow) ||
-									!reflect.DeepEqual(nX.LastTime, oX.LastTime) {
+									!reflect.DeepEqual(nX.LastTime, oX.LastTime) ||
+									!reflect.DeepEqual(nX.Switch, oX.Switch) ||
+									!reflect.DeepEqual(nX.Release, oX.Release) ||
+									!reflect.DeepEqual(nX.Step, oX.Step) {
 									tempXctrl = append(tempXctrl, nX)
 								}
 								break

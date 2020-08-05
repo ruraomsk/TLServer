@@ -7,7 +7,6 @@ import (
 	"github.com/JanFant/TLServer/internal/app/handlers/greenStreet"
 	"github.com/JanFant/TLServer/internal/app/handlers/licenseH"
 	"github.com/JanFant/TLServer/internal/app/handlers/mapH"
-	"github.com/JanFant/TLServer/internal/app/handlers/techArmH"
 	"github.com/JanFant/TLServer/internal/sockets/crossSock"
 	"github.com/JanFant/TLServer/internal/sockets/mapSock"
 	"github.com/JanFant/TLServer/internal/sockets/techArm"
@@ -33,9 +32,11 @@ func StartServer(conf *ServerConf, db *sqlx.DB) {
 	go mapSock.MapBroadcast(data.GetDB())
 	go crossSock.CrossBroadcast(data.GetDB())
 	go crossSock.ControlBroadcast()
-	go techArm.ArmTechBroadcast(data.GetDB())
+	//go techArm.ArmTechBroadcast(data.GetDB())
 	go mapSock.GSBroadcast(data.GetDB())
 
+	techArmHub := techArm.NewTechArmHub()
+	go techArmHub.Run(db)
 	xctrlHub := xctrl.NewXctrlHub()
 	go xctrlHub.Run(db)
 
@@ -95,7 +96,9 @@ func StartServer(conf *ServerConf, db *sqlx.DB) {
 	mainRouter.GET("/:slug/techArm", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "techControl.html", nil)
 	})
-	mainRouter.GET("/:slug/techArmW", techArmH.TechArmEngine)
+	mainRouter.GET("/:slug/techArmW", func(c *gin.Context) {
+		techArm.HTechArm(c, techArmHub, db)
+	})
 
 	//зеленая улица
 	mainRouter.GET("/:slug/greenStreet", func(c *gin.Context) {
