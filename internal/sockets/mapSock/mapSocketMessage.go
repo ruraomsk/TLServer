@@ -24,6 +24,7 @@ var (
 	typeError                  = "error"
 	typeClose                  = "close"
 	typeCheckConn              = "checkConn"
+	typeDButton                = "dispatch"
 	errUnregisteredMessageType = "unregistered message type"
 )
 

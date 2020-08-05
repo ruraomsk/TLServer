@@ -1,13 +1,17 @@
-package xctrl
+package greenStreet
 
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/JanFant/TLServer/internal/app/tcpConnect"
+	"github.com/JanFant/TLServer/internal/model/data"
+	"github.com/JanFant/TLServer/internal/model/routeGS"
 	"github.com/JanFant/TLServer/internal/sockets"
+	"github.com/JanFant/TLServer/internal/sockets/mapSock"
 	"github.com/JanFant/TLServer/logger"
 	"github.com/gorilla/websocket"
 	"github.com/jmoiron/sqlx"
-	"github.com/ruraomsk/ag-server/xcontrol"
+	"github.com/ruraomsk/ag-server/comm"
 	"time"
 )
 
@@ -24,22 +28,20 @@ const (
 	// Maximum message size allowed from peer.
 	maxMessageSize = 1024 * 100
 
-	stateTime = time.Second * 20
+	crossPeriod = time.Second * 5
 )
 
-var UserLogoutXctrl chan string //канал для закрытия сокетов, пользователя который вышел из системы
-
-//ClientXctrl информация о подключившемся пользователе
-type ClientXctrl struct {
-	hub  *HubXctrl
+//ClientGS информация о подключившемся пользователе
+type ClientGS struct {
+	hub  *HubGStreet
 	conn *websocket.Conn
-	send chan MessXctrl
+	send chan gSResponse
 
 	login string
 }
 
 //readPump обработчик чтения сокета
-func (c *ClientXctrl) readPump(db *sqlx.DB) {
+func (c *ClientGS) readPump(db *sqlx.DB) {
 
 	//если нужно указать лимит пакета
 	//c.conn.SetReadLimit(maxMessageSize)
@@ -47,23 +49,17 @@ func (c *ClientXctrl) readPump(db *sqlx.DB) {
 	_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error { _ = c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	{
-		allXctrl, err := getXctrl(db)
-		if err != nil {
-			logger.Error.Printf("|IP: - |Login: %v |Resource: /charPoint |Message: %v \n", c.login, err.Error())
-			resp := newXctrlMess(typeError, nil)
-			resp.Data["message"] = ErrorMessage{Error: errGetXctrl}
-			c.send <- resp
-		}
-		resp := newXctrlMess(typeXctrlInfo, nil)
-		resp.Data[typeXctrlInfo] = allXctrl
+		resp := newGSMess(typeMapInfo, mapSock.MapOpenInfo(db))
+		resp.Data["routes"] = getAllModes(db)
+		data.CacheArea.Mux.Lock()
+		resp.Data["areaZone"] = data.CacheArea.Areas
+		data.CacheArea.Mux.Unlock()
 		c.send <- resp
 	}
 
 	for {
 		_, p, err := c.conn.ReadMessage()
 		if err != nil {
-			//resp := newXctrlMess(typeClose, nil)
-			//c.send <- resp
 			c.hub.unregister <- c
 			break
 		}
@@ -71,33 +67,82 @@ func (c *ClientXctrl) readPump(db *sqlx.DB) {
 		typeSelect, err := sockets.ChoseTypeMessage(p)
 		if err != nil {
 			logger.Error.Printf("|IP: - |Login: %v |Resource: /charPoint |Message: %v \n", c.login, err.Error())
-			resp := newXctrlMess(typeError, nil)
+			resp := newGSMess(typeError, nil)
 			resp.Data["message"] = ErrorMessage{Error: errParseType}
 			c.send <- resp
 		}
 		switch typeSelect {
-		case typeXctrlChange:
+		case typeCreateRout:
 			{
-				temp := struct {
-					SType string           `json:"type"`
-					State []xcontrol.State `json:"state"`
-				}{}
+				temp := routeGS.Route{}
 				_ = json.Unmarshal(p, &temp)
-				err := writeXctrl(temp.State, db)
+				resp := newGSMess(typeCreateRout, nil)
+				err := temp.Create(db)
 				if err != nil {
-					logger.Error.Printf("|IP: - |Login: %v |Resource: /charPoint |Message: %v \n", c.login, err.Error())
-					resp := newXctrlMess(typeError, nil)
-					resp.Data["message"] = ErrorMessage{Error: errChangeXctrl}
+					resp.Data[typeError] = errCantWriteInBD
 					c.send <- resp
+				} else {
+					resp.Data["route"] = temp
+					c.hub.broadcast <- resp
 				}
-				resp := newXctrlMess(typeXctrlChange, nil)
-				resp.Data["message"] = "ok"
+			}
+		case typeUpdateRout:
+			{
+				temp := routeGS.Route{}
+				_ = json.Unmarshal(p, &temp)
+				resp := newGSMess(typeUpdateRout, nil)
+				err := temp.Update(db)
+				if err != nil {
+					resp.Data[typeError] = errCantWriteInBD
+					c.send <- resp
+				} else {
+					resp.Data["route"] = temp
+					c.hub.broadcast <- resp
+				}
+			}
+		case typeDeleteRout:
+			{
+				temp := routeGS.Route{}
+				_ = json.Unmarshal(p, &temp)
+				resp := newGSMess(typeDeleteRout, nil)
+				err := temp.Delete(db)
+				if err != nil {
+					resp.Data[typeError] = errCantWriteInBD
+					c.send <- resp
+				} else {
+					resp.Data["route"] = temp
+					c.hub.broadcast <- resp
+				}
+			}
+		case typeJump: //отправка default
+			{
+				location := &data.Locations{}
+				_ = json.Unmarshal(p, &location)
+				box, _ := location.MakeBoxPoint()
+				resp := newGSMess(typeJump, nil)
+				resp.Data["boxPoint"] = box
 				c.send <- resp
+			}
+		case typeDButton: //отправка сообщения о изменениии режима работы
+			{
+				arm := comm.CommandARM{}
+				_ = json.Unmarshal(p, &arm)
+				arm.User = c.login
+				var mess = tcpConnect.TCPMessage{
+					User:        arm.User,
+					TCPType:     tcpConnect.TypeDispatch,
+					Idevice:     arm.ID,
+					Data:        arm,
+					From:        tcpConnect.FromGsSoc,
+					CommandType: typeDButton,
+					Pos:         sockets.PosInfo{},
+				}
+				mess.SendToTCPServer()
 			}
 		default:
 			{
 				fmt.Println("asdasd")
-				resp := newXctrlMess("type", nil)
+				resp := newGSMess("type", nil)
 				resp.Data["type"] = typeSelect
 				c.send <- resp
 			}
@@ -106,7 +151,7 @@ func (c *ClientXctrl) readPump(db *sqlx.DB) {
 }
 
 //writePump обработчик записи в сокет
-func (c *ClientXctrl) writePump() {
+func (c *ClientGS) writePump() {
 	pingTick := time.NewTicker(pingPeriod)
 	defer func() {
 		pingTick.Stop()

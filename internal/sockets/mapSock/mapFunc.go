@@ -116,8 +116,8 @@ func logOut(login string, db *sqlx.DB) bool {
 	return true
 }
 
-//selectTL возвращает массив в котором содержатся светофоры, которые попали в указанную область
-func selectTL(db *sqlx.DB) (tfdata []data.TrafficLights) {
+//SelectTL возвращает массив в котором содержатся светофоры, которые попали в указанную область
+func SelectTL(db *sqlx.DB) (tfdata []data.TrafficLights) {
 	var dgis string
 	rowsTL, err := db.Query(`SELECT region, area, subarea, id, idevice, dgis, describ, status, state->'arrays'->'SetDK' FROM public.cross`)
 	if err != nil {
@@ -148,14 +148,14 @@ func selectTL(db *sqlx.DB) (tfdata []data.TrafficLights) {
 	return tfdata
 }
 
-//mapOpenInfo сбор всех данных для отображения информации на карте
-func mapOpenInfo(db *sqlx.DB) (obj map[string]interface{}) {
+//MapOpenInfo сбор всех данных для отображения информации на карте
+func MapOpenInfo(db *sqlx.DB) (obj map[string]interface{}) {
 	obj = make(map[string]interface{})
 
 	location := &data.Locations{}
 	box, _ := location.MakeBoxPoint()
 	obj["boxPoint"] = &box
-	obj["tflight"] = selectTL(db)
+	obj["tflight"] = SelectTL(db)
 	obj["authorizedFlag"] = false
 
 	//собираю в кучу регионы для отображения

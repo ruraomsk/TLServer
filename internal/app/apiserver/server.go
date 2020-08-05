@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"github.com/JanFant/TLServer/internal/app/handlers/chatH"
 	"github.com/JanFant/TLServer/internal/app/handlers/crossH"
-	"github.com/JanFant/TLServer/internal/app/handlers/greenStreet"
 	"github.com/JanFant/TLServer/internal/app/handlers/licenseH"
 	"github.com/JanFant/TLServer/internal/app/handlers/mapH"
 	"github.com/JanFant/TLServer/internal/sockets/crossSock"
 	"github.com/JanFant/TLServer/internal/sockets/mapSock"
+	"github.com/JanFant/TLServer/internal/sockets/mapSock/greenStreet"
 	"github.com/JanFant/TLServer/internal/sockets/techArm"
 	"github.com/JanFant/TLServer/internal/sockets/xctrl"
 	"github.com/jmoiron/sqlx"
@@ -33,12 +33,14 @@ func StartServer(conf *ServerConf, db *sqlx.DB) {
 	go crossSock.CrossBroadcast(data.GetDB())
 	go crossSock.ControlBroadcast()
 	//go techArm.ArmTechBroadcast(data.GetDB())
-	go mapSock.GSBroadcast(data.GetDB())
+	//go mapSock.GSBroadcast(data.GetDB())
 
 	techArmHub := techArm.NewTechArmHub()
 	go techArmHub.Run(db)
 	xctrlHub := xctrl.NewXctrlHub()
 	go xctrlHub.Run(db)
+	gsHub := greenStreet.NewGSHub()
+	go gsHub.Run(db)
 
 	// Создаем engine для соединений
 	router := gin.Default()
@@ -104,7 +106,9 @@ func StartServer(conf *ServerConf, db *sqlx.DB) {
 	mainRouter.GET("/:slug/greenStreet", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "greenStreet.html", gin.H{"yaKey": license.LicenseFields.YaKey})
 	})
-	mainRouter.GET("/:slug/greenStreetW", greenStreet.GSEngine)
+	mainRouter.GET("/:slug/greenStreetW", func(c *gin.Context) {
+		greenStreet.HGStreet(c, gsHub, db)
+	})
 
 	//CharPoints
 	mainRouter.GET("/:slug/charPoints", func(c *gin.Context) {

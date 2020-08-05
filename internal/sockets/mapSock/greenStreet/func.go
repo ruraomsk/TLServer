@@ -1,4 +1,4 @@
-package mapSock
+package greenStreet
 
 import (
 	"encoding/json"

@@ -159,10 +159,11 @@ func (h *HubTechArm) Run(db *sqlx.DB) {
 			{
 				h.clients[client] = true
 
-				fmt.Println("techArm reg")
+				fmt.Printf("techArm reg: ")
 				for client := range h.clients {
-					fmt.Println(client.armInfo)
+					fmt.Printf("%v ", client.armInfo)
 				}
+				fmt.Printf("\n")
 			}
 		case client := <-h.unregister:
 			{
@@ -172,10 +173,11 @@ func (h *HubTechArm) Run(db *sqlx.DB) {
 					_ = client.conn.Close()
 				}
 
-				fmt.Println("techArm unReg")
+				fmt.Printf("techArm unReg: ")
 				for client := range h.clients {
-					fmt.Println(client.armInfo)
+					fmt.Printf("%v ", client.armInfo)
 				}
+				fmt.Printf("\n")
 			}
 		case mess := <-h.broadcast:
 			{

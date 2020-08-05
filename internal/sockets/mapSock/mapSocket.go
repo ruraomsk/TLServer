@@ -18,6 +18,7 @@ import (
 
 var connectedUsersOnMap map[*websocket.Conn]string //пулл соединений
 var writeMap chan MapSokResponse                   //канал для отправки сообщений
+var UserLogoutGS chan string                       //канал для закрытия сокетов, пользователя который вышел из системы
 
 const pingPeriod = time.Second * 30
 
@@ -28,7 +29,7 @@ func MapReader(conn *websocket.Conn, c *gin.Context, db *sqlx.DB) {
 	//подготовка начальной информации
 	{
 		flag, tk := checkToken(c, db)
-		resp := newMapMess(typeMapInfo, conn, mapOpenInfo(db))
+		resp := newMapMess(typeMapInfo, conn, MapOpenInfo(db))
 		if flag {
 			login = tk.Login
 			role := tk.Role
@@ -153,6 +154,7 @@ func MapBroadcast(db *sqlx.DB) {
 	connectedUsersOnMap = make(map[*websocket.Conn]string)
 	writeMap = make(chan MapSokResponse, 50)
 
+	UserLogoutGS = make(chan string)
 	data.AccAction = make(chan string)
 	crossReadTick := time.NewTicker(time.Second * 5)
 	pingTicker := time.NewTicker(pingPeriod)
@@ -161,13 +163,13 @@ func MapBroadcast(db *sqlx.DB) {
 		pingTicker.Stop()
 		crossReadTick.Stop()
 	}()
-	oldTFs := selectTL(db)
+	oldTFs := SelectTL(db)
 	for {
 		select {
 		case <-crossReadTick.C:
 			{
 				if len(connectedUsersOnMap) > 0 {
-					newTFs := selectTL(db)
+					newTFs := SelectTL(db)
 					if len(newTFs) != len(oldTFs) {
 						resp := newMapMess(typeRepaint, nil, nil)
 						resp.Data["tflight"] = newTFs
@@ -281,6 +283,6 @@ func logOutSockets(login string) {
 	crossSock.UserLogoutCrControl <- login
 	crossSock.UserLogoutCross <- login
 	techArm.UserLogoutTech <- login
-	userLogout <- login
 	xctrl.UserLogoutXctrl <- login
+	UserLogoutGS <- login
 }

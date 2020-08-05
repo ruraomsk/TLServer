@@ -1,6 +1,7 @@
 package xctrl
 
 import (
+	"fmt"
 	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/ag-server/xcontrol"
 	"reflect"
@@ -29,7 +30,7 @@ func NewXctrlHub() *HubXctrl {
 func (h *HubXctrl) Run(db *sqlx.DB) {
 	UserLogoutXctrl = make(chan string)
 
-	updateTicker := time.NewTicker(time.Second * 20)
+	updateTicker := time.NewTicker(stateTime)
 	defer updateTicker.Stop()
 	oldXctrl, _ := getXctrl(db)
 
@@ -77,6 +78,12 @@ func (h *HubXctrl) Run(db *sqlx.DB) {
 		case client := <-h.register:
 			{
 				h.clients[client] = true
+
+				fmt.Printf("xctrl reg: ")
+				for client := range h.clients {
+					fmt.Printf("%v ", client.login)
+				}
+				fmt.Printf("\n")
 			}
 		case client := <-h.unregister:
 			{
@@ -85,6 +92,12 @@ func (h *HubXctrl) Run(db *sqlx.DB) {
 					close(client.send)
 					_ = client.conn.Close()
 				}
+
+				fmt.Printf("xctrl unReg: ")
+				for client := range h.clients {
+					fmt.Printf("%v ", client.login)
+				}
+				fmt.Printf("\n")
 			}
 		case mess := <-h.broadcast:
 			{
