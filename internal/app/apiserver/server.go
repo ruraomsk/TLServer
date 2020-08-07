@@ -5,10 +5,9 @@ import (
 	"github.com/JanFant/TLServer/internal/app/handlers/chatH"
 	"github.com/JanFant/TLServer/internal/app/handlers/crossH"
 	"github.com/JanFant/TLServer/internal/app/handlers/licenseH"
-	"github.com/JanFant/TLServer/internal/app/handlers/mapH"
 	"github.com/JanFant/TLServer/internal/sockets/crossSock"
-	"github.com/JanFant/TLServer/internal/sockets/mapSock"
 	"github.com/JanFant/TLServer/internal/sockets/mapSock/greenStreet"
+	"github.com/JanFant/TLServer/internal/sockets/mapSock/mainMap"
 	"github.com/JanFant/TLServer/internal/sockets/techArm"
 	"github.com/JanFant/TLServer/internal/sockets/xctrl"
 	"github.com/jmoiron/sqlx"
@@ -29,12 +28,14 @@ import (
 func StartServer(conf *ServerConf, db *sqlx.DB) {
 
 	go chat.CBroadcast()
-	go mapSock.MapBroadcast(data.GetDB())
+	//go mapSock.MapBroadcast(data.GetDB())
 	go crossSock.CrossBroadcast(data.GetDB())
 	go crossSock.ControlBroadcast()
 	//go techArm.ArmTechBroadcast(data.GetDB())
 	//go mapSock.GSBroadcast(data.GetDB())
 
+	mainMapHub := mainMap.NewMainMapHub()
+	go mainMapHub.Run(db)
 	techArmHub := techArm.NewTechArmHub()
 	go techArmHub.Run(db)
 	xctrlHub := xctrl.NewXctrlHub()
@@ -67,7 +68,9 @@ func StartServer(conf *ServerConf, db *sqlx.DB) {
 	})
 
 	//сокет карты
-	router.GET("/mapW", mapH.MapEngine)
+	router.GET("/mapW", func(c *gin.Context) {
+		mainMap.HMainMap(c, mainMapHub, db)
+	})
 
 	//------------------------------------------------------------------------------------------------------------------
 	//обязательный общий путь

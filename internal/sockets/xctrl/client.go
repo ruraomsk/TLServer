@@ -36,6 +36,7 @@ type ClientXctrl struct {
 	send chan MessXctrl
 
 	login string
+	ip    string
 }
 
 //readPump обработчик чтения сокета
@@ -49,7 +50,7 @@ func (c *ClientXctrl) readPump(db *sqlx.DB) {
 	{
 		allXctrl, err := getXctrl(db)
 		if err != nil {
-			logger.Error.Printf("|IP: - |Login: %v |Resource: /charPoint |Message: %v \n", c.login, err.Error())
+			logger.Error.Printf("|IP: %v |Login: %v |Resource: /charPoint |Message: %v \n", c.ip, c.login, err.Error())
 			resp := newXctrlMess(typeError, nil)
 			resp.Data["message"] = ErrorMessage{Error: errGetXctrl}
 			c.send <- resp
@@ -70,7 +71,7 @@ func (c *ClientXctrl) readPump(db *sqlx.DB) {
 		//ну отправка и отправка
 		typeSelect, err := sockets.ChoseTypeMessage(p)
 		if err != nil {
-			logger.Error.Printf("|IP: - |Login: %v |Resource: /charPoint |Message: %v \n", c.login, err.Error())
+			logger.Error.Printf("|IP: %v |Login: %v |Resource: /charPoint |Message: %v \n", c.ip, c.login, err.Error())
 			resp := newXctrlMess(typeError, nil)
 			resp.Data["message"] = ErrorMessage{Error: errParseType}
 			c.send <- resp
@@ -85,7 +86,7 @@ func (c *ClientXctrl) readPump(db *sqlx.DB) {
 				_ = json.Unmarshal(p, &temp)
 				err := writeXctrl(temp.State, db)
 				if err != nil {
-					logger.Error.Printf("|IP: - |Login: %v |Resource: /charPoint |Message: %v \n", c.login, err.Error())
+					logger.Error.Printf("|IP: %v |Login: %v |Resource: /charPoint |Message: %v \n", c.ip, c.login, err.Error())
 					resp := newXctrlMess(typeError, nil)
 					resp.Data["message"] = ErrorMessage{Error: errChangeXctrl}
 					c.send <- resp
@@ -120,22 +121,11 @@ func (c *ClientXctrl) writePump() {
 					_ = c.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "канал был закрыт"))
 					return
 				}
-
-				w, err := c.conn.NextWriter(websocket.TextMessage)
-				if err != nil {
-					return
-				}
-				_ = json.NewEncoder(w).Encode(mess)
-
+				_ = c.conn.WriteJSON(mess)
 				// Add queued chat messages to the current websocket message.
 				n := len(c.send)
 				for i := 0; i < n; i++ {
-					_, _ = w.Write([]byte{'\n'})
-					_ = json.NewEncoder(w).Encode(mess)
-				}
-
-				if err := w.Close(); err != nil {
-					return
+					_ = c.conn.WriteJSON(<-c.send)
 				}
 			}
 		case <-pingTick.C:

@@ -72,6 +72,7 @@ type ErrorMessage struct {
 //ArmInfo информация о запрашиваемом арме
 type ArmInfo struct {
 	Login  string   `json:"login"`  //логин
+	ip     string   `json:"-"`      //ip пользоателя
 	Region int      `json:"region"` //регион
 	Area   []string `json:"area"`   //район
 }

@@ -1,41 +1,42 @@
-package greenStreet
+package mainMap
 
 import (
-	"fmt"
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/model/data"
-	"github.com/JanFant/TLServer/internal/sockets"
+	"github.com/JanFant/TLServer/internal/sockets/crossSock"
 	"github.com/JanFant/TLServer/internal/sockets/mapSock"
-	"github.com/JanFant/TLServer/internal/sockets/mapSock/mainMap"
 	"github.com/jmoiron/sqlx"
 	"time"
 )
 
-//HubGStreet структура хаба для GStreet
-type HubGStreet struct {
-	clients    map[*ClientGS]bool
-	broadcast  chan gSResponse
-	register   chan *ClientGS
-	unregister chan *ClientGS
+//HubMainMap структура хаба для xctrl
+type HubMainMap struct {
+	clients    map[*ClientMainMap]bool
+	broadcast  chan mapResponse
+	register   chan *ClientMainMap
+	unregister chan *ClientMainMap
 }
 
-//NewGSHub создание хаба
-func NewGSHub() *HubGStreet {
-	return &HubGStreet{
-		broadcast:  make(chan gSResponse),
-		clients:    make(map[*ClientGS]bool),
-		register:   make(chan *ClientGS),
-		unregister: make(chan *ClientGS),
+//NewMainMapHub создание хаба
+func NewMainMapHub() *HubMainMap {
+	return &HubMainMap{
+		broadcast:  make(chan mapResponse),
+		clients:    make(map[*ClientMainMap]bool),
+		register:   make(chan *ClientMainMap),
+		unregister: make(chan *ClientMainMap),
 	}
 }
 
 //Run запуск хаба для xctrl
-func (h *HubGStreet) Run(db *sqlx.DB) {
+func (h *HubMainMap) Run(db *sqlx.DB) {
 
-	crossReadTick := time.NewTicker(crossPeriod)
+	UserLogoutGS = make(chan string)
+	data.AccAction = make(chan string)
+	crossReadTick := time.NewTicker(crossTick)
 	defer crossReadTick.Stop()
 
 	oldTFs := mapSock.SelectTL(db)
+
 	for {
 		select {
 		case <-crossReadTick.C:
@@ -43,8 +44,9 @@ func (h *HubGStreet) Run(db *sqlx.DB) {
 				if len(h.clients) > 0 {
 					newTFs := mapSock.SelectTL(db)
 					if len(newTFs) != len(oldTFs) {
-						resp := newGSMess(typeRepaint, nil)
+						resp := newMapMess(typeRepaint, nil)
 						resp.Data["tflight"] = newTFs
+						data.FillMapAreaZone()
 						data.CacheArea.Mux.Lock()
 						resp.Data["areaZone"] = data.CacheArea.Areas
 						data.CacheArea.Mux.Unlock()
@@ -75,7 +77,7 @@ func (h *HubGStreet) Run(db *sqlx.DB) {
 							}
 						}
 						if len(tempTF) > 0 {
-							resp := newGSMess(typeTFlight, nil)
+							resp := newMapMess(typeTFlight, nil)
 							if flagFill {
 								data.FillMapAreaZone()
 								data.CacheArea.Mux.Lock()
@@ -94,12 +96,6 @@ func (h *HubGStreet) Run(db *sqlx.DB) {
 		case client := <-h.register:
 			{
 				h.clients[client] = true
-
-				fmt.Printf("gStreet reg: ")
-				for client := range h.clients {
-					fmt.Printf("%v ", client.login)
-				}
-				fmt.Printf("\n")
 			}
 		case client := <-h.unregister:
 			{
@@ -108,12 +104,6 @@ func (h *HubGStreet) Run(db *sqlx.DB) {
 					close(client.send)
 					_ = client.conn.Close()
 				}
-
-				fmt.Println("gStreet unReg: ")
-				for client := range h.clients {
-					fmt.Printf("%v ", client.login)
-				}
-				fmt.Printf("\n")
 			}
 		case mess := <-h.broadcast:
 			{
@@ -126,30 +116,35 @@ func (h *HubGStreet) Run(db *sqlx.DB) {
 					}
 				}
 			}
-		case login := <-mainMap.UserLogoutGS:
+		case crossUsers := <-crossSock.CrossUsersForMap:
 			{
-				resp := newGSMess(typeClose, nil)
-				resp.Data["message"] = "пользователь вышел из системы"
+				resp := newMapMess(typeEditCrossUsers, nil)
+				resp.Data["editCrossUsers"] = crossUsers
 				for client := range h.clients {
-					if client.login == login {
-						client.send <- resp
-					}
+					client.send <- resp
 				}
 			}
-		case msg := <-tcpConnect.TCPRespGS:
+		case msg := <-tcpConnect.TCPRespMap:
 			{
-				resp := newGSMess(typeDButton, nil)
-				resp.Data["status"] = msg.Status
-				if msg.Status {
-					resp.Data["command"] = msg.Data
-					var message = sockets.DBMessage{Data: resp, Idevice: msg.Idevice}
-					sockets.DispatchMessageFromAnotherPlace <- message
+				resp := newMapMess(typeCheckConn, nil)
+				resp.Data["statusS"] = msg.Status
+				for client := range h.clients {
+					client.send <- resp
+				}
+			}
+		case login := <-data.AccAction:
+			{
+				respLO := newMapMess(typeLogOut, nil)
+				status := logOut(login, db)
+				if status {
+					respLO.Data["authorizedFlag"] = false
 				}
 				for client := range h.clients {
-					if client.login == msg.User {
-						client.send <- resp
+					if client.login == login {
+						client.send <- respLO
 					}
 				}
+				logOutSockets(login)
 			}
 		}
 	}

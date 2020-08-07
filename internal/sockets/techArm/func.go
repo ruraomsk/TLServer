@@ -26,7 +26,7 @@ func getCross(reg int, db *sqlx.DB) []CrossInfo {
 	}
 	rows, err := db.Query(sqlStr)
 	if err != nil {
-		logger.Error.Println("|IP: - |Login: - |Resource: /techArm |Message: Error get Cross from BD ", err.Error())
+		logger.Error.Println("|IP: server |Login: server |Resource: /techArm |Message: Error get Cross from BD ", err.Error())
 		return make([]CrossInfo, 0)
 	}
 	for rows.Next() {
@@ -55,7 +55,7 @@ func getDevice(db *sqlx.DB) []DevInfo {
 									d.device 
 									FROM public.cross as c, public.devices as d WHERE c.idevice IN(d.id);`)
 	if err != nil {
-		logger.Error.Println("|IP: - |Login: - |Resource: /techArm |Message: Error get Device from BD ", err.Error())
+		logger.Error.Println("|IP: server |Login: server |Resource: /techArm |Message: Error get Device from BD ", err.Error())
 		return make([]DevInfo, 0)
 	}
 	for rows.Next() {
