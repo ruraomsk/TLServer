@@ -6,14 +6,14 @@ import (
 	"github.com/JanFant/TLServer/internal/app/handlers/crossH"
 	"github.com/JanFant/TLServer/internal/app/handlers/licenseH"
 	"github.com/JanFant/TLServer/internal/sockets/crossSock"
-	"github.com/JanFant/TLServer/internal/sockets/mapSock/greenStreet"
-	"github.com/JanFant/TLServer/internal/sockets/mapSock/mainMap"
+	"github.com/JanFant/TLServer/internal/sockets/crossSock/mainCross"
+	"github.com/JanFant/TLServer/internal/sockets/maps/greenStreet"
+	"github.com/JanFant/TLServer/internal/sockets/maps/mainMap"
 	"github.com/JanFant/TLServer/internal/sockets/techArm"
 	"github.com/JanFant/TLServer/internal/sockets/xctrl"
 	"github.com/jmoiron/sqlx"
 	"net/http"
 
-	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/model/license"
 	"github.com/JanFant/TLServer/logger"
 
@@ -28,14 +28,18 @@ import (
 func StartServer(conf *ServerConf, db *sqlx.DB) {
 
 	go chat.CBroadcast()
-	//go mapSock.MapBroadcast(data.GetDB())
-	go crossSock.CrossBroadcast(data.GetDB())
+	//go maps.MapBroadcast(data.GetDB())
+	//go crossSock.CrossBroadcast(data.GetDB())
 	go crossSock.ControlBroadcast()
 	//go techArm.ArmTechBroadcast(data.GetDB())
-	//go mapSock.GSBroadcast(data.GetDB())
+	//go maps.GSBroadcast(data.GetDB())
 
 	mainMapHub := mainMap.NewMainMapHub()
 	go mainMapHub.Run(db)
+
+	mainCrossHub := mainCross.NewCrossHub()
+	go mainCrossHub.Run(db)
+
 	techArmHub := techArm.NewTechArmHub()
 	go techArmHub.Run(db)
 	xctrlHub := xctrl.NewXctrlHub()
@@ -89,7 +93,9 @@ func StartServer(conf *ServerConf, db *sqlx.DB) {
 	mainRouter.GET("/:slug/cross", func(c *gin.Context) { //работа со странички перекрестков (страничка)
 		c.HTML(http.StatusOK, "cross.html", nil)
 	})
-	mainRouter.GET("/:slug/crossW", crossH.CrossEngine)
+	mainRouter.GET("/:slug/crossW", func(c *gin.Context) {
+		mainCross.HMainCross(c, mainCrossHub, db)
+	})
 
 	//арм перекрестка
 	mainRouter.GET("/:slug/cross/control", func(c *gin.Context) { //расширеная страничка настройки перекрестка (страничка)

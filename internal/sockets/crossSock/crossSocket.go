@@ -35,7 +35,7 @@ func CrossReader(conn *websocket.Conn, pos sockets.PosInfo, mapContx map[string]
 	var crossCI = CrossInfo{Login: mapContx["login"], Role: mapContx["role"], Pos: pos, Edit: false}
 
 	//проверка не существование такого перекрестка (сбос если нету)
-	_, err := getNewState(pos, db)
+	_, err := GetNewState(pos, db)
 	if err != nil {
 		//msg := closeMessage{Type: typeClose, Message: errCrossDoesntExist}
 		//_ = conn.WriteJSON(msg)
@@ -71,7 +71,7 @@ func CrossReader(conn *websocket.Conn, pos sockets.PosInfo, mapContx map[string]
 	//сборка начальной информации для отображения перекрестка
 	{
 		resp := newCrossMess(typeCrossBuild, conn, nil, crossCI)
-		resp, crossCI.Idevice, crossCI.Description = takeCrossInfo(crossCI.Pos, db)
+		resp, crossCI.Idevice = TakeCrossInfo(crossCI.Pos, db)
 		resp.conn = conn
 		resp.Data["edit"] = crossCI.Edit
 		resp.Data["controlCrossFlag"] = false
@@ -199,7 +199,7 @@ func CrossBroadcast(db *sqlx.DB) {
 							var tempCR crossUpdateInfo
 							_ = rows.Scan(&tempCR.Idevice, &tempCR.Status.Num, &tempCR.stateStr)
 							tempCR.Status.Description = data.CacheInfo.MapTLSost[tempCR.Status.Num]
-							tempCR.State, _ = convertStateStrToStruct(tempCR.stateStr)
+							tempCR.State, _ = ConvertStateStrToStruct(tempCR.stateStr)
 							arrayCross[tempCR.Idevice] = tempCR
 						}
 						for idevice, newData := range arrayCross {

@@ -7,7 +7,7 @@ import (
 	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/model/routeGS"
 	"github.com/JanFant/TLServer/internal/sockets"
-	"github.com/JanFant/TLServer/internal/sockets/mapSock"
+	"github.com/JanFant/TLServer/internal/sockets/maps"
 	"github.com/JanFant/TLServer/logger"
 	"github.com/gorilla/websocket"
 	"github.com/jmoiron/sqlx"
@@ -50,7 +50,7 @@ func (c *ClientGS) readPump(db *sqlx.DB) {
 	_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error { _ = c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	{
-		resp := newGSMess(typeMapInfo, mapSock.MapOpenInfo(db))
+		resp := newGSMess(typeMapInfo, maps.MapOpenInfo(db))
 		resp.Data["routes"] = getAllModes(db)
 		data.CacheArea.Mux.Lock()
 		resp.Data["areaZone"] = data.CacheArea.Areas

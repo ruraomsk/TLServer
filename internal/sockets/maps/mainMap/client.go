@@ -7,7 +7,7 @@ import (
 	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/JanFant/TLServer/internal/sockets/crossSock"
-	"github.com/JanFant/TLServer/internal/sockets/mapSock"
+	"github.com/JanFant/TLServer/internal/sockets/maps"
 	"github.com/JanFant/TLServer/logger"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -52,7 +52,7 @@ func (c *ClientMainMap) readPump(db *sqlx.DB, gc *gin.Context) {
 	c.conn.SetPongHandler(func(string) error { _ = c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	{
 		flag, tk := checkToken(gc, db)
-		resp := newMapMess(typeMapInfo, mapSock.MapOpenInfo(db))
+		resp := newMapMess(typeMapInfo, maps.MapOpenInfo(db))
 		if flag {
 			login := tk.Login
 			role := tk.Role
@@ -125,8 +125,8 @@ func (c *ClientMainMap) readPump(db *sqlx.DB, gc *gin.Context) {
 					respLO := newMapMess(typeLogOut, nil)
 					status := logOut(c.login, db)
 					if status {
-						c.login = fmt.Sprint(resp.Data["login"])
 						logOutSockets(c.login)
+						c.login = fmt.Sprint(resp.Data["login"])
 					}
 					c.send <- respLO
 				}

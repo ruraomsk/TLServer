@@ -1,4 +1,4 @@
-package mapSock
+package maps
 
 import (
 	"encoding/json"

@@ -36,12 +36,11 @@ type CrossSokResponse struct {
 
 //crossInfo информация о перекрестке для которого открыт сокет
 type CrossInfo struct {
-	Login       string          `json:"login"`       //пользователь
-	Role        string          `json:"-"`           //роль
-	Edit        bool            `json:"edit"`        //признак редактирования
-	Idevice     int             `json:"idevice"`     //идентификатор утройства
-	Description string          `json:"description"` //описание
-	Pos         sockets.PosInfo `json:"pos"`         //расположение перекрестка
+	Login   string          `json:"login"`   //пользователь
+	Role    string          `json:"-"`       //роль
+	Edit    bool            `json:"edit"`    //признак редактирования
+	Idevice int             `json:"idevice"` //идентификатор утройства
+	Pos     sockets.PosInfo `json:"pos"`     //расположение перекрестка
 }
 
 //newCrossMess создание нового сообщения

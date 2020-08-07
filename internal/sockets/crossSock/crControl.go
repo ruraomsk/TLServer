@@ -36,7 +36,7 @@ func TestCrossStateData(mapContx map[string]string, db *sqlx.DB) u.Response {
 	}
 	for rows.Next() {
 		_ = rows.Scan(&stateSql)
-		testState, err := convertStateStrToStruct(stateSql)
+		testState, err := ConvertStateStrToStruct(stateSql)
 		if err != nil {
 			logger.Error.Println("|Message: Failed to parse cross information: ", err.Error())
 			return u.Message(http.StatusInternalServerError, "failed to parse cross information")
@@ -57,7 +57,7 @@ func TestCrossStateData(mapContx map[string]string, db *sqlx.DB) u.Response {
 }
 
 //takeControlInfo формарование необходимой информации о арме перекрестка
-func takeControlInfo(pos sockets.PosInfo, db *sqlx.DB) (resp ControlSokResponse, idev int, desc string) {
+func takeControlInfo(pos sockets.PosInfo, db *sqlx.DB) (resp ControlSokResponse, idev int) {
 	var (
 		stateStr string
 	)
@@ -66,18 +66,18 @@ func takeControlInfo(pos sockets.PosInfo, db *sqlx.DB) (resp ControlSokResponse,
 	if err != nil {
 		resp := newControlMess(typeError, nil, nil, CrossInfo{})
 		resp.Data["message"] = "No result at these points, table cross"
-		return resp, 0, ""
+		return resp, 0
 	}
 	//Состояние светофора!
-	rState, err := convertStateStrToStruct(stateStr)
+	rState, err := ConvertStateStrToStruct(stateStr)
 	if err != nil {
 		resp := newControlMess(typeError, nil, nil, CrossInfo{})
 		resp.Data["message"] = "failed to parse cross information"
-		return resp, 0, ""
+		return resp, 0
 	}
 	resp = newControlMess(typeControlBuild, nil, nil, CrossInfo{})
 	resp.Data["state"] = rState
-	return resp, rState.IDevice, rState.Name
+	return resp, rState.IDevice
 }
 
 //checkCrossData проверка полученных данных

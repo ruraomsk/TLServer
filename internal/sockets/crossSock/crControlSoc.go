@@ -29,7 +29,7 @@ func ControlReader(conn *websocket.Conn, pos sockets.PosInfo, mapContx map[strin
 	var controlI = CrossInfo{Login: mapContx["login"], Pos: pos, Edit: false}
 
 	//проверка не существование такого перекрестка (сбос если нету)
-	_, err := getNewState(pos, db)
+	_, err := GetNewState(pos, db)
 	if err != nil {
 		//msg := closeMessage{Type: typeClose, Message: errCrossDoesntExist}
 		//_ = conn.WriteJSON(msg)
@@ -70,7 +70,7 @@ func ControlReader(conn *websocket.Conn, pos sockets.PosInfo, mapContx map[strin
 	//сборка начальной информации для отображения перекрестка
 	{
 		resp := newControlMess(typeControlBuild, conn, nil, controlI)
-		resp, controlI.Idevice, controlI.Description = takeControlInfo(controlI.Pos, db)
+		resp, controlI.Idevice = takeControlInfo(controlI.Pos, db)
 		resp.conn = conn
 		data.CacheInfo.Mux.Lock()
 		resp.Data["areaMap"] = data.CacheInfo.MapArea[data.CacheInfo.MapRegion[pos.Region]]
@@ -165,7 +165,7 @@ func ControlReader(conn *websocket.Conn, pos sockets.PosInfo, mapContx map[strin
 		case typeUpdateB: //обновление state
 			{
 				resp := newControlMess(typeUpdateB, conn, nil, controlI)
-				resp, _, _ = takeControlInfo(controlI.Pos, db)
+				resp, _ = takeControlInfo(controlI.Pos, db)
 				resp.info = controlI
 				resp.Data["edit"] = controlI.Edit
 				resp.conn = conn

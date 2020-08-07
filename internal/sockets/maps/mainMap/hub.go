@@ -4,7 +4,7 @@ import (
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/sockets/crossSock"
-	"github.com/JanFant/TLServer/internal/sockets/mapSock"
+	"github.com/JanFant/TLServer/internal/sockets/maps"
 	"github.com/jmoiron/sqlx"
 	"time"
 )
@@ -35,14 +35,14 @@ func (h *HubMainMap) Run(db *sqlx.DB) {
 	crossReadTick := time.NewTicker(crossTick)
 	defer crossReadTick.Stop()
 
-	oldTFs := mapSock.SelectTL(db)
+	oldTFs := maps.SelectTL(db)
 
 	for {
 		select {
 		case <-crossReadTick.C:
 			{
 				if len(h.clients) > 0 {
-					newTFs := mapSock.SelectTL(db)
+					newTFs := maps.SelectTL(db)
 					if len(newTFs) != len(oldTFs) {
 						resp := newMapMess(typeRepaint, nil)
 						resp.Data["tflight"] = newTFs

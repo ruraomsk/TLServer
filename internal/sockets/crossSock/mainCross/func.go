@@ -1,15 +1,34 @@
-package crossSock
+package mainCross
 
 import (
-	"encoding/json"
 	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/sockets"
+	"github.com/JanFant/TLServer/internal/sockets/crossSock"
 	"github.com/jmoiron/sqlx"
-	agspudge "github.com/ruraomsk/ag-server/pudge"
 )
 
-//TakeCrossInfo формарование необходимой информации о перекрестке
-func TakeCrossInfo(pos sockets.PosInfo, db *sqlx.DB) (resp CrossSokResponse, idev int) {
+//get запрос фазы из базы
+func (p *phaseInfo) get(db *sqlx.DB) error {
+	err := db.QueryRow(`SELECT fdk, tdk, pdk FROM public.devices WHERE id = $1`, p.idevice).Scan(&p.Fdk, &p.Tdk, &p.Pdk)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+////formCrossUser сформировать пользователей которые редактируеют кросы
+//func formCrossUser() []CrossInfo {
+//	var temp = make([]CrossInfo, 0)
+//	for _, info := range crossConnect {
+//		if info.Edit {
+//			temp = append(temp, info)
+//		}
+//	}
+//	return temp
+//}
+
+//takeCrossInfo формарование необходимой информации о перекрестке
+func takeCrossInfo(pos sockets.PosInfo, db *sqlx.DB) (resp crossResponse, idev int) {
 	var (
 		dgis     string
 		stateStr string
@@ -19,20 +38,20 @@ func TakeCrossInfo(pos sockets.PosInfo, db *sqlx.DB) (resp CrossSokResponse, ide
 	rowsTL := db.QueryRow(`SELECT area, subarea, Idevice, dgis, describ, state FROM public.cross WHERE region = $1 and id = $2 and area = $3`, pos.Region, pos.Id, pos.Area)
 	err := rowsTL.Scan(&TLignt.Area.Num, &TLignt.Subarea, &TLignt.Idevice, &dgis, &TLignt.Description, &stateStr)
 	if err != nil {
-		resp := newCrossMess(typeError, nil, nil, CrossInfo{})
+		resp := newCrossMess(typeError, nil)
 		resp.Data["message"] = "No result at these points, table cross"
 		return resp, 0
 	}
 	TLignt.Points.StrToFloat(dgis)
 	//Состояние светофора!
-	rState, err := ConvertStateStrToStruct(stateStr)
+	rState, err := crossSock.ConvertStateStrToStruct(stateStr)
 	if err != nil {
-		resp := newCrossMess(typeError, nil, nil, CrossInfo{})
+		resp := newCrossMess(typeError, nil)
 		resp.Data["message"] = "failed to parse cross information"
 		return resp, 0
 	}
 
-	resp = newCrossMess(typeCrossBuild, nil, nil, CrossInfo{})
+	resp = newCrossMess(typeCrossBuild, nil)
 	data.CacheInfo.Mux.Lock()
 	TLignt.Region.NameRegion = data.CacheInfo.MapRegion[TLignt.Region.Num]
 	TLignt.Area.NameArea = data.CacheInfo.MapArea[TLignt.Region.NameRegion][TLignt.Area.Num]
@@ -50,24 +69,4 @@ func TakeCrossInfo(pos sockets.PosInfo, db *sqlx.DB) (resp CrossSokResponse, ide
 	resp.Data["state"] = rState
 	resp.Data["region"] = TLignt.Region.Num
 	return resp, TLignt.Idevice
-}
-
-//GetNewState получение обновленного state
-func GetNewState(pos sockets.PosInfo, db *sqlx.DB) (agspudge.Cross, error) {
-	var stateStr string
-	rowsTL := db.QueryRow(`SELECT state FROM public.cross WHERE region = $1 and id = $2 and area = $3`, pos.Region, pos.Id, pos.Area)
-	_ = rowsTL.Scan(&stateStr)
-	rState, err := ConvertStateStrToStruct(stateStr)
-	if err != nil {
-		return agspudge.Cross{}, err
-	}
-	return rState, nil
-}
-
-//ConvertStateStrToStruct разбор данных (Cross) полученных из БД в нужную структуру
-func ConvertStateStrToStruct(str string) (rState agspudge.Cross, err error) {
-	if err := json.Unmarshal([]byte(str), &rState); err != nil {
-		return rState, err
-	}
-	return rState, nil
 }
