@@ -15,9 +15,8 @@ type CrossDisc struct {
 func DisplayCrossEditInfo(mapContx map[string]string) u.Response {
 	resp := u.Message(http.StatusOK, "edit info")
 
-	//getArmUsersForDisplay <- true
-	//arms := <-crArmUsersForDisplay
-	var arms []CrossInfo
+	GetArmUsersForDisplay <- true
+	arms := <-CrArmUsersForDisplay
 	if len(arms) == 0 {
 		arms = make([]CrossInfo, 0)
 	}
@@ -55,7 +54,7 @@ func DisplayCrossEditInfo(mapContx map[string]string) u.Response {
 func CrossEditFree(disc CrossDisc) u.Response {
 	resp := u.Message(http.StatusOK, "free")
 	if len(disc.Arms) > 0 {
-		//discArmUsers <- disc.Arms
+		DiscArmUsers <- disc.Arms
 	}
 	if len(disc.Crosses) > 0 {
 		DiscCrossUsers <- disc.Crosses

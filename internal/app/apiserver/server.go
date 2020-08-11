@@ -5,6 +5,7 @@ import (
 	"github.com/JanFant/TLServer/internal/app/handlers/chatH"
 	"github.com/JanFant/TLServer/internal/app/handlers/crossH"
 	"github.com/JanFant/TLServer/internal/app/handlers/licenseH"
+	"github.com/JanFant/TLServer/internal/sockets/crossSock/controlCross"
 	"github.com/JanFant/TLServer/internal/sockets/crossSock/mainCross"
 	"github.com/JanFant/TLServer/internal/sockets/maps/greenStreet"
 	"github.com/JanFant/TLServer/internal/sockets/maps/mainMap"
@@ -34,18 +35,17 @@ func StartServer(conf *ServerConf, db *sqlx.DB) {
 	//go maps.GSBroadcast(data.GetDB())
 
 	mainMapHub := mainMap.NewMainMapHub()
-	go mainMapHub.Run(db)
-
 	mainCrossHub := mainCross.NewCrossHub()
-	go mainCrossHub.Run(db)
-
+	controlCrHub := controlCross.NewCrossHub()
 	techArmHub := techArm.NewTechArmHub()
-	go techArmHub.Run(db)
-
 	xctrlHub := xctrl.NewXctrlHub()
-	go xctrlHub.Run(db)
-
 	gsHub := greenStreet.NewGSHub()
+
+	go mainMapHub.Run(db)
+	go mainCrossHub.Run(db)
+	go controlCrHub.Run(db)
+	go techArmHub.Run(db)
+	go xctrlHub.Run(db)
 	go gsHub.Run(db)
 
 	// Создаем engine для соединений
@@ -103,7 +103,7 @@ func StartServer(conf *ServerConf, db *sqlx.DB) {
 		c.HTML(http.StatusOK, "crossControl.html", nil)
 	})
 	mainRouter.GET("/:slug/cross/controlW", func(c *gin.Context) {
-		//todo кросс контрол
+		controlCross.HControlCross(c, controlCrHub, db)
 	})
 
 	//арм технолога

@@ -27,8 +27,11 @@ type CrossInfo struct {
 }
 
 var GetCrossUsersForDisplay chan bool
+var GetArmUsersForDisplay chan bool
+var CrArmUsersForDisplay chan []CrossInfo
 var CrossUsersForDisplay chan []CrossInfo
 var DiscCrossUsers chan []CrossInfo
+var DiscArmUsers chan []CrossInfo
 
 //GetNewState получение обновленного state
 func GetNewState(pos sockets.PosInfo, db *sqlx.DB) (agspudge.Cross, error) {
@@ -75,7 +78,7 @@ func TestCrossStateData(mapContx map[string]string, db *sqlx.DB) u.Response {
 			return u.Message(http.StatusInternalServerError, "failed to parse cross information")
 		}
 		var verif stateVerified.StateResult
-		verifiedState(&testState, &verif)
+		VerifiedState(&testState, &verif)
 		if verif.Err != nil {
 			state.ID = testState.ID
 			state.Region = strconv.Itoa(testState.Region)
@@ -89,8 +92,8 @@ func TestCrossStateData(mapContx map[string]string, db *sqlx.DB) u.Response {
 	return resp
 }
 
-//verifiedState набор проверкок для стейта
-func verifiedState(cross *agspudge.Cross, result *stateVerified.StateResult) {
+//VerifiedState набор проверкок для стейта
+func VerifiedState(cross *agspudge.Cross, result *stateVerified.StateResult) {
 	resultDay := stateVerified.DaySetsVerified(cross)
 	appendResult(result, resultDay)
 	resultWeek, empty := stateVerified.WeekSetsVerified(cross)

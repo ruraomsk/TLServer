@@ -184,7 +184,7 @@ func (h *HubCross) Run(db *sqlx.DB) {
 		case client := <-h.register:
 			{
 				var regStatus = true
-				//проверка не существование такого перекрестка (сбос если нету)
+				//проверка на существование такого перекрестка (сбос если нету)
 				_, err := crossSock.GetNewState(client.crossInfo.Pos, db)
 				if err != nil {
 					close(client.send)
@@ -229,13 +229,13 @@ func (h *HubCross) Run(db *sqlx.DB) {
 							break
 						}
 					}
-				}
-				if !flagEdit {
-					resp.Data["edit"] = true
-					client.crossInfo.Edit = true
+					if !flagEdit {
+						resp.Data["edit"] = true
+						client.crossInfo.Edit = true
 
-				} else {
-					resp.Data["edit"] = false
+					} else {
+						resp.Data["edit"] = false
+					}
 				}
 
 				client.regStatus <- regStatus
