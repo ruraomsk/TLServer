@@ -6,7 +6,7 @@ import (
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/sockets"
-	"github.com/JanFant/TLServer/internal/sockets/crossSock"
+	"github.com/JanFant/TLServer/internal/sockets/crossSock/mainCross"
 	"github.com/JanFant/TLServer/internal/sockets/maps"
 	"github.com/JanFant/TLServer/logger"
 	"github.com/gin-gonic/gin"
@@ -78,7 +78,7 @@ func (c *ClientMainMap) readPump(db *sqlx.DB, gc *gin.Context) {
 		}
 		c.send <- resp
 	}
-	crossSock.GetCrossUserForMap <- true
+	mainCross.GetCrossUserForMap <- true
 	for {
 		_, p, err := c.conn.ReadMessage()
 		if err != nil {

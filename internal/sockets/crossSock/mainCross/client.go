@@ -1,11 +1,15 @@
 package mainCross
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/sockets"
+	"github.com/JanFant/TLServer/internal/sockets/crossSock"
 	"github.com/JanFant/TLServer/logger"
 	"github.com/gorilla/websocket"
 	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/ag-server/comm"
 	"time"
 )
 
@@ -21,6 +25,8 @@ const (
 
 	// Maximum message size allowed from peer.
 	maxMessageSize = 1024 * 100
+
+	readCrossTick = time.Second * 1
 )
 
 //ClientCross информация о подключившемся пользователе
@@ -28,37 +34,49 @@ type ClientCross struct {
 	hub       *HubCross
 	conn      *websocket.Conn
 	send      chan crossResponse
-	regStatus chan regStatus
-	crossInfo CrossInfo
+	regStatus chan bool
+	crossInfo crossSock.CrossInfo
 }
 
 //readPump обработчик чтения сокета
 func (c *ClientCross) readPump(db *sqlx.DB) {
 	_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error { _ = c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
-	{
-		fmt.Println(c.crossInfo)
-	}
 
 	for {
 		_, p, err := c.conn.ReadMessage()
 		if err != nil {
-
 			c.hub.unregister <- c
 			break
 		}
 		//ну отправка и отправка
 		typeSelect, err := sockets.ChoseTypeMessage(p)
 		if err != nil {
-			logger.Error.Printf("|IP: %v |Login: %v |Resource: /cross |Message: %v \n", c.crossInfo.ip, c.crossInfo.Login, err.Error())
+			logger.Error.Printf("|IP: %v |Login: %v |Resource: /cross |Message: %v \n", c.crossInfo.Ip, c.crossInfo.Login, err.Error())
 			resp := newCrossMess(typeError, nil)
 			resp.Data["message"] = ErrorMessage{Error: errParseType}
 			c.send <- resp
 		}
 		switch typeSelect {
+		case typeDButton:
+			{
+				arm := comm.CommandARM{}
+				_ = json.Unmarshal(p, &arm)
+				arm.User = c.crossInfo.Login
+				var mess = tcpConnect.TCPMessage{
+					User:        c.crossInfo.Login,
+					TCPType:     tcpConnect.TypeDispatch,
+					Idevice:     arm.ID,
+					Data:        arm,
+					From:        tcpConnect.FromCrossSoc,
+					CommandType: typeDButton,
+					Pos:         c.crossInfo.Pos,
+				}
+				mess.SendToTCPServer()
+			}
 		default:
 			{
-				fmt.Println("asdasd")
+				fmt.Println(typeSelect)
 				resp := newCrossMess("type", nil)
 				resp.Data["type"] = typeSelect
 				c.send <- resp

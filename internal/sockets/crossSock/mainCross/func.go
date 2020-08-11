@@ -7,6 +7,14 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+//phaseInfo инофрмация о фазах
+type phaseInfo struct {
+	idevice int  `json:"-"`   //идентификатор утройства
+	Fdk     int  `json:"fdk"` //фаза
+	Tdk     int  `json:"tdk"` //время обработки
+	Pdk     bool `json:"pdk"` //переходный период
+}
+
 //get запрос фазы из базы
 func (p *phaseInfo) get(db *sqlx.DB) error {
 	err := db.QueryRow(`SELECT fdk, tdk, pdk FROM public.devices WHERE id = $1`, p.idevice).Scan(&p.Fdk, &p.Tdk, &p.Pdk)
@@ -16,19 +24,8 @@ func (p *phaseInfo) get(db *sqlx.DB) error {
 	return nil
 }
 
-////formCrossUser сформировать пользователей которые редактируеют кросы
-//func formCrossUser() []CrossInfo {
-//	var temp = make([]CrossInfo, 0)
-//	for _, info := range crossConnect {
-//		if info.Edit {
-//			temp = append(temp, info)
-//		}
-//	}
-//	return temp
-//}
-
 //takeCrossInfo формарование необходимой информации о перекрестке
-func takeCrossInfo(pos sockets.PosInfo, db *sqlx.DB) (resp crossResponse, idev int) {
+func takeCrossInfo(pos sockets.PosInfo, db *sqlx.DB) (resp crossResponse, idev int, description string) {
 	var (
 		dgis     string
 		stateStr string
@@ -40,7 +37,7 @@ func takeCrossInfo(pos sockets.PosInfo, db *sqlx.DB) (resp crossResponse, idev i
 	if err != nil {
 		resp := newCrossMess(typeError, nil)
 		resp.Data["message"] = "No result at these points, table cross"
-		return resp, 0
+		return resp, 0, ""
 	}
 	TLignt.Points.StrToFloat(dgis)
 	//Состояние светофора!
@@ -48,7 +45,7 @@ func takeCrossInfo(pos sockets.PosInfo, db *sqlx.DB) (resp crossResponse, idev i
 	if err != nil {
 		resp := newCrossMess(typeError, nil)
 		resp.Data["message"] = "failed to parse cross information"
-		return resp, 0
+		return resp, 0, ""
 	}
 
 	resp = newCrossMess(typeCrossBuild, nil)
@@ -68,5 +65,5 @@ func takeCrossInfo(pos sockets.PosInfo, db *sqlx.DB) (resp crossResponse, idev i
 	resp.Data["cross"] = TLignt
 	resp.Data["state"] = rState
 	resp.Data["region"] = TLignt.Region.Num
-	return resp, TLignt.Idevice
+	return resp, TLignt.Idevice, TLignt.Description
 }

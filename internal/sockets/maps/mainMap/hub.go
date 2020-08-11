@@ -3,7 +3,7 @@ package mainMap
 import (
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/model/data"
-	"github.com/JanFant/TLServer/internal/sockets/crossSock"
+	"github.com/JanFant/TLServer/internal/sockets/crossSock/mainCross"
 	"github.com/JanFant/TLServer/internal/sockets/maps"
 	"github.com/jmoiron/sqlx"
 	"time"
@@ -116,7 +116,7 @@ func (h *HubMainMap) Run(db *sqlx.DB) {
 					}
 				}
 			}
-		case crossUsers := <-crossSock.CrossUsersForMap:
+		case crossUsers := <-mainCross.CrossUsersForMap:
 			{
 				resp := newMapMess(typeEditCrossUsers, nil)
 				resp.Data["editCrossUsers"] = crossUsers

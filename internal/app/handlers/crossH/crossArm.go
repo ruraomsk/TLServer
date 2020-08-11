@@ -1,13 +1,12 @@
 package crossH
 
 import (
-	"github.com/JanFant/TLServer/internal/sockets"
+	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/sockets/crossSock"
 	"github.com/gorilla/websocket"
 	"net/http"
 	"strconv"
 
-	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/gin-gonic/gin"
 
 	u "github.com/JanFant/TLServer/internal/utils"
@@ -16,51 +15,6 @@ import (
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
-}
-
-//CrossEngine обработчик вебсокета для работы с перекрестком
-var CrossEngine = func(c *gin.Context) {
-	var (
-		crEdit sockets.PosInfo
-		err    error
-	)
-	crEdit.Region, crEdit.Area, crEdit.Id, err = queryParser(c)
-	if err != nil {
-		return
-	}
-
-	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
-	if err != nil {
-		u.SendRespond(c, u.Message(http.StatusInternalServerError, "Bad socket connect"))
-		return
-	}
-	defer conn.Close()
-
-	mapContx := u.ParserInterface(c.Value("info"))
-
-	crossSock.CrossReader(conn, crEdit, mapContx, data.GetDB())
-}
-
-//CrossControlEngine обработчик вебсокета для работы с армом перекрестком
-var CrossControlEngine = func(c *gin.Context) {
-	var (
-		crEdit sockets.PosInfo
-		err    error
-	)
-	crEdit.Region, crEdit.Area, crEdit.Id, err = queryParser(c)
-	if err != nil {
-		return
-	}
-	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
-	if err != nil {
-		u.SendRespond(c, u.Message(http.StatusInternalServerError, "Bad socket connect"))
-		return
-	}
-	defer conn.Close()
-
-	mapContx := u.ParserInterface(c.Value("info"))
-
-	crossSock.ControlReader(conn, crEdit, mapContx, data.GetDB())
 }
 
 //ControlTestState обработчик проверки State

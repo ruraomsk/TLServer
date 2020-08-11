@@ -2,55 +2,33 @@ package crossSock
 
 import (
 	"encoding/json"
-	"github.com/JanFant/TLServer/internal/model/data"
+	"fmt"
+	"github.com/JanFant/TLServer/internal/model/deviceLog"
+	"github.com/JanFant/TLServer/internal/model/stateVerified"
 	"github.com/JanFant/TLServer/internal/sockets"
+	u "github.com/JanFant/TLServer/internal/utils"
+	"github.com/JanFant/TLServer/logger"
 	"github.com/jmoiron/sqlx"
 	agspudge "github.com/ruraomsk/ag-server/pudge"
+	"net/http"
+	"strconv"
 )
 
-//TakeCrossInfo формарование необходимой информации о перекрестке
-func TakeCrossInfo(pos sockets.PosInfo, db *sqlx.DB) (resp CrossSokResponse, idev int) {
-	var (
-		dgis     string
-		stateStr string
-		phase    phaseInfo
-	)
-	TLignt := data.TrafficLights{Area: data.AreaInfo{Num: pos.Area}, Region: data.RegionInfo{Num: pos.Region}, ID: pos.Id}
-	rowsTL := db.QueryRow(`SELECT area, subarea, Idevice, dgis, describ, state FROM public.cross WHERE region = $1 and id = $2 and area = $3`, pos.Region, pos.Id, pos.Area)
-	err := rowsTL.Scan(&TLignt.Area.Num, &TLignt.Subarea, &TLignt.Idevice, &dgis, &TLignt.Description, &stateStr)
-	if err != nil {
-		resp := newCrossMess(typeError, nil, nil, CrossInfo{})
-		resp.Data["message"] = "No result at these points, table cross"
-		return resp, 0
-	}
-	TLignt.Points.StrToFloat(dgis)
-	//Состояние светофора!
-	rState, err := ConvertStateStrToStruct(stateStr)
-	if err != nil {
-		resp := newCrossMess(typeError, nil, nil, CrossInfo{})
-		resp.Data["message"] = "failed to parse cross information"
-		return resp, 0
-	}
-
-	resp = newCrossMess(typeCrossBuild, nil, nil, CrossInfo{})
-	data.CacheInfo.Mux.Lock()
-	TLignt.Region.NameRegion = data.CacheInfo.MapRegion[TLignt.Region.Num]
-	TLignt.Area.NameArea = data.CacheInfo.MapArea[TLignt.Region.NameRegion][TLignt.Area.Num]
-	TLignt.Sost.Num = rState.StatusDevice
-	TLignt.Sost.Description = data.CacheInfo.MapTLSost[TLignt.Sost.Num]
-	data.CacheInfo.Mux.Unlock()
-	phase.idevice = TLignt.Idevice
-	err = phase.get(db)
-	if err != nil {
-		resp.Data["phase"] = phaseInfo{}
-	} else {
-		resp.Data["phase"] = phase
-	}
-	resp.Data["cross"] = TLignt
-	resp.Data["state"] = rState
-	resp.Data["region"] = TLignt.Region.Num
-	return resp, TLignt.Idevice
+//crossInfo информация о перекрестке для которого открыт сокет
+type CrossInfo struct {
+	Login       string          `json:"login"`       //пользователь
+	Role        string          `json:"-"`           //роль
+	Edit        bool            `json:"edit"`        //признак редактирования
+	Idevice     int             `json:"idevice"`     //идентификатор утройства
+	Pos         sockets.PosInfo `json:"pos"`         //расположение перекрестка
+	Description string          `json:"description"` //описание
+	Ip          string
+	Region      string
 }
+
+var GetCrossUsersForDisplay chan bool
+var CrossUsersForDisplay chan []CrossInfo
+var DiscCrossUsers chan []CrossInfo
 
 //GetNewState получение обновленного state
 func GetNewState(pos sockets.PosInfo, db *sqlx.DB) (agspudge.Cross, error) {
@@ -70,4 +48,66 @@ func ConvertStateStrToStruct(str string) (rState agspudge.Cross, err error) {
 		return rState, err
 	}
 	return rState, nil
+}
+
+//TestCrossStateData проверить все стрейты на наличие ошибок
+func TestCrossStateData(mapContx map[string]string, db *sqlx.DB) u.Response {
+	var (
+		stateSql  string
+		stateInfo []deviceLog.BusyArm
+		state     deviceLog.BusyArm
+	)
+	sqlStr := fmt.Sprintf(`SELECT state FROM public.cross `)
+	if mapContx["region"] != "*" {
+		sqlStr += fmt.Sprintf(`WHERE region = %v `, mapContx["region"])
+	}
+	sqlStr += "order by describ"
+	rows, err := db.Query(sqlStr)
+	if err != nil {
+		resp := u.Message(http.StatusInternalServerError, "DB not respond")
+		return resp
+	}
+	for rows.Next() {
+		_ = rows.Scan(&stateSql)
+		testState, err := ConvertStateStrToStruct(stateSql)
+		if err != nil {
+			logger.Error.Println("|Message: Failed to parse cross information: ", err.Error())
+			return u.Message(http.StatusInternalServerError, "failed to parse cross information")
+		}
+		var verif stateVerified.StateResult
+		verifiedState(&testState, &verif)
+		if verif.Err != nil {
+			state.ID = testState.ID
+			state.Region = strconv.Itoa(testState.Region)
+			state.Area = strconv.Itoa(testState.Area)
+			state.Description = testState.Name
+			stateInfo = append(stateInfo, state)
+		}
+	}
+	resp := u.Message(http.StatusOK, "state data")
+	resp.Obj["arms"] = stateInfo
+	return resp
+}
+
+//verifiedState набор проверкок для стейта
+func verifiedState(cross *agspudge.Cross, result *stateVerified.StateResult) {
+	resultDay := stateVerified.DaySetsVerified(cross)
+	appendResult(result, resultDay)
+	resultWeek, empty := stateVerified.WeekSetsVerified(cross)
+	appendResult(result, resultWeek)
+	resultMouth := stateVerified.MouthSetsVerified(cross, empty)
+	appendResult(result, resultMouth)
+	resultTimeUse := stateVerified.TimeUseVerified(cross)
+	appendResult(result, resultTimeUse)
+	resultCtrl := stateVerified.CtrlVerified(cross)
+	appendResult(result, resultCtrl)
+	return
+}
+
+//appendResult накапливание результатов верификации
+func appendResult(mainRes *stateVerified.StateResult, addResult stateVerified.StateResult) {
+	mainRes.SumResult = append(mainRes.SumResult, addResult.SumResult...)
+	if addResult.Err != nil {
+		mainRes.Err = addResult.Err
+	}
 }

@@ -1,11 +1,16 @@
 package mainCross
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/model/data"
+	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/JanFant/TLServer/internal/sockets/crossSock"
+	"github.com/JanFant/TLServer/logger"
 	"github.com/gorilla/websocket"
 	"github.com/jmoiron/sqlx"
+	agspudge "github.com/ruraomsk/ag-server/pudge"
 	"time"
 )
 
@@ -27,27 +32,166 @@ func NewCrossHub() *HubCross {
 	}
 }
 
+var ChangeState chan tcpConnect.TCPMessage
+var GetCrossUserForMap chan bool
+var UserLogoutCross chan string
+var CrossUsersForMap chan []crossSock.CrossInfo
+var ArmDeleted chan tcpConnect.TCPMessage
+
 //Run запуск хаба для xctrl
 func (h *HubCross) Run(db *sqlx.DB) {
+	ChangeState = make(chan tcpConnect.TCPMessage)
+	GetCrossUserForMap = make(chan bool)
+	UserLogoutCross = make(chan string)
+	crossSock.CrossUsersForDisplay = make(chan []crossSock.CrossInfo)
+	CrossUsersForMap = make(chan []crossSock.CrossInfo)
+	crossSock.GetCrossUsersForDisplay = make(chan bool)
+	crossSock.DiscCrossUsers = make(chan []crossSock.CrossInfo)
+	ArmDeleted = make(chan tcpConnect.TCPMessage)
 
-	updateTicker := time.NewTicker(time.Second * 20)
+	type crossUpdateInfo struct {
+		Idevice  int             `json:"idevice"`
+		Status   data.TLSostInfo `json:"status"`
+		State    agspudge.Cross  `json:"state"`
+		stateStr string
+	}
+	globArrCross := make(map[int]crossUpdateInfo)
+	globArrPhase := make(map[int]phaseInfo)
+
+	updateTicker := time.NewTicker(readCrossTick)
 	defer updateTicker.Stop()
 
 	for {
 		select {
 		case <-updateTicker.C:
 			{
+				if len(h.clients) > 0 {
+					aPos := make([]int, 0)
+					arrayCross := make(map[int]crossUpdateInfo)
+					arrayPhase := make(map[int]phaseInfo)
+					for client := range h.clients {
+						if len(aPos) == 0 {
+							aPos = append(aPos, client.crossInfo.Idevice)
+							continue
+						}
+						for _, a := range aPos {
+							if a == client.crossInfo.Idevice {
+								break
+							}
+							aPos = append(aPos, client.crossInfo.Idevice)
+						}
+					}
+					//выполняем если хоть что-то есть
+					if len(aPos) > 0 {
+						//запрос статуса и state
+						query, args, err := sqlx.In("SELECT idevice, status, state FROM public.cross WHERE idevice IN (?)", aPos)
+						if err != nil {
+							logger.Error.Println("|Message: cross socket cant make IN ", err.Error())
+							continue
+						}
+						query = db.Rebind(query)
+						rows, err := db.Queryx(query, args...)
+						if err != nil {
+							logger.Error.Println("|Message: db not respond", err.Error())
+							continue
+						}
+						for rows.Next() {
+							var tempCR crossUpdateInfo
+							_ = rows.Scan(&tempCR.Idevice, &tempCR.Status.Num, &tempCR.stateStr)
+							tempCR.Status.Description = data.CacheInfo.MapTLSost[tempCR.Status.Num]
+							tempCR.State, _ = crossSock.ConvertStateStrToStruct(tempCR.stateStr)
+							arrayCross[tempCR.Idevice] = tempCR
+						}
+						for idevice, newData := range arrayCross {
+							if oldData, ok := globArrCross[idevice]; ok {
+								//если запись есть нужно сравнить и если есть разница отправить изменения
+								if oldData.State.PK != newData.State.PK || oldData.State.NK != newData.State.NK || oldData.State.CK != newData.State.CK || oldData.Status.Num != newData.Status.Num {
+									for client := range h.clients {
+										if client.crossInfo.Idevice == newData.Idevice {
+											msg := newCrossMess(typeCrossUpdate, nil)
+											msg.Data["idevice"] = newData.Idevice
+											msg.Data["status"] = newData.Status
+											msg.Data["state"] = newData.State
+											client.send <- msg
+										}
+									}
+								}
+							} else {
+								//если не существует старой записи ее нужно отправить
+								for client := range h.clients {
+									if client.crossInfo.Idevice == newData.Idevice {
+										msg := newCrossMess(typeCrossUpdate, nil)
+										msg.Data["idevice"] = newData.Idevice
+										msg.Data["status"] = newData.Status
+										msg.Data["state"] = newData.State
+										client.send <- msg
+									}
+								}
+							}
+						}
+						globArrCross = arrayCross
 
+						//запрос phase
+						query, args, err = sqlx.In("SELECT id, fdk, tdk, pdk FROM public.devices WHERE id IN (?)", aPos)
+						if err != nil {
+							logger.Error.Println("|Message: cross socket cant make IN ", err.Error())
+							continue
+						}
+						query = db.Rebind(query)
+						rows, err = db.Queryx(query, args...)
+						if err != nil {
+							logger.Error.Println("|Message: db not respond", err.Error())
+							continue
+						}
+						for rows.Next() {
+							var tempPhase phaseInfo
+							_ = rows.Scan(&tempPhase.idevice, &tempPhase.Fdk, &tempPhase.Tdk, &tempPhase.Pdk)
+							arrayPhase[tempPhase.idevice] = tempPhase
+						}
+						for idevice, newData := range arrayPhase {
+							if oldData, ok := globArrPhase[idevice]; ok {
+								//если запись есть нужно сравнить и если есть разница отправить изменения
+								if oldData.Pdk != newData.Pdk || oldData.Tdk != newData.Tdk || oldData.Fdk != newData.Fdk {
+									for client := range h.clients {
+										if client.crossInfo.Idevice == newData.idevice {
+											msg := newCrossMess(typePhase, nil)
+											msg.Data["idevice"] = newData.idevice
+											msg.Data["fdk"] = newData.Fdk
+											msg.Data["tdk"] = newData.Tdk
+											msg.Data["pdk"] = newData.Pdk
+											client.send <- msg
+										}
+									}
+								}
+							} else {
+								//если не существует старой записи ее нужно отправить
+								for client := range h.clients {
+									if client.crossInfo.Idevice == newData.idevice {
+										msg := newCrossMess(typePhase, nil)
+										msg.Data["idevice"] = newData.idevice
+										msg.Data["fdk"] = newData.Fdk
+										msg.Data["tdk"] = newData.Tdk
+										msg.Data["pdk"] = newData.Pdk
+										client.send <- msg
+									}
+								}
+							}
+						}
+						globArrPhase = arrayPhase
+					}
+				}
 			}
 		case client := <-h.register:
 			{
+				var regStatus = true
 				//проверка не существование такого перекрестка (сбос если нету)
 				_, err := crossSock.GetNewState(client.crossInfo.Pos, db)
 				if err != nil {
 					close(client.send)
 					_ = client.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, errCrossDoesntExist))
 					_ = client.conn.Close()
-					client.regStatus <- regStatus{ok: false}
+					regStatus = false
+					client.regStatus <- regStatus
 					continue
 				}
 
@@ -57,12 +201,25 @@ func (h *HubCross) Run(db *sqlx.DB) {
 						close(client.send)
 						_ = client.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, errDoubleOpeningDevice))
 						_ = client.conn.Close()
-						client.regStatus <- regStatus{ok: false}
-						continue
+						regStatus = false
+						client.regStatus <- regStatus
+						break
 					}
 				}
-				regStatus := regStatus{ok: true, edit: false}
-				//флаг редактирования перекрестка
+				if !regStatus {
+					continue
+				}
+				//кромешный пи**** с созданием нормального клиента
+				resp, Idevice, description := takeCrossInfo(client.crossInfo.Pos, db)
+				client.crossInfo.Idevice = Idevice
+				client.crossInfo.Description = description
+				resp.Data["controlCrossFlag"] = false
+				controlCrossFlag, _ := data.AccessCheck(client.crossInfo.Login, client.crossInfo.Role, 4)
+				if (fmt.Sprint(resp.Data["region"]) == client.crossInfo.Region) || (client.crossInfo.Region == "*") {
+					resp.Data["controlCrossFlag"] = controlCrossFlag
+				}
+				delete(resp.Data, "region")
+
 				//если роль пришедшего Viewer то влаг ему не ставим
 				flagEdit := false
 				if client.crossInfo.Role != "Viewer" {
@@ -72,27 +229,31 @@ func (h *HubCross) Run(db *sqlx.DB) {
 							break
 						}
 					}
-					if !flagEdit {
-						regStatus.edit = true
-					}
 				}
+				if !flagEdit {
+					resp.Data["edit"] = true
+					client.crossInfo.Edit = true
 
-				//кромешный пи**** с созданием нормального клиента
-				resp, Idevice := takeCrossInfo(client.crossInfo.Pos, db)
-				regStatus.idevice = Idevice
-				resp.Data["edit"] = regStatus.edit
-				resp.Data["controlCrossFlag"] = false
-				controlCrossFlag, _ := data.AccessCheck(client.crossInfo.Login, client.crossInfo.Role, 4)
-				if (fmt.Sprint(resp.Data["region"]) == client.crossInfo.region) || (client.crossInfo.region == "*") {
-					resp.Data["controlCrossFlag"] = controlCrossFlag
+				} else {
+					resp.Data["edit"] = false
 				}
-				delete(resp.Data, "region")
 
 				client.regStatus <- regStatus
-				client.crossInfo.Idevice = Idevice
-				client.crossInfo.Edit = flagEdit
+
 				h.clients[client] = true
+				//отправим собранные данные клиенту
 				client.send <- resp
+
+				//если пользователь занял светофор на управление отправить на карту список всех управляемых светофоров
+				if client.crossInfo.Edit {
+					CrossUsersForMap <- h.usersList()
+				}
+
+				fmt.Printf("mainCross reg: ")
+				for client := range h.clients {
+					fmt.Printf("%v ", client.crossInfo)
+				}
+				fmt.Printf("\n")
 			}
 		case client := <-h.unregister:
 			{
@@ -100,7 +261,30 @@ func (h *HubCross) Run(db *sqlx.DB) {
 					delete(h.clients, client)
 					close(client.send)
 					_ = client.conn.Close()
+					if client.crossInfo.Edit {
+						{
+							for aClient := range h.clients {
+								if (aClient.crossInfo.Pos == client.crossInfo.Pos) && (aClient.crossInfo.Role != "Viewer") {
+									delete(h.clients, aClient)
+									aClient.crossInfo.Edit = true
+									h.clients[aClient] = true
+									resp := newCrossMess(typeChangeEdit, nil)
+									resp.Data["edit"] = true
+									aClient.send <- resp
+									break
+								}
+							}
+							//отправить на мапу подключенные устройства которые редактируют
+							CrossUsersForMap <- h.usersList()
+						}
+					}
 				}
+
+				fmt.Printf("mainCross UnReg: ")
+				for client := range h.clients {
+					fmt.Printf("%v ", client.crossInfo)
+				}
+				fmt.Printf("\n")
 			}
 		case mess := <-h.broadcast:
 			{
@@ -113,6 +297,93 @@ func (h *HubCross) Run(db *sqlx.DB) {
 					}
 				}
 			}
+		//отправить на мапу подключенные устройства которые редактируют
+		case <-GetCrossUserForMap:
+			{
+				CrossUsersForMap <- h.usersList()
+			}
+		case <-crossSock.GetCrossUsersForDisplay:
+			{
+				crossSock.CrossUsersForDisplay <- h.usersList()
+			}
+		case dCrInfo := <-crossSock.DiscCrossUsers: //ok
+			{
+				for _, dCr := range dCrInfo {
+					for client := range h.clients {
+						if client.crossInfo.Pos == dCr.Pos && client.crossInfo.Login == dCr.Login {
+							msg := newCrossMess(typeClose, nil)
+							msg.Data["message"] = "закрытие администратором"
+							client.send <- msg
+						}
+					}
+				}
+			}
+		case msgD := <-ArmDeleted: //ok
+			{
+				for client := range h.clients {
+					if client.crossInfo.Pos == msgD.Pos {
+						msg := newCrossMess(typeClose, nil)
+						msg.Data["message"] = "перекресток удален"
+						client.send <- msg
+					}
+				}
+			}
+		case login := <-UserLogoutCross:
+			{
+				for client := range h.clients {
+					if client.crossInfo.Login == login {
+						msg := newCrossMess(typeClose, nil)
+						msg.Data["message"] = "пользователь вышел из системы"
+						client.send <- msg
+					}
+				}
+			}
+		case msg := <-ChangeState: //ok
+			{
+				resp := newCrossMess(typeStateChange, nil)
+				var uState agspudge.UserCross
+				raw, _ := json.Marshal(msg.Data)
+				_ = json.Unmarshal(raw, &uState)
+				resp.Data["state"] = uState.State
+				resp.Data["user"] = msg.User
+				for client := range h.clients {
+					if client.crossInfo.Pos == msg.Pos {
+						client.send <- resp
+					}
+				}
+			}
+		case msg := <-sockets.DispatchMessageFromAnotherPlace:
+			{
+				for client := range h.clients {
+					if client.crossInfo.Idevice == msg.Idevice {
+						//так сформировано (п.с. ну а че...)
+						_ = client.conn.WriteJSON(msg.Data)
+					}
+				}
+			}
+		case msg := <-tcpConnect.TCPRespCrossSoc:
+			{
+				resp := newCrossMess(typeDButton, nil)
+				resp.Data["status"] = msg.Status
+				if msg.Status {
+					resp.Data["command"] = msg.Data
+				}
+				for client := range h.clients {
+					if client.crossInfo.Idevice == msg.Idevice {
+						client.send <- resp
+					}
+				}
+			}
 		}
 	}
+}
+
+func (h *HubCross) usersList() []crossSock.CrossInfo {
+	var temp = make([]crossSock.CrossInfo, 0)
+	for client := range h.clients {
+		if client.crossInfo.Edit {
+			temp = append(temp, client.crossInfo)
+		}
+	}
+	return temp
 }

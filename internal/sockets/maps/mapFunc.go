@@ -3,9 +3,13 @@ package maps
 import (
 	"encoding/json"
 	"github.com/JanFant/TLServer/internal/model/data"
+	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/JanFant/TLServer/logger"
+	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/ag-server/binding"
+	"net/http"
+	"strconv"
 )
 
 //SelectTL возвращает массив в котором содержатся светофоры, которые попали в указанную область
@@ -68,5 +72,37 @@ func MapOpenInfo(db *sqlx.DB) (obj map[string]interface{}) {
 	delete(chosenArea, "Все регионы")
 	data.CacheInfo.Mux.Unlock()
 	obj["areaInfo"] = chosenArea
+	return
+}
+
+//QueryParser разбор URL строки
+func QueryParser(c *gin.Context) (region, area string, ID int, err error) {
+	region = c.Query("Region")
+	if region != "" {
+		_, err = strconv.Atoi(region)
+		if err != nil {
+			u.SendRespond(c, u.Message(http.StatusBadRequest, "blank field: Region"))
+			return
+		}
+	}
+
+	area = c.Query("Area")
+	if area != "" {
+		_, err = strconv.Atoi(area)
+		if err != nil {
+			u.SendRespond(c, u.Message(http.StatusBadRequest, "blank field: Area"))
+			return
+		}
+	}
+
+	IDStr := c.Query("ID")
+	if IDStr != "" {
+		ID, err = strconv.Atoi(IDStr)
+		if err != nil {
+			u.SendRespond(c, u.Message(http.StatusBadRequest, "blank field: ID"))
+			return
+		}
+	}
+
 	return
 }

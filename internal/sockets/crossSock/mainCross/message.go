@@ -1,9 +1,5 @@
 package mainCross
 
-import (
-	"github.com/JanFant/TLServer/internal/sockets"
-)
-
 var (
 	typeError          = "error"
 	typeClose          = "close"
@@ -27,17 +23,6 @@ type crossResponse struct {
 	Data map[string]interface{} `json:"data"`
 }
 
-//crossInfo информация о перекрестке для которого открыт сокет
-type CrossInfo struct {
-	Login   string          `json:"login"`   //пользователь
-	Role    string          `json:"-"`       //роль
-	Edit    bool            `json:"edit"`    //признак редактирования
-	Idevice int             `json:"idevice"` //идентификатор утройства
-	Pos     sockets.PosInfo `json:"pos"`     //расположение перекрестка
-	ip      string
-	region  string
-}
-
 //newCrossMess создание нового сообщения
 func newCrossMess(mType string, data map[string]interface{}) crossResponse {
 	var resp crossResponse
@@ -50,21 +35,7 @@ func newCrossMess(mType string, data map[string]interface{}) crossResponse {
 	return resp
 }
 
-//phaseInfo инофрмация о фазах
-type phaseInfo struct {
-	idevice int  `json:"-"`   //идентификатор утройства
-	Fdk     int  `json:"fdk"` //фаза
-	Tdk     int  `json:"tdk"` //время обработки
-	Pdk     bool `json:"pdk"` //переходный период
-}
-
 //ErrorMessage структура ошибки
 type ErrorMessage struct {
 	Error string `json:"error"`
-}
-
-type regStatus struct {
-	ok      bool
-	edit    bool
-	idevice int
 }

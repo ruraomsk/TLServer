@@ -5,7 +5,7 @@ import (
 	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/model/license"
 	"github.com/JanFant/TLServer/internal/sockets/chat"
-	"github.com/JanFant/TLServer/internal/sockets/crossSock"
+	"github.com/JanFant/TLServer/internal/sockets/crossSock/mainCross"
 	"github.com/JanFant/TLServer/internal/sockets/techArm"
 	"github.com/JanFant/TLServer/internal/sockets/xctrl"
 	"github.com/dgrijalva/jwt-go"
@@ -183,8 +183,8 @@ func logOut(login string, db *sqlx.DB) bool {
 //logOutSockets закрытие всех сокетов по действию logout на основном экране
 func logOutSockets(login string) {
 	chat.UserLogoutChat <- login
-	crossSock.UserLogoutCrControl <- login
-	crossSock.UserLogoutCross <- login
+	//mainCross.UserLogoutCrControl <- login
+	mainCross.UserLogoutCross <- login
 	techArm.UserLogoutTech <- login
 	xctrl.UserLogoutXctrl <- login
 	UserLogoutGS <- login

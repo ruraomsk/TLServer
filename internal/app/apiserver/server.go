@@ -5,7 +5,6 @@ import (
 	"github.com/JanFant/TLServer/internal/app/handlers/chatH"
 	"github.com/JanFant/TLServer/internal/app/handlers/crossH"
 	"github.com/JanFant/TLServer/internal/app/handlers/licenseH"
-	"github.com/JanFant/TLServer/internal/sockets/crossSock"
 	"github.com/JanFant/TLServer/internal/sockets/crossSock/mainCross"
 	"github.com/JanFant/TLServer/internal/sockets/maps/greenStreet"
 	"github.com/JanFant/TLServer/internal/sockets/maps/mainMap"
@@ -30,7 +29,7 @@ func StartServer(conf *ServerConf, db *sqlx.DB) {
 	go chat.CBroadcast()
 	//go maps.MapBroadcast(data.GetDB())
 	//go crossSock.CrossBroadcast(data.GetDB())
-	go crossSock.ControlBroadcast()
+	//go crossSock.ControlBroadcast()
 	//go techArm.ArmTechBroadcast(data.GetDB())
 	//go maps.GSBroadcast(data.GetDB())
 
@@ -42,8 +41,10 @@ func StartServer(conf *ServerConf, db *sqlx.DB) {
 
 	techArmHub := techArm.NewTechArmHub()
 	go techArmHub.Run(db)
+
 	xctrlHub := xctrl.NewXctrlHub()
 	go xctrlHub.Run(db)
+
 	gsHub := greenStreet.NewGSHub()
 	go gsHub.Run(db)
 
@@ -101,7 +102,9 @@ func StartServer(conf *ServerConf, db *sqlx.DB) {
 	mainRouter.GET("/:slug/cross/control", func(c *gin.Context) { //расширеная страничка настройки перекрестка (страничка)
 		c.HTML(http.StatusOK, "crossControl.html", nil)
 	})
-	mainRouter.GET("/:slug/cross/controlW", crossH.CrossControlEngine)
+	mainRouter.GET("/:slug/cross/controlW", func(c *gin.Context) {
+		//todo кросс контрол
+	})
 
 	//арм технолога
 	mainRouter.GET("/:slug/techArm", func(c *gin.Context) {
