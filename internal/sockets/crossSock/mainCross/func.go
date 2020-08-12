@@ -9,7 +9,7 @@ import (
 
 //phaseInfo инофрмация о фазах
 type phaseInfo struct {
-	idevice int  `json:"-"`   //идентификатор утройства
+	idevice int  //идентификатор утройства
 	Fdk     int  `json:"fdk"` //фаза
 	Tdk     int  `json:"tdk"` //время обработки
 	Pdk     bool `json:"pdk"` //переходный период
@@ -53,7 +53,8 @@ func takeCrossInfo(pos sockets.PosInfo, db *sqlx.DB) (resp crossResponse, idev i
 	TLignt.Region.NameRegion = data.CacheInfo.MapRegion[TLignt.Region.Num]
 	TLignt.Area.NameArea = data.CacheInfo.MapArea[TLignt.Region.NameRegion][TLignt.Area.Num]
 	TLignt.Sost.Num = rState.StatusDevice
-	TLignt.Sost.Description = data.CacheInfo.MapTLSost[TLignt.Sost.Num]
+	TLignt.Sost.Description = data.CacheInfo.MapTLSost[TLignt.Sost.Num].Description
+	TLignt.Sost.Control = data.CacheInfo.MapTLSost[TLignt.Sost.Num].Control
 	data.CacheInfo.Mux.Unlock()
 	phase.idevice = TLignt.Idevice
 	err = phase.get(db)

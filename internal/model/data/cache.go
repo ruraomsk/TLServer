@@ -20,7 +20,7 @@ type CacheData struct {
 	Mux       sync.Mutex
 	MapRegion map[string]string            //регионы
 	MapArea   map[string]map[string]string //районы
-	MapTLSost map[int]string               //светофоры
+	MapTLSost map[int]TLSostInfo           //светофоры
 
 }
 
@@ -45,6 +45,7 @@ type InfoTL struct {
 type TLSostInfo struct {
 	Num         int    `json:"num"`         //номер состояния
 	Description string `json:"description"` //описание состояния
+	Control     bool   `json:"control"`     //признак управления в этом режиме
 }
 
 //CacheDataUpdate обновление данных из бд, период обновления 1 час
@@ -171,25 +172,22 @@ func GetRegionInfo() (region map[string]string, area map[string]map[string]strin
 }
 
 //getTLSost получить данные о состоянии светофоров
-func getTLSost() (TLsost map[int]string, err error) {
-	TLsost = make(map[int]string)
-	statusRow, err := GetDB().Query(`SELECT id, description FROM public.status`)
+func getTLSost() (TLsost map[int]TLSostInfo, err error) {
+	TLsost = make(map[int]TLSostInfo)
+	statusRow, err := GetDB().Query(`SELECT id, description, control FROM public.status`)
 	if err != nil {
 		logger.Error.Println("|Message: GetTLSost StatusTable error : ", err.Error())
 		return nil, err
 	}
 	for statusRow.Next() {
-		var (
-			id   int
-			desc string
-		)
-		err := statusRow.Scan(&id, &desc)
+		var tempTL TLSostInfo
+		err := statusRow.Scan(&tempTL.Num, &tempTL.Description, &tempTL.Control)
 		if err != nil {
 			logger.Error.Println("|Message: No result at these points", err.Error())
 			return nil, err
 		}
-		if _, ok := TLsost[id]; !ok {
-			TLsost[id] = desc
+		if _, ok := TLsost[tempTL.Num]; !ok {
+			TLsost[tempTL.Num] = tempTL
 		}
 	}
 	return TLsost, err

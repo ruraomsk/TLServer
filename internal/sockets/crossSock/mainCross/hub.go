@@ -98,7 +98,10 @@ func (h *HubCross) Run(db *sqlx.DB) {
 						for rows.Next() {
 							var tempCR crossUpdateInfo
 							_ = rows.Scan(&tempCR.Idevice, &tempCR.Status.Num, &tempCR.stateStr)
-							tempCR.Status.Description = data.CacheInfo.MapTLSost[tempCR.Status.Num]
+							data.CacheInfo.Mux.Lock()
+							tempCR.Status.Description = data.CacheInfo.MapTLSost[tempCR.Status.Num].Description
+							tempCR.Status.Control = data.CacheInfo.MapTLSost[tempCR.Status.Num].Control
+							data.CacheInfo.Mux.Lock()
 							tempCR.State, _ = crossSock.ConvertStateStrToStruct(tempCR.stateStr)
 							arrayCross[tempCR.Idevice] = tempCR
 						}

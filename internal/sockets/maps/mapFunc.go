@@ -37,7 +37,8 @@ func SelectTL(db *sqlx.DB) (tfdata []data.TrafficLights) {
 		data.CacheInfo.Mux.Lock()
 		temp.Region.NameRegion = data.CacheInfo.MapRegion[temp.Region.Num]
 		temp.Area.NameArea = data.CacheInfo.MapArea[temp.Region.NameRegion][temp.Area.Num]
-		temp.Sost.Description = data.CacheInfo.MapTLSost[temp.Sost.Num]
+		temp.Sost.Description = data.CacheInfo.MapTLSost[temp.Sost.Num].Description
+		temp.Sost.Control = data.CacheInfo.MapTLSost[temp.Sost.Num].Control
 		data.CacheInfo.Mux.Unlock()
 		tfdata = append(tfdata, temp)
 	}
