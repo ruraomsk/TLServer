@@ -60,7 +60,7 @@ func (h *HubMainMap) Run(db *sqlx.DB) {
 						)
 						for _, nTF := range newTFs {
 							for _, oTF := range oldTFs {
-								if oTF.Idevice == nTF.Idevice {
+								if oTF.Idevice == nTF.Idevice && oTF.Description != nTF.Description {
 									var flagAdd = false
 									if oTF.Sost.Num != nTF.Sost.Num {
 										flagAdd = true

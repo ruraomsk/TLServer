@@ -101,7 +101,7 @@ func (h *HubCross) Run(db *sqlx.DB) {
 							data.CacheInfo.Mux.Lock()
 							tempCR.Status.Description = data.CacheInfo.MapTLSost[tempCR.Status.Num].Description
 							tempCR.Status.Control = data.CacheInfo.MapTLSost[tempCR.Status.Num].Control
-							data.CacheInfo.Mux.Lock()
+							data.CacheInfo.Mux.Unlock()
 							tempCR.State, _ = crossSock.ConvertStateStrToStruct(tempCR.stateStr)
 							arrayCross[tempCR.Idevice] = tempCR
 						}

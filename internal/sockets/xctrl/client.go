@@ -3,6 +3,7 @@ package xctrl
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/JanFant/TLServer/logger"
 	"github.com/gorilla/websocket"
@@ -56,6 +57,24 @@ func (c *ClientXctrl) readPump(db *sqlx.DB) {
 			c.send <- resp
 		}
 		resp := newXctrlMess(typeXctrlInfo, nil)
+		//собираю в кучу регионы для отображения
+		chosenRegion := make(map[string]string)
+		data.CacheInfo.Mux.Lock()
+		for first, second := range data.CacheInfo.MapRegion {
+			chosenRegion[first] = second
+		}
+		delete(chosenRegion, "*")
+		resp.Data["regionInfo"] = chosenRegion
+
+		//собираю в кучу районы для отображения
+		chosenArea := make(map[string]map[string]string)
+		for first, second := range data.CacheInfo.MapArea {
+			chosenArea[first] = make(map[string]string)
+			chosenArea[first] = second
+		}
+		delete(chosenArea, "Все регионы")
+		data.CacheInfo.Mux.Unlock()
+		resp.Data["areaInfo"] = chosenArea
 		resp.Data[typeXctrlInfo] = allXctrl
 		c.send <- resp
 	}
@@ -63,8 +82,6 @@ func (c *ClientXctrl) readPump(db *sqlx.DB) {
 	for {
 		_, p, err := c.conn.ReadMessage()
 		if err != nil {
-			//resp := newXctrlMess(typeClose, nil)
-			//c.send <- resp
 			c.hub.unregister <- c
 			break
 		}
@@ -93,6 +110,25 @@ func (c *ClientXctrl) readPump(db *sqlx.DB) {
 				}
 				resp := newXctrlMess(typeXctrlChange, nil)
 				resp.Data["message"] = "ok"
+				c.send <- resp
+			}
+		case typeGetSubArea:
+			{
+				temp := struct {
+					Region int `json:"region"`
+					Area   int `json:"area"`
+					Sub    int `json:"sub"`
+				}{}
+				_ = json.Unmarshal(p, &temp)
+				tfLight, err := getSubAreaTF(temp.Region, temp.Area, temp.Sub, db)
+				if err != nil {
+					logger.Error.Printf("|IP: %v |Login: %v |Resource: /charPoint |Message: %v \n", c.ip, c.login, err.Error())
+					resp := newXctrlMess(typeError, nil)
+					resp.Data["message"] = ErrorMessage{Error: errChangeXctrl}
+					c.send <- resp
+				}
+				resp := newXctrlMess(typeGetSubArea, nil)
+				resp.Data["tflight"] = tfLight
 				c.send <- resp
 			}
 		default:

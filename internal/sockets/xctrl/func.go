@@ -2,6 +2,8 @@ package xctrl
 
 import (
 	"encoding/json"
+	"github.com/JanFant/TLServer/internal/model/data"
+	"github.com/JanFant/TLServer/logger"
 	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/ag-server/xcontrol"
 )
@@ -48,4 +50,28 @@ func writeXctrl(states []xcontrol.State, db *sqlx.DB) error {
 		return err
 	}
 	return nil
+}
+
+func getSubAreaTF(region, area, sub int, db *sqlx.DB) (tfdata []data.TrafficLights, err error) {
+	rowsTL, err := db.Query(`SELECT region, area, subarea, id, describ FROM public.cross WHERE region = $1 AND area = $2 AND subarea = $3`, region, area, sub)
+	if err != nil {
+		logger.Error.Println("|Message: db not respond", err.Error())
+		return nil, err
+	}
+	for rowsTL.Next() {
+		var temp = data.TrafficLights{}
+		err := rowsTL.Scan(&temp.Region.Num, &temp.Area.Num, &temp.Subarea, &temp.ID, &temp.Description)
+		if err != nil {
+			logger.Error.Println("|Message: No result at these points", err.Error())
+			return nil, err
+		}
+		data.CacheInfo.Mux.Lock()
+		temp.Region.NameRegion = data.CacheInfo.MapRegion[temp.Region.Num]
+		temp.Area.NameArea = data.CacheInfo.MapArea[temp.Region.NameRegion][temp.Area.Num]
+		temp.Sost.Description = data.CacheInfo.MapTLSost[temp.Sost.Num].Description
+		temp.Sost.Control = data.CacheInfo.MapTLSost[temp.Sost.Num].Control
+		data.CacheInfo.Mux.Unlock()
+		tfdata = append(tfdata, temp)
+	}
+	return tfdata, nil
 }

@@ -2,9 +2,9 @@ package apiserver
 
 import (
 	"fmt"
-	"github.com/JanFant/TLServer/internal/app/handlers/chatH"
 	"github.com/JanFant/TLServer/internal/app/handlers/crossH"
 	"github.com/JanFant/TLServer/internal/app/handlers/licenseH"
+	"github.com/JanFant/TLServer/internal/sockets/chat"
 	"github.com/JanFant/TLServer/internal/sockets/crossSock/controlCross"
 	"github.com/JanFant/TLServer/internal/sockets/crossSock/mainCross"
 	"github.com/JanFant/TLServer/internal/sockets/maps/greenStreet"
@@ -19,7 +19,6 @@ import (
 
 	"github.com/JanFant/TLServer/internal/app/handlers"
 	"github.com/JanFant/TLServer/internal/app/middleWare"
-	"github.com/JanFant/TLServer/internal/sockets/chat"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
@@ -27,7 +26,7 @@ import (
 //StartServer запуск сервера
 func StartServer(conf *ServerConf, db *sqlx.DB) {
 
-	go chat.CBroadcast()
+	//go chat.CBroadcast()
 	//go maps.MapBroadcast(data.GetDB())
 	//go crossSock.CrossBroadcast(data.GetDB())
 	//go crossSock.ControlBroadcast()
@@ -40,6 +39,7 @@ func StartServer(conf *ServerConf, db *sqlx.DB) {
 	techArmHub := techArm.NewTechArmHub()
 	xctrlHub := xctrl.NewXctrlHub()
 	gsHub := greenStreet.NewGSHub()
+	chatHub := chat.NewChatHub()
 
 	go mainMapHub.Run(db)
 	go mainCrossHub.Run(db)
@@ -47,6 +47,7 @@ func StartServer(conf *ServerConf, db *sqlx.DB) {
 	go techArmHub.Run(db)
 	go xctrlHub.Run(db)
 	go gsHub.Run(db)
+	go chatHub.Run(db)
 
 	// Создаем engine для соединений
 	router := gin.Default()
@@ -88,7 +89,9 @@ func StartServer(conf *ServerConf, db *sqlx.DB) {
 	mainRouter.GET("/:slug/chat", func(c *gin.Context) { //работа с основной страничкой чата (страница)
 		c.HTML(http.StatusOK, "chat.html", nil)
 	})
-	mainRouter.GET("/:slug/chatW", chatH.ChatEngine) //обработчик веб сокета для чата
+	mainRouter.GET("/:slug/chatW", func(c *gin.Context) { //обработчик веб сокета для чата
+		chat.HChat(c, chatHub, db)
+	})
 
 	//перекресток
 	mainRouter.GET("/:slug/cross", func(c *gin.Context) { //работа со странички перекрестков (страничка)

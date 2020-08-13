@@ -6,6 +6,7 @@ var (
 	typeXctrlUpdate = "xctrlUpdate"
 	typeError       = "error"
 	typeClose       = "close"
+	typeGetSubArea  = "getSubArea"
 
 	errParseType   = "Сервер не смог обработать запрос"
 	errGetXctrl    = "Ошибка запроса данных из БД"
