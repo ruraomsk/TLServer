@@ -21,9 +21,7 @@ const (
 	pingPeriod = (pongWait * 9) / 10
 
 	// Maximum message size allowed from peer.
-	maxMessageSize = 1024 * 100
 
-	readCrossTick = time.Second * 1
 )
 
 var UserLogoutChat chan string //канал для закрытия сокетов, пользователя который вышел из системы
