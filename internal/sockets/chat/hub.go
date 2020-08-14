@@ -54,7 +54,7 @@ func (h *HubChat) Run(db *sqlx.DB) {
 				h.clients[client] = true
 				//отправим собранные данные клиенту
 
-				fmt.Printf("mainCross reg: ")
+				fmt.Printf("Chat reg: ")
 				for hClient := range h.clients {
 					fmt.Printf("%v ", hClient.clientInfo)
 				}
@@ -84,7 +84,7 @@ func (h *HubChat) Run(db *sqlx.DB) {
 					}
 				}
 
-				fmt.Printf("mainCross UnReg: ")
+				fmt.Printf("Chat UnReg: ")
 				for hClient := range h.clients {
 					fmt.Printf("%v ", hClient.clientInfo)
 				}

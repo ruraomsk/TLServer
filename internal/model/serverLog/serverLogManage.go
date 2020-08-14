@@ -52,7 +52,10 @@ func DisplayServerFileLog(fileName, logPath string, mapContex map[string]string,
 	var loginNames []string
 	if mapContex["region"] != "*" {
 		sqlStr := fmt.Sprintf(`SELECT login FROM public.accounts WHERE privilege::jsonb @> '{"region":"%s"}'::jsonb`, mapContex["region"])
-		rowsTL, _ := db.Query(sqlStr)
+		rowsTL, err := db.Query(sqlStr)
+		if err != nil {
+			return u.Message(http.StatusBadRequest, "display info: Bad request")
+		}
 		for rowsTL.Next() {
 			var login string
 			err := rowsTL.Scan(&login)

@@ -1,7 +1,6 @@
 package data
 
 import (
-	"fmt"
 	"github.com/JanFant/TLServer/internal/model/locations"
 	"sync"
 	"time"
@@ -77,20 +76,19 @@ func CacheInfoDataUpdate() {
 	FillMapAreaZone()
 	err = getRoleAccess()
 	if err != nil {
-		logger.Error.Println(fmt.Sprintf("|Message: Error reading data cache: %s", err.Error()))
+		logger.Error.Printf("|IP: Server  |Login: Server |Resource: Server |Message: %v \n", err.Error())
 	}
 }
 
 //FillMapAreaBox заполнение мапы районов и регионов с координатами
 func FillMapAreaZone() {
-	CacheArea.Mux.Lock()
-	defer CacheArea.Mux.Unlock()
-	CacheInfo.Mux.Lock()
-	defer CacheInfo.Mux.Unlock()
-	CacheArea.Areas = make([]locations.AreaZone, 0)
-
+	tempAreaCache := make([]locations.AreaZone, 0)
 	//запрос уникальных регионов и районов
-	rows, _ := GetDB().Query(`SELECT distinct on (region, area) region, area, array_agg(dgis) as aDgis   FROM public.cross  group by region, area`)
+	rows, err := GetDB().Query(`SELECT distinct on (region, area) region, area, array_agg(dgis) as aDgis   FROM public.cross  group by region, area`)
+	if err != nil {
+		logger.Error.Printf("|IP: Server  |Login: Server |Resource: Server |Message: %v \n", err.Error())
+		return
+	}
 	for rows.Next() {
 		var (
 			temp     locations.AreaZone
@@ -100,11 +98,15 @@ func FillMapAreaZone() {
 		temp.Zone.ParseFromStr(arrayStr)
 		temp.Zone = temp.Zone.ConvexHull()
 		temp.Sub = make([]locations.SybAreaZone, 0)
-		CacheArea.Areas = append(CacheArea.Areas, temp)
+		tempAreaCache = append(tempAreaCache, temp)
 	}
 
 	//запрос уникальных подрайонов
-	rows, _ = GetDB().Query(`SELECT distinct on (region, area, subarea) region, area, subarea, array_agg(dgis) as aDgis FROM public.cross  group by region, area, subarea`)
+	rows, err = GetDB().Query(`SELECT distinct on (region, area, subarea) region, area, subarea, array_agg(dgis) as aDgis FROM public.cross  group by region, area, subarea`)
+	if err != nil {
+		logger.Error.Printf("|IP: Server  |Login: Server |Resource: Server |Message: %v \n", err.Error())
+		return
+	}
 	for rows.Next() {
 		var (
 			tempSyb  locations.SybAreaZone
@@ -117,19 +119,25 @@ func FillMapAreaZone() {
 		if len(tempSyb.Zone) > 1 {
 			tempSyb.Zone = tempSyb.Zone.ConvexHull()
 		}
-		for num, areaBox := range CacheArea.Areas {
+		for num, areaBox := range tempAreaCache {
 			if areaBox.Region == reg && areaBox.Area == area {
-				CacheArea.Areas[num].Sub = append(CacheArea.Areas[num].Sub, tempSyb)
+				tempAreaCache[num].Sub = append(tempAreaCache[num].Sub, tempSyb)
 			}
 		}
 
 	}
 
+	CacheInfo.Mux.Lock()
 	//заполним поля названиями
-	for num := range CacheArea.Areas {
-		CacheArea.Areas[num].Region = CacheInfo.MapRegion[CacheArea.Areas[num].Region]
-		CacheArea.Areas[num].Area = CacheInfo.MapArea[CacheArea.Areas[num].Region][CacheArea.Areas[num].Area]
+	for num := range tempAreaCache {
+		tempAreaCache[num].Region = CacheInfo.MapRegion[tempAreaCache[num].Region]
+		tempAreaCache[num].Area = CacheInfo.MapArea[tempAreaCache[num].Region][tempAreaCache[num].Area]
 	}
+	CacheInfo.Mux.Unlock()
+
+	CacheArea.Mux.Lock()
+	CacheArea.Areas = tempAreaCache
+	CacheArea.Mux.Unlock()
 }
 
 //GetRegionInfo получить таблицу регионов
@@ -147,7 +155,7 @@ func GetRegionInfo() (region map[string]string, area map[string]map[string]strin
 		)
 		err = rows.Scan(&tempReg.Num, &tempReg.NameRegion, &tempArea.Num, &tempArea.NameArea)
 		if err != nil {
-			return nil, nil, err
+			return CacheInfo.MapRegion, CacheInfo.MapArea, err
 		}
 		if _, ok := region[tempReg.Num]; !ok {
 			region[tempReg.Num] = tempReg.NameRegion
@@ -173,18 +181,18 @@ func GetRegionInfo() (region map[string]string, area map[string]map[string]strin
 
 //getTLSost получить данные о состоянии светофоров
 func getTLSost() (TLsost map[int]TLSostInfo, err error) {
-	TLsost = make(map[int]TLSostInfo)
+	TLsost = make(map[int]TLSostInfo, 0)
 	statusRow, err := GetDB().Query(`SELECT id, description, control FROM public.status`)
 	if err != nil {
-		logger.Error.Println("|Message: GetTLSost StatusTable error : ", err.Error())
-		return nil, err
+		logger.Error.Printf("|IP: Server  |Login: Server |Resource: Server |Message: %v \n", err.Error())
+		return TLsost, err
 	}
 	for statusRow.Next() {
 		var tempTL TLSostInfo
 		err := statusRow.Scan(&tempTL.Num, &tempTL.Description, &tempTL.Control)
 		if err != nil {
-			logger.Error.Println("|Message: No result at these points", err.Error())
-			return nil, err
+			logger.Error.Printf("|IP: Server  |Login: Server |Resource: Server |Message: %v \n", err.Error())
+			return TLsost, err
 		}
 		if _, ok := TLsost[tempTL.Num]; !ok {
 			TLsost[tempTL.Num] = tempTL

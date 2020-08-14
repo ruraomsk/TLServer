@@ -1,6 +1,7 @@
 package mainMap
 
 import (
+	"fmt"
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/sockets/crossSock/mainCross"
@@ -96,6 +97,12 @@ func (h *HubMainMap) Run(db *sqlx.DB) {
 		case client := <-h.register:
 			{
 				h.clients[client] = true
+
+				fmt.Printf("mainMap reg: ")
+				for hClient := range h.clients {
+					fmt.Printf("%v ", hClient.login)
+				}
+				fmt.Printf("\n")
 			}
 		case client := <-h.unregister:
 			{
@@ -104,6 +111,12 @@ func (h *HubMainMap) Run(db *sqlx.DB) {
 					close(client.send)
 					_ = client.conn.Close()
 				}
+
+				fmt.Printf("mainMap unReg: ")
+				for hClient := range h.clients {
+					fmt.Printf("%v ", hClient.login)
+				}
+				fmt.Printf("\n")
 			}
 		case mess := <-h.broadcast:
 			{

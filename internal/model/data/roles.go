@@ -83,7 +83,10 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) u.Re
 		//sqlStr += fmt.Sprintf(`and privilege::jsonb @> '{"region":"%s"}'::jsonb`, privilege.Region)
 		sqlStr += fmt.Sprintf(`where privilege::jsonb @> '{"region":"%s"}'::jsonb`, privilege.Region)
 	}
-	rowsTL, _ := GetDB().Query(sqlStr)
+	rowsTL, err := GetDB().Query(sqlStr)
+	if err != nil {
+		return u.Message(http.StatusBadRequest, "display info: Bad request")
+	}
 	for rowsTL.Next() {
 		var tempSA = ShortAccount{}
 		err := rowsTL.Scan(&tempSA.Login, &tempSA.WorkTime, &tempSA.Privilege, &tempSA.Description)
