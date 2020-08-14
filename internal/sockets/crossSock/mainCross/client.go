@@ -56,6 +56,7 @@ func (c *ClientCross) readPump(db *sqlx.DB) {
 			resp := newCrossMess(typeError, nil)
 			resp.Data["message"] = ErrorMessage{Error: errParseType}
 			c.send <- resp
+			continue
 		}
 		switch typeSelect {
 		case typeDButton:

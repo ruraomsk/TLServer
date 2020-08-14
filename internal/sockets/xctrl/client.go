@@ -48,6 +48,7 @@ func (c *ClientXctrl) readPump(db *sqlx.DB) {
 
 	_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error { _ = c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+
 	{
 		allXctrl, err := getXctrl(db)
 		if err != nil {
@@ -55,6 +56,7 @@ func (c *ClientXctrl) readPump(db *sqlx.DB) {
 			resp := newXctrlMess(typeError, nil)
 			resp.Data["message"] = ErrorMessage{Error: errGetXctrl}
 			c.send <- resp
+			goto next
 		}
 		resp := newXctrlMess(typeXctrlInfo, nil)
 		//собираю в кучу регионы для отображения
@@ -79,6 +81,8 @@ func (c *ClientXctrl) readPump(db *sqlx.DB) {
 		c.send <- resp
 	}
 
+next:
+
 	for {
 		_, p, err := c.conn.ReadMessage()
 		if err != nil {
@@ -92,6 +96,7 @@ func (c *ClientXctrl) readPump(db *sqlx.DB) {
 			resp := newXctrlMess(typeError, nil)
 			resp.Data["message"] = ErrorMessage{Error: errParseType}
 			c.send <- resp
+			continue
 		}
 		switch typeSelect {
 		case typeXctrlChange:
@@ -101,33 +106,87 @@ func (c *ClientXctrl) readPump(db *sqlx.DB) {
 					State []xcontrol.State `json:"state"`
 				}{}
 				_ = json.Unmarshal(p, &temp)
-				err := writeXctrl(temp.State, db)
+				err := changeXctrl(temp.State, db)
 				if err != nil {
 					logger.Error.Printf("|IP: %v |Login: %v |Resource: /charPoint |Message: %v \n", c.ip, c.login, err.Error())
 					resp := newXctrlMess(typeError, nil)
 					resp.Data["message"] = ErrorMessage{Error: errChangeXctrl}
 					c.send <- resp
+					continue
 				}
 				resp := newXctrlMess(typeXctrlChange, nil)
 				resp.Data["message"] = "ok"
 				c.send <- resp
+				//обновим данные
+				respI := newXctrlMess(typeXctrlReInfo, nil)
+				allXctrl, _ := getXctrl(db)
+				respI.Data[typeXctrlInfo] = allXctrl
+				c.send <- respI
 			}
-		case typeGetSubArea:
+		case typeXctrlCreate:
 			{
 				temp := struct {
-					Region int `json:"region"`
-					Area   int `json:"area"`
-					Sub    int `json:"sub"`
+					SType string         `json:"type"`
+					State xcontrol.State `json:"state"`
 				}{}
 				_ = json.Unmarshal(p, &temp)
-				tfLight, err := getSubAreaTF(temp.Region, temp.Area, temp.Sub, db)
+				err := createXctrl(temp.State, db)
 				if err != nil {
 					logger.Error.Printf("|IP: %v |Login: %v |Resource: /charPoint |Message: %v \n", c.ip, c.login, err.Error())
 					resp := newXctrlMess(typeError, nil)
 					resp.Data["message"] = ErrorMessage{Error: errChangeXctrl}
 					c.send <- resp
+					continue
 				}
-				resp := newXctrlMess(typeGetSubArea, nil)
+				resp := newXctrlMess(typeXctrlCreate, nil)
+				resp.Data["message"] = "ok"
+				c.send <- resp
+				//обновим данные
+				respI := newXctrlMess(typeXctrlReInfo, nil)
+				allXctrl, _ := getXctrl(db)
+				respI.Data[typeXctrlInfo] = allXctrl
+				c.send <- respI
+			}
+		case typeXctrlDelete:
+			{
+				temp := struct {
+					SType string         `json:"type"`
+					State xcontrol.State `json:"state"`
+				}{}
+				_ = json.Unmarshal(p, &temp)
+				err := deleteXctrl(temp.State, db)
+				if err != nil {
+					logger.Error.Printf("|IP: %v |Login: %v |Resource: /charPoint |Message: %v \n", c.ip, c.login, err.Error())
+					resp := newXctrlMess(typeError, nil)
+					resp.Data["message"] = ErrorMessage{Error: errChangeXctrl}
+					c.send <- resp
+					continue
+				}
+				resp := newXctrlMess(typeXctrlDelete, nil)
+				resp.Data["message"] = "ok"
+				c.send <- resp
+				//обновим данные
+				respI := newXctrlMess(typeXctrlReInfo, nil)
+				allXctrl, _ := getXctrl(db)
+				respI.Data[typeXctrlInfo] = allXctrl
+				c.send <- respI
+			}
+		case typeGetArea:
+			{
+				temp := struct {
+					Region int `json:"region"`
+					Area   int `json:"area"`
+				}{}
+				_ = json.Unmarshal(p, &temp)
+				tfLight, err := getSubAreaTF(temp.Region, temp.Area, db)
+				if err != nil {
+					logger.Error.Printf("|IP: %v |Login: %v |Resource: /charPoint |Message: %v \n", c.ip, c.login, err.Error())
+					resp := newXctrlMess(typeError, nil)
+					resp.Data["message"] = ErrorMessage{Error: errChangeXctrl}
+					c.send <- resp
+					continue
+				}
+				resp := newXctrlMess(typeGetArea, nil)
 				resp.Data["tflight"] = tfLight
 				c.send <- resp
 			}
@@ -137,6 +196,7 @@ func (c *ClientXctrl) readPump(db *sqlx.DB) {
 				resp := newXctrlMess("type", nil)
 				resp.Data["type"] = typeSelect
 				c.send <- resp
+				continue
 			}
 		}
 	}

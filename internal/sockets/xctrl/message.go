@@ -2,11 +2,15 @@ package xctrl
 
 var (
 	typeXctrlChange = "xctrlChange"
+	typeXctrlCreate = "xctrlCreate"
 	typeXctrlInfo   = "xctrlInfo"
+	typeXctrlReInfo = "xctrlReInfo"
 	typeXctrlUpdate = "xctrlUpdate"
-	typeError       = "error"
-	typeClose       = "close"
-	typeGetSubArea  = "getSubArea"
+	typeXctrlDelete = "xctrlDelete"
+
+	typeError   = "error"
+	typeClose   = "close"
+	typeGetArea = "getArea"
 
 	errParseType   = "Сервер не смог обработать запрос"
 	errGetXctrl    = "Ошибка запроса данных из БД"

@@ -73,7 +73,7 @@ func (h *HubControlCross) Run(db *sqlx.DB) {
 				client.crossInfo.Idevice = Idevice
 				client.crossInfo.Description = description
 				data.CacheInfo.Mux.Lock()
-				resp.Data["areaMap"] = data.CacheInfo.MapArea[data.CacheInfo.MapRegion[client.crossInfo.Region]]
+				resp.Data["areaMap"] = data.CacheInfo.MapArea[data.CacheInfo.MapRegion[client.crossInfo.Pos.Region]]
 				data.CacheInfo.Mux.Unlock()
 
 				//если роль пришедшего Viewer то влаг ему не ставим
@@ -114,9 +114,9 @@ func (h *HubControlCross) Run(db *sqlx.DB) {
 						{
 							for aClient := range h.clients {
 								if (aClient.crossInfo.Pos == client.crossInfo.Pos) && (aClient.crossInfo.Role != "Viewer") {
-									delete(h.clients, aClient)
+									//delete(h.clients, aClient)
 									aClient.crossInfo.Edit = true
-									h.clients[aClient] = true
+									//h.clients[aClient] = true
 									resp := newControlMess(typeChangeEdit, nil)
 									resp.Data["edit"] = true
 									aClient.send <- resp

@@ -268,9 +268,9 @@ func (h *HubCross) Run(db *sqlx.DB) {
 						{
 							for aClient := range h.clients {
 								if (aClient.crossInfo.Pos == client.crossInfo.Pos) && (aClient.crossInfo.Role != "Viewer") {
-									delete(h.clients, aClient)
+									//delete(h.clients, aClient)
 									aClient.crossInfo.Edit = true
-									h.clients[aClient] = true
+									//h.clients[aClient] = true
 									resp := newCrossMess(typeChangeEdit, nil)
 									resp.Data["edit"] = true
 									aClient.send <- resp

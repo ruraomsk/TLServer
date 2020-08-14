@@ -56,6 +56,7 @@ func (c *ClientControlCr) readPump(db *sqlx.DB) {
 			resp := newControlMess(typeError, nil)
 			resp.Data["message"] = ErrorMessage{Error: errParseType}
 			c.send <- resp
+			continue
 		}
 		switch typeSelect {
 		case typeSendB: //отправка state
@@ -153,7 +154,6 @@ func (c *ClientControlCr) readPump(db *sqlx.DB) {
 					Pos:         c.crossInfo.Pos,
 				}
 				mess.SendToTCPServer()
-
 			}
 		default:
 			{

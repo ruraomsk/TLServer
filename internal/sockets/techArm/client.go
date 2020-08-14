@@ -89,6 +89,7 @@ func (c *ClientTechArm) readPump(db *sqlx.DB) {
 			resp := newArmMess(typeError, nil)
 			resp.Data["message"] = ErrorMessage{Error: errParseType}
 			c.send <- resp
+			continue
 		}
 		switch typeSelect {
 		case typeDButton: //отправка сообщения о изменениии режима работы

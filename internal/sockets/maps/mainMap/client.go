@@ -92,6 +92,7 @@ func (c *ClientMainMap) readPump(db *sqlx.DB, gc *gin.Context) {
 			resp := newMapMess(typeError, nil)
 			resp.Data["message"] = ErrorMessage{Error: errParseType}
 			c.send <- resp
+			continue
 		}
 		switch typeSelect {
 		case typeJump: //отправка default

@@ -45,12 +45,13 @@ func (c *ClientChat) readPump(db *sqlx.DB) {
 			resp := newChatMess(typeError, nil)
 			resp.Data["message"] = ErrorMessage{Error: errNoAccessWithDatabase}
 			c.send <- resp
+			goto next1
 		}
 		resp := newChatMess(typeAllUsers, nil)
 		resp.Data["users"] = users
 		c.send <- resp
 	}
-
+next1:
 	//выгрузить архив сообщений за последний день
 	{
 		var arc = ArchiveMessages{TimeStart: time.Now(), TimeEnd: time.Now().AddDate(0, 0, -1), To: globalMessage}
@@ -59,11 +60,13 @@ func (c *ClientChat) readPump(db *sqlx.DB) {
 			resp := newChatMess(typeError, nil)
 			resp.Data["message"] = ErrorMessage{Error: errNoAccessWithDatabase}
 			c.send <- resp
+			goto next2
 		}
 		resp := newChatMess(typeArchive, nil)
 		resp.Data[typeArchive] = arc
 		c.send <- resp
 	}
+next2:
 	for {
 		_, p, err := c.conn.ReadMessage()
 		if err != nil {
@@ -77,6 +80,7 @@ func (c *ClientChat) readPump(db *sqlx.DB) {
 			resp := newChatMess(typeError, nil)
 			resp.Data["message"] = ErrorMessage{Error: errParseType}
 			c.send <- resp
+			continue
 		}
 		switch typeSelect {
 		case typeMessage:
@@ -87,6 +91,7 @@ func (c *ClientChat) readPump(db *sqlx.DB) {
 					resp := newChatMess(typeError, nil)
 					resp.Data["message"] = ErrorMessage{Error: errNoAccessWithDatabase}
 					c.send <- resp
+					continue
 				}
 				resp := newChatMess(typeMessage, nil)
 				resp.Data["message"] = mF.Message

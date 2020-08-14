@@ -71,6 +71,7 @@ func (c *ClientGS) readPump(db *sqlx.DB) {
 			resp := newGSMess(typeError, nil)
 			resp.Data["message"] = ErrorMessage{Error: errParseType}
 			c.send <- resp
+			continue
 		}
 		switch typeSelect {
 		case typeCreateRout:
