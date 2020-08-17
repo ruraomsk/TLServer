@@ -31,7 +31,7 @@ func getXctrl(db *sqlx.DB) ([]xcontrol.State, error) {
 	return allXctrl, nil
 }
 
-//changeXctrl запис массива state в базу
+//changeXctrl запись массива state в базу
 func changeXctrl(states []xcontrol.State, db *sqlx.DB) error {
 	tx, err := db.Begin()
 	if err != nil {
@@ -53,7 +53,7 @@ func changeXctrl(states []xcontrol.State, db *sqlx.DB) error {
 	return nil
 }
 
-//createXctrl запис state в базу
+//createXctrl создание state в базу
 func createXctrl(state xcontrol.State, db *sqlx.DB) error {
 	strState, _ := json.Marshal(state)
 	_, err := db.Exec(`INSERT INTO public.xctrl (region, area, subarea, state) VALUES ($1, $2, $3, $4)`, state.Region, state.Area, state.SubArea, string(strState))
@@ -63,16 +63,17 @@ func createXctrl(state xcontrol.State, db *sqlx.DB) error {
 	return nil
 }
 
-//deleteXctrl запис массива state в базу
-func deleteXctrl(state xcontrol.State, db *sqlx.DB) error {
-	_, err := db.Exec(`DELETE FROM public.xctrl WHERE (region, area, subarea) VALUES ($1, $2, $3)`, state.Region, state.Area, state.SubArea)
+//deleteXctrl удаление state из базы
+func deleteXctrl(reg, area, sub int, db *sqlx.DB) error {
+	_, err := db.Exec(`DELETE FROM public.xctrl WHERE region = $1 AND area = $2 AND subarea= $3`, reg, area, sub)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func getSubAreaTF(region, area int, db *sqlx.DB) (tfdata []data.TrafficLights, err error) {
+//getAreaTF генерация сортированного массива светофоров из базы
+func getAreaTF(region, area int, db *sqlx.DB) (tfdata []data.TrafficLights, err error) {
 	rowsTL, err := db.Query(`SELECT region, area, subarea, id, describ FROM public.cross WHERE region = $1 AND area = $2`, region, area)
 	if err != nil {
 		logger.Error.Println("|Message: db not respond", err.Error())

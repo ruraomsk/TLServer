@@ -54,34 +54,32 @@ func (c *ClientXctrl) readPump(db *sqlx.DB) {
 		if err != nil {
 			logger.Error.Printf("|IP: %v |Login: %v |Resource: /charPoint |Message: %v \n", c.ip, c.login, err.Error())
 			resp := newXctrlMess(typeError, nil)
-			resp.Data["message"] = ErrorMessage{Error: errGetXctrl}
+			resp.Data["message"] = ErrorMessage{Error: errBD}
 			c.send <- resp
-			goto next
-		}
-		resp := newXctrlMess(typeXctrlInfo, nil)
-		//собираю в кучу регионы для отображения
-		chosenRegion := make(map[string]string)
-		data.CacheInfo.Mux.Lock()
-		for first, second := range data.CacheInfo.MapRegion {
-			chosenRegion[first] = second
-		}
-		delete(chosenRegion, "*")
-		resp.Data["regionInfo"] = chosenRegion
+		} else {
+			resp := newXctrlMess(typeXctrlInfo, nil)
+			//собираю в кучу регионы для отображения
+			chosenRegion := make(map[string]string)
+			data.CacheInfo.Mux.Lock()
+			for first, second := range data.CacheInfo.MapRegion {
+				chosenRegion[first] = second
+			}
+			delete(chosenRegion, "*")
+			resp.Data["regionInfo"] = chosenRegion
 
-		//собираю в кучу районы для отображения
-		chosenArea := make(map[string]map[string]string)
-		for first, second := range data.CacheInfo.MapArea {
-			chosenArea[first] = make(map[string]string)
-			chosenArea[first] = second
+			//собираю в кучу районы для отображения
+			chosenArea := make(map[string]map[string]string)
+			for first, second := range data.CacheInfo.MapArea {
+				chosenArea[first] = make(map[string]string)
+				chosenArea[first] = second
+			}
+			delete(chosenArea, "Все регионы")
+			data.CacheInfo.Mux.Unlock()
+			resp.Data["areaInfo"] = chosenArea
+			resp.Data[typeXctrlInfo] = allXctrl
+			c.send <- resp
 		}
-		delete(chosenArea, "Все регионы")
-		data.CacheInfo.Mux.Unlock()
-		resp.Data["areaInfo"] = chosenArea
-		resp.Data[typeXctrlInfo] = allXctrl
-		c.send <- resp
 	}
-
-next:
 
 	for {
 		_, p, err := c.conn.ReadMessage()
@@ -106,22 +104,22 @@ next:
 					State []xcontrol.State `json:"state"`
 				}{}
 				_ = json.Unmarshal(p, &temp)
-				err := changeXctrl(temp.State, db)
+				err = changeXctrl(temp.State, db)
 				if err != nil {
 					logger.Error.Printf("|IP: %v |Login: %v |Resource: /charPoint |Message: %v \n", c.ip, c.login, err.Error())
 					resp := newXctrlMess(typeError, nil)
-					resp.Data["message"] = ErrorMessage{Error: errChangeXctrl}
+					resp.Data["message"] = ErrorMessage{Error: errBD}
 					c.send <- resp
-					continue
+				} else {
+					resp := newXctrlMess(typeXctrlChange, nil)
+					resp.Data["message"] = "ok"
+					c.send <- resp
+					//обновим данные
+					respI := newXctrlMess(typeXctrlReInfo, nil)
+					allXctrl, _ := getXctrl(db)
+					respI.Data[typeXctrlInfo] = allXctrl
+					c.hub.broadcast <- respI
 				}
-				resp := newXctrlMess(typeXctrlChange, nil)
-				resp.Data["message"] = "ok"
-				c.send <- resp
-				//обновим данные
-				respI := newXctrlMess(typeXctrlReInfo, nil)
-				allXctrl, _ := getXctrl(db)
-				respI.Data[typeXctrlInfo] = allXctrl
-				c.send <- respI
 			}
 		case typeXctrlCreate:
 			{
@@ -134,42 +132,44 @@ next:
 				if err != nil {
 					logger.Error.Printf("|IP: %v |Login: %v |Resource: /charPoint |Message: %v \n", c.ip, c.login, err.Error())
 					resp := newXctrlMess(typeError, nil)
-					resp.Data["message"] = ErrorMessage{Error: errChangeXctrl}
+					resp.Data["message"] = ErrorMessage{Error: errBD}
 					c.send <- resp
-					continue
+				} else {
+					resp := newXctrlMess(typeXctrlCreate, nil)
+					resp.Data["message"] = "ok"
+					c.send <- resp
+					//обновим данные
+					respI := newXctrlMess(typeXctrlReInfo, nil)
+					allXctrl, _ := getXctrl(db)
+					respI.Data[typeXctrlInfo] = allXctrl
+					c.hub.broadcast <- respI
 				}
-				resp := newXctrlMess(typeXctrlCreate, nil)
-				resp.Data["message"] = "ok"
-				c.send <- resp
-				//обновим данные
-				respI := newXctrlMess(typeXctrlReInfo, nil)
-				allXctrl, _ := getXctrl(db)
-				respI.Data[typeXctrlInfo] = allXctrl
-				c.send <- respI
 			}
 		case typeXctrlDelete:
 			{
 				temp := struct {
-					SType string         `json:"type"`
-					State xcontrol.State `json:"state"`
+					SType   string `json:"type"`
+					Region  int    `json:"region"`
+					Area    int    `json:"area"`
+					SubArea int    `json:"subarea"`
 				}{}
 				_ = json.Unmarshal(p, &temp)
-				err := deleteXctrl(temp.State, db)
+				err := deleteXctrl(temp.Region, temp.Area, temp.SubArea, db)
 				if err != nil {
 					logger.Error.Printf("|IP: %v |Login: %v |Resource: /charPoint |Message: %v \n", c.ip, c.login, err.Error())
 					resp := newXctrlMess(typeError, nil)
-					resp.Data["message"] = ErrorMessage{Error: errChangeXctrl}
+					resp.Data["message"] = ErrorMessage{Error: errBD}
 					c.send <- resp
-					continue
+				} else {
+					resp := newXctrlMess(typeXctrlDelete, nil)
+					resp.Data["message"] = "ok"
+					c.send <- resp
+					//обновим данные
+					respI := newXctrlMess(typeXctrlReInfo, nil)
+					allXctrl, _ := getXctrl(db)
+					respI.Data[typeXctrlInfo] = allXctrl
+					c.hub.broadcast <- respI
 				}
-				resp := newXctrlMess(typeXctrlDelete, nil)
-				resp.Data["message"] = "ok"
-				c.send <- resp
-				//обновим данные
-				respI := newXctrlMess(typeXctrlReInfo, nil)
-				allXctrl, _ := getXctrl(db)
-				respI.Data[typeXctrlInfo] = allXctrl
-				c.send <- respI
 			}
 		case typeGetArea:
 			{
@@ -178,17 +178,17 @@ next:
 					Area   int `json:"area"`
 				}{}
 				_ = json.Unmarshal(p, &temp)
-				tfLight, err := getSubAreaTF(temp.Region, temp.Area, db)
+				tfLight, err := getAreaTF(temp.Region, temp.Area, db)
 				if err != nil {
 					logger.Error.Printf("|IP: %v |Login: %v |Resource: /charPoint |Message: %v \n", c.ip, c.login, err.Error())
 					resp := newXctrlMess(typeError, nil)
-					resp.Data["message"] = ErrorMessage{Error: errChangeXctrl}
+					resp.Data["message"] = ErrorMessage{Error: errBD}
 					c.send <- resp
-					continue
+				} else {
+					resp := newXctrlMess(typeGetArea, nil)
+					resp.Data["tflight"] = tfLight
+					c.send <- resp
 				}
-				resp := newXctrlMess(typeGetArea, nil)
-				resp.Data["tflight"] = tfLight
-				c.send <- resp
 			}
 		default:
 			{

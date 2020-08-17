@@ -12,9 +12,8 @@ var (
 	typeClose   = "close"
 	typeGetArea = "getArea"
 
-	errParseType   = "Сервер не смог обработать запрос"
-	errGetXctrl    = "Ошибка запроса данных из БД"
-	errChangeXctrl = "Ошибка записи данных в БД"
+	errParseType = "Сервер не смог обработать запрос"
+	errBD        = "Ошибка обращения к БД"
 )
 
 //MessXctrl структура пакета сообщения для xctrl

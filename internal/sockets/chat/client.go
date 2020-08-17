@@ -45,13 +45,12 @@ func (c *ClientChat) readPump(db *sqlx.DB) {
 			resp := newChatMess(typeError, nil)
 			resp.Data["message"] = ErrorMessage{Error: errNoAccessWithDatabase}
 			c.send <- resp
-			goto next1
+		} else {
+			resp := newChatMess(typeAllUsers, nil)
+			resp.Data["users"] = users
+			c.send <- resp
 		}
-		resp := newChatMess(typeAllUsers, nil)
-		resp.Data["users"] = users
-		c.send <- resp
 	}
-next1:
 	//выгрузить архив сообщений за последний день
 	{
 		var arc = ArchiveMessages{TimeStart: time.Now(), TimeEnd: time.Now().AddDate(0, 0, -1), To: globalMessage}
@@ -60,13 +59,12 @@ next1:
 			resp := newChatMess(typeError, nil)
 			resp.Data["message"] = ErrorMessage{Error: errNoAccessWithDatabase}
 			c.send <- resp
-			goto next2
+		} else {
+			resp := newChatMess(typeArchive, nil)
+			resp.Data[typeArchive] = arc
+			c.send <- resp
 		}
-		resp := newChatMess(typeArchive, nil)
-		resp.Data[typeArchive] = arc
-		c.send <- resp
 	}
-next2:
 	for {
 		_, p, err := c.conn.ReadMessage()
 		if err != nil {
@@ -91,16 +89,16 @@ next2:
 					resp := newChatMess(typeError, nil)
 					resp.Data["message"] = ErrorMessage{Error: errNoAccessWithDatabase}
 					c.send <- resp
-					continue
+				} else {
+					resp := newChatMess(typeMessage, nil)
+					resp.Data["message"] = mF.Message
+					resp.Data["time"] = mF.Time
+					resp.Data["from"] = mF.From
+					resp.Data["to"] = mF.To
+					resp.to = mF.To
+					resp.from = mF.From
+					c.hub.broadcast <- resp
 				}
-				resp := newChatMess(typeMessage, nil)
-				resp.Data["message"] = mF.Message
-				resp.Data["time"] = mF.Time
-				resp.Data["from"] = mF.From
-				resp.Data["to"] = mF.To
-				resp.to = mF.To
-				resp.from = mF.From
-				c.hub.broadcast <- resp
 			}
 		default:
 			{
