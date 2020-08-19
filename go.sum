@@ -148,6 +148,14 @@ github.com/ruraomsk/ag-server v0.0.0-20200730083514-6ac292b1aabd h1:1CaALczlda9l
 github.com/ruraomsk/ag-server v0.0.0-20200730083514-6ac292b1aabd/go.mod h1:kDkkBE++mPwNAxJrRMOX4Z87AA5XqR7QTpSiKT3XiTU=
 github.com/ruraomsk/ag-server v0.0.0-20200803074209-e09a36379f76 h1:BzJ5zDDvLYQZm3rrYcjDpvYaZQ/sR9qIOrgKPGjSy68=
 github.com/ruraomsk/ag-server v0.0.0-20200803074209-e09a36379f76/go.mod h1:kDkkBE++mPwNAxJrRMOX4Z87AA5XqR7QTpSiKT3XiTU=
+github.com/ruraomsk/ag-server v0.0.0-20200819062835-d6541bc0a686 h1:fml9XnyAPK/sDu+EvkBP4W0lW4GKR41rW0ptzMZo/x4=
+github.com/ruraomsk/ag-server v0.0.0-20200819062835-d6541bc0a686/go.mod h1:kDkkBE++mPwNAxJrRMOX4Z87AA5XqR7QTpSiKT3XiTU=
+github.com/ruraomsk/ag-server v0.0.0-20200819063528-794cea1c9dba h1:+PlX6P6nBZMn0Ah6yZP4HORR2JL39+Cksgb03CT+9Qc=
+github.com/ruraomsk/ag-server v0.0.0-20200819063528-794cea1c9dba/go.mod h1:kDkkBE++mPwNAxJrRMOX4Z87AA5XqR7QTpSiKT3XiTU=
+github.com/ruraomsk/ag-server v0.0.0-20200819064522-7c235cd75c37 h1:sWLej1vNRqdrAd4qAW2wiv6ZIhcwwQoxJzHJwJ4/N6I=
+github.com/ruraomsk/ag-server v0.0.0-20200819064522-7c235cd75c37/go.mod h1:kDkkBE++mPwNAxJrRMOX4Z87AA5XqR7QTpSiKT3XiTU=
+github.com/ruraomsk/ag-server v0.0.0-20200819072433-ac06946ebd73 h1:tKfny+aKgYTLRDBOyOvcuKHfgaUwe7hLBAYRzAt3hQE=
+github.com/ruraomsk/ag-server v0.0.0-20200819072433-ac06946ebd73/go.mod h1:kDkkBE++mPwNAxJrRMOX4Z87AA5XqR7QTpSiKT3XiTU=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=

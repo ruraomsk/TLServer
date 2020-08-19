@@ -210,7 +210,7 @@ func ShortCreateDirPng(region, area, id, z int, pointStr string) bool {
 			return false
 		}
 		defer file1.Close()
-		_, err = fmt.Fprintln(file1, str1, str2)
+		_, err = fmt.Fprintln(file1, svgStr)
 		if err != nil {
 			return false
 		}
@@ -219,19 +219,30 @@ func ShortCreateDirPng(region, area, id, z int, pointStr string) bool {
 }
 
 var (
-	str1 = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-			<svg
-			xmlns:svg="http://www.w3.org/2000/svg"
-			xmlns="http://www.w3.org/2000/svg"
-			width="450"
-			height="450"
-			viewBox="0 0 450 450">
-			<foreignObject x="5" y="5" width="100" height="450">
-			<div xmlns="http://www.w3.org/1999/xhtml"
-		style="font-size:8px;font-family:sans-serif">`
-	str2 = `</div>
-			</foreignObject>
- 			</svg>`
+	svgStr = `<svg height="450" width="450" 
+		xmlns:svg="http://www.w3.org/2000/svg" 
+		xmlns:xlink="http://www.w3.org/1999/xlink" 
+		xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
+		xmlns="http://www.w3.org/2000/svg" 
+		xlinkn="http://www.w3.org/1999/xlink" 
+		viewBox="0 0 450 450">
+ 		<circle cx="225" cy="225" r="14" 
+            	stroke="black"
+            	stroke-width="1"  
+            	fill="blue" />
+    		<text id = "midText" x="225" y="225" 
+          	font-size="11"
+          	dy=".3em"
+          	text-anchor="middle" 
+          	stroke="white" 
+          	stroke-width="1px"
+          	> 0Ф </text>
+     	<script>
+			function setPhase(phase){
+    			var midText = document.getElementById('midText'); midText.textContent = phase + "Ф";
+			}
+ 	</script>
+	</svg>`
 )
 
 //createPng создание png файла

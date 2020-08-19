@@ -49,12 +49,13 @@ func (h *HubXctrl) Run(db *sqlx.DB) {
 								if !reflect.DeepEqual(nX.Calculates, oX.Calculates) ||
 									!reflect.DeepEqual(nX.Status, oX.Status) ||
 									!reflect.DeepEqual(nX.Strategys, oX.Strategys) ||
-									!reflect.DeepEqual(nX.XNumber, oX.XNumber) ||
 									!reflect.DeepEqual(nX.PKLast, oX.PKLast) ||
+									!reflect.DeepEqual(nX.PKCalc, oX.PKCalc) ||
 									!reflect.DeepEqual(nX.PKNow, oX.PKNow) ||
 									!reflect.DeepEqual(nX.LastTime, oX.LastTime) ||
 									!reflect.DeepEqual(nX.Switch, oX.Switch) ||
 									!reflect.DeepEqual(nX.Release, oX.Release) ||
+									!reflect.DeepEqual(nX.Results, oX.Results) ||
 									!reflect.DeepEqual(nX.Step, oX.Step) {
 									tempXctrl = append(tempXctrl, nX)
 								}
