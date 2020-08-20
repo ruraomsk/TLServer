@@ -19,7 +19,6 @@ portGPS = "1093"
 
 #настройки для постгреса
 [database]
-db_waitTime = 1  # должно соответствовать задержке записи в бд Rura
 db_name = "agserv"
 db_password = "162747"
 db_user = "postgres"

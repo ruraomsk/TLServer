@@ -17,7 +17,6 @@ type DBConfig struct {
 	Type            string `toml:"db_type"`            //тип бд
 	Host            string `toml:"db_host"`            //ip сервера бд
 	Port            string `toml:"db_port"`            //порт для обращения к бд
-	DBWait          int    `toml:"db_waitTime"`        //должно соответствовать задержке записи в бд Rura
 	SetMaxOpenConst int    `toml:"db_SetMaxOpenConst"` //максимальное количество пустых соединений с бд
 	SetMaxIdleConst int    `toml:"db_SetMaxIdleConst"` //максимальное количество соединенияй с бд
 }
