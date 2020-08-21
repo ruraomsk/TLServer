@@ -75,6 +75,7 @@ type ArmInfo struct {
 	ip     string   `json:"-"`      //ip пользоателя
 	Region int      `json:"region"` //регион
 	Area   []string `json:"area"`   //район
+	token  string
 }
 
 //CrossInfo информация о перекрестке для техАРМ

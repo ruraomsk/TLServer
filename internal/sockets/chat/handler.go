@@ -22,11 +22,13 @@ func HChat(c *gin.Context, hub *HubChat, db *sqlx.DB) {
 		return
 	}
 
+	token, _ := c.Cookie("Authorization")
 	mapContx := u.ParserInterface(c.Value("info"))
 	var cInfo = clientInfo{
 		login:  mapContx["login"],
 		status: statusOnline,
 		ip:     c.ClientIP(),
+		token:  token,
 	}
 	client := &ClientChat{hub: hub, conn: conn, send: make(chan chatResponse, 256), clientInfo: cInfo}
 

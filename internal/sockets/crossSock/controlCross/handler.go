@@ -40,7 +40,7 @@ func HControlCross(c *gin.Context, hub *HubControlCross, db *sqlx.DB) {
 		_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, typeNotEdit))
 		return
 	}
-
+	token, _ := c.Cookie("Authorization")
 	var crossInfo = crossSock.CrossInfo{
 		Login:   mapContx["login"],
 		Role:    mapContx["role"],
@@ -49,6 +49,7 @@ func HControlCross(c *gin.Context, hub *HubControlCross, db *sqlx.DB) {
 		Pos:     crEdit,
 		Ip:      c.ClientIP(),
 		Region:  mapContx["region"],
+		Token:   token,
 	}
 
 	client := &ClientControlCr{hub: hub, conn: conn, send: make(chan ControlSokResponse, 256), crossInfo: crossInfo, regStatus: make(chan bool)}

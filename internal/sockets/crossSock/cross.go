@@ -24,6 +24,7 @@ type CrossInfo struct {
 	Description string          `json:"description"` //описание
 	Ip          string
 	Region      string
+	Token       string
 }
 
 var GetCrossUsersForDisplay chan bool

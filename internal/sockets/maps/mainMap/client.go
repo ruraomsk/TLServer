@@ -7,8 +7,8 @@ import (
 	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/JanFant/TLServer/internal/sockets/crossSock/mainCross"
-	"github.com/JanFant/TLServer/internal/sockets/maps"
 	"github.com/JanFant/TLServer/logger"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/jmoiron/sqlx"
@@ -39,8 +39,15 @@ type ClientMainMap struct {
 	conn *websocket.Conn
 	send chan mapResponse
 
-	login string
-	ip    string
+	cInfo *clientInfo
+}
+
+//clientInfo информация о клиенту
+type clientInfo struct {
+	login    string     //логин
+	tokenStr string     //строка токена пользователя
+	token    *jwt.Token //токен
+	ip       []string   //разделенный ip
 }
 
 //readPump обработчик чтения сокета
@@ -50,34 +57,7 @@ func (c *ClientMainMap) readPump(db *sqlx.DB, gc *gin.Context) {
 
 	_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error { _ = c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
-	{
-		flag, tk := checkToken(gc, db)
-		resp := newMapMess(typeMapInfo, maps.MapOpenInfo(db))
-		if flag {
-			login := tk.Login
-			role := tk.Role
-			resp.Data["role"] = tk.Role
-			resp.Data["manageFlag"], _ = data.AccessCheck(login, role, 2)
-			resp.Data["logDeviceFlag"], _ = data.AccessCheck(login, role, 5)
-			resp.Data["techArmFlag"], _ = data.AccessCheck(login, role, 7)
-			resp.Data["gsFlag"], _ = data.AccessCheck(login, role, 8)
-			resp.Data["description"] = tk.Description
-			resp.Data["authorizedFlag"] = true
-			resp.Data["region"] = tk.Region
-			var areaMap = make(map[string]string)
-			for _, area := range tk.Area {
-				var tempA data.AreaInfo
-				tempA.SetAreaInfo(tk.Region, area)
-				areaMap[tempA.Num] = tempA.NameArea
-			}
-			resp.Data["area"] = areaMap
-			data.CacheArea.Mux.Lock()
-			resp.Data["areaZone"] = data.CacheArea.Areas
-			data.CacheArea.Mux.Unlock()
-			c.login = login
-		}
-		c.send <- resp
-	}
+
 	mainCross.GetCrossUserForMap <- true
 	for {
 		_, p, err := c.conn.ReadMessage()
@@ -88,7 +68,7 @@ func (c *ClientMainMap) readPump(db *sqlx.DB, gc *gin.Context) {
 		//ну отправка и отправка
 		typeSelect, err := sockets.ChoseTypeMessage(p)
 		if err != nil {
-			logger.Error.Printf("|IP: %v |Login: %v |Resource: /map |Message: %v \n", c.ip, c.login, err.Error())
+			logger.Error.Printf("|IP: %v |Login: %v |Resource: /map |Message: %v \n", c.cInfo.ip[0], c.cInfo.login, err.Error())
 			resp := newMapMess(typeError, nil)
 			resp.Data["message"] = ErrorMessage{Error: errParseType}
 			c.send <- resp
@@ -108,10 +88,16 @@ func (c *ClientMainMap) readPump(db *sqlx.DB, gc *gin.Context) {
 			{
 				account := &data.Account{}
 				_ = json.Unmarshal(p, &account)
-				resp := newMapMess(typeLogin, nil)
-				resp.Data = logIn(account.Login, account.Password, c.conn.RemoteAddr().String(), db)
+
+				var (
+					resp  = newMapMess(typeLogin, nil)
+					token *jwt.Token
+				)
+				resp.Data, token = logIn(account.Login, account.Password, c.conn.RemoteAddr().String(), db)
 				if _, ok := resp.Data["message"]; !ok {
-					c.login = fmt.Sprint(resp.Data["login"])
+					c.cInfo.login = fmt.Sprint(resp.Data["login"])
+					c.cInfo.tokenStr = fmt.Sprint(resp.Data["token"])
+					c.cInfo.token = token
 				}
 				c.send <- resp
 			}
@@ -119,15 +105,20 @@ func (c *ClientMainMap) readPump(db *sqlx.DB, gc *gin.Context) {
 			{
 				account := &data.Account{}
 				_ = json.Unmarshal(p, &account)
-				resp := newMapMess(typeLogin, nil)
-				resp.Data = logIn(account.Login, account.Password, c.conn.RemoteAddr().String(), db)
+				var (
+					resp  = newMapMess(typeLogin, nil)
+					token *jwt.Token
+				)
+				resp.Data, token = logIn(account.Login, account.Password, c.conn.RemoteAddr().String(), db)
 				if _, ok := resp.Data["message"]; !ok {
 					//делаем выход из аккаунта
 					respLO := newMapMess(typeLogOut, nil)
-					status := logOut(c.login, db)
+					status := logOut(c.cInfo.login, db)
 					if status {
-						logOutSockets(c.login)
-						c.login = fmt.Sprint(resp.Data["login"])
+						logOutSockets(c.cInfo.login)
+						c.cInfo.login = fmt.Sprint(resp.Data["login"])
+						c.cInfo.tokenStr = fmt.Sprint(resp.Data["token"])
+						c.cInfo.token = token
 					}
 					c.send <- respLO
 				}
@@ -135,14 +126,16 @@ func (c *ClientMainMap) readPump(db *sqlx.DB, gc *gin.Context) {
 			}
 		case typeLogOut: //отправка default
 			{
-				if c.login != "" {
+				if c.cInfo.login != "" {
 					resp := newMapMess(typeLogOut, nil)
-					status := logOut(c.login, db)
+					status := logOut(c.cInfo.login, db)
 					if status {
 						resp.Data["authorizedFlag"] = false
-						logOutSockets(c.login)
+						logOutSockets(c.cInfo.login)
 					}
-					c.login = ""
+					c.cInfo.login = ""
+					c.cInfo.tokenStr = ""
+					c.cInfo.token = nil
 					c.send <- resp
 				}
 			}
@@ -157,7 +150,7 @@ func (c *ClientMainMap) readPump(db *sqlx.DB, gc *gin.Context) {
 				resp.Data["statusBD"] = statusDB
 				var tcpPackage = tcpConnect.TCPMessage{
 					TCPType:     tcpConnect.TypeState,
-					User:        c.login,
+					User:        c.cInfo.login,
 					Idevice:     -1,
 					Data:        0,
 					From:        tcpConnect.FromMapSoc,

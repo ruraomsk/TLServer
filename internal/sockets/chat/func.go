@@ -6,6 +6,7 @@ type clientInfo struct {
 	login  string
 	status string
 	ip     string
+	token  string
 }
 
 //userInfo информация о статусе юзера

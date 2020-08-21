@@ -21,8 +21,11 @@ func HXctrl(c *gin.Context, hub *HubXctrl, db *sqlx.DB) {
 		return
 	}
 
+	token, _ := c.Cookie("Authorization")
 	mapContx := u.ParserInterface(c.Value("info"))
-	client := &ClientXctrl{hub: hub, conn: conn, send: make(chan MessXctrl, 256), login: mapContx["login"], ip: c.ClientIP()}
+	var xInfo = xctrltInfo{login: mapContx["login"], ip: c.ClientIP(), token: token}
+
+	client := &ClientXctrl{hub: hub, conn: conn, send: make(chan MessXctrl, 256), xInfo: &xInfo}
 	client.hub.register <- client
 
 	go client.writePump()

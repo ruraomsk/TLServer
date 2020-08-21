@@ -37,8 +37,13 @@ type ClientGS struct {
 	conn *websocket.Conn
 	send chan gSResponse
 
+	cInfo *clientInfo
+}
+
+type clientInfo struct {
 	login string
 	ip    string
+	token string
 }
 
 //readPump обработчик чтения сокета
@@ -67,7 +72,7 @@ func (c *ClientGS) readPump(db *sqlx.DB) {
 		//ну отправка и отправка
 		typeSelect, err := sockets.ChoseTypeMessage(p)
 		if err != nil {
-			logger.Error.Printf("|IP: %v |Login: %v |Resource: /greenStreet |Message: %v \n", c.ip, c.login, err.Error())
+			logger.Error.Printf("|IP: %v |Login: %v |Resource: /greenStreet |Message: %v \n", c.cInfo.ip, c.cInfo.login, err.Error())
 			resp := newGSMess(typeError, nil)
 			resp.Data["message"] = ErrorMessage{Error: errParseType}
 			c.send <- resp
@@ -129,7 +134,7 @@ func (c *ClientGS) readPump(db *sqlx.DB) {
 			{
 				arm := comm.CommandARM{}
 				_ = json.Unmarshal(p, &arm)
-				arm.User = c.login
+				arm.User = c.cInfo.login
 				var mess = tcpConnect.TCPMessage{
 					User:        arm.User,
 					TCPType:     tcpConnect.TypeDispatch,

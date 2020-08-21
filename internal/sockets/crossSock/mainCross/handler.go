@@ -32,7 +32,7 @@ func HMainCross(c *gin.Context, hub *HubCross, db *sqlx.DB) {
 		u.SendRespond(c, u.Message(http.StatusBadRequest, "bad socket connect"))
 		return
 	}
-
+	token, _ := c.Cookie("Authorization")
 	mapContx := u.ParserInterface(c.Value("info"))
 	var crossInfo = crossSock.CrossInfo{
 		Login:   mapContx["login"],
@@ -42,6 +42,7 @@ func HMainCross(c *gin.Context, hub *HubCross, db *sqlx.DB) {
 		Pos:     crEdit,
 		Ip:      c.ClientIP(),
 		Region:  mapContx["region"],
+		Token:   token,
 	}
 
 	client := &ClientCross{hub: hub, conn: conn, send: make(chan crossResponse, 256), crossInfo: crossInfo, regStatus: make(chan bool)}

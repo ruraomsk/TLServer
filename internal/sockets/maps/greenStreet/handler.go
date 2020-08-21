@@ -21,8 +21,14 @@ func HGStreet(c *gin.Context, hub *HubGStreet, db *sqlx.DB) {
 		return
 	}
 
+	token, _ := c.Cookie("Authorization")
 	mapContx := u.ParserInterface(c.Value("info"))
-	client := &ClientGS{hub: hub, conn: conn, send: make(chan gSResponse, 256), login: mapContx["login"], ip: c.ClientIP()}
+	var cInfo = clientInfo{
+		login: mapContx["login"],
+		ip:    c.ClientIP(),
+		token: token,
+	}
+	client := &ClientGS{hub: hub, conn: conn, send: make(chan gSResponse, 256), cInfo: &cInfo}
 	client.hub.register <- client
 
 	go client.writePump()

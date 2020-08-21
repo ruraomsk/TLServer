@@ -36,8 +36,13 @@ type ClientXctrl struct {
 	conn *websocket.Conn
 	send chan MessXctrl
 
+	xInfo *xctrltInfo
+}
+
+type xctrltInfo struct {
 	login string
 	ip    string
+	token string
 }
 
 //readPump обработчик чтения сокета
@@ -52,7 +57,7 @@ func (c *ClientXctrl) readPump(db *sqlx.DB) {
 	{
 		allXctrl, err := getXctrl(db)
 		if err != nil {
-			logger.Error.Printf("|IP: %v |Login: %v |Resource: /charPoint |Message: %v \n", c.ip, c.login, err.Error())
+			logger.Error.Printf("|IP: %v |Login: %v |Resource: /charPoint |Message: %v \n", c.xInfo.ip, c.xInfo.login, err.Error())
 			resp := newXctrlMess(typeError, nil)
 			resp.Data["message"] = ErrorMessage{Error: errBD}
 			c.send <- resp
@@ -90,7 +95,7 @@ func (c *ClientXctrl) readPump(db *sqlx.DB) {
 		//ну отправка и отправка
 		typeSelect, err := sockets.ChoseTypeMessage(p)
 		if err != nil {
-			logger.Error.Printf("|IP: %v |Login: %v |Resource: /charPoint |Message: %v \n", c.ip, c.login, err.Error())
+			logger.Error.Printf("|IP: %v |Login: %v |Resource: /charPoint |Message: %v \n", c.xInfo.ip, c.xInfo.login, err.Error())
 			resp := newXctrlMess(typeError, nil)
 			resp.Data["message"] = ErrorMessage{Error: errParseType}
 			c.send <- resp
@@ -106,7 +111,7 @@ func (c *ClientXctrl) readPump(db *sqlx.DB) {
 				_ = json.Unmarshal(p, &temp)
 				err = changeXctrl(temp.State, db)
 				if err != nil {
-					logger.Error.Printf("|IP: %v |Login: %v |Resource: /charPoint |Message: %v \n", c.ip, c.login, err.Error())
+					logger.Error.Printf("|IP: %v |Login: %v |Resource: /charPoint |Message: %v \n", c.xInfo.ip, c.xInfo.login, err.Error())
 					resp := newXctrlMess(typeError, nil)
 					resp.Data["message"] = ErrorMessage{Error: errBD}
 					c.send <- resp
@@ -130,7 +135,7 @@ func (c *ClientXctrl) readPump(db *sqlx.DB) {
 				_ = json.Unmarshal(p, &temp)
 				err := createXctrl(temp.State, db)
 				if err != nil {
-					logger.Error.Printf("|IP: %v |Login: %v |Resource: /charPoint |Message: %v \n", c.ip, c.login, err.Error())
+					logger.Error.Printf("|IP: %v |Login: %v |Resource: /charPoint |Message: %v \n", c.xInfo.ip, c.xInfo.login, err.Error())
 					resp := newXctrlMess(typeError, nil)
 					resp.Data["message"] = ErrorMessage{Error: errBD}
 					c.send <- resp
@@ -156,7 +161,7 @@ func (c *ClientXctrl) readPump(db *sqlx.DB) {
 				_ = json.Unmarshal(p, &temp)
 				err := deleteXctrl(temp.Region, temp.Area, temp.SubArea, db)
 				if err != nil {
-					logger.Error.Printf("|IP: %v |Login: %v |Resource: /charPoint |Message: %v \n", c.ip, c.login, err.Error())
+					logger.Error.Printf("|IP: %v |Login: %v |Resource: /charPoint |Message: %v \n", c.xInfo.ip, c.xInfo.login, err.Error())
 					resp := newXctrlMess(typeError, nil)
 					resp.Data["message"] = ErrorMessage{Error: errBD}
 					c.send <- resp
@@ -180,7 +185,7 @@ func (c *ClientXctrl) readPump(db *sqlx.DB) {
 				_ = json.Unmarshal(p, &temp)
 				tfLight, err := getAreaTF(temp.Region, temp.Area, db)
 				if err != nil {
-					logger.Error.Printf("|IP: %v |Login: %v |Resource: /charPoint |Message: %v \n", c.ip, c.login, err.Error())
+					logger.Error.Printf("|IP: %v |Login: %v |Resource: /charPoint |Message: %v \n", c.xInfo.ip, c.xInfo.login, err.Error())
 					resp := newXctrlMess(typeError, nil)
 					resp.Data["message"] = ErrorMessage{Error: errBD}
 					c.send <- resp

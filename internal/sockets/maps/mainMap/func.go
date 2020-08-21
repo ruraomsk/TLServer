@@ -10,7 +10,6 @@ import (
 	"github.com/JanFant/TLServer/internal/sockets/techArm"
 	"github.com/JanFant/TLServer/internal/sockets/xctrl"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 	"golang.org/x/crypto/bcrypt"
 	"strings"
@@ -18,22 +17,13 @@ import (
 )
 
 //checkToken проверка токена для вебсокета
-func checkToken(c *gin.Context, db *sqlx.DB) (flag bool, t *data.Token) {
-	var tokenString string
-	cookie, err := c.Cookie("Authorization")
-	//Проверка куков получили ли их вообще
-	if err != nil {
-		return false, nil
-	}
-	tokenString = cookie
-
-	ip := strings.Split(c.Request.RemoteAddr, ":")
+func checkToken(tokenStr string, ip []string, db *sqlx.DB) (flag bool, t *data.Token) {
 	//проверка если ли токен, если нету ошибка 403 нужно авторизироваться!
-	if tokenString == "" {
+	if tokenStr == "" {
 		return false, nil
 	}
 	//токен приходит строкой в формате {слово пробел слово} разделяем строку и забираем нужную нам часть
-	splitted := strings.Split(tokenString, " ")
+	splitted := strings.Split(tokenStr, " ")
 	if len(splitted) != 2 {
 		return false, nil
 	}
@@ -80,7 +70,7 @@ func checkToken(c *gin.Context, db *sqlx.DB) (flag bool, t *data.Token) {
 }
 
 //logIn обработчик авторизации пользователя в системе
-func logIn(login, password, ip string, db *sqlx.DB) map[string]interface{} {
+func logIn(login, password, ip string, db *sqlx.DB) (map[string]interface{}, *jwt.Token) {
 	resp := make(map[string]interface{})
 	ipSplit := strings.Split(ip, ":")
 	account := &data.Account{}
@@ -89,12 +79,12 @@ func logIn(login, password, ip string, db *sqlx.DB) map[string]interface{} {
 	if rows == nil {
 		resp["status"] = false
 		resp["message"] = fmt.Sprintf("Неверно указан логин или пароль")
-		return resp
+		return resp, nil
 	}
 	if err != nil {
 		resp["status"] = false
 		resp["message"] = "Потеряно соединение с сервером БД"
-		return resp
+		return resp, nil
 	}
 	for rows.Next() {
 		_ = rows.Scan(&account.ID, &account.Login, &account.Password, &account.WorkTime, &account.Description)
@@ -106,7 +96,7 @@ func logIn(login, password, ip string, db *sqlx.DB) map[string]interface{} {
 	if err != nil {
 		resp["status"] = false
 		resp["message"] = fmt.Sprintf("Неверно указан логин или пароль")
-		return resp
+		return resp, nil
 	}
 
 	//Сравниваю хэши полученного пароля и пароля взятого из БД
@@ -114,7 +104,7 @@ func logIn(login, password, ip string, db *sqlx.DB) map[string]interface{} {
 	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
 		resp["status"] = false
 		resp["message"] = fmt.Sprintf("Неверно указан логин или пароль")
-		return resp
+		return resp, nil
 	}
 	//Залогинились, создаем токен
 	account.Password = ""
@@ -134,21 +124,21 @@ func logIn(login, password, ip string, db *sqlx.DB) map[string]interface{} {
 	tk.ExpiresAt = time.Now().Add(time.Hour * account.WorkTime).Unix()
 
 	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tk)
-	tokenString, _ := token.SignedString([]byte(license.LicenseFields.TokenPass))
-	account.Token = tokenString
+	tokenStr, _ := token.SignedString([]byte(license.LicenseFields.TokenPass))
+	account.Token = tokenStr
 	//сохраняем токен в БД чтобы точно знать что дейтвителен только 1 токен
 
 	_, err = db.Exec(`UPDATE public.accounts SET token = $1 WHERE login = $2`, account.Token, account.Login)
 	if err != nil {
 		resp["status"] = false
 		resp["message"] = "Потеряно соединение с сервером БД"
-		return resp
+		return resp, nil
 	}
 
 	//Формируем ответ
 	resp["status"] = true
 	resp["login"] = account.Login
-	resp["token"] = tokenString
+	resp["token"] = tokenStr
 	resp["role"] = privilege.Role.Name
 	resp["manageFlag"], _ = data.AccessCheck(login, privilege.Role.Name, 2)
 	resp["logDeviceFlag"], _ = data.AccessCheck(login, privilege.Role.Name, 5)
@@ -169,7 +159,7 @@ func logIn(login, password, ip string, db *sqlx.DB) map[string]interface{} {
 	data.CacheArea.Mux.Lock()
 	resp["areaZone"] = data.CacheArea.Areas
 	data.CacheArea.Mux.Unlock()
-	return resp
+	return resp, token
 }
 
 //logOut выход из учетной записи

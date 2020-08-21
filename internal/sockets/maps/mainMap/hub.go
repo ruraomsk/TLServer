@@ -96,11 +96,41 @@ func (h *HubMainMap) Run(db *sqlx.DB) {
 			}
 		case client := <-h.register:
 			{
+
+				{
+					flag, tk := checkToken(client.cInfo.tokenStr, client.cInfo.ip, db)
+					resp := newMapMess(typeMapInfo, maps.MapOpenInfo(db))
+					if flag {
+						login := tk.Login
+						role := tk.Role
+						resp.Data["role"] = tk.Role
+						resp.Data["manageFlag"], _ = data.AccessCheck(login, role, 2)
+						resp.Data["logDeviceFlag"], _ = data.AccessCheck(login, role, 5)
+						resp.Data["techArmFlag"], _ = data.AccessCheck(login, role, 7)
+						resp.Data["gsFlag"], _ = data.AccessCheck(login, role, 8)
+						resp.Data["description"] = tk.Description
+						resp.Data["authorizedFlag"] = true
+						resp.Data["region"] = tk.Region
+						var areaMap = make(map[string]string)
+						for _, area := range tk.Area {
+							var tempA data.AreaInfo
+							tempA.SetAreaInfo(tk.Region, area)
+							areaMap[tempA.Num] = tempA.NameArea
+						}
+						resp.Data["area"] = areaMap
+						data.CacheArea.Mux.Lock()
+						resp.Data["areaZone"] = data.CacheArea.Areas
+						data.CacheArea.Mux.Unlock()
+						client.cInfo.login = login
+					}
+					client.send <- resp
+				}
+
 				h.clients[client] = true
 
 				fmt.Printf("mainMap reg: ")
 				for hClient := range h.clients {
-					fmt.Printf("%v ", hClient.login)
+					fmt.Printf("%v ", hClient.cInfo.login)
 				}
 				fmt.Printf("\n")
 			}
@@ -114,7 +144,7 @@ func (h *HubMainMap) Run(db *sqlx.DB) {
 
 				fmt.Printf("mainMap unReg: ")
 				for hClient := range h.clients {
-					fmt.Printf("%v ", hClient.login)
+					fmt.Printf("%v ", hClient.cInfo.login)
 				}
 				fmt.Printf("\n")
 			}
@@ -153,7 +183,7 @@ func (h *HubMainMap) Run(db *sqlx.DB) {
 					respLO.Data["authorizedFlag"] = false
 				}
 				for client := range h.clients {
-					if client.login == login {
+					if client.cInfo.login == login {
 						client.send <- respLO
 					}
 				}

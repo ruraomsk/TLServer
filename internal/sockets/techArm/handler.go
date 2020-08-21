@@ -43,7 +43,8 @@ func HTechArm(c *gin.Context, hub *HubTechArm, db *sqlx.DB) {
 	}
 
 	mapContx := u.ParserInterface(c.Value("info"))
-	var armInfo = ArmInfo{Login: mapContx["login"], Region: reg, Area: area, ip: c.ClientIP()}
+	token, _ := c.Cookie("Authorization")
+	var armInfo = ArmInfo{Login: mapContx["login"], Region: reg, Area: area, ip: c.ClientIP(), token: token}
 
 	client := &ClientTechArm{hub: hub, conn: conn, send: make(chan armResponse, 256), armInfo: armInfo}
 	client.hub.register <- client
