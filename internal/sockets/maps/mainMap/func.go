@@ -2,6 +2,7 @@ package mainMap
 
 import (
 	"fmt"
+	"github.com/JanFant/TLServer/internal/model/accToken"
 	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/model/license"
 	"github.com/JanFant/TLServer/internal/sockets/chat"
@@ -17,7 +18,7 @@ import (
 )
 
 //checkToken проверка токена для вебсокета
-func checkToken(tokenStr string, ip []string, db *sqlx.DB) (flag bool, t *data.Token) {
+func checkToken(tokenStr string, ip []string, db *sqlx.DB) (flag bool, t *accToken.Token) {
 	//проверка если ли токен, если нету ошибка 403 нужно авторизироваться!
 	if tokenStr == "" {
 		return false, nil
@@ -30,7 +31,7 @@ func checkToken(tokenStr string, ip []string, db *sqlx.DB) (flag bool, t *data.T
 
 	//берем часть где хранится токен
 	tokenSTR := splitted[1]
-	tk := &data.Token{}
+	tk := &accToken.Token{}
 
 	token, err := jwt.ParseWithClaims(tokenSTR, tk, func(token *jwt.Token) (interface{}, error) {
 		return []byte(license.LicenseFields.TokenPass), nil
@@ -75,7 +76,7 @@ func logIn(login, password, ip string, db *sqlx.DB) (map[string]interface{}, *jw
 	ipSplit := strings.Split(ip, ":")
 	account := &data.Account{}
 	//Забираю из базы запись с подходящей почтой
-	rows, err := db.Query(`SELECT id, login, password, work_time, description FROM public.accounts WHERE login=$1`, login)
+	rows, err := db.Query(`SELECT login, password, work_time, description FROM public.accounts WHERE login=$1`, login)
 	if rows == nil {
 		resp["status"] = false
 		resp["message"] = fmt.Sprintf("Неверно указан логин или пароль")
@@ -87,7 +88,7 @@ func logIn(login, password, ip string, db *sqlx.DB) (map[string]interface{}, *jw
 		return resp, nil
 	}
 	for rows.Next() {
-		_ = rows.Scan(&account.ID, &account.Login, &account.Password, &account.WorkTime, &account.Description)
+		_ = rows.Scan(&account.Login, &account.Password, &account.WorkTime, &account.Description)
 	}
 
 	//Авторизировались добираем полномочия
@@ -108,8 +109,7 @@ func logIn(login, password, ip string, db *sqlx.DB) (map[string]interface{}, *jw
 	}
 	//Залогинились, создаем токен
 	account.Password = ""
-	tk := &data.Token{
-		UserID:      account.ID,
+	tk := &accToken.Token{
 		Login:       account.Login,
 		IP:          ipSplit[0],
 		Role:        privilege.Role.Name,

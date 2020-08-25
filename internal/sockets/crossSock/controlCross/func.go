@@ -38,9 +38,9 @@ func takeControlInfo(pos sockets.PosInfo, db *sqlx.DB) (resp ControlSokResponse,
 }
 
 //checkCrossData проверка полученных данных
-func checkCrossData(state agspudge.Cross) ControlSokResponse {
+func checkCrossData(state agspudge.Cross, db *sqlx.DB) ControlSokResponse {
 	var verif stateVerified.StateResult
-	crossSock.VerifiedState(&state, &verif)
+	crossSock.VerifiedState(&state, &verif, db)
 	resp := newControlMess(typeCheckB, nil)
 	if verif.Err != nil {
 		resp.Data["status"] = false

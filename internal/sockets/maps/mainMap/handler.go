@@ -1,7 +1,7 @@
 package mainMap
 
 import (
-	"github.com/JanFant/TLServer/internal/model/data"
+	"github.com/JanFant/TLServer/internal/model/accToken"
 	"github.com/JanFant/TLServer/internal/model/license"
 	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/dgrijalva/jwt-go"
@@ -43,7 +43,7 @@ func getToken(tokenStr string) (token *jwt.Token) {
 		if len(splitted) == 2 {
 			//берем часть где хранится токен
 			tokenSTR := splitted[1]
-			tk := &data.Token{}
+			tk := &accToken.Token{}
 			token, _ = jwt.ParseWithClaims(tokenSTR, tk, func(token *jwt.Token) (interface{}, error) {
 				return []byte(license.LicenseFields.TokenPass), nil
 			})

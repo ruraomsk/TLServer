@@ -32,6 +32,14 @@ func HMainCross(c *gin.Context, hub *HubCross, db *sqlx.DB) {
 		u.SendRespond(c, u.Message(http.StatusBadRequest, "bad socket connect"))
 		return
 	}
+
+	//a, _ := c.Get("token")
+	//fmt.Println("1 ", a)
+	//a1, _ := c.Get("tk")
+	//fmt.Println("2 ", a1)
+	//a2, ok := a1.(*accToken.Token)
+	//fmt.Println("1231123  ",ok, "      ", a2)
+
 	token, _ := c.Cookie("Authorization")
 	mapContx := u.ParserInterface(c.Value("info"))
 	var crossInfo = crossSock.CrossInfo{

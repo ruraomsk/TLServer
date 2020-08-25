@@ -92,7 +92,7 @@ func (shortAcc *ShortAccount) ValidCreate(role string, region string) (err error
 func (shortAcc *ShortAccount) ValidDelete(role string, region string) (account *Account, err error) {
 	account = &Account{}
 	//Забираю из базы запись с подходящей почтой
-	rows, err := GetDB().Query(`SELECT id, login, password, token, work_time FROM public.accounts WHERE login=$1`, shortAcc.Login)
+	rows, err := GetDB().Query(`SELECT login, password, token, work_time FROM public.accounts WHERE login=$1`, shortAcc.Login)
 	if rows == nil {
 		return nil, errors.New(fmt.Sprintf("login: %s, not found", shortAcc.Login))
 	}
@@ -100,7 +100,7 @@ func (shortAcc *ShortAccount) ValidDelete(role string, region string) (account *
 		return nil, errors.New("connection to DB error")
 	}
 	for rows.Next() {
-		_ = rows.Scan(&account.ID, &account.Login, &account.Password, &account.Token, &account.WorkTime)
+		_ = rows.Scan(&account.Login, &account.Password, &account.Token, &account.WorkTime)
 	}
 
 	//Авторизировались добираем полномочия
@@ -126,7 +126,7 @@ func (shortAcc *ShortAccount) ValidDelete(role string, region string) (account *
 func (shortAcc *ShortAccount) ValidChangePW(role string, region string) (account *Account, err error) {
 	account = &Account{}
 	//Забираю из базы запись с подходящим логином
-	rows, err := GetDB().Query(`SELECT id, login, password, token, work_time FROM public.accounts WHERE login=$1`, shortAcc.Login)
+	rows, err := GetDB().Query(`SELECT login, password, token, work_time FROM public.accounts WHERE login=$1`, shortAcc.Login)
 	if rows == nil {
 		return nil, errors.New(fmt.Sprintf("Пользователь: %s, не найден", shortAcc.Login))
 	}
@@ -134,7 +134,7 @@ func (shortAcc *ShortAccount) ValidChangePW(role string, region string) (account
 		return nil, errors.New("Ошибка соединения с базой")
 	}
 	for rows.Next() {
-		_ = rows.Scan(&account.ID, &account.Login, &account.Password, &account.Token, &account.WorkTime)
+		_ = rows.Scan(&account.Login, &account.Password, &account.Token, &account.WorkTime)
 	}
 	//Авторизировались добираем полномочия
 	privilege := Privilege{}
@@ -160,7 +160,7 @@ func (shortAcc *ShortAccount) ValidChangePW(role string, region string) (account
 func (passChange *PassChange) ValidOldNewPW(login string) (account *Account, err error) {
 	account = &Account{}
 	//Забираю из базы запись с подходящей почтой
-	rows, err := GetDB().Query(`SELECT id, login, password, token, work_time FROM public.accounts WHERE login=$1`, login)
+	rows, err := GetDB().Query(`SELECT login, password, token, work_time FROM public.accounts WHERE login=$1`, login)
 	if rows == nil {
 		return nil, errors.New(fmt.Sprintf("login: %s, not found", login))
 	}
@@ -168,7 +168,7 @@ func (passChange *PassChange) ValidOldNewPW(login string) (account *Account, err
 		return nil, errors.New("connection to DB error")
 	}
 	for rows.Next() {
-		_ = rows.Scan(&account.ID, &account.Login, &account.Password, &account.Token, &account.WorkTime)
+		_ = rows.Scan(&account.Login, &account.Password, &account.Token, &account.WorkTime)
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(account.Password), []byte(passChange.OldPW))
 	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {

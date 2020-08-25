@@ -2,6 +2,7 @@ package middleWare
 
 import (
 	"fmt"
+	"github.com/JanFant/TLServer/internal/model/accToken"
 	"net/http"
 	"strings"
 
@@ -10,8 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/JanFant/TLServer/internal/model/data"
-	"github.com/JanFant/TLServer/internal/model/license"
-	"github.com/dgrijalva/jwt-go"
 )
 
 //JwtAuth контроль токена для всех прошедших регистрацию и обрашающихся к ресурсу
@@ -44,12 +43,9 @@ var JwtAuth = func() gin.HandlerFunc {
 
 		//берем часть где хранится токен
 		tokenSTR := splitted[1]
-		tk := &data.Token{}
+		tk := new(accToken.Token)
 
-		token, err := jwt.ParseWithClaims(tokenSTR, tk, func(token *jwt.Token) (interface{}, error) {
-			return []byte(license.LicenseFields.TokenPass), nil
-		})
-
+		token, err := tk.Parse(tokenSTR)
 		//не правильный токен возвращаем ошибку с кодом 403
 		if err != nil {
 			c.HTML(http.StatusForbidden, "accessDenied.html", gin.H{"status": http.StatusForbidden, "message": "wrong auth token"})
@@ -121,6 +117,8 @@ var JwtAuth = func() gin.HandlerFunc {
 		mapCont["perm"] = tk.Permission
 		mapCont["description"] = tk.Description
 		mapCont["area"] = tk.Area
+		c.Set("token", token)
+		c.Set("tk", tk)
 		c.Set("info", mapCont)
 		c.Next()
 
@@ -156,11 +154,9 @@ var JwtFile = func() gin.HandlerFunc {
 		}
 		//берем часть где хранится токен
 		tokenSTR := splitted[1]
-		tk := &data.Token{}
+		tk := new(accToken.Token)
 
-		token, err := jwt.ParseWithClaims(tokenSTR, tk, func(token *jwt.Token) (interface{}, error) {
-			return []byte(license.LicenseFields.TokenPass), nil
-		})
+		token, err := tk.Parse(tokenSTR)
 
 		//не правильный токен возвращаем ошибку с кодом 403
 		if err != nil {

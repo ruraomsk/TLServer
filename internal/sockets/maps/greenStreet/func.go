@@ -37,8 +37,13 @@ func getAllModes(db *sqlx.DB) interface{} {
 			logger.Error.Printf("|IP: - |Login: - |Resource: /greenStreet |Message: %v", err.Error())
 			return modes
 		}
+
 		if len(temp.List) == 0 {
 			temp.List = make([]routeGS.RouteTL, 0)
+		}
+		for numR, route := range temp.List {
+			rowRoute := db.QueryRow(`SELECT describ FROM public.cross WHERE region = $1 AND area = $2 AND id = $3`, route.Pos.Region, route.Pos.Area, route.Pos.Id)
+			_ = rowRoute.Scan(&temp.List[numR].Description)
 		}
 		modes = append(modes, temp)
 	}

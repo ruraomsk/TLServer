@@ -11,41 +11,27 @@ import (
 	"github.com/JanFant/TLServer/internal/model/license"
 	"github.com/JanFant/TLServer/internal/model/locations"
 	u "github.com/JanFant/TLServer/internal/utils"
-	"github.com/dgrijalva/jwt-go"
 	validation "github.com/go-ozzo/ozzo-validation"
 	"golang.org/x/crypto/bcrypt"
 )
 
-//Token (JWT) структура токена доступа
-type Token struct {
-	UserID      int      //Уникальный ID пользователя
-	Login       string   //Уникальный логин пользователя
-	IP          string   //IP пользователя
-	Description string   //какая-то хуйня!!!?!??!?!?!?!?!!?
-	Role        string   //Роль
-	Permission  []int    //Привелегии
-	Region      string   //Регион пользователя
-	Area        []string //список доступных регионов
-	jwt.StandardClaims
-}
-
 //Account структура аккаунта пользователя
 type Account struct {
-	ID          int                `json:"id",sql:"id"`                   //уникальный номер пользователя
-	Description string             `json:"description",sql:"description"` //какая-то хуйня!!!?!??!?!?!?!?!!?
-	Login       string             `json:"login",sql:"login"`             //Имя пользователя
-	Password    string             `json:"password"`                      //Пароль
-	BoxPoint    locations.BoxPoint `json:"boxPoint",sql:"-"`              //Точки области отображения
-	WorkTime    time.Duration      `json:"workTime",sql:"workTime"`       //Время работы пользователя в часах
-	YaMapKey    string             `json:"ya_key",sql:"-"`                //Ключ доступа к яндекс карте
-	Token       string             `json:"token",sql:"-"`                 //Токен пользователя
+	Description string             `json:"description"` //какая-то хуйня!!!?!??!?!?!?!?!!?
+	Login       string             `json:"login"`       //Имя пользователя
+	Password    string             `json:"password"`    //Пароль
+	BoxPoint    locations.BoxPoint `json:"boxPoint"`    //Точки области отображения
+	WorkTime    time.Duration      `json:"workTime"`    //Время работы пользователя в часах
+	YaMapKey    string             `json:"ya_key"`      //Ключ доступа к яндекс карте
+	Token       string             `json:"token"`       //Токен пользователя
 }
 
 var (
-	AutomaticLogin = "TechAutomatic"            //Пользователь для суперпользователя :D
-	errorConnectDB = "соединение с БД потеряно" //стандартная ошибка
-	passLong       = 10
-	AccAction      chan string
+	AutomaticLogin     = "TechAutomatic"            //Пользователь для суперпользователя :D
+	errorConnectDB     = "соединение с БД потеряно" //стандартная ошибка
+	errorDuplicateUser = "такой пользователь уже существует"
+	passLong           = 10
+	AccAction          chan string
 )
 
 //Validate проверка аккаунда в бд
@@ -74,7 +60,10 @@ func (data *Account) Validate() error {
 
 //Create создание аккаунта для пользователей
 func (data *Account) Create(privilege Privilege) u.Response {
-	var count int
+	var (
+		count int
+		login string
+	)
 	if err := GetDB().QueryRow(`SELECT count(*) FROM public.accounts`).Scan(&count); err != nil {
 		return u.Message(http.StatusInternalServerError, errorConnectDB)
 	}
@@ -89,12 +78,12 @@ func (data *Account) Create(privilege Privilege) u.Response {
 	//Отдаем ключ для yandex map
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(data.Password), bcrypt.DefaultCost)
 	data.Password = string(hashedPassword)
-	row := GetDB().QueryRow(`INSERT INTO  public.accounts (login, password, work_time, description) VALUES ($1, $2, $3, $4) RETURNING id`,
+	row := GetDB().QueryRow(`INSERT INTO  public.accounts (login, password, work_time, description) VALUES ($1, $2, $3, $4) RETURNING login`,
 		data.Login, data.Password, data.WorkTime, data.Description)
-	if err := row.Scan(&data.ID); err != nil {
-		return u.Message(http.StatusInternalServerError, errorConnectDB)
+	if err := row.Scan(&login); err != nil {
+		return u.Message(http.StatusInternalServerError, errorDuplicateUser)
 	}
-	if data.ID <= 0 {
+	if data.Login != login {
 		return u.Message(http.StatusBadRequest, "ошибка создания пользователя")
 	}
 	RoleInfo.Mux.Lock()

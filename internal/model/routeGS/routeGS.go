@@ -18,10 +18,11 @@ type Route struct {
 
 //RouteTL информация о перекрестке
 type RouteTL struct {
-	Num   int             `json:"num"`   //порятковый новер светофора в маршруте
-	Phase int             `json:"phase"` //фаза заданная для данного перекрестка
-	Point locations.Point `json:"point"` //координаты перекретска
-	Pos   sockets.PosInfo `json:"pos"`   //информация о перекрестка (где находится)
+	Num         int             `json:"num"`         //порятковый новер светофора в маршруте
+	Phase       int             `json:"phase"`       //фаза заданная для данного перекрестка
+	Description string          `json:"description"` //описание светофора
+	Point       locations.Point `json:"point"`       //координаты перекретска
+	Pos         sockets.PosInfo `json:"pos"`         //информация о перекрестка (где находится)
 }
 
 //Create создание/запись маршрута в БД

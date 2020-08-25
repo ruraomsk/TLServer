@@ -22,9 +22,8 @@ var (
 	);`
 	accountsTable = `
 	CREATE TABLE accounts (
-		id serial PRIMARY KEY,
 		description text,
-		login text,
+		login text PRIMARY KEY,
 		password text,
 		work_time bigint,
 		token text,

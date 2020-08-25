@@ -79,7 +79,7 @@ func TestCrossStateData(mapContx map[string]string, db *sqlx.DB) u.Response {
 			return u.Message(http.StatusInternalServerError, "failed to parse cross information")
 		}
 		var verif stateVerified.StateResult
-		VerifiedState(&testState, &verif)
+		VerifiedState(&testState, &verif, db)
 		if verif.Err != nil {
 			state.ID = testState.ID
 			state.Region = strconv.Itoa(testState.Region)
@@ -94,7 +94,9 @@ func TestCrossStateData(mapContx map[string]string, db *sqlx.DB) u.Response {
 }
 
 //VerifiedState набор проверкок для стейта
-func VerifiedState(cross *agspudge.Cross, result *stateVerified.StateResult) {
+func VerifiedState(cross *agspudge.Cross, result *stateVerified.StateResult, db *sqlx.DB) {
+	resultMainWind := stateVerified.MainWindVerified(cross, db)
+	appendResult(result, resultMainWind)
 	resultDay := stateVerified.DaySetsVerified(cross)
 	appendResult(result, resultDay)
 	resultWeek, empty := stateVerified.WeekSetsVerified(cross)

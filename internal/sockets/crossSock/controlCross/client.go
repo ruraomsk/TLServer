@@ -81,7 +81,7 @@ func (c *ClientControlCr) readPump(db *sqlx.DB) {
 			{
 				temp := StateHandler{}
 				_ = json.Unmarshal(p, &temp)
-				resp := checkCrossData(temp.State)
+				resp := checkCrossData(temp.State, db)
 				c.send <- resp
 			}
 		case typeCreateB: //создание перекрестка
