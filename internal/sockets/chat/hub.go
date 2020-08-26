@@ -35,17 +35,17 @@ func (h *HubChat) Run(db *sqlx.DB) {
 				//проверяем нужно ли оповещать других пользоветелей о подключенном
 				flagNew := true
 				for hClient := range h.clients {
-					if hClient.clientInfo.login == client.clientInfo.login {
+					if hClient.clientInfo.accInfo.Login == client.clientInfo.accInfo.Login {
 						flagNew = false
 						break
 					}
 				}
 				if flagNew {
 					resp := newChatMess(typeStatus, nil)
-					resp.Data["user"] = client.clientInfo.login
+					resp.Data["user"] = client.clientInfo.accInfo.Login
 					resp.Data["status"] = client.clientInfo.status
 					for hClient := range h.clients {
-						if hClient.clientInfo.login != client.clientInfo.login {
+						if hClient.clientInfo.accInfo.Login != client.clientInfo.accInfo.Login {
 							hClient.send <- resp
 						}
 					}
@@ -56,7 +56,7 @@ func (h *HubChat) Run(db *sqlx.DB) {
 
 				fmt.Printf("Chat reg: ")
 				for hClient := range h.clients {
-					fmt.Printf("%v ", hClient.clientInfo)
+					fmt.Printf("%v ", hClient.clientInfo.accInfo.Login)
 				}
 				fmt.Printf("\n")
 			}
@@ -69,14 +69,14 @@ func (h *HubChat) Run(db *sqlx.DB) {
 
 					flagOffline := true
 					for hClient := range h.clients {
-						if hClient.clientInfo.login == client.clientInfo.login {
+						if hClient.clientInfo.accInfo.Login == client.clientInfo.accInfo.Login {
 							flagOffline = false
 							break
 						}
 					}
 					if flagOffline {
 						resp := newChatMess(typeStatus, nil)
-						resp.Data["user"] = client.clientInfo.login
+						resp.Data["user"] = client.clientInfo.accInfo.Login
 						resp.Data["status"] = statusOffline
 						for hClient := range h.clients {
 							hClient.send <- resp
@@ -86,7 +86,7 @@ func (h *HubChat) Run(db *sqlx.DB) {
 
 				fmt.Printf("Chat UnReg: ")
 				for hClient := range h.clients {
-					fmt.Printf("%v ", hClient.clientInfo)
+					fmt.Printf("%v ", hClient.clientInfo.accInfo.Login)
 				}
 				fmt.Printf("\n")
 			}
@@ -104,7 +104,7 @@ func (h *HubChat) Run(db *sqlx.DB) {
 				}
 				if mess.to != globalMessage {
 					for client := range h.clients {
-						if mess.to == client.clientInfo.login || mess.from == client.clientInfo.login {
+						if mess.to == client.clientInfo.accInfo.Login || mess.from == client.clientInfo.accInfo.Login {
 							select {
 							case client.send <- mess:
 							default:
@@ -118,7 +118,7 @@ func (h *HubChat) Run(db *sqlx.DB) {
 		case login := <-UserLogoutChat:
 			{
 				for client := range h.clients {
-					if client.clientInfo.login == login {
+					if client.clientInfo.accInfo.Login == login {
 						msg := newChatMess(typeClose, nil)
 						msg.Data["message"] = "пользователь вышел из системы"
 						client.send <- msg

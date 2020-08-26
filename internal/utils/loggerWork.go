@@ -7,9 +7,7 @@ import (
 )
 
 //writeLogMessage обработчик u.message преобразует сообщение для записи в лог файл
-func writeLogMessage(ip string, url string, data map[string]interface{}, info interface{}) {
-	mapContx := ParserInterface(info)
-	login := mapContx["login"]
+func writeLogMessage(ip string, url string, data map[string]interface{}, login string) {
 	if login == "" {
 		if _, ok := data["login"]; ok {
 			login = fmt.Sprintf("%v", data["login"])

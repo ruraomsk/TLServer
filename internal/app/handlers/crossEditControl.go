@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/JanFant/TLServer/internal/model/accToken"
 	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/sockets/crossSock"
 	u "github.com/JanFant/TLServer/internal/utils"
@@ -10,8 +11,9 @@ import (
 
 //CrossEditInfo сбор информации о занятых перекрестках
 var CrossEditInfo = func(c *gin.Context) {
-	mapContx := u.ParserInterface(c.Value("info"))
-	resp := crossSock.DisplayCrossEditInfo(mapContx)
+	accTK, _ := c.Get("tk")
+	accInfo, _ := accTK.(*accToken.Token)
+	resp := crossSock.DisplayCrossEditInfo(accInfo)
 	data.CacheInfo.Mux.Lock()
 	resp.Obj["regionInfo"] = data.CacheInfo.MapRegion
 	resp.Obj["areaInfo"] = data.CacheInfo.MapArea

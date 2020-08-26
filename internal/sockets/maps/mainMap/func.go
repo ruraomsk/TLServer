@@ -18,13 +18,14 @@ import (
 )
 
 //checkToken проверка токена для вебсокета
-func checkToken(tokenStr string, ip []string, db *sqlx.DB) (flag bool, t *accToken.Token) {
+func checkToken(cookie string, ip string, db *sqlx.DB) (flag bool, t *accToken.Token) {
+
 	//проверка если ли токен, если нету ошибка 403 нужно авторизироваться!
-	if tokenStr == "" {
+	if cookie == "" {
 		return false, nil
 	}
 	//токен приходит строкой в формате {слово пробел слово} разделяем строку и забираем нужную нам часть
-	splitted := strings.Split(tokenStr, " ")
+	splitted := strings.Split(cookie, " ")
 	if len(splitted) != 2 {
 		return false, nil
 	}
@@ -55,7 +56,7 @@ func checkToken(tokenStr string, ip []string, db *sqlx.DB) (flag bool, t *accTok
 		_ = rows.Scan(&tokenStrFromBd, &userPrivilege.PrivilegeStr)
 	}
 
-	if tokenSTR != tokenStrFromBd || tk.IP != ip[0] || !token.Valid {
+	if tokenSTR != tokenStrFromBd || tk.IP != ip || !token.Valid {
 		return false, nil
 	}
 
@@ -71,7 +72,7 @@ func checkToken(tokenStr string, ip []string, db *sqlx.DB) (flag bool, t *accTok
 }
 
 //logIn обработчик авторизации пользователя в системе
-func logIn(login, password, ip string, db *sqlx.DB) (map[string]interface{}, *jwt.Token) {
+func logIn(login, password, ip string, db *sqlx.DB) map[string]interface{} {
 	resp := make(map[string]interface{})
 	ipSplit := strings.Split(ip, ":")
 	account := &data.Account{}
@@ -80,12 +81,12 @@ func logIn(login, password, ip string, db *sqlx.DB) (map[string]interface{}, *jw
 	if rows == nil {
 		resp["status"] = false
 		resp["message"] = fmt.Sprintf("Неверно указан логин или пароль")
-		return resp, nil
+		return resp
 	}
 	if err != nil {
 		resp["status"] = false
 		resp["message"] = "Потеряно соединение с сервером БД"
-		return resp, nil
+		return resp
 	}
 	for rows.Next() {
 		_ = rows.Scan(&account.Login, &account.Password, &account.WorkTime, &account.Description)
@@ -97,7 +98,7 @@ func logIn(login, password, ip string, db *sqlx.DB) (map[string]interface{}, *jw
 	if err != nil {
 		resp["status"] = false
 		resp["message"] = fmt.Sprintf("Неверно указан логин или пароль")
-		return resp, nil
+		return resp
 	}
 
 	//Сравниваю хэши полученного пароля и пароля взятого из БД
@@ -105,7 +106,7 @@ func logIn(login, password, ip string, db *sqlx.DB) (map[string]interface{}, *jw
 	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
 		resp["status"] = false
 		resp["message"] = fmt.Sprintf("Неверно указан логин или пароль")
-		return resp, nil
+		return resp
 	}
 	//Залогинились, создаем токен
 	account.Password = ""
@@ -132,7 +133,7 @@ func logIn(login, password, ip string, db *sqlx.DB) (map[string]interface{}, *jw
 	if err != nil {
 		resp["status"] = false
 		resp["message"] = "Потеряно соединение с сервером БД"
-		return resp, nil
+		return resp
 	}
 
 	//Формируем ответ
@@ -159,7 +160,7 @@ func logIn(login, password, ip string, db *sqlx.DB) (map[string]interface{}, *jw
 	data.CacheArea.Mux.Lock()
 	resp["areaZone"] = data.CacheArea.Areas
 	data.CacheArea.Mux.Unlock()
-	return resp, token
+	return resp
 }
 
 //logOut выход из учетной записи

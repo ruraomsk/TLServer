@@ -200,7 +200,7 @@ func (h *HubCross) Run(db *sqlx.DB) {
 
 				//проверка открыт ли у этого пользователя такой перекресток
 				for hubClient := range h.clients {
-					if client.crossInfo.Pos == hubClient.crossInfo.Pos && client.crossInfo.Login == hubClient.crossInfo.Login {
+					if client.crossInfo.Pos == hubClient.crossInfo.Pos && client.crossInfo.AccInfo.Login == hubClient.crossInfo.AccInfo.Login {
 						close(client.send)
 						_ = client.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, errDoubleOpeningDevice))
 						_ = client.conn.Close()
@@ -217,15 +217,15 @@ func (h *HubCross) Run(db *sqlx.DB) {
 				client.crossInfo.Idevice = Idevice
 				client.crossInfo.Description = description
 				resp.Data["controlCrossFlag"] = false
-				controlCrossFlag, _ := data.AccessCheck(client.crossInfo.Login, client.crossInfo.Role, 4)
-				if (fmt.Sprint(resp.Data["region"]) == client.crossInfo.Region) || (client.crossInfo.Region == "*") {
+				controlCrossFlag, _ := data.AccessCheck(client.crossInfo.AccInfo.Login, client.crossInfo.AccInfo.Role, 4)
+				if (fmt.Sprint(resp.Data["region"]) == client.crossInfo.AccInfo.Region) || (client.crossInfo.AccInfo.Region == "*") {
 					resp.Data["controlCrossFlag"] = controlCrossFlag
 				}
 				delete(resp.Data, "region")
 
 				//если роль пришедшего Viewer то влаг ему не ставим
 				flagEdit := false
-				if client.crossInfo.Role != "Viewer" {
+				if client.crossInfo.AccInfo.Role != "Viewer" {
 					for hClient := range h.clients {
 						if hClient.crossInfo.Pos == client.crossInfo.Pos && hClient.crossInfo.Edit {
 							flagEdit = true
@@ -254,7 +254,7 @@ func (h *HubCross) Run(db *sqlx.DB) {
 
 				fmt.Printf("mainCross reg: ")
 				for client := range h.clients {
-					fmt.Printf("%v ", client.crossInfo)
+					fmt.Printf("%v ", client.crossInfo.AccInfo.Login)
 				}
 				fmt.Printf("\n")
 			}
@@ -267,7 +267,7 @@ func (h *HubCross) Run(db *sqlx.DB) {
 					if client.crossInfo.Edit {
 						{
 							for aClient := range h.clients {
-								if (aClient.crossInfo.Pos == client.crossInfo.Pos) && (aClient.crossInfo.Role != "Viewer") {
+								if (aClient.crossInfo.Pos == client.crossInfo.Pos) && (aClient.crossInfo.AccInfo.Role != "Viewer") {
 									//delete(h.clients, aClient)
 									aClient.crossInfo.Edit = true
 									//h.clients[aClient] = true
@@ -285,7 +285,7 @@ func (h *HubCross) Run(db *sqlx.DB) {
 
 				fmt.Printf("mainCross UnReg: ")
 				for client := range h.clients {
-					fmt.Printf("%v ", client.crossInfo)
+					fmt.Printf("%v ", client.crossInfo.AccInfo.Login)
 				}
 				fmt.Printf("\n")
 			}
@@ -313,7 +313,7 @@ func (h *HubCross) Run(db *sqlx.DB) {
 			{
 				for _, dCr := range dCrInfo {
 					for client := range h.clients {
-						if client.crossInfo.Pos == dCr.Pos && client.crossInfo.Login == dCr.Login {
+						if client.crossInfo.Pos == dCr.Pos && client.crossInfo.AccInfo.Login == dCr.AccInfo.Login {
 							msg := newCrossMess(typeClose, nil)
 							msg.Data["message"] = "закрытие администратором"
 							client.send <- msg
@@ -334,7 +334,7 @@ func (h *HubCross) Run(db *sqlx.DB) {
 		case login := <-UserLogoutCross:
 			{
 				for client := range h.clients {
-					if client.crossInfo.Login == login {
+					if client.crossInfo.AccInfo.Login == login {
 						msg := newCrossMess(typeClose, nil)
 						msg.Data["message"] = "пользователь вышел из системы"
 						client.send <- msg

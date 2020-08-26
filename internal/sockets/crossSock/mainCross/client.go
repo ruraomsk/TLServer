@@ -23,9 +23,6 @@ const (
 	// Send pings to peer with this period. Must be less than pongWait.
 	pingPeriod = (pongWait * 9) / 10
 
-	// Maximum message size allowed from peer.
-	maxMessageSize = 1024 * 100
-
 	readCrossTick = time.Second * 1
 )
 
@@ -52,7 +49,7 @@ func (c *ClientCross) readPump(db *sqlx.DB) {
 		//ну отправка и отправка
 		typeSelect, err := sockets.ChoseTypeMessage(p)
 		if err != nil {
-			logger.Error.Printf("|IP: %v |Login: %v |Resource: /cross |Message: %v \n", c.crossInfo.Ip, c.crossInfo.Login, err.Error())
+			logger.Error.Printf("|IP: %v |Login: %v |Resource: /cross |Message: %v \n", c.crossInfo.AccInfo.IP, c.crossInfo.AccInfo.Login, err.Error())
 			resp := newCrossMess(typeError, nil)
 			resp.Data["message"] = ErrorMessage{Error: errParseType}
 			c.send <- resp
@@ -63,9 +60,9 @@ func (c *ClientCross) readPump(db *sqlx.DB) {
 			{
 				arm := comm.CommandARM{}
 				_ = json.Unmarshal(p, &arm)
-				arm.User = c.crossInfo.Login
+				arm.User = c.crossInfo.AccInfo.Login
 				var mess = tcpConnect.TCPMessage{
-					User:        c.crossInfo.Login,
+					User:        c.crossInfo.AccInfo.Login,
 					TCPType:     tcpConnect.TypeDispatch,
 					Idevice:     arm.ID,
 					Data:        arm,

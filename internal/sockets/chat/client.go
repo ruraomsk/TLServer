@@ -74,7 +74,7 @@ func (c *ClientChat) readPump(db *sqlx.DB) {
 		//ну отправка и отправка
 		typeSelect, err := sockets.ChoseTypeMessage(p)
 		if err != nil {
-			logger.Error.Printf("|IP: %v |Login: %v |Resource: /cross |Message: %v \n", c.clientInfo.ip, c.clientInfo.login, err.Error())
+			logger.Error.Printf("|IP: %v |Login: %v |Resource: /cross |Message: %v \n", c.clientInfo.accInfo.IP, c.clientInfo.accInfo.Login, err.Error())
 			resp := newChatMess(typeError, nil)
 			resp.Data["message"] = ErrorMessage{Error: errParseType}
 			c.send <- resp

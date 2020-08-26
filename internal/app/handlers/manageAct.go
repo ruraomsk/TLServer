@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"github.com/JanFant/TLServer/internal/model/accToken"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -12,14 +13,15 @@ import (
 
 //ActUpdateAccount обработчик запроса обновления (работа с пользователями)
 var ActUpdateAccount = func(c *gin.Context) {
-	mapContx := u.ParserInterface(c.Value("info"))
+	accTK, _ := c.Get("tk")
+	accInfo, _ := accTK.(*accToken.Token)
 	var shortAcc = &data.ShortAccount{}
 	err := c.ShouldBindJSON(&shortAcc)
 	if err != nil {
 		u.SendRespond(c, u.Message(http.StatusBadRequest, "incorrectly filled data"))
 		return
 	}
-	err = shortAcc.ValidCreate(mapContx["role"], mapContx["region"])
+	err = shortAcc.ValidCreate(accInfo.Role, accInfo.Region)
 	if err != nil {
 		u.SendRespond(c, u.Message(http.StatusBadRequest, fmt.Sprintf("incorrectly filled data: %s", err.Error())))
 		return
@@ -31,14 +33,15 @@ var ActUpdateAccount = func(c *gin.Context) {
 
 //ActDeleteAccount обработчик запроса удаления (работа с пользователями)
 var ActDeleteAccount = func(c *gin.Context) {
-	mapContx := u.ParserInterface(c.Value("info"))
+	accTK, _ := c.Get("tk")
+	accInfo, _ := accTK.(*accToken.Token)
 	var shortAcc = &data.ShortAccount{}
 	err := c.ShouldBindJSON(&shortAcc)
 	if err != nil {
 		u.SendRespond(c, u.Message(http.StatusBadRequest, "incorrectly filled data"))
 		return
 	}
-	account, err := shortAcc.ValidDelete(mapContx["role"], mapContx["region"])
+	account, err := shortAcc.ValidDelete(accInfo.Role, accInfo.Region)
 	if err != nil {
 		u.SendRespond(c, u.Message(http.StatusBadRequest, fmt.Sprintf("incorrectly filled data: %s", err.Error())))
 		return
@@ -49,14 +52,15 @@ var ActDeleteAccount = func(c *gin.Context) {
 
 //ActAddAccount обработчик запроса добавления (работа с пользователями)
 var ActAddAccount = func(c *gin.Context) {
-	mapContx := u.ParserInterface(c.Value("info"))
+	accTK, _ := c.Get("tk")
+	accInfo, _ := accTK.(*accToken.Token)
 	var shortAcc = &data.ShortAccount{}
 	err := c.ShouldBindJSON(&shortAcc)
 	if err != nil {
 		u.SendRespond(c, u.Message(http.StatusBadRequest, "incorrectly filled data"))
 		return
 	}
-	err = shortAcc.ValidCreate(mapContx["role"], mapContx["region"])
+	err = shortAcc.ValidCreate(accInfo.Role, accInfo.Region)
 	if err != nil {
 		u.SendRespond(c, u.Message(http.StatusBadRequest, fmt.Sprintf("incorrectly filled data: %s", err.Error())))
 		return
@@ -68,14 +72,15 @@ var ActAddAccount = func(c *gin.Context) {
 
 //ActChangePw обработчик запроса смены пароля для пользователя
 var ActChangePw = func(c *gin.Context) {
-	mapContx := u.ParserInterface(c.Value("info"))
+	accTK, _ := c.Get("tk")
+	accInfo, _ := accTK.(*accToken.Token)
 	var passChange = &data.PassChange{}
 	err := c.ShouldBindJSON(&passChange)
 	if err != nil {
 		u.SendRespond(c, u.Message(http.StatusBadRequest, "incorrectly filled data"))
 		return
 	}
-	account, err := passChange.ValidOldNewPW(mapContx["login"])
+	account, err := passChange.ValidOldNewPW(accInfo.Login)
 	if err != nil {
 		u.SendRespond(c, u.Message(http.StatusBadRequest, err.Error()))
 		return
@@ -86,14 +91,15 @@ var ActChangePw = func(c *gin.Context) {
 
 //ActChangePw обработчик запроса смены пароля для пользователя
 var ActResetPw = func(c *gin.Context) {
-	mapContx := u.ParserInterface(c.Value("info"))
+	accTK, _ := c.Get("tk")
+	accInfo, _ := accTK.(*accToken.Token)
 	var shortAcc = &data.ShortAccount{}
 	err := c.ShouldBindJSON(&shortAcc)
 	if err != nil {
 		u.SendRespond(c, u.Message(http.StatusBadRequest, "Не правильно заполненные данные"))
 		return
 	}
-	account, err := shortAcc.ValidChangePW(mapContx["role"], mapContx["region"])
+	account, err := shortAcc.ValidChangePW(accInfo.Role, accInfo.Region)
 	if err != nil {
 		u.SendRespond(c, u.Message(http.StatusBadRequest, fmt.Sprintf("Не правильно заполненные данные: %s", err.Error())))
 		return

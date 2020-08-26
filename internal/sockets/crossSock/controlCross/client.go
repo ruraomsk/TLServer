@@ -52,7 +52,7 @@ func (c *ClientControlCr) readPump(db *sqlx.DB) {
 		//ну отправка и отправка
 		typeSelect, err := sockets.ChoseTypeMessage(p)
 		if err != nil {
-			logger.Error.Printf("|IP: %v |Login: %v |Resource: /cross |Message: %v \n", c.crossInfo.Ip, c.crossInfo.Login, err.Error())
+			logger.Error.Printf("|IP: %v |Login: %v |Resource: /cross |Message: %v \n", c.crossInfo.AccInfo.IP, c.crossInfo.AccInfo.Login, err.Error())
 			resp := newControlMess(typeError, nil)
 			resp.Data["message"] = ErrorMessage{Error: errParseType}
 			c.send <- resp
@@ -64,9 +64,9 @@ func (c *ClientControlCr) readPump(db *sqlx.DB) {
 				temp := StateHandler{}
 				_ = json.Unmarshal(p, &temp)
 				var (
-					userCross = agspudge.UserCross{User: c.crossInfo.Login, State: temp.State}
+					userCross = agspudge.UserCross{User: c.crossInfo.AccInfo.Login, State: temp.State}
 					mess      = tcpConnect.TCPMessage{
-						User:        c.crossInfo.Login,
+						User:        c.crossInfo.AccInfo.Login,
 						TCPType:     tcpConnect.TypeState,
 						Idevice:     temp.State.IDevice,
 						Data:        userCross,
@@ -93,17 +93,17 @@ func (c *ClientControlCr) readPump(db *sqlx.DB) {
 				}{}
 				_ = json.Unmarshal(p, &temp)
 				resp := newControlMess(typeCreateB, nil)
-				resp.Data = createCrossData(temp.State, c.crossInfo.Pos, c.crossInfo.Login, temp.Z, db)
+				resp.Data = createCrossData(temp.State, c.crossInfo.Pos, c.crossInfo.AccInfo.Login, temp.Z, db)
 				c.send <- resp
 			}
 		case typeDeleteB: //удаление state
 			{
 				temp := StateHandler{}
 				_ = json.Unmarshal(p, &temp)
-				userCross := agspudge.UserCross{User: c.crossInfo.Login, State: temp.State}
+				userCross := agspudge.UserCross{User: c.crossInfo.AccInfo.Login, State: temp.State}
 				userCross.State.IDevice = -1
 				mess := tcpConnect.TCPMessage{
-					User:        c.crossInfo.Login,
+					User:        c.crossInfo.AccInfo.Login,
 					TCPType:     tcpConnect.TypeState,
 					Idevice:     temp.State.IDevice,
 					Data:        userCross,
@@ -132,7 +132,7 @@ func (c *ClientControlCr) readPump(db *sqlx.DB) {
 				//нужно ха этим посмотреть но проблем не должно быть
 				for client := range c.hub.clients {
 					if client.crossInfo.Pos == c.crossInfo.Pos {
-						temp := usersEdit{User: client.crossInfo.Login, Edit: client.crossInfo.Edit}
+						temp := usersEdit{User: client.crossInfo.AccInfo.Login, Edit: client.crossInfo.Edit}
 						users = append(users, temp)
 					}
 				}
@@ -143,9 +143,9 @@ func (c *ClientControlCr) readPump(db *sqlx.DB) {
 			{
 				arm := comm.CommandARM{}
 				_ = json.Unmarshal(p, &arm)
-				arm.User = c.crossInfo.Login
+				arm.User = c.crossInfo.AccInfo.Login
 				var mess = tcpConnect.TCPMessage{
-					User:        c.crossInfo.Login,
+					User:        c.crossInfo.AccInfo.Login,
 					TCPType:     tcpConnect.TypeDispatch,
 					Idevice:     arm.ID,
 					Data:        arm,

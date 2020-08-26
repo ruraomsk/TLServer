@@ -1,6 +1,7 @@
 package techArm
 
 import (
+	"github.com/JanFant/TLServer/internal/model/accToken"
 	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -41,10 +42,14 @@ func HTechArm(c *gin.Context, hub *HubTechArm, db *sqlx.DB) {
 		u.SendRespond(c, u.Message(http.StatusBadRequest, "bad socket connect"))
 		return
 	}
+	accTK, _ := c.Get("tk")
+	accInfo, _ := accTK.(*accToken.Token)
 
-	mapContx := u.ParserInterface(c.Value("info"))
-	token, _ := c.Cookie("Authorization")
-	var armInfo = ArmInfo{Login: mapContx["login"], Region: reg, Area: area, ip: c.ClientIP(), token: token}
+	var armInfo = ArmInfo{
+		Region:  reg,
+		Area:    area,
+		AccInfo: accInfo,
+	}
 
 	client := &ClientTechArm{hub: hub, conn: conn, send: make(chan armResponse, 256), armInfo: armInfo}
 	client.hub.register <- client

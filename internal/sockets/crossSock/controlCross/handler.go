@@ -1,6 +1,7 @@
 package controlCross
 
 import (
+	"github.com/JanFant/TLServer/internal/model/accToken"
 	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/JanFant/TLServer/internal/sockets/crossSock"
 	"github.com/JanFant/TLServer/internal/sockets/maps"
@@ -33,23 +34,19 @@ func HControlCross(c *gin.Context, hub *HubControlCross, db *sqlx.DB) {
 		return
 	}
 
-	mapContx := u.ParserInterface(c.Value("info"))
-
+	accTK, _ := c.Get("tk")
+	accInfo, _ := accTK.(*accToken.Token)
 	//проверка на полномочия редактирования
-	if !((crEdit.Region == mapContx["region"]) || (mapContx["region"] == "*")) {
+	if !((crEdit.Region == accInfo.Region) || (accInfo.Region == "*")) {
 		_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, typeNotEdit))
 		return
 	}
-	token, _ := c.Cookie("Authorization")
+
 	var crossInfo = crossSock.CrossInfo{
-		Login:   mapContx["login"],
-		Role:    mapContx["role"],
 		Edit:    false,
 		Idevice: 0,
 		Pos:     crEdit,
-		Ip:      c.ClientIP(),
-		Region:  mapContx["region"],
-		Token:   token,
+		AccInfo: accInfo,
 	}
 
 	client := &ClientControlCr{hub: hub, conn: conn, send: make(chan ControlSokResponse, 256), crossInfo: crossInfo, regStatus: make(chan bool)}

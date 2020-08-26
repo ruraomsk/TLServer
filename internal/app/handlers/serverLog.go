@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/JanFant/TLServer/internal/model/accToken"
 	"net/http"
 
 	"github.com/JanFant/TLServer/internal/model/data"
@@ -25,7 +26,8 @@ var DisplayServerLogInfo = func(c *gin.Context) {
 		return
 	}
 
-	mapContx := u.ParserInterface(c.Value("info"))
-	resp := serverLog.DisplayServerFileLog(fileName, logger.LogGlobalConf.LogPath, mapContx, data.GetDB())
+	accTK, _ := c.Get("tk")
+	accInfo, _ := accTK.(*accToken.Token)
+	resp := serverLog.DisplayServerFileLog(fileName, logger.LogGlobalConf.LogPath, accInfo, data.GetDB())
 	u.SendRespond(c, resp)
 }

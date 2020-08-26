@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/JanFant/TLServer/internal/model/accToken"
 	"net/http"
 
 	"github.com/JanFant/TLServer/internal/model/data"
@@ -11,8 +12,9 @@ import (
 
 //DisplayDeviceLogFile обработчик отображения файлов лога устройства
 var DisplayDeviceLogFile = func(c *gin.Context) {
-	mapContx := u.ParserInterface(c.Value("info"))
-	resp := deviceLog.DisplayDeviceLog(mapContx, data.GetDB())
+	accTK, _ := c.Get("tk")
+	accInfo, _ := accTK.(*accToken.Token)
+	resp := deviceLog.DisplayDeviceLog(accInfo, data.GetDB())
 	data.CacheInfo.Mux.Lock()
 	resp.Obj["regionInfo"] = data.CacheInfo.MapRegion
 	resp.Obj["areaInfo"] = data.CacheInfo.MapArea

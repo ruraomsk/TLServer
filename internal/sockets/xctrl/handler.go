@@ -1,6 +1,7 @@
 package xctrl
 
 import (
+	"github.com/JanFant/TLServer/internal/model/accToken"
 	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -21,11 +22,9 @@ func HXctrl(c *gin.Context, hub *HubXctrl, db *sqlx.DB) {
 		return
 	}
 
-	token, _ := c.Cookie("Authorization")
-	mapContx := u.ParserInterface(c.Value("info"))
-	var xInfo = xctrltInfo{login: mapContx["login"], ip: c.ClientIP(), token: token}
-
-	client := &ClientXctrl{hub: hub, conn: conn, send: make(chan MessXctrl, 256), xInfo: &xInfo}
+	accTK, _ := c.Get("tk")
+	accInfo, _ := accTK.(*accToken.Token)
+	client := &ClientXctrl{hub: hub, conn: conn, send: make(chan MessXctrl, 256), xInfo: accInfo}
 	client.hub.register <- client
 
 	go client.writePump()

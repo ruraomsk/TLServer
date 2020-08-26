@@ -3,6 +3,7 @@ package crossSock
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/JanFant/TLServer/internal/model/accToken"
 	"github.com/JanFant/TLServer/internal/model/deviceLog"
 	"github.com/JanFant/TLServer/internal/model/stateVerified"
 	"github.com/JanFant/TLServer/internal/sockets"
@@ -16,15 +17,11 @@ import (
 
 //crossInfo информация о перекрестке для которого открыт сокет
 type CrossInfo struct {
-	Login       string          `json:"login"`       //пользователь
-	Role        string          `json:"-"`           //роль
 	Edit        bool            `json:"edit"`        //признак редактирования
 	Idevice     int             `json:"idevice"`     //идентификатор утройства
 	Pos         sockets.PosInfo `json:"pos"`         //расположение перекрестка
 	Description string          `json:"description"` //описание
-	Ip          string
-	Region      string
-	Token       string
+	AccInfo     *accToken.Token
 }
 
 var GetCrossUsersForDisplay chan bool
@@ -55,15 +52,15 @@ func ConvertStateStrToStruct(str string) (rState agspudge.Cross, err error) {
 }
 
 //TestCrossStateData проверить все стрейты на наличие ошибок
-func TestCrossStateData(mapContx map[string]string, db *sqlx.DB) u.Response {
+func TestCrossStateData(accInfo *accToken.Token, db *sqlx.DB) u.Response {
 	var (
 		stateSql  string
 		stateInfo []deviceLog.BusyArm
 		state     deviceLog.BusyArm
 	)
 	sqlStr := fmt.Sprintf(`SELECT state FROM public.cross `)
-	if mapContx["region"] != "*" {
-		sqlStr += fmt.Sprintf(`WHERE region = %v `, mapContx["region"])
+	if accInfo.Region != "*" {
+		sqlStr += fmt.Sprintf(`WHERE region = %v `, accInfo.Region)
 	}
 	sqlStr += "order by describ"
 	rows, err := db.Query(sqlStr)

@@ -3,6 +3,7 @@ package data
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/JanFant/TLServer/internal/model/accToken"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -67,12 +68,12 @@ type RouteInfo struct {
 }
 
 //DisplayInfoForAdmin отображение информации о пользователях для администраторов
-func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) u.Response {
+func (privilege *Privilege) DisplayInfoForAdmin(accInfo *accToken.Token) u.Response {
 	var (
 		sqlStr   string
 		shortAcc []ShortAccount
 	)
-	err := privilege.ReadFromBD(mapContx["login"])
+	err := privilege.ReadFromBD(accInfo.Login)
 	if err != nil {
 		return u.Message(http.StatusInternalServerError, "display info: Privilege error")
 	}
@@ -144,15 +145,15 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) u.Re
 	RoleInfo.Mux.Lock()
 	var roles []string
 
-	if mapContx["login"] == AutomaticLogin {
+	if accInfo.Login == AutomaticLogin {
 		roles = append(roles, "Admin")
 	}
 
 	for roleName := range RoleInfo.MapRoles {
-		if (mapContx["role"] == "Admin") && (roleName == "Admin") {
+		if (accInfo.Role == "Admin") && (roleName == "Admin") {
 			continue
 		}
-		if (mapContx["role"] == "RegAdmin") && ((roleName == "Admin") || (roleName == "RegAdmin")) {
+		if (accInfo.Role == "RegAdmin") && ((roleName == "Admin") || (roleName == "RegAdmin")) {
 			continue
 		}
 		roles = append(roles, roleName)
@@ -175,16 +176,16 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) u.Re
 	//собираю в кучу регионы для отображения
 	chosenRegion := make(map[string]string)
 
-	if mapContx["role"] != "RegAdmin" {
+	if accInfo.Role != "RegAdmin" {
 		for first, second := range CacheInfo.MapRegion {
 			chosenRegion[first] = second
 		}
 		delete(chosenRegion, "*")
 	} else {
-		chosenRegion[mapContx["region"]] = CacheInfo.MapRegion[mapContx["region"]]
+		chosenRegion[accInfo.Region] = CacheInfo.MapRegion[accInfo.Region]
 	}
 
-	if mapContx["login"] == AutomaticLogin {
+	if accInfo.Login == AutomaticLogin {
 		chosenRegion["*"] = CacheInfo.MapRegion["*"]
 	}
 
@@ -196,7 +197,7 @@ func (privilege *Privilege) DisplayInfoForAdmin(mapContx map[string]string) u.Re
 		chosenArea[key] = make(map[string]string)
 		chosenArea[key] = value
 	}
-	if mapContx["login"] != AutomaticLogin {
+	if accInfo.Login != AutomaticLogin {
 		delete(chosenArea, "Все регионы")
 	}
 	CacheInfo.Mux.Unlock()

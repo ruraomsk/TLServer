@@ -1,30 +1,22 @@
 package middleWare
 
 import (
+	"github.com/JanFant/TLServer/internal/model/accToken"
 	"github.com/JanFant/TLServer/logger"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/JanFant/TLServer/internal/model/data"
-	u "github.com/JanFant/TLServer/internal/utils"
 )
 
 //AccessControl проверка разрешен ли пользователя доступ к запрашиваемому ресурсу
 var AccessControl = func() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		//достаем разрешенные группы маршрутов из контекста
-		mapContx := u.ParserInterface(c.Value("info"))
-		var permission []int
-		permStr := mapContx["perm"]
-		permStr = strings.TrimPrefix(permStr, "[")
-		permStr = strings.TrimSuffix(permStr, "]")
-		for _, value := range strings.Split(permStr, " ") {
-			intVal, _ := strconv.Atoi(value)
-			permission = append(permission, intVal)
-		}
+		accTK, _ := c.Get("tk")
+		accInfo, _ := accTK.(*accToken.Token)
 
 		//убираем из url лишнее
 		url := c.Request.URL.Path
@@ -41,11 +33,11 @@ var AccessControl = func() gin.HandlerFunc {
 		}
 
 		access := false
-		if mapContx["role"] == "Admin" {
+		if accInfo.Role == "Admin" {
 			access = true
 		}
 		//смотрим если ли доступ у пользователя к этому машруту
-		for _, perm := range permission {
+		for _, perm := range accInfo.Permission {
 			if perm == rout.Permission {
 				access = true
 				break
@@ -57,7 +49,7 @@ var AccessControl = func() gin.HandlerFunc {
 			c.Next()
 		} else {
 			c.HTML(http.StatusForbidden, "accessDenied.html", gin.H{"status": http.StatusForbidden, "message": "accessDenied"})
-			logger.Warning.Printf("|IP: %s |Login: %s |Resource: %s |Message: %v", c.Request.RemoteAddr, mapContx["login"], c.Request.RequestURI, "accessDenied")
+			logger.Warning.Printf("|IP: %s |Login: %s |Resource: %s |Message: %v", c.Request.RemoteAddr, accInfo.Login, c.Request.RequestURI, "accessDenied")
 			c.Abort()
 			return
 		}

@@ -98,7 +98,7 @@ func (h *HubMainMap) Run(db *sqlx.DB) {
 			{
 
 				{
-					flag, tk := checkToken(client.cInfo.tokenStr, client.cInfo.ip, db)
+					flag, tk := checkToken(client.cookie, client.cInfo.IP, db)
 					resp := newMapMess(typeMapInfo, maps.MapOpenInfo(db))
 					if flag {
 						login := tk.Login
@@ -121,7 +121,7 @@ func (h *HubMainMap) Run(db *sqlx.DB) {
 						data.CacheArea.Mux.Lock()
 						resp.Data["areaZone"] = data.CacheArea.Areas
 						data.CacheArea.Mux.Unlock()
-						client.cInfo.login = login
+						client.cInfo.Login = login
 					}
 					client.send <- resp
 				}
@@ -130,7 +130,7 @@ func (h *HubMainMap) Run(db *sqlx.DB) {
 
 				fmt.Printf("mainMap reg: ")
 				for hClient := range h.clients {
-					fmt.Printf("%v ", hClient.cInfo.login)
+					fmt.Printf("%v ", hClient.cInfo.Login)
 				}
 				fmt.Printf("\n")
 			}
@@ -144,7 +144,7 @@ func (h *HubMainMap) Run(db *sqlx.DB) {
 
 				fmt.Printf("mainMap unReg: ")
 				for hClient := range h.clients {
-					fmt.Printf("%v ", hClient.cInfo.login)
+					fmt.Printf("%v ", hClient.cInfo.Login)
 				}
 				fmt.Printf("\n")
 			}
@@ -183,7 +183,7 @@ func (h *HubMainMap) Run(db *sqlx.DB) {
 					respLO.Data["authorizedFlag"] = false
 				}
 				for client := range h.clients {
-					if client.cInfo.login == login {
+					if client.cInfo.Login == login {
 						client.send <- respLO
 					}
 				}

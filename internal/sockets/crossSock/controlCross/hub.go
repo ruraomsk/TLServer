@@ -55,7 +55,7 @@ func (h *HubControlCross) Run(db *sqlx.DB) {
 
 				//проверка открыт ли у этого пользователя такой перекресток
 				for hubClient := range h.clients {
-					if client.crossInfo.Pos == hubClient.crossInfo.Pos && client.crossInfo.Login == hubClient.crossInfo.Login {
+					if client.crossInfo.Pos == hubClient.crossInfo.Pos && client.crossInfo.AccInfo.Login == hubClient.crossInfo.AccInfo.Login {
 						close(client.send)
 						_ = client.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, errDoubleOpeningDevice))
 						_ = client.conn.Close()
@@ -100,7 +100,7 @@ func (h *HubControlCross) Run(db *sqlx.DB) {
 
 				fmt.Printf("Cross ARM reg: ")
 				for client := range h.clients {
-					fmt.Printf("%v ", client.crossInfo)
+					fmt.Printf("%v ", client.crossInfo.AccInfo.Login)
 				}
 				fmt.Printf("\n")
 			}
@@ -113,7 +113,7 @@ func (h *HubControlCross) Run(db *sqlx.DB) {
 					if client.crossInfo.Edit {
 						{
 							for aClient := range h.clients {
-								if (aClient.crossInfo.Pos == client.crossInfo.Pos) && (aClient.crossInfo.Role != "Viewer") {
+								if (aClient.crossInfo.Pos == client.crossInfo.Pos) && (aClient.crossInfo.AccInfo.Role != "Viewer") {
 									//delete(h.clients, aClient)
 									aClient.crossInfo.Edit = true
 									//h.clients[aClient] = true
@@ -129,7 +129,7 @@ func (h *HubControlCross) Run(db *sqlx.DB) {
 
 				fmt.Printf("Cross ARM UnReg: ")
 				for client := range h.clients {
-					fmt.Printf("%v ", client.crossInfo)
+					fmt.Printf("%v ", client.crossInfo.AccInfo.Login)
 				}
 				fmt.Printf("\n")
 			}
@@ -152,7 +152,7 @@ func (h *HubControlCross) Run(db *sqlx.DB) {
 			{
 				for _, dArm := range dArmInfo {
 					for client := range h.clients {
-						if client.crossInfo.Pos == dArm.Pos && client.crossInfo.Login == dArm.Login {
+						if client.crossInfo.Pos == dArm.Pos && client.crossInfo.AccInfo.Login == dArm.AccInfo.Login {
 							msg := newControlMess(typeClose, nil)
 							msg.Data["message"] = "закрытие администратором"
 							client.send <- msg
@@ -163,7 +163,7 @@ func (h *HubControlCross) Run(db *sqlx.DB) {
 		case login := <-UserLogoutCrControl:
 			{
 				for client := range h.clients {
-					if client.crossInfo.Login == login {
+					if client.crossInfo.AccInfo.Login == login {
 						msg := newControlMess(typeClose, nil)
 						msg.Data["message"] = "пользователь вышел из системы"
 						client.send <- msg
@@ -209,7 +209,7 @@ func (h *HubControlCross) Run(db *sqlx.DB) {
 						} else {
 							// если нету поля отправить ошибку только пользователю
 							for client := range h.clients {
-								if client.crossInfo.Login == msg.User && client.crossInfo.Pos == msg.Pos {
+								if client.crossInfo.AccInfo.Login == msg.User && client.crossInfo.Pos == msg.Pos {
 									client.send <- resp
 								}
 							}
@@ -220,7 +220,7 @@ func (h *HubControlCross) Run(db *sqlx.DB) {
 						resp.Type = typeCreateB
 						resp.Data["status"] = msg.Status
 						for client := range h.clients {
-							if client.crossInfo.Login == msg.User && client.crossInfo.Pos == msg.Pos {
+							if client.crossInfo.AccInfo.Login == msg.User && client.crossInfo.Pos == msg.Pos {
 								client.send <- resp
 							}
 						}
@@ -241,7 +241,7 @@ func (h *HubControlCross) Run(db *sqlx.DB) {
 						} else {
 							// если нету поля отправить ошибку только пользователю
 							for client := range h.clients {
-								if client.crossInfo.Login == msg.User && client.crossInfo.Pos == msg.Pos {
+								if client.crossInfo.AccInfo.Login == msg.User && client.crossInfo.Pos == msg.Pos {
 									client.send <- resp
 								}
 							}

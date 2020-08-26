@@ -82,7 +82,7 @@ func (h *HubXctrl) Run(db *sqlx.DB) {
 
 				fmt.Printf("xctrl reg: ")
 				for client := range h.clients {
-					fmt.Printf("%v ", client.xInfo.login)
+					fmt.Printf("%v ", client.xInfo.Login)
 				}
 				fmt.Printf("\n")
 			}
@@ -96,7 +96,7 @@ func (h *HubXctrl) Run(db *sqlx.DB) {
 
 				fmt.Printf("xctrl unReg: ")
 				for client := range h.clients {
-					fmt.Printf("%v ", client.xInfo.login)
+					fmt.Printf("%v ", client.xInfo.Login)
 				}
 				fmt.Printf("\n")
 			}
@@ -116,7 +116,7 @@ func (h *HubXctrl) Run(db *sqlx.DB) {
 				resp := newXctrlMess(typeClose, nil)
 				resp.Data["message"] = "пользователь вышел из системы"
 				for client := range h.clients {
-					if client.xInfo.login == login {
+					if client.xInfo.Login == login {
 						client.send <- resp
 					}
 				}

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/JanFant/TLServer/internal/model/accToken"
 	"github.com/JanFant/TLServer/internal/model/data"
 	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/gin-gonic/gin"
@@ -9,7 +10,8 @@ import (
 //DisplayAccInfo отображение информации об аккаунтах для администрирования
 var DisplayAccInfo = func(c *gin.Context) {
 	privilege := &data.Privilege{}
-	mapContx := u.ParserInterface(c.Value("info"))
-	resp := privilege.DisplayInfoForAdmin(mapContx)
+	accTK, _ := c.Get("tk")
+	accInfo, _ := accTK.(*accToken.Token)
+	resp := privilege.DisplayInfoForAdmin(accInfo)
 	u.SendRespond(c, resp)
 }

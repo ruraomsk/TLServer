@@ -16,8 +16,6 @@ func Message(code int, message string) Response {
 
 //SendRespond формирует ответ пользователю записывает
 func SendRespond(c *gin.Context, resp Response) {
-	//if resp.Code != http.StatusOK {
-	writeLogMessage(c.Request.RemoteAddr, c.Request.RequestURI, resp.Obj, c.Value("info"))
-	//}
+	writeLogMessage(c.Request.RemoteAddr, c.Request.RequestURI, resp.Obj, c.Param("slug"))
 	c.JSON(resp.Code, resp.Obj)
 }

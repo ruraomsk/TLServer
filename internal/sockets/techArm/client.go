@@ -22,9 +22,6 @@ const (
 	// Send pings to peer with this period. Must be less than pongWait.
 	pingPeriod = (pongWait * 9) / 10
 
-	// Maximum message size allowed from peer.
-	maxMessageSize = 1024 * 100
-
 	devUpdate = time.Second * 1
 )
 
@@ -85,7 +82,7 @@ func (c *ClientTechArm) readPump(db *sqlx.DB) {
 		//ну отправка и отправка
 		typeSelect, err := sockets.ChoseTypeMessage(p)
 		if err != nil {
-			logger.Error.Printf("|IP: %v |Login: %v |Resource: /techArm |Message: %v \n", c.armInfo.ip, c.armInfo.Login, err.Error())
+			logger.Error.Printf("|IP: %v |Login: %v |Resource: /techArm |Message: %v \n", c.armInfo.AccInfo.IP, c.armInfo.AccInfo.Login, err.Error())
 			resp := newArmMess(typeError, nil)
 			resp.Data["message"] = ErrorMessage{Error: errParseType}
 			c.send <- resp
@@ -96,9 +93,9 @@ func (c *ClientTechArm) readPump(db *sqlx.DB) {
 			{
 				arm := comm.CommandARM{}
 				_ = json.Unmarshal(p, &arm)
-				arm.User = c.armInfo.Login
+				arm.User = c.armInfo.AccInfo.Login
 				var mess = tcpConnect.TCPMessage{
-					User:        c.armInfo.Login,
+					User:        c.armInfo.AccInfo.Login,
 					TCPType:     tcpConnect.TypeDispatch,
 					Idevice:     arm.ID,
 					Data:        arm,
@@ -111,9 +108,9 @@ func (c *ClientTechArm) readPump(db *sqlx.DB) {
 			{
 				gps := comm.ChangeProtocol{}
 				_ = json.Unmarshal(p, &gps)
-				gps.User = c.armInfo.Login
+				gps.User = c.armInfo.AccInfo.Login
 				var mess = tcpConnect.TCPMessage{
-					User:        c.armInfo.Login,
+					User:        c.armInfo.AccInfo.Login,
 					TCPType:     tcpConnect.TypeChangeProtocol,
 					Idevice:     gps.ID,
 					Data:        gps,

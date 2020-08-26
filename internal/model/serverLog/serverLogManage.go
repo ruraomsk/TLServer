@@ -2,6 +2,7 @@ package serverLog
 
 import (
 	"fmt"
+	"github.com/JanFant/TLServer/internal/model/accToken"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -41,7 +42,7 @@ func DisplayServerLogFiles(logPath string) u.Response {
 }
 
 //DisplayServerFileLog получение данных из заданного файла
-func DisplayServerFileLog(fileName, logPath string, mapContex map[string]string, db *sqlx.DB) u.Response {
+func DisplayServerFileLog(fileName, logPath string, accInfo *accToken.Token, db *sqlx.DB) u.Response {
 	path := logPath + "//" + fileName + logFileSuffix
 	byteFile, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -50,8 +51,8 @@ func DisplayServerFileLog(fileName, logPath string, mapContex map[string]string,
 		return resp
 	}
 	var loginNames []string
-	if mapContex["region"] != "*" {
-		sqlStr := fmt.Sprintf(`SELECT login FROM public.accounts WHERE privilege::jsonb @> '{"region":"%s"}'::jsonb`, mapContex["region"])
+	if accInfo.Region != "*" {
+		sqlStr := fmt.Sprintf(`SELECT login FROM public.accounts WHERE privilege::jsonb @> '{"region":"%s"}'::jsonb`, accInfo.Region)
 		rowsTL, err := db.Query(sqlStr)
 		if err != nil {
 			return u.Message(http.StatusBadRequest, "display info: Bad request")

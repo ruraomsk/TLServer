@@ -3,6 +3,7 @@ package deviceLog
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/JanFant/TLServer/internal/model/accToken"
 	"net/http"
 	"time"
 
@@ -47,11 +48,11 @@ func (busyArm *BusyArm) toStruct(str string) (err error) {
 }
 
 //DisplayDeviceLog формирование начальной информации отображения логов устройства
-func DisplayDeviceLog(mapContx map[string]string, db *sqlx.DB) u.Response {
+func DisplayDeviceLog(accInfo *accToken.Token, db *sqlx.DB) u.Response {
 	var devices []BusyArm
 	var sqlStr = fmt.Sprintf(`SELECT distinct on (crossinfo->'region', crossinfo->'area', crossinfo->'ID') crossinfo, id FROM public.logdevice`)
-	if mapContx["region"] != "*" {
-		sqlStr += fmt.Sprintf(` WHERE crossinfo::jsonb @> '{"region": "%v"}'::jsonb`, mapContx["region"])
+	if accInfo.Region != "*" {
+		sqlStr += fmt.Sprintf(` WHERE crossinfo::jsonb @> '{"region": "%v"}'::jsonb`, accInfo.Region)
 	}
 	rowsDevice, err := db.Query(sqlStr)
 	if err != nil {

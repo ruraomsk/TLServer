@@ -97,7 +97,7 @@ func (h *HubGStreet) Run(db *sqlx.DB) {
 
 				fmt.Printf("gStreet reg: ")
 				for client := range h.clients {
-					fmt.Printf("%v ", client.cInfo.login)
+					fmt.Printf("%v ", client.cInfo.Login)
 				}
 				fmt.Printf("\n")
 			}
@@ -111,7 +111,7 @@ func (h *HubGStreet) Run(db *sqlx.DB) {
 
 				fmt.Println("gStreet unReg: ")
 				for client := range h.clients {
-					fmt.Printf("%v ", client.cInfo.login)
+					fmt.Printf("%v ", client.cInfo.Login)
 				}
 				fmt.Printf("\n")
 			}
@@ -131,7 +131,7 @@ func (h *HubGStreet) Run(db *sqlx.DB) {
 				resp := newGSMess(typeClose, nil)
 				resp.Data["message"] = "пользователь вышел из системы"
 				for client := range h.clients {
-					if client.cInfo.login == login {
+					if client.cInfo.Login == login {
 						client.send <- resp
 					}
 				}
@@ -146,7 +146,7 @@ func (h *HubGStreet) Run(db *sqlx.DB) {
 					sockets.DispatchMessageFromAnotherPlace <- message
 				}
 				for client := range h.clients {
-					if client.cInfo.login == msg.User {
+					if client.cInfo.Login == msg.User {
 						client.send <- resp
 					}
 				}

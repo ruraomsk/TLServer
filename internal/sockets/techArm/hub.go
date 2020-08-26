@@ -161,7 +161,7 @@ func (h *HubTechArm) Run(db *sqlx.DB) {
 
 				fmt.Printf("techArm reg: ")
 				for client := range h.clients {
-					fmt.Printf("%v ", client.armInfo)
+					fmt.Printf("%v ", client.armInfo.AccInfo.Login)
 				}
 				fmt.Printf("\n")
 			}
@@ -175,7 +175,7 @@ func (h *HubTechArm) Run(db *sqlx.DB) {
 
 				fmt.Printf("techArm unReg: ")
 				for client := range h.clients {
-					fmt.Printf("%v ", client.armInfo)
+					fmt.Printf("%v ", client.armInfo.AccInfo.Login)
 				}
 				fmt.Printf("\n")
 			}
@@ -195,7 +195,7 @@ func (h *HubTechArm) Run(db *sqlx.DB) {
 				resp := newArmMess(typeClose, nil)
 				resp.Data["message"] = "пользователь вышел из системы"
 				for client := range h.clients {
-					if client.armInfo.Login == login {
+					if client.armInfo.AccInfo.Login == login {
 						client.send <- resp
 					}
 				}
@@ -222,7 +222,7 @@ func (h *HubTechArm) Run(db *sqlx.DB) {
 				}
 
 				for client := range h.clients {
-					if client.armInfo.Login == msg.User {
+					if client.armInfo.AccInfo.Login == msg.User {
 						client.send <- resp
 					}
 				}

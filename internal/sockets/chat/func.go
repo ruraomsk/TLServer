@@ -1,12 +1,13 @@
 package chat
 
-import "github.com/jmoiron/sqlx"
+import (
+	"github.com/JanFant/TLServer/internal/model/accToken"
+	"github.com/jmoiron/sqlx"
+)
 
 type clientInfo struct {
-	login  string
-	status string
-	ip     string
-	token  string
+	status  string
+	accInfo *accToken.Token
 }
 
 //userInfo информация о статусе юзера
@@ -18,7 +19,7 @@ type userInfo struct {
 //setStatus установить статус пользователя
 func (u *userInfo) setStatus(h *HubChat) {
 	for client := range h.clients {
-		if client.clientInfo.login == u.User {
+		if client.clientInfo.accInfo.Login == u.User {
 			u.Status = statusOnline
 			break
 		}

@@ -1,6 +1,7 @@
 package crossSock
 
 import (
+	"github.com/JanFant/TLServer/internal/model/accToken"
 	u "github.com/JanFant/TLServer/internal/utils"
 	"net/http"
 )
@@ -12,7 +13,7 @@ type CrossDisc struct {
 }
 
 //DisplayCrossEditInfo сбор информации для отображения информации о редактируемых страницах
-func DisplayCrossEditInfo(mapContx map[string]string) u.Response {
+func DisplayCrossEditInfo(accInfo *accToken.Token) u.Response {
 	resp := u.Message(http.StatusOK, "edit info")
 
 	GetArmUsersForDisplay <- true
@@ -27,10 +28,10 @@ func DisplayCrossEditInfo(mapContx map[string]string) u.Response {
 		crosses = make([]CrossInfo, 0)
 	}
 
-	if mapContx["region"] != "*" {
+	if accInfo.Region != "*" {
 		var temp = make([]CrossInfo, 0)
 		for _, arm := range arms {
-			if arm.Pos.Region == mapContx["region"] {
+			if arm.Pos.Region == accInfo.Region {
 				temp = append(temp, arm)
 			}
 		}
@@ -38,7 +39,7 @@ func DisplayCrossEditInfo(mapContx map[string]string) u.Response {
 
 		temp = make([]CrossInfo, 0)
 		for _, cross := range crosses {
-			if cross.Pos.Region == mapContx["region"] {
+			if cross.Pos.Region == accInfo.Region {
 				temp = append(temp, cross)
 			}
 		}

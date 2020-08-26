@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
+	"github.com/JanFant/TLServer/internal/model/accToken"
 	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/model/routeGS"
 	"github.com/JanFant/TLServer/internal/sockets"
@@ -25,9 +26,6 @@ const (
 	// Send pings to peer with this period. Must be less than pongWait.
 	pingPeriod = (pongWait * 9) / 10
 
-	// Maximum message size allowed from peer.
-	maxMessageSize = 1024 * 100
-
 	crossPeriod = time.Second * 5
 )
 
@@ -37,13 +35,7 @@ type ClientGS struct {
 	conn *websocket.Conn
 	send chan gSResponse
 
-	cInfo *clientInfo
-}
-
-type clientInfo struct {
-	login string
-	ip    string
-	token string
+	cInfo *accToken.Token
 }
 
 //readPump обработчик чтения сокета
@@ -72,7 +64,7 @@ func (c *ClientGS) readPump(db *sqlx.DB) {
 		//ну отправка и отправка
 		typeSelect, err := sockets.ChoseTypeMessage(p)
 		if err != nil {
-			logger.Error.Printf("|IP: %v |Login: %v |Resource: /greenStreet |Message: %v \n", c.cInfo.ip, c.cInfo.login, err.Error())
+			logger.Error.Printf("|IP: %v |Login: %v |Resource: /greenStreet |Message: %v \n", c.cInfo.IP, c.cInfo.Login, err.Error())
 			resp := newGSMess(typeError, nil)
 			resp.Data["message"] = ErrorMessage{Error: errParseType}
 			c.send <- resp
@@ -134,7 +126,7 @@ func (c *ClientGS) readPump(db *sqlx.DB) {
 			{
 				arm := comm.CommandARM{}
 				_ = json.Unmarshal(p, &arm)
-				arm.User = c.cInfo.login
+				arm.User = c.cInfo.Login
 				var mess = tcpConnect.TCPMessage{
 					User:        arm.User,
 					TCPType:     tcpConnect.TypeDispatch,

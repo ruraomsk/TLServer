@@ -1,6 +1,7 @@
 package mainCross
 
 import (
+	"github.com/JanFant/TLServer/internal/model/accToken"
 	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/JanFant/TLServer/internal/sockets/crossSock"
 	"github.com/JanFant/TLServer/internal/sockets/maps"
@@ -33,24 +34,14 @@ func HMainCross(c *gin.Context, hub *HubCross, db *sqlx.DB) {
 		return
 	}
 
-	//a, _ := c.Get("token")
-	//fmt.Println("1 ", a)
-	//a1, _ := c.Get("tk")
-	//fmt.Println("2 ", a1)
-	//a2, ok := a1.(*accToken.Token)
-	//fmt.Println("1231123  ",ok, "      ", a2)
+	accTK, _ := c.Get("tk")
+	accInfo, _ := accTK.(*accToken.Token)
 
-	token, _ := c.Cookie("Authorization")
-	mapContx := u.ParserInterface(c.Value("info"))
 	var crossInfo = crossSock.CrossInfo{
-		Login:   mapContx["login"],
-		Role:    mapContx["role"],
 		Edit:    false,
 		Idevice: 0,
 		Pos:     crEdit,
-		Ip:      c.ClientIP(),
-		Region:  mapContx["region"],
-		Token:   token,
+		AccInfo: accInfo,
 	}
 
 	client := &ClientCross{hub: hub, conn: conn, send: make(chan crossResponse, 256), crossInfo: crossInfo, regStatus: make(chan bool)}

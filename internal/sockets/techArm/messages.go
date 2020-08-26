@@ -1,6 +1,7 @@
 package techArm
 
 import (
+	"github.com/JanFant/TLServer/internal/model/accToken"
 	"github.com/ruraomsk/ag-server/pudge"
 )
 
@@ -41,8 +42,8 @@ var (
 		12: "противозаторовое управление",
 	}
 	GPSInfo = struct {
-		IP   string `json:"ip", toml:"tcpServerAddress"`
-		Port string `json:"port", toml:"portGPS"`
+		IP   string `json:"ip" ,toml:"tcpServerAddress"`
+		Port string `json:"port" ,toml:"portGPS"`
 	}{}
 )
 
@@ -71,11 +72,9 @@ type ErrorMessage struct {
 
 //ArmInfo информация о запрашиваемом арме
 type ArmInfo struct {
-	Login  string   `json:"login"`  //логин
-	ip     string   `json:"-"`      //ip пользоателя
-	Region int      `json:"region"` //регион
-	Area   []string `json:"area"`   //район
-	token  string
+	Region  int      `json:"region"` //регион запрошенные пользователем
+	Area    []string `json:"area"`   //район запрошенные пользователем
+	AccInfo *accToken.Token
 }
 
 //CrossInfo информация о перекрестке для техАРМ

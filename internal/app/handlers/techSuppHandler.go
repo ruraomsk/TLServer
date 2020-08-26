@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/JanFant/TLServer/internal/model/accToken"
 	"github.com/JanFant/TLServer/internal/model/data"
 	"net/http"
 
@@ -18,7 +19,8 @@ var TechSupp = func(c *gin.Context) {
 		u.SendRespond(c, u.Message(http.StatusBadRequest, "invalid request"))
 		return
 	}
-	mapContx := u.ParserInterface(c.Value("info"))
-	resp := techSupport.SendEmail(emailInfo, mapContx["login"], license.LicenseFields.CompanyName, license.LicenseFields.Address, data.GetDB())
+	accTK, _ := c.Get("tk")
+	accInfo, _ := accTK.(*accToken.Token)
+	resp := techSupport.SendEmail(emailInfo, accInfo.Login, license.LicenseFields.CompanyName, license.LicenseFields.Address, data.GetDB())
 	u.SendRespond(c, resp)
 }

@@ -1,6 +1,7 @@
 package chat
 
 import (
+	"github.com/JanFant/TLServer/internal/model/accToken"
 	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -22,13 +23,12 @@ func HChat(c *gin.Context, hub *HubChat, db *sqlx.DB) {
 		return
 	}
 
-	token, _ := c.Cookie("Authorization")
-	mapContx := u.ParserInterface(c.Value("info"))
+	accTK, _ := c.Get("tk")
+	accInfo, _ := accTK.(*accToken.Token)
+
 	var cInfo = clientInfo{
-		login:  mapContx["login"],
-		status: statusOnline,
-		ip:     c.ClientIP(),
-		token:  token,
+		status:  statusOnline,
+		accInfo: accInfo,
 	}
 	client := &ClientChat{hub: hub, conn: conn, send: make(chan chatResponse, 256), clientInfo: cInfo}
 
