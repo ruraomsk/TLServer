@@ -33,7 +33,11 @@ func NewGSHub() *HubGStreet {
 func (h *HubGStreet) Run(db *sqlx.DB) {
 
 	crossReadTick := time.NewTicker(crossPeriod)
-	defer crossReadTick.Stop()
+	checkValidityTicker := time.NewTicker(checkTokensValidity)
+	defer func() {
+		crossReadTick.Stop()
+		checkValidityTicker.Stop()
+	}()
 
 	oldTFs := maps.SelectTL(db)
 	for {
@@ -133,6 +137,16 @@ func (h *HubGStreet) Run(db *sqlx.DB) {
 				for client := range h.clients {
 					if client.cInfo.Login == login {
 						client.send <- resp
+					}
+				}
+			}
+		case <-checkValidityTicker.C:
+			{
+				for client := range h.clients {
+					if client.cInfo.Valid() != nil {
+						msg := newGSMess(typeClose, nil)
+						msg.Data["message"] = "вышло время сеанса пользователя"
+						client.send <- msg
 					}
 				}
 			}

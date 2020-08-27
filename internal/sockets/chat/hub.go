@@ -3,6 +3,7 @@ package chat
 import (
 	"fmt"
 	"github.com/jmoiron/sqlx"
+	"time"
 )
 
 //HubChat структура хаба для cross
@@ -27,7 +28,8 @@ func NewChatHub() *HubChat {
 func (h *HubChat) Run(db *sqlx.DB) {
 
 	UserLogoutChat = make(chan string)
-
+	checkValidityTicker := time.NewTicker(checkTokensValidity)
+	defer checkValidityTicker.Stop()
 	for {
 		select {
 		case client := <-h.register:
@@ -121,6 +123,16 @@ func (h *HubChat) Run(db *sqlx.DB) {
 					if client.clientInfo.accInfo.Login == login {
 						msg := newChatMess(typeClose, nil)
 						msg.Data["message"] = "пользователь вышел из системы"
+						client.send <- msg
+					}
+				}
+			}
+		case <-checkValidityTicker.C:
+			{
+				for client := range h.clients {
+					if client.clientInfo.accInfo.Valid() != nil {
+						msg := newChatMess(typeClose, nil)
+						msg.Data["message"] = "вышло время сеанса пользователя"
 						client.send <- msg
 					}
 				}

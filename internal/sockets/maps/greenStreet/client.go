@@ -26,7 +26,8 @@ const (
 	// Send pings to peer with this period. Must be less than pongWait.
 	pingPeriod = (pongWait * 9) / 10
 
-	crossPeriod = time.Second * 5
+	crossPeriod         = time.Second * 5
+	checkTokensValidity = time.Minute * 1
 )
 
 //ClientGS информация о подключившемся пользователе

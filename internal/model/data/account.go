@@ -196,7 +196,7 @@ func SuperCreate() {
 	account := &Account{}
 	account.Login = AutomaticLogin
 	//Отдаем ключ для yandex map
-	account.WorkTime = 24
+	account.WorkTime = 24 * 60
 	account.Password = "$2a$10$ZCWyIEfEVF3KGj6OUtIeSOQ3WexMjuAZ43VSO6T.QqOndn4HN1J6C"
 	account.Description = "Tech"
 	privilege := NewPrivilege("Admin", "*", []string{"*"})
@@ -209,7 +209,7 @@ func SuperCreate() {
 	account = &Account{}
 	account.Login = "Moscow"
 	//Отдаем ключ для yandex map
-	account.WorkTime = 12
+	account.WorkTime = 12 * 60
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	account.Description = "Moscow ADs"
 	privilege = NewPrivilege("RegAdmin", "1", []string{"1", "2", "3"})
@@ -221,7 +221,7 @@ func SuperCreate() {
 	account = &Account{}
 	account.Login = "Sachalin"
 	//Отдаем ключ для yandex map
-	account.WorkTime = 12
+	account.WorkTime = 12 * 60
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	account.Description = "Sachalin"
 	privilege = NewPrivilege("RegAdmin", "3", []string{"1"})
@@ -234,7 +234,7 @@ func SuperCreate() {
 	account = &Account{}
 	account.Login = "Cykotka"
 	//Отдаем ключ для yandex map
-	account.WorkTime = 12
+	account.WorkTime = 12 * 60
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	account.Description = "Cykotka"
 	privilege = NewPrivilege("RegAdmin", "2", []string{"1", "2", "3"})
@@ -247,7 +247,7 @@ func SuperCreate() {
 	account = &Account{}
 	account.Login = "All"
 	//Отдаем ключ для yandex map
-	account.WorkTime = 1000
+	account.WorkTime = 1000 * 60
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	account.Description = "ALLLLLLAAAAALLLLAAA"
 	privilege = NewPrivilege("Admin", "*", []string{"*"})
@@ -259,7 +259,7 @@ func SuperCreate() {
 	account = &Account{}
 	account.Login = "Пупкин И.И."
 	//Отдаем ключ для yandex map
-	account.WorkTime = 24
+	account.WorkTime = 24 * 60
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	account.Description = "ЦУП"
 	privilege = NewPrivilege("RegAdmin", "1", []string{"1", "2", "3"})
@@ -271,7 +271,7 @@ func SuperCreate() {
 	account = &Account{}
 	account.Login = "Marina"
 	//Отдаем ключ для yandex map
-	account.WorkTime = 1000
+	account.WorkTime = 1000 * 60
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	account.Description = "Marina ARM"
 	privilege = NewPrivilege("Admin", "*", []string{"*"})
@@ -283,7 +283,7 @@ func SuperCreate() {
 	account = &Account{}
 	account.Login = "Rura"
 	//Отдаем ключ для yandex map
-	account.WorkTime = 12
+	account.WorkTime = 12 * 60
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	account.Description = "BoSS"
 	privilege = NewPrivilege("Admin", "*", []string{"*"})
@@ -295,7 +295,7 @@ func SuperCreate() {
 	account = &Account{}
 	account.Login = "Alex_B"
 	//Отдаем ключ для yandex map
-	account.WorkTime = 24
+	account.WorkTime = 24 * 60
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	account.Description = "Alex_B Description"
 	privilege = NewPrivilege("Admin", "*", []string{"*"})
@@ -307,7 +307,7 @@ func SuperCreate() {
 	account = &Account{}
 	account.Login = "MMM"
 	//Отдаем ключ для yandex map
-	account.WorkTime = 10000
+	account.WorkTime = 10000 * 60
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	account.Description = "MMMMMMMMMMMMM"
 	privilege = NewPrivilege("Admin", "*", []string{"*"})
@@ -319,7 +319,7 @@ func SuperCreate() {
 	account = &Account{}
 	account.Login = "Admin"
 	//Отдаем ключ для yandex map
-	account.WorkTime = 10000
+	account.WorkTime = 10000 * 60
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	account.Description = "Admin KEKW"
 	privilege = NewPrivilege("Admin", "*", []string{"*"})
@@ -331,7 +331,7 @@ func SuperCreate() {
 	account = &Account{}
 	account.Login = "RegAdmin"
 	//Отдаем ключ для yandex map
-	account.WorkTime = 12
+	account.WorkTime = 12 * 60
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	account.Description = "RegA"
 	privilege = NewPrivilege("RegAdmin", "1", []string{"1", "2", "3"})
@@ -343,7 +343,7 @@ func SuperCreate() {
 	account = &Account{}
 	account.Login = "User"
 	//Отдаем ключ для yandex map
-	account.WorkTime = 12
+	account.WorkTime = 12 * 60
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	account.Description = "User"
 	privilege = NewPrivilege("User", "2", []string{"2"})
@@ -355,7 +355,7 @@ func SuperCreate() {
 	account = &Account{}
 	account.Login = "Viewer"
 	//Отдаем ключ для yandex map
-	account.WorkTime = 12
+	account.WorkTime = 12 * 60
 	account.Password = "$2a$10$BPvHSsc5VO5zuuZqUFltJeln93d28So27gt81zE0MyAAjnrv8OfaW"
 	account.Description = "View ASD"
 	privilege = NewPrivilege("Viewer", "3", []string{"1"})

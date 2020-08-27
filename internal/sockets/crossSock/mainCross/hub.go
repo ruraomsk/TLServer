@@ -59,7 +59,11 @@ func (h *HubCross) Run(db *sqlx.DB) {
 	globArrPhase := make(map[int]phaseInfo)
 
 	updateTicker := time.NewTicker(readCrossTick)
-	defer updateTicker.Stop()
+	checkValidityTicker := time.NewTicker(checkTokensValidity)
+	defer func() {
+		updateTicker.Stop()
+		checkValidityTicker.Stop()
+	}()
 
 	for {
 		select {
@@ -216,10 +220,9 @@ func (h *HubCross) Run(db *sqlx.DB) {
 				resp, Idevice, description := takeCrossInfo(client.crossInfo.Pos, db)
 				client.crossInfo.Idevice = Idevice
 				client.crossInfo.Description = description
-				resp.Data["controlCrossFlag"] = false
-				controlCrossFlag, _ := data.AccessCheck(client.crossInfo.AccInfo.Login, client.crossInfo.AccInfo.Role, 4)
+				resp.Data["access"] = false
 				if (fmt.Sprint(resp.Data["region"]) == client.crossInfo.AccInfo.Region) || (client.crossInfo.AccInfo.Region == "*") {
-					resp.Data["controlCrossFlag"] = controlCrossFlag
+					resp.Data["access"] = data.AccessCheck(client.crossInfo.AccInfo.Login, 4)
 				}
 				delete(resp.Data, "region")
 
@@ -337,6 +340,16 @@ func (h *HubCross) Run(db *sqlx.DB) {
 					if client.crossInfo.AccInfo.Login == login {
 						msg := newCrossMess(typeClose, nil)
 						msg.Data["message"] = "пользователь вышел из системы"
+						client.send <- msg
+					}
+				}
+			}
+		case <-checkValidityTicker.C:
+			{
+				for client := range h.clients {
+					if client.crossInfo.AccInfo.Valid() != nil {
+						msg := newCrossMess(typeClose, nil)
+						msg.Data["message"] = "вышло время сеанса пользователя"
 						client.send <- msg
 					}
 				}

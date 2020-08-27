@@ -22,9 +22,8 @@ const (
 	pongWait = 60 * time.Second
 
 	// Send pings to peer with this period. Must be less than pongWait.
-	pingPeriod = (pongWait * 9) / 10
-
-	// Maximum message size allowed from peer.
+	pingPeriod          = (pongWait * 9) / 10
+	checkTokensValidity = time.Minute * 1
 )
 
 //ClientControlCr информация о подключившемся пользователе

@@ -102,12 +102,8 @@ func (h *HubMainMap) Run(db *sqlx.DB) {
 					resp := newMapMess(typeMapInfo, maps.MapOpenInfo(db))
 					if flag {
 						login := tk.Login
-						role := tk.Role
 						resp.Data["role"] = tk.Role
-						resp.Data["manageFlag"], _ = data.AccessCheck(login, role, 2)
-						resp.Data["logDeviceFlag"], _ = data.AccessCheck(login, role, 5)
-						resp.Data["techArmFlag"], _ = data.AccessCheck(login, role, 7)
-						resp.Data["gsFlag"], _ = data.AccessCheck(login, role, 8)
+						resp.Data["access"] = data.AccessCheck(login, 2, 5, 6, 7, 8, 9)
 						resp.Data["description"] = tk.Description
 						resp.Data["authorizedFlag"] = true
 						resp.Data["region"] = tk.Region

@@ -23,7 +23,8 @@ const (
 	// Send pings to peer with this period. Must be less than pongWait.
 	pingPeriod = (pongWait * 9) / 10
 
-	readCrossTick = time.Second * 1
+	readCrossTick       = time.Second * 1
+	checkTokensValidity = time.Minute * 1
 )
 
 //ClientCross информация о подключившемся пользователе

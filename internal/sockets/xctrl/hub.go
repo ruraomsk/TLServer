@@ -31,7 +31,12 @@ func (h *HubXctrl) Run(db *sqlx.DB) {
 	UserLogoutXctrl = make(chan string)
 
 	updateTicker := time.NewTicker(stateTime)
-	defer updateTicker.Stop()
+	checkValidityTicker := time.NewTicker(checkTokensValidity)
+	defer func() {
+		updateTicker.Stop()
+		checkValidityTicker.Stop()
+	}()
+
 	oldXctrl, _ := getXctrl(db)
 
 	for {
@@ -118,6 +123,16 @@ func (h *HubXctrl) Run(db *sqlx.DB) {
 				for client := range h.clients {
 					if client.xInfo.Login == login {
 						client.send <- resp
+					}
+				}
+			}
+		case <-checkValidityTicker.C:
+			{
+				for client := range h.clients {
+					if client.xInfo.Valid() != nil {
+						msg := newXctrlMess(typeClose, nil)
+						msg.Data["message"] = "вышло время сеанса пользователя"
+						client.send <- msg
 					}
 				}
 			}

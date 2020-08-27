@@ -10,8 +10,6 @@ import (
 	"sync"
 
 	u "github.com/JanFant/TLServer/internal/utils"
-
-	"github.com/pkg/errors"
 )
 
 //RoleInfo глабальная переменная для обращения к мапам
@@ -285,23 +283,26 @@ func NewPrivilege(role, region string, area []string) *Privilege {
 	return &privilege
 }
 
-//RoleCheck проверка полученной роли на соответствие заданной и разрешение на выполнение действия
-func AccessCheck(login, role string, act int) (accept bool, err error) {
-	if role == "Admin" {
-		return true, nil
+//AccessCheck проверка разрешения на доступ к ресурсу
+func AccessCheck(login string, acts ...int) map[int]bool {
+	accessMap := make(map[int]bool)
+	for _, act := range acts {
+		accessMap[act] = false
 	}
 	privilege := Privilege{}
 	//Проверил соответствует ли роль которую мне дали с ролью установленной в БД
-	err = privilege.ReadFromBD(login)
+	err := privilege.ReadFromBD(login)
 	if err != nil {
-		return false, err
+
+		return accessMap
 	}
-	//Проверяю можно ли делать этой роле данное действие
-	for _, perm := range privilege.Role.Perm {
-		if perm == act {
-			return true, nil
+	for _, act := range acts {
+		for _, perm := range privilege.Role.Perm {
+			if perm == act {
+				accessMap[act] = true
+				break
+			}
 		}
 	}
-	err = errors.New("Access denied")
-	return false, err
+	return accessMap
 }

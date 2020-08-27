@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/jmoiron/sqlx"
 	agspudge "github.com/ruraomsk/ag-server/pudge"
+	"time"
 )
 
 //HubCross структура хаба для cross
@@ -37,6 +38,8 @@ func (h *HubControlCross) Run(db *sqlx.DB) {
 	crossSock.DiscArmUsers = make(chan []crossSock.CrossInfo)
 	UserLogoutCrControl = make(chan string)
 
+	checkValidityTicker := time.NewTicker(checkTokensValidity)
+	defer checkValidityTicker.Stop()
 	for {
 		select {
 		case client := <-h.register:
@@ -166,6 +169,16 @@ func (h *HubControlCross) Run(db *sqlx.DB) {
 					if client.crossInfo.AccInfo.Login == login {
 						msg := newControlMess(typeClose, nil)
 						msg.Data["message"] = "пользователь вышел из системы"
+						client.send <- msg
+					}
+				}
+			}
+		case <-checkValidityTicker.C:
+			{
+				for client := range h.clients {
+					if client.crossInfo.AccInfo.Valid() != nil {
+						msg := newControlMess(typeClose, nil)
+						msg.Data["message"] = "вышло время сеанса пользователя"
 						client.send <- msg
 					}
 				}

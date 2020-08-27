@@ -35,9 +35,11 @@ func (h *HubTechArm) Run(db *sqlx.DB) {
 
 	readDeviceTick := time.NewTicker(devUpdate)
 	readCrossTick := time.NewTicker(devUpdate)
+	checkValidityTicker := time.NewTicker(checkTokensValidity)
 	defer func() {
 		readDeviceTick.Stop()
 		readCrossTick.Stop()
+		checkValidityTicker.Stop()
 	}()
 
 	var (
@@ -197,6 +199,16 @@ func (h *HubTechArm) Run(db *sqlx.DB) {
 				for client := range h.clients {
 					if client.armInfo.AccInfo.Login == login {
 						client.send <- resp
+					}
+				}
+			}
+		case <-checkValidityTicker.C:
+			{
+				for client := range h.clients {
+					if client.armInfo.AccInfo.Valid() != nil {
+						msg := newArmMess(typeClose, nil)
+						msg.Data["message"] = "вышло время сеанса пользователя"
+						client.send <- msg
 					}
 				}
 			}

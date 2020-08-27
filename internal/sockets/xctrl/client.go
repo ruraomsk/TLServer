@@ -23,7 +23,8 @@ const (
 	// Send pings to peer with this period. Must be less than pongWait.
 	pingPeriod = (pongWait * 9) / 10
 
-	stateTime = time.Second * 20
+	stateTime           = time.Second * 20
+	checkTokensValidity = time.Minute * 1
 )
 
 var UserLogoutXctrl chan string //канал для закрытия сокетов, пользователя который вышел из системы

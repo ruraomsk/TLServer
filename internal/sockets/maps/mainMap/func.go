@@ -122,7 +122,7 @@ func logIn(login, password, ip string, db *sqlx.DB) map[string]interface{} {
 	//врямя выдачи токена
 	tk.IssuedAt = time.Now().Unix()
 	//время когда закончится действие токена
-	tk.ExpiresAt = time.Now().Add(time.Hour * account.WorkTime).Unix()
+	tk.ExpiresAt = time.Now().Add(time.Minute * account.WorkTime).Unix()
 
 	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tk)
 	tokenStr, _ := token.SignedString([]byte(license.LicenseFields.TokenPass))
@@ -141,10 +141,7 @@ func logIn(login, password, ip string, db *sqlx.DB) map[string]interface{} {
 	resp["login"] = account.Login
 	resp["token"] = tokenStr
 	resp["role"] = privilege.Role.Name
-	resp["manageFlag"], _ = data.AccessCheck(login, privilege.Role.Name, 2)
-	resp["logDeviceFlag"], _ = data.AccessCheck(login, privilege.Role.Name, 5)
-	resp["techArmFlag"], _ = data.AccessCheck(login, privilege.Role.Name, 7)
-	resp["gsFlag"], _ = data.AccessCheck(login, privilege.Role.Name, 8)
+	resp["access"] = data.AccessCheck(login, 2, 5, 6, 7, 8, 9)
 	resp["authorizedFlag"] = true
 	resp["description"] = account.Description
 	resp["region"] = privilege.Region

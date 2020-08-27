@@ -64,6 +64,7 @@ func takeCrossInfo(pos sockets.PosInfo, db *sqlx.DB) (resp crossResponse, idev i
 		resp.Data["phase"] = phase
 	}
 	resp.Data["cross"] = TLignt
+	resp.Data["phase"] = rState.Arrays.SetDK.GetPhases()
 	resp.Data["state"] = rState
 	resp.Data["region"] = TLignt.Region.Num
 	return resp, TLignt.Idevice, TLignt.Description
