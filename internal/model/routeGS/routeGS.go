@@ -30,6 +30,10 @@ func (r *Route) Create(db *sqlx.DB) error {
 	r.setBox()
 	list, _ := json.Marshal(r.List)
 	box, _ := json.Marshal(r.Box)
+	for numR, route := range r.List {
+		rowRoute := db.QueryRow(`SELECT describ FROM public.cross WHERE region = $1 AND area = $2 AND id = $3`, route.Pos.Region, route.Pos.Area, route.Pos.Id)
+		_ = rowRoute.Scan(&r.List[numR].Description)
+	}
 	row := db.QueryRow(`INSERT INTO  public.routes (description, box, listtl, region) VALUES ($1, $2, $3, $4) RETURNING id`, r.Description, string(box), string(list), r.Region)
 	err := row.Scan(&r.Id)
 	if err != nil {
@@ -43,6 +47,10 @@ func (r *Route) Update(db *sqlx.DB) error {
 	r.setBox()
 	list, _ := json.Marshal(r.List)
 	box, _ := json.Marshal(r.Box)
+	for numR, route := range r.List {
+		rowRoute := db.QueryRow(`SELECT describ FROM public.cross WHERE region = $1 AND area = $2 AND id = $3`, route.Pos.Region, route.Pos.Area, route.Pos.Id)
+		_ = rowRoute.Scan(&r.List[numR].Description)
+	}
 	_, err := db.Exec(`UPDATE public.routes SET description = $1, box = $2, listtl = $3 WHERE id = $4 AND region = $5`, r.Description, string(box), string(list), r.Id, r.Region)
 	if err != nil {
 		return err
