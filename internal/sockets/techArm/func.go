@@ -7,6 +7,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+//getCross запроса состояния перекрестков
 func getCross(reg int, db *sqlx.DB) []CrossInfo {
 	var (
 		temp    CrossInfo
@@ -43,6 +44,7 @@ func getCross(reg int, db *sqlx.DB) []CrossInfo {
 	return crosses
 }
 
+//getCross запрос состояния устройств
 func getDevice(db *sqlx.DB) []DevInfo {
 	var (
 		temp    DevInfo

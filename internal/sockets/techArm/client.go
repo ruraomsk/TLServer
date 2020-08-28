@@ -34,7 +34,7 @@ type ClientTechArm struct {
 	conn *websocket.Conn
 	send chan armResponse
 
-	armInfo ArmInfo
+	armInfo *ArmInfo
 }
 
 //readPump обработчик чтения сокета

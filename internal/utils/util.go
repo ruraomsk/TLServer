@@ -4,9 +4,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+//Response ответ http запроса
 type Response struct {
-	Code int
-	Obj  map[string]interface{}
+	Code int                    //код ответа
+	Obj  map[string]interface{} //данные
 }
 
 //Message создает map для ответа пользователю

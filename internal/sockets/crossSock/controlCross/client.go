@@ -32,7 +32,7 @@ type ClientControlCr struct {
 	conn      *websocket.Conn
 	send      chan ControlSokResponse
 	regStatus chan bool
-	crossInfo crossSock.CrossInfo
+	crossInfo *crossSock.CrossInfo
 }
 
 var UserLogoutCrControl chan string

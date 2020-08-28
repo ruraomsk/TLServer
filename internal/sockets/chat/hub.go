@@ -2,7 +2,6 @@ package chat
 
 import (
 	"fmt"
-	"github.com/jmoiron/sqlx"
 	"time"
 )
 
@@ -25,7 +24,7 @@ func NewChatHub() *HubChat {
 }
 
 //Run запуск хаба для xctrl
-func (h *HubChat) Run(db *sqlx.DB) {
+func (h *HubChat) Run() {
 
 	UserLogoutChat = make(chan string)
 	checkValidityTicker := time.NewTicker(checkTokensValidity)
@@ -139,14 +138,4 @@ func (h *HubChat) Run(db *sqlx.DB) {
 			}
 		}
 	}
-}
-
-func (h *HubChat) usersList() []clientInfo {
-	var temp = make([]clientInfo, 0)
-	//for client := range h.clients {
-	//	if client.clientInfo.Edit {
-	//		temp = append(temp, client.clientInfo)
-	//	}
-	//}
-	return temp
 }

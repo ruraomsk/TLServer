@@ -7,11 +7,6 @@ var (
 	typeClose      = "close"
 	typeDButton    = "dispatch"
 	typeChangeEdit = "changeEdit"
-	//typeCrossBuild     = "crossBuild"
-	//typePhase          = "phase"
-	//typeCrossUpdate    = "crossUpdate"
-	//typeStateChange    = "stateChange"
-	//typeEditCrossUsers = "editCrossUsers"
 
 	typeSendB     = "sendB"
 	typeCheckB    = "checkB"

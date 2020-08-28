@@ -25,14 +25,6 @@ import (
 
 //StartServer запуск сервера
 func StartServer(conf *ServerConf, db *sqlx.DB) {
-
-	//go chat.CBroadcast()
-	//go maps.MapBroadcast(data.GetDB())
-	//go crossSock.CrossBroadcast(data.GetDB())
-	//go crossSock.ControlBroadcast()
-	//go techArm.ArmTechBroadcast(data.GetDB())
-	//go maps.GSBroadcast(data.GetDB())
-
 	mainMapHub := mainMap.NewMainMapHub()
 	mainCrossHub := mainCross.NewCrossHub()
 	controlCrHub := controlCross.NewCrossHub()
@@ -47,7 +39,7 @@ func StartServer(conf *ServerConf, db *sqlx.DB) {
 	go techArmHub.Run(db)
 	go xctrlHub.Run(db)
 	go gsHub.Run(db)
-	go chatHub.Run(db)
+	go chatHub.Run()
 
 	// Создаем engine для соединений
 	router := gin.Default()

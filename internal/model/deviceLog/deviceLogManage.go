@@ -26,7 +26,6 @@ type LogDeviceInfo struct {
 	Devices   []BusyArm `json:"devices"`   //информация о девайсах
 	TimeStart time.Time `json:"timeStart"` //время начала отсчета
 	TimeEnd   time.Time `json:"timeEnd"`   //время конца отсчета
-	structStr string    //строка для запроса в бд
 }
 
 //BusyArm информация о занятом перекрестке

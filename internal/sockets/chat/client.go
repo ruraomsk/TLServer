@@ -29,7 +29,7 @@ type ClientChat struct {
 	hub        *HubChat
 	conn       *websocket.Conn
 	send       chan chatResponse
-	clientInfo clientInfo
+	clientInfo *clientInfo
 }
 
 //readPump обработчик чтения сокета

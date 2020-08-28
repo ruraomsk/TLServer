@@ -17,7 +17,7 @@ import (
 
 //Account структура аккаунта пользователя
 type Account struct {
-	Description string             `json:"description"` //какая-то хуйня!!!?!??!?!?!?!?!!?
+	Description string             `json:"description"` //описание арм
 	Login       string             `json:"login"`       //Имя пользователя
 	Password    string             `json:"password"`    //Пароль
 	BoxPoint    locations.BoxPoint `json:"boxPoint"`    //Точки области отображения

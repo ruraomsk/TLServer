@@ -49,7 +49,7 @@ func HControlCross(c *gin.Context, hub *HubControlCross, db *sqlx.DB) {
 		AccInfo: accInfo,
 	}
 
-	client := &ClientControlCr{hub: hub, conn: conn, send: make(chan ControlSokResponse, 256), crossInfo: crossInfo, regStatus: make(chan bool)}
+	client := &ClientControlCr{hub: hub, conn: conn, send: make(chan ControlSokResponse, 256), crossInfo: &crossInfo, regStatus: make(chan bool)}
 	client.hub.register <- client
 	rs := <-client.regStatus
 	if rs {

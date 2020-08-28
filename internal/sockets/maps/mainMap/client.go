@@ -43,7 +43,6 @@ type ClientMainMap struct {
 //readPump обработчик чтения сокета
 func (c *ClientMainMap) readPump(db *sqlx.DB) {
 	//если нужно указать лимит пакета
-	//c.conn.SetReadLimit(maxMessageSize)
 
 	_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error { _ = c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })

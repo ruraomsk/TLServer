@@ -30,7 +30,7 @@ func HChat(c *gin.Context, hub *HubChat, db *sqlx.DB) {
 		status:  statusOnline,
 		accInfo: accInfo,
 	}
-	client := &ClientChat{hub: hub, conn: conn, send: make(chan chatResponse, 256), clientInfo: cInfo}
+	client := &ClientChat{hub: hub, conn: conn, send: make(chan chatResponse, 256), clientInfo: &cInfo}
 
 	client.hub.register <- client
 	go client.writePump()

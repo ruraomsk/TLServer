@@ -51,7 +51,7 @@ func HTechArm(c *gin.Context, hub *HubTechArm, db *sqlx.DB) {
 		AccInfo: accInfo,
 	}
 
-	client := &ClientTechArm{hub: hub, conn: conn, send: make(chan armResponse, 256), armInfo: armInfo}
+	client := &ClientTechArm{hub: hub, conn: conn, send: make(chan armResponse, 256), armInfo: &armInfo}
 	client.hub.register <- client
 
 	go client.writePump()

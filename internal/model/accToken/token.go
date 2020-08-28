@@ -9,7 +9,7 @@ import (
 type Token struct {
 	Login       string   //Уникальный логин пользователя
 	IP          string   //IP пользователя
-	Description string   //какая-то хуйня!!!?!??!?!?!?!?!!?
+	Description string   //описание арм
 	Role        string   //Роль
 	Permission  []int    //Привелегии
 	Region      string   //Регион пользователя
@@ -17,6 +17,7 @@ type Token struct {
 	jwt.StandardClaims
 }
 
+//Parse разобрать токен
 func (t *Token) Parse(tokenStr string) (*jwt.Token, error) {
 	token, err := jwt.ParseWithClaims(tokenStr, t, func(token *jwt.Token) (interface{}, error) {
 		return []byte(license.LicenseFields.TokenPass), nil

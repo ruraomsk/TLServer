@@ -44,7 +44,7 @@ func HMainCross(c *gin.Context, hub *HubCross, db *sqlx.DB) {
 		AccInfo: accInfo,
 	}
 
-	client := &ClientCross{hub: hub, conn: conn, send: make(chan crossResponse, 256), crossInfo: crossInfo, regStatus: make(chan bool)}
+	client := &ClientCross{hub: hub, conn: conn, send: make(chan crossResponse, 256), crossInfo: &crossInfo, regStatus: make(chan bool)}
 	client.hub.register <- client
 	rs := <-client.regStatus
 	if rs {

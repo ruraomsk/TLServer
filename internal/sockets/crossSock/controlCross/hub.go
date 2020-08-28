@@ -270,7 +270,7 @@ func (h *HubControlCross) usersList() []crossSock.CrossInfo {
 	var temp = make([]crossSock.CrossInfo, 0)
 	for client := range h.clients {
 		if client.crossInfo.Edit {
-			temp = append(temp, client.crossInfo)
+			temp = append(temp, *client.crossInfo)
 		}
 	}
 	return temp

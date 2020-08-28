@@ -33,7 +33,7 @@ type ClientCross struct {
 	conn      *websocket.Conn
 	send      chan crossResponse
 	regStatus chan bool
-	crossInfo crossSock.CrossInfo
+	crossInfo *crossSock.CrossInfo
 }
 
 //readPump обработчик чтения сокета
