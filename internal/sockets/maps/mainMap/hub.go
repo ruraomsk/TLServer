@@ -10,12 +10,12 @@ import (
 	"time"
 )
 
-//HubMainMap структура хаба для xctrl
+//HubMainMap структура хаба для mainMap
 type HubMainMap struct {
-	clients    map[*ClientMainMap]bool
-	broadcast  chan mapResponse
-	register   chan *ClientMainMap
-	unregister chan *ClientMainMap
+	clients    map[*ClientMainMap]bool //карта клиентов
+	broadcast  chan mapResponse        //струтура сообщения mainMap
+	register   chan *ClientMainMap     //канал для регистрации пользователя
+	unregister chan *ClientMainMap     //канал для удаления пользователя
 }
 
 //NewMainMapHub создание хаба
@@ -28,7 +28,7 @@ func NewMainMapHub() *HubMainMap {
 	}
 }
 
-//Run запуск хаба для xctrl
+//Run запуск хаба для mainMap
 func (h *HubMainMap) Run(db *sqlx.DB) {
 
 	UserLogoutGS = make(chan string)
@@ -61,9 +61,9 @@ func (h *HubMainMap) Run(db *sqlx.DB) {
 						)
 						for _, nTF := range newTFs {
 							for _, oTF := range oldTFs {
-								if oTF.Idevice == nTF.Idevice && oTF.Description != nTF.Description {
+								if oTF.Idevice == nTF.Idevice {
 									var flagAdd = false
-									if oTF.Sost.Num != nTF.Sost.Num {
+									if oTF.Sost.Num != nTF.Sost.Num || oTF.Description != nTF.Description {
 										flagAdd = true
 									}
 									if oTF.Subarea != nTF.Subarea {

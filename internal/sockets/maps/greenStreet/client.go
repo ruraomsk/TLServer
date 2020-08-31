@@ -107,7 +107,7 @@ func (c *ClientGS) readPump(db *sqlx.DB) {
 				resp := newGSMess(typeDeleteRout, nil)
 				err := temp.Delete(db)
 				if err != nil {
-					resp.Data[typeError] = errCantWriteInBD
+					resp.Data[typeError] = errCantDeleteFromBD
 					c.send <- resp
 				} else {
 					resp.Data["route"] = temp

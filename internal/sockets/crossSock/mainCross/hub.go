@@ -38,7 +38,7 @@ var UserLogoutCross chan string
 var CrossUsersForMap chan []crossSock.CrossInfo
 var ArmDeleted chan tcpConnect.TCPMessage
 
-//Run запуск хаба для xctrl
+//Run запуск хаба для mainCross
 func (h *HubCross) Run(db *sqlx.DB) {
 	ChangeState = make(chan tcpConnect.TCPMessage)
 	GetCrossUserForMap = make(chan bool)

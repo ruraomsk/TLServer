@@ -8,11 +8,12 @@ var (
 	typeRepaint = "repaint"
 	typeTFlight = "tflight"
 
-	typeCreateRout   = "createRoute"
-	typeUpdateRout   = "updateRoute"
-	typeDeleteRout   = "deleteRoute"
-	typeDButton      = "dispatch"
-	errCantWriteInBD = "Запись в БД не удалась"
+	typeCreateRout      = "createRoute"
+	typeUpdateRout      = "updateRoute"
+	typeDeleteRout      = "deleteRoute"
+	typeDButton         = "dispatch"
+	errCantWriteInBD    = "Запись в БД не удалась"
+	errCantDeleteFromBD = "Удаление из БД не удалось"
 
 	errParseType = "Сервер не смог обработать запрос"
 )

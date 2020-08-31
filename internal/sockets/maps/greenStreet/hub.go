@@ -29,7 +29,7 @@ func NewGSHub() *HubGStreet {
 	}
 }
 
-//Run запуск хаба для xctrl
+//Run запуск хаба для GS
 func (h *HubGStreet) Run(db *sqlx.DB) {
 
 	crossReadTick := time.NewTicker(crossPeriod)

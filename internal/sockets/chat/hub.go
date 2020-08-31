@@ -23,7 +23,7 @@ func NewChatHub() *HubChat {
 	}
 }
 
-//Run запуск хаба для xctrl
+//Run запуск хаба для Chat
 func (h *HubChat) Run() {
 
 	UserLogoutChat = make(chan string)

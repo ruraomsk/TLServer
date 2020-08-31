@@ -31,7 +31,7 @@ func NewCrossHub() *HubControlCross {
 	}
 }
 
-//Run запуск хаба для xctrl
+//Run запуск хаба для controlCross
 func (h *HubControlCross) Run(db *sqlx.DB) {
 	crossSock.GetArmUsersForDisplay = make(chan bool)
 	crossSock.CrArmUsersForDisplay = make(chan []crossSock.CrossInfo)

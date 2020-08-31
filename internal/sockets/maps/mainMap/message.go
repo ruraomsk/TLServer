@@ -19,8 +19,8 @@ var (
 
 //MapSokResponse структура для отправки сообщений (map)
 type mapResponse struct {
-	Type string                 `json:"type"`
-	Data map[string]interface{} `json:"data"`
+	Type string                 `json:"type"` //тип сообщения
+	Data map[string]interface{} `json:"data"` //данные
 }
 
 //newMapMess создание нового сообщения
