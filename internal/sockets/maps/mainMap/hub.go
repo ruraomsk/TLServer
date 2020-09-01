@@ -60,9 +60,10 @@ func (h *HubMainMap) Run(db *sqlx.DB) {
 							flagFill = false
 						)
 						for _, nTF := range newTFs {
+							var flagAdd = true
 							for _, oTF := range oldTFs {
 								if oTF.Idevice == nTF.Idevice {
-									var flagAdd = false
+									flagAdd = false
 									if oTF.Sost.Num != nTF.Sost.Num || oTF.Description != nTF.Description {
 										flagAdd = true
 									}
@@ -70,11 +71,11 @@ func (h *HubMainMap) Run(db *sqlx.DB) {
 										flagAdd = true
 										flagFill = true
 									}
-									if flagAdd {
-										tempTF = append(tempTF, nTF)
-										break
-									}
+									break
 								}
+							}
+							if flagAdd {
+								tempTF = append(tempTF, nTF)
 							}
 						}
 						if len(tempTF) > 0 {

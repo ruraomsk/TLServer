@@ -61,21 +61,22 @@ func (h *HubGStreet) Run(db *sqlx.DB) {
 							flagFill = false
 						)
 						for _, nTF := range newTFs {
+							var flagAdd = true
 							for _, oTF := range oldTFs {
 								if oTF.Idevice == nTF.Idevice {
-									var flagAdd = false
-									if oTF.Sost.Num != nTF.Sost.Num {
+									flagAdd = false
+									if oTF.Sost.Num != nTF.Sost.Num || oTF.Description != nTF.Description {
 										flagAdd = true
 									}
 									if oTF.Subarea != nTF.Subarea {
 										flagAdd = true
 										flagFill = true
 									}
-									if flagAdd {
-										tempTF = append(tempTF, nTF)
-										break
-									}
+									break
 								}
+							}
+							if flagAdd {
+								tempTF = append(tempTF, nTF)
 							}
 						}
 						if len(tempTF) > 0 {
