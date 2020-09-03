@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/model/data"
+	"github.com/JanFant/TLServer/internal/model/device"
 	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/JanFant/TLServer/internal/sockets/crossSock"
 	"github.com/JanFant/TLServer/logger"
@@ -139,22 +140,19 @@ func (h *HubCross) Run(db *sqlx.DB) {
 						globArrCross = arrayCross
 
 						//запрос phase
-						query, args, err = sqlx.In("SELECT id, fdk, tdk, pdk FROM public.devices WHERE id IN (?)", aPos)
-						if err != nil {
-							logger.Error.Println("|Message: cross socket cant make IN ", err.Error())
-							continue
+						var copyDev = make(map[int]agspudge.Controller)
+						device.GlobalDevices.Mux.Lock()
+						for key, c := range device.GlobalDevices.MapDevices {
+							copyDev[key] = c.Controller
 						}
-						query = db.Rebind(query)
-						rows, err = db.Queryx(query, args...)
-						if err != nil {
-							logger.Error.Println("|Message: db not respond", err.Error())
-							continue
+						device.GlobalDevices.Mux.Unlock()
+						for _, pos := range aPos {
+							if c, ok := copyDev[pos]; ok {
+								var tempPhase = phaseInfo{Pdk: c.DK.PDK, Fdk: c.DK.FDK, Tdk: c.DK.TDK, idevice: c.ID}
+								arrayPhase[pos] = tempPhase
+							}
 						}
-						for rows.Next() {
-							var tempPhase phaseInfo
-							_ = rows.Scan(&tempPhase.idevice, &tempPhase.Fdk, &tempPhase.Tdk, &tempPhase.Pdk)
-							arrayPhase[tempPhase.idevice] = tempPhase
-						}
+
 						for idevice, newData := range arrayPhase {
 							if oldData, ok := globArrPhase[idevice]; ok {
 								//если запись есть нужно сравнить и если есть разница отправить изменения
@@ -271,9 +269,7 @@ func (h *HubCross) Run(db *sqlx.DB) {
 						{
 							for aClient := range h.clients {
 								if (aClient.crossInfo.Pos == client.crossInfo.Pos) && (aClient.crossInfo.AccInfo.Role != "Viewer") {
-									//delete(h.clients, aClient)
 									aClient.crossInfo.Edit = true
-									//h.clients[aClient] = true
 									resp := newCrossMess(typeChangeEdit, nil)
 									resp.Data["edit"] = true
 									aClient.send <- resp

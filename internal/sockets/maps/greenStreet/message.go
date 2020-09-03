@@ -8,6 +8,7 @@ var (
 	typeRepaint = "repaint"
 	typeTFlight = "tflight"
 
+	typeRoutes          = "route"
 	typeCreateRout      = "createRoute"
 	typeUpdateRout      = "updateRoute"
 	typeDeleteRout      = "deleteRoute"

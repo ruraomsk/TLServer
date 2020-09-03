@@ -43,7 +43,7 @@ func (h *HubTechArm) Run(db *sqlx.DB) {
 	}()
 
 	var (
-		oldDevice = getDevice(db)
+		oldDevice = getDevice()
 		oldCross  = getCross(-1, db)
 	)
 
@@ -52,7 +52,7 @@ func (h *HubTechArm) Run(db *sqlx.DB) {
 		case <-readDeviceTick.C:
 			{
 				if len(h.clients) > 0 {
-					newDevice := getDevice(db)
+					newDevice := getDevice()
 					var (
 						tempDev []DevInfo
 					)

@@ -1,8 +1,8 @@
 package techArm
 
 import (
-	"encoding/json"
 	"fmt"
+	"github.com/JanFant/TLServer/internal/model/device"
 	"github.com/JanFant/TLServer/logger"
 	"github.com/jmoiron/sqlx"
 )
@@ -45,27 +45,24 @@ func getCross(reg int, db *sqlx.DB) []CrossInfo {
 }
 
 //getCross запрос состояния устройств
-func getDevice(db *sqlx.DB) []DevInfo {
+func getDevice() []DevInfo {
 	var (
-		temp    DevInfo
 		devices []DevInfo
-		dStr    string
+		copyDev = make(map[int]device.DevInfo)
 	)
-	rows, err := db.Query(`SELECT c.region, 
-									c.area, 
-									c.idevice, 
-									d.device 
-									FROM public.cross as c, public.devices as d WHERE c.idevice IN(d.id);`)
-	if err != nil {
-		logger.Error.Println("|IP: server |Login: server |Resource: /techArm |Message: Error get Device from BD ", err.Error())
-		return make([]DevInfo, 0)
+
+	device.GlobalDevices.Mux.Lock()
+	for key, c := range device.GlobalDevices.MapDevices {
+		copyDev[key] = c
 	}
-	for rows.Next() {
-		_ = rows.Scan(&temp.Region, &temp.Area, &temp.Idevice, &dStr)
-		_ = json.Unmarshal([]byte(dStr), &temp.Device)
+	device.GlobalDevices.Mux.Unlock()
+
+	for _, dev := range copyDev {
+		var temp = DevInfo{Area: dev.Area, Region: dev.Region, Idevice: dev.Controller.ID, Device: dev.Controller}
 		temp.ModeRdk = modeRDK[temp.Device.DK.RDK]
 		temp.TechMode = texMode[temp.Device.TechMode]
 		devices = append(devices, temp)
 	}
+
 	return devices
 }

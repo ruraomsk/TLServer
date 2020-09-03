@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/JanFant/TLServer/internal/app/handlers/crossH"
 	"github.com/JanFant/TLServer/internal/app/handlers/licenseH"
+	"github.com/JanFant/TLServer/internal/model/device"
 	"github.com/JanFant/TLServer/internal/sockets/chat"
 	"github.com/JanFant/TLServer/internal/sockets/crossSock/controlCross"
 	"github.com/JanFant/TLServer/internal/sockets/crossSock/mainCross"
@@ -33,6 +34,7 @@ func StartServer(conf *ServerConf, db *sqlx.DB) {
 	gsHub := greenStreet.NewGSHub()
 	chatHub := chat.NewChatHub()
 
+	go device.StartReadDevices(db)
 	go mainMapHub.Run(db)
 	go mainCrossHub.Run(db)
 	go controlCrHub.Run(db)

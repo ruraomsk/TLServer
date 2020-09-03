@@ -24,7 +24,7 @@ func HGStreet(c *gin.Context, hub *HubGStreet, db *sqlx.DB) {
 
 	accTK, _ := c.Get("tk")
 	accInfo, _ := accTK.(*accToken.Token)
-	client := &ClientGS{hub: hub, conn: conn, send: make(chan gSResponse, 256), cInfo: accInfo}
+	client := &ClientGS{hub: hub, conn: conn, send: make(chan gSResponse, 256), cInfo: accInfo, devices: make([]int, 0)}
 	client.hub.register <- client
 
 	go client.writePump()

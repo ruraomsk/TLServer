@@ -60,7 +60,7 @@ func (c *ClientTechArm) readPump(db *sqlx.DB) {
 		resp.Data[typeCrosses] = tempCrosses
 
 		var tempDevises = make([]DevInfo, 0)
-		devices := getDevice(db)
+		devices := getDevice()
 		for _, dev := range devices {
 			for _, area := range c.armInfo.Area {
 				tArea, _ := strconv.Atoi(area)

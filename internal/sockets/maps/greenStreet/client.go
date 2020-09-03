@@ -36,15 +36,12 @@ type ClientGS struct {
 	conn *websocket.Conn
 	send chan gSResponse
 
-	cInfo *accToken.Token
+	cInfo   *accToken.Token
+	devices []int
 }
 
 //readPump обработчик чтения сокета
 func (c *ClientGS) readPump(db *sqlx.DB) {
-
-	//если нужно указать лимит пакета
-	//c.conn.SetReadLimit(maxMessageSize)
-
 	_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error { _ = c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	{
