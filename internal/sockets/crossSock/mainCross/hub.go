@@ -236,10 +236,20 @@ func (h *HubCross) Run(db *sqlx.DB) {
 					if !flagEdit {
 						resp.Data["edit"] = true
 						client.crossInfo.Edit = true
-
 					} else {
 						resp.Data["edit"] = false
 					}
+					//если есть полномочия запишим что он на перекрестке
+					device.GlobalDevEdit.Mux.Lock()
+					tDev := device.GlobalDevEdit.MapDevices[client.crossInfo.Idevice]
+					if tDev.BusyCount == 0 {
+						tDev.SendFlag = false
+						fmt.Println("Отправка 4.1 кросс")
+					}
+					tDev.BusyCount++
+
+					device.GlobalDevEdit.MapDevices[client.crossInfo.Idevice] = tDev
+					device.GlobalDevEdit.Mux.Unlock()
 				}
 
 				client.regStatus <- regStatus
@@ -266,19 +276,30 @@ func (h *HubCross) Run(db *sqlx.DB) {
 					close(client.send)
 					_ = client.conn.Close()
 					if client.crossInfo.Edit {
-						{
-							for aClient := range h.clients {
-								if (aClient.crossInfo.Pos == client.crossInfo.Pos) && (aClient.crossInfo.AccInfo.Role != "Viewer") {
-									aClient.crossInfo.Edit = true
-									resp := newCrossMess(typeChangeEdit, nil)
-									resp.Data["edit"] = true
-									aClient.send <- resp
-									break
-								}
-							}
-							//отправить на мапу подключенные устройства которые редактируют
-							CrossUsersForMap <- h.usersList()
+
+						//если есть полномочия запишим что он на перекрестке
+						device.GlobalDevEdit.Mux.Lock()
+						tDev := device.GlobalDevEdit.MapDevices[client.crossInfo.Idevice]
+						tDev.BusyCount--
+						if tDev.BusyCount == 0 {
+							tDev.SendFlag = false
+							fmt.Println("Отправка 4.0 кросс")
 						}
+						device.GlobalDevEdit.MapDevices[client.crossInfo.Idevice] = tDev
+						device.GlobalDevEdit.Mux.Unlock()
+
+						for aClient := range h.clients {
+							if (aClient.crossInfo.Pos == client.crossInfo.Pos) && (aClient.crossInfo.AccInfo.Role != "Viewer") {
+								aClient.crossInfo.Edit = true
+								resp := newCrossMess(typeChangeEdit, nil)
+								resp.Data["edit"] = true
+								aClient.send <- resp
+								break
+							}
+						}
+						//отправить на мапу подключенные устройства которые редактируют
+						CrossUsersForMap <- h.usersList()
+
 					}
 				}
 
@@ -312,7 +333,7 @@ func (h *HubCross) Run(db *sqlx.DB) {
 			{
 				for _, dCr := range dCrInfo {
 					for client := range h.clients {
-						if client.crossInfo.Pos == dCr.Pos && client.crossInfo.AccInfo.Login == dCr.AccInfo.Login {
+						if client.crossInfo.Pos == dCr.Pos && client.crossInfo.Login == dCr.Login {
 							msg := newCrossMess(typeClose, nil)
 							msg.Data["message"] = "закрытие администратором"
 							client.send <- msg

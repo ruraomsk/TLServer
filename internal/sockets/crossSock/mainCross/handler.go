@@ -42,6 +42,7 @@ func HMainCross(c *gin.Context, hub *HubCross, db *sqlx.DB) {
 		Idevice: 0,
 		Pos:     crEdit,
 		AccInfo: accInfo,
+		Login:   accInfo.Login,
 	}
 
 	client := &ClientCross{hub: hub, conn: conn, send: make(chan crossResponse, 256), crossInfo: &crossInfo, regStatus: make(chan bool)}

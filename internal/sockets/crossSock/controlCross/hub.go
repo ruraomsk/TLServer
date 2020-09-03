@@ -155,7 +155,7 @@ func (h *HubControlCross) Run(db *sqlx.DB) {
 			{
 				for _, dArm := range dArmInfo {
 					for client := range h.clients {
-						if client.crossInfo.Pos == dArm.Pos && client.crossInfo.AccInfo.Login == dArm.AccInfo.Login {
+						if client.crossInfo.Pos == dArm.Pos && client.crossInfo.Login == dArm.Login {
 							msg := newControlMess(typeClose, nil)
 							msg.Data["message"] = "закрытие администратором"
 							client.send <- msg

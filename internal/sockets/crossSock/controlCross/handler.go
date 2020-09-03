@@ -47,6 +47,7 @@ func HControlCross(c *gin.Context, hub *HubControlCross, db *sqlx.DB) {
 		Idevice: 0,
 		Pos:     crEdit,
 		AccInfo: accInfo,
+		Login:   accInfo.Login,
 	}
 
 	client := &ClientControlCr{hub: hub, conn: conn, send: make(chan ControlSokResponse, 256), crossInfo: &crossInfo, regStatus: make(chan bool)}

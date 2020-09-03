@@ -21,7 +21,8 @@ type CrossInfo struct {
 	Idevice     int             `json:"idevice"`     //идентификатор утройства
 	Pos         sockets.PosInfo `json:"pos"`         //расположение перекрестка
 	Description string          `json:"description"` //описание
-	AccInfo     *accToken.Token
+	Login       string          `json:"login"`
+	AccInfo     *accToken.Token `json:"-"`
 }
 
 var GetCrossUsersForDisplay chan bool
