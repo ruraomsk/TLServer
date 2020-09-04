@@ -11,6 +11,7 @@ import (
 	"github.com/JanFant/TLServer/logger"
 	"github.com/gorilla/websocket"
 	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/ag-server/comm"
 	agspudge "github.com/ruraomsk/ag-server/pudge"
 	"time"
 )
@@ -242,9 +243,26 @@ func (h *HubCross) Run(db *sqlx.DB) {
 					//если есть полномочия запишим что он на перекрестке
 					device.GlobalDevEdit.Mux.Lock()
 					tDev := device.GlobalDevEdit.MapDevices[client.crossInfo.Idevice]
-					if tDev.BusyCount == 0 {
-						tDev.SendFlag = false
+					if tDev.BusyCount == 0 || tDev.TurnOnFlag == false {
+						arm := comm.CommandARM{
+							User:    client.crossInfo.Login,
+							ID:      Idevice,
+							Command: 4,
+							Params:  1,
+						}
+						var mess = tcpConnect.TCPMessage{
+							User:        client.crossInfo.AccInfo.Login,
+							TCPType:     tcpConnect.TypeDispatch,
+							Idevice:     arm.ID,
+							Data:        arm,
+							From:        tcpConnect.FromCrossSoc,
+							CommandType: typeDButton,
+							Pos:         client.crossInfo.Pos,
+						}
+						mess.SendToTCPServer()
+
 						fmt.Println("Отправка 4.1 кросс")
+						tDev.TurnOnFlag = true
 					}
 					tDev.BusyCount++
 
@@ -281,9 +299,25 @@ func (h *HubCross) Run(db *sqlx.DB) {
 						device.GlobalDevEdit.Mux.Lock()
 						tDev := device.GlobalDevEdit.MapDevices[client.crossInfo.Idevice]
 						tDev.BusyCount--
-						if tDev.BusyCount == 0 {
-							tDev.SendFlag = false
-							fmt.Println("Отправка 4.0 кросс")
+						if tDev.BusyCount == 0 && tDev.TurnOnFlag == true {
+							arm := comm.CommandARM{
+								User:    client.crossInfo.Login,
+								ID:      client.crossInfo.Idevice,
+								Command: 4,
+								Params:  0,
+							}
+							var mess = tcpConnect.TCPMessage{
+								User:        client.crossInfo.AccInfo.Login,
+								TCPType:     tcpConnect.TypeDispatch,
+								Idevice:     arm.ID,
+								Data:        arm,
+								From:        tcpConnect.FromCrossSoc,
+								CommandType: typeDButton,
+								Pos:         client.crossInfo.Pos,
+							}
+							mess.SendToTCPServer()
+
+							tDev.TurnOnFlag = false
 						}
 						device.GlobalDevEdit.MapDevices[client.crossInfo.Idevice] = tDev
 						device.GlobalDevEdit.Mux.Unlock()

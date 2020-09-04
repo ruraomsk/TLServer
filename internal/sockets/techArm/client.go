@@ -3,6 +3,7 @@ package techArm
 import (
 	"encoding/json"
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
+	"github.com/JanFant/TLServer/internal/model/device"
 	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/JanFant/TLServer/logger"
 	"github.com/gorilla/websocket"
@@ -95,6 +96,17 @@ func (c *ClientTechArm) readPump(db *sqlx.DB) {
 				arm := comm.CommandARM{}
 				_ = json.Unmarshal(p, &arm)
 				arm.User = c.armInfo.AccInfo.Login
+				if arm.Command == 4 {
+					device.GlobalDevEdit.Mux.Lock()
+					tDev := device.GlobalDevEdit.MapDevices[arm.ID]
+					if arm.Params == 1 {
+						tDev.TurnOnFlag = true
+					} else if arm.Params == 0 {
+						tDev.TurnOnFlag = false
+					}
+					device.GlobalDevEdit.MapDevices[arm.ID] = tDev
+					device.GlobalDevEdit.Mux.Unlock()
+				}
 				var mess = tcpConnect.TCPMessage{
 					User:        c.armInfo.AccInfo.Login,
 					TCPType:     tcpConnect.TypeDispatch,

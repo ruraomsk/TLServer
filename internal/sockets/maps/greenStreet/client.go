@@ -6,6 +6,7 @@ import (
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/model/accToken"
 	"github.com/JanFant/TLServer/internal/model/data"
+	"github.com/JanFant/TLServer/internal/model/device"
 	"github.com/JanFant/TLServer/internal/model/routeGS"
 	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/JanFant/TLServer/internal/sockets/maps"
@@ -135,6 +136,55 @@ func (c *ClientGS) readPump(db *sqlx.DB) {
 					Pos:         sockets.PosInfo{},
 				}
 				mess.SendToTCPServer()
+			}
+		case typeRoute:
+			{
+				execRoute := executeRoute{}
+				_ = json.Unmarshal(p, &execRoute)
+
+				arm := comm.CommandARM{Command: 4, User: c.cInfo.Login}
+				var mess = tcpConnect.TCPMessage{
+					User:        c.cInfo.Login,
+					TCPType:     tcpConnect.TypeDispatch,
+					From:        tcpConnect.FromGsSoc,
+					CommandType: typeDButton,
+					Pos:         sockets.PosInfo{},
+				}
+				if execRoute.TurnOn {
+					c.devices = execRoute.Devices
+					arm.Params = 1
+					device.GlobalDevEdit.Mux.Lock()
+					for _, dev := range execRoute.Devices {
+						tDev := device.GlobalDevEdit.MapDevices[dev]
+						if tDev.BusyCount == 0 || tDev.TurnOnFlag == false {
+							arm.ID = dev
+							mess.Idevice = arm.ID
+							mess.Data = arm
+							mess.SendToTCPServer()
+							tDev.TurnOnFlag = true
+						}
+						tDev.BusyCount++
+						device.GlobalDevEdit.MapDevices[dev] = tDev
+					}
+					device.GlobalDevEdit.Mux.Unlock()
+				} else {
+					arm.Params = 0
+					device.GlobalDevEdit.Mux.Lock()
+					for _, dev := range c.devices {
+						tDev := device.GlobalDevEdit.MapDevices[dev]
+						tDev.BusyCount--
+						if tDev.BusyCount == 0 && tDev.TurnOnFlag == true {
+							arm.ID = dev
+							mess.Idevice = arm.ID
+							mess.Data = arm
+							mess.SendToTCPServer()
+							tDev.TurnOnFlag = false
+						}
+						device.GlobalDevEdit.MapDevices[dev] = tDev
+					}
+					device.GlobalDevEdit.Mux.Unlock()
+					c.devices = make([]int, 0)
+				}
 			}
 		default:
 			{

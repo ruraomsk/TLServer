@@ -7,6 +7,12 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+//executeRoute управление светофорами
+type executeRoute struct {
+	Devices []int `json:"devices"`
+	TurnOn  bool  `json:"turnOn"`
+}
+
 //getAllModes вернуть из базы все маршруты
 func getAllModes(db *sqlx.DB) interface{} {
 	var (

@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/model/data"
+	"github.com/JanFant/TLServer/internal/model/device"
 	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/JanFant/TLServer/internal/sockets/maps"
 	"github.com/JanFant/TLServer/internal/sockets/maps/mainMap"
 	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/ag-server/comm"
 	"time"
 )
 
@@ -112,6 +114,32 @@ func (h *HubGStreet) Run(db *sqlx.DB) {
 					delete(h.clients, client)
 					close(client.send)
 					_ = client.conn.Close()
+				}
+
+				if len(client.devices) != 0 {
+					arm := comm.CommandARM{Command: 4, Params: 0, User: client.cInfo.Login}
+					var mess = tcpConnect.TCPMessage{
+						User:        client.cInfo.Login,
+						TCPType:     tcpConnect.TypeDispatch,
+						From:        tcpConnect.FromGsSoc,
+						CommandType: typeDButton,
+						Pos:         sockets.PosInfo{},
+					}
+
+					device.GlobalDevEdit.Mux.Lock()
+					for _, dev := range client.devices {
+						tDev := device.GlobalDevEdit.MapDevices[dev]
+						tDev.BusyCount--
+						if tDev.BusyCount == 0 && tDev.TurnOnFlag == true {
+							arm.ID = dev
+							mess.Idevice = arm.ID
+							mess.Data = arm
+							mess.SendToTCPServer()
+							tDev.TurnOnFlag = false
+						}
+						device.GlobalDevEdit.MapDevices[dev] = tDev
+					}
+					device.GlobalDevEdit.Mux.Unlock()
 				}
 
 				fmt.Println("gStreet unReg: ")

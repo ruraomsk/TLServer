@@ -33,8 +33,8 @@ type EditDevices struct {
 
 //ControllerEdit информация о редактировании устройства
 type ControllerEdit struct {
-	BusyCount int  //количество устройств которые редактируются
-	SendFlag  bool //флаг контроля отправки команды на редактирование
+	BusyCount  int  //количество устройств которые редактируются
+	TurnOnFlag bool //флаг контроля отправки команды на редактирование
 }
 
 //StartReadDevices чтение БД таблицы public.devices
@@ -68,7 +68,7 @@ func StartReadDevices(db *sqlx.DB) {
 		GlobalDevEdit.Mux.Lock()
 		for key := range tempDevice {
 			if _, ok := GlobalDevEdit.MapDevices[key]; !ok {
-				var nullEdit = ControllerEdit{BusyCount: 0, SendFlag: false}
+				var nullEdit = ControllerEdit{BusyCount: 0, TurnOnFlag: false}
 				GlobalDevEdit.MapDevices[key] = nullEdit
 			}
 		}
