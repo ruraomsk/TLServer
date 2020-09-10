@@ -226,9 +226,9 @@ func (h *HubTechArm) Run(db *sqlx.DB) {
 						var message = sockets.DBMessage{Data: resp, Idevice: msg.Idevice}
 						sockets.DispatchMessageFromAnotherPlace <- message
 					}
-				case typeGPS:
+				case typeGPRS:
 					{
-						resp.Type = typeGPS
+						resp.Type = typeGPRS
 						resp.Data["status"] = msg.Status
 					}
 				}

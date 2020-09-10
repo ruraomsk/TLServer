@@ -10,7 +10,7 @@ var (
 	typeClose   = "close"
 	typeArmInfo = "armInfo"
 	typeDButton = "dispatch"
-	typeGPS     = "gps"
+	typeGPRS    = "gprs"
 	typeCrosses = "crosses"
 	typeDevices = "devices"
 
@@ -41,9 +41,9 @@ var (
 		11: "выбор ПК по картограмме",
 		12: "противозаторовое управление",
 	}
-	GPSInfo = struct {
+	GPRSInfo = struct {
 		IP   string `json:"ip" ,toml:"tcpServerAddress"`
-		Port string `json:"port" ,toml:"portGPS"`
+		Port string `json:"port" ,toml:"portGPRS"`
 	}{}
 )
 
@@ -79,14 +79,16 @@ type ArmInfo struct {
 
 //CrossInfo информация о перекрестке для техАРМ
 type CrossInfo struct {
-	Region    int    `json:"region"`    //регион
-	Area      int    `json:"area"`      //район
-	ID        int    `json:"id"`        //id
-	Idevice   int    `json:"idevice"`   //идентификатор устройства
-	Subarea   int    `json:"subarea"`   //подрайон
-	ArrayType int    `json:"arrayType"` //тип устройства
-	Describe  string `json:"describe"`  //описание
-	Phone     string `json:"phone"`     //телефон
+	Region    int         `json:"region"`    //регион
+	Area      int         `json:"area"`      //район
+	ID        int         `json:"id"`        //id
+	Idevice   int         `json:"idevice"`   //идентификатор устройства
+	Subarea   int         `json:"subarea"`   //подрайон
+	ArrayType int         `json:"arrayType"` //тип устройства
+	Describe  string      `json:"describe"`  //описание
+	Phone     string      `json:"phone"`     //телефон
+	Model     pudge.Model `json:"Model"`     //модель устройства
+
 }
 
 //DevInfo информация о устройства для техАРМ

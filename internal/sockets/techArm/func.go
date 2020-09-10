@@ -1,6 +1,7 @@
 package techArm
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/JanFant/TLServer/internal/model/device"
 	"github.com/JanFant/TLServer/logger"
@@ -12,6 +13,7 @@ func getCross(reg int, db *sqlx.DB) []CrossInfo {
 	var (
 		temp    CrossInfo
 		crosses []CrossInfo
+		model   []byte
 		sqlStr  = `SELECT region,
  					area, 
  					id,
@@ -19,7 +21,8 @@ func getCross(reg int, db *sqlx.DB) []CrossInfo {
   					describ, 
   					subarea, 
   					state->'arrays'->'type',
-  					state->'phone' 
+  					state->'phone',
+  					state->'Model' 
   					FROM public.cross`
 	)
 	if reg != -1 {
@@ -38,7 +41,9 @@ func getCross(reg int, db *sqlx.DB) []CrossInfo {
 			&temp.Describe,
 			&temp.Subarea,
 			&temp.ArrayType,
-			&temp.Phone)
+			&temp.Phone,
+			&model)
+		_ = json.Unmarshal(model, &temp.Model)
 		crosses = append(crosses, temp)
 	}
 	return crosses

@@ -34,8 +34,8 @@ func init() {
 		fmt.Println("Can't load config file - ", err.Error())
 		os.Exit(1)
 	}
-	techArm.GPSInfo.IP = config.GlobalConfig.TCPConfig.ServerAddr
-	techArm.GPSInfo.Port = config.GlobalConfig.TCPConfig.PortGPS
+	techArm.GPRSInfo.IP = config.GlobalConfig.TCPConfig.ServerAddr
+	techArm.GPRSInfo.Port = config.GlobalConfig.TCPConfig.PortGPRS
 	if _, err := toml.DecodeFile(configPath, &logger.LogGlobalConf); err != nil {
 		fmt.Println("Can't load config file - ", err.Error())
 		os.Exit(1)

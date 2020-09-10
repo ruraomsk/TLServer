@@ -97,14 +97,12 @@ func (h *HubMainMap) Run(db *sqlx.DB) {
 			}
 		case client := <-h.register:
 			{
-
 				{
 					flag, tk := checkToken(client.cookie, client.cInfo.IP, db)
 					resp := newMapMess(typeMapInfo, maps.MapOpenInfo(db))
 					if flag {
-						login := tk.Login
 						resp.Data["role"] = tk.Role
-						resp.Data["access"] = data.AccessCheck(login, 2, 5, 6, 7, 8, 9)
+						resp.Data["access"] = data.AccessCheck(tk.Login, 2, 5, 6, 7, 8, 9)
 						resp.Data["description"] = tk.Description
 						resp.Data["authorizedFlag"] = true
 						resp.Data["region"] = tk.Region
@@ -118,7 +116,7 @@ func (h *HubMainMap) Run(db *sqlx.DB) {
 						data.CacheArea.Mux.Lock()
 						resp.Data["areaZone"] = data.CacheArea.Areas
 						data.CacheArea.Mux.Unlock()
-						client.cInfo.Login = login
+						client.cInfo = tk
 					}
 					client.send <- resp
 				}

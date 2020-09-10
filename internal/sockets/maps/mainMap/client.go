@@ -75,29 +75,34 @@ func (c *ClientMainMap) readPump(db *sqlx.DB) {
 			}
 		case typeLogin: //отправка default
 			{
-				account := &data.Account{}
+				var (
+					account = &data.Account{}
+					token   *accToken.Token
+				)
 				_ = json.Unmarshal(p, &account)
-
 				resp := newMapMess(typeLogin, nil)
-				resp.Data = logIn(account.Login, account.Password, c.conn.RemoteAddr().String(), db)
-				if _, ok := resp.Data["message"]; !ok {
-					c.cInfo.Login = fmt.Sprint(resp.Data["login"])
+				resp.Data, token = logIn(account.Login, account.Password, c.conn.RemoteAddr().String(), db)
+				if token != nil {
+					c.cInfo = token
 				}
 				c.send <- resp
 			}
 		case typeChangeAccount:
 			{
-				account := &data.Account{}
+				var (
+					account = &data.Account{}
+					token   *accToken.Token
+				)
 				_ = json.Unmarshal(p, &account)
 				resp := newMapMess(typeLogin, nil)
-				resp.Data = logIn(account.Login, account.Password, c.conn.RemoteAddr().String(), db)
-				if _, ok := resp.Data["message"]; !ok {
+				resp.Data, token = logIn(account.Login, account.Password, c.conn.RemoteAddr().String(), db)
+				if token != nil {
 					//делаем выход из аккаунта
 					respLO := newMapMess(typeLogOut, nil)
 					status := logOut(c.cInfo.Login, db)
 					if status {
 						logOutSockets(c.cInfo.Login)
-						c.cInfo.Login = fmt.Sprint(resp.Data["login"])
+						c.cInfo = token
 					}
 					c.send <- respLO
 				}
@@ -112,7 +117,7 @@ func (c *ClientMainMap) readPump(db *sqlx.DB) {
 						resp.Data["authorizedFlag"] = false
 						logOutSockets(c.cInfo.Login)
 					}
-					c.cInfo.Login = ""
+					c.cInfo = new(accToken.Token)
 					c.send <- resp
 				}
 			}

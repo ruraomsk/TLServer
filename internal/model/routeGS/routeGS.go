@@ -1,7 +1,9 @@
 package routeGS
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"github.com/JanFant/TLServer/internal/model/locations"
 	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/jmoiron/sqlx"
@@ -9,7 +11,6 @@ import (
 
 //Route маршрут движения
 type Route struct {
-	Id          int                `json:"id"`          //уникальный номер в бд
 	Region      string             `json:"region"`      //регион
 	Description string             `json:"description"` //описание маршрута
 	Box         locations.BoxPoint `json:"box"`         //координаты на которые перемещаться при выборе маршрута
@@ -25,6 +26,12 @@ type RouteTL struct {
 	Pos         sockets.PosInfo `json:"pos"`         //информация о перекрестка (где находится)
 }
 
+var (
+	errCantWriteInBD      = "запись в БД не удалась"
+	errCantDeleteFromBD   = "удаление из БД не удалось"
+	errEntryAlreadyExists = "заданное название маршрута уже существует"
+)
+
 //Create создание/запись маршрута в БД
 func (r *Route) Create(db *sqlx.DB) error {
 	r.setBox()
@@ -34,10 +41,17 @@ func (r *Route) Create(db *sqlx.DB) error {
 		rowRoute := db.QueryRow(`SELECT describ FROM public.cross WHERE region = $1 AND area = $2 AND id = $3`, route.Pos.Region, route.Pos.Area, route.Pos.Id)
 		_ = rowRoute.Scan(&r.List[numR].Description)
 	}
-	row := db.QueryRow(`INSERT INTO  public.routes (description, box, listtl, region) VALUES ($1, $2, $3, $4) RETURNING id`, r.Description, string(box), string(list), r.Region)
-	err := row.Scan(&r.Id)
+
+	var temp string
+	row := db.QueryRow(`SELECT description FROM public.routes WHERE description = $1 AND region = $2`, r.Description, r.Region)
+	err := row.Scan(&temp)
+	if err != sql.ErrNoRows {
+		return errors.New(errEntryAlreadyExists)
+	}
+
+	_, err = db.Exec(`INSERT INTO  public.routes (description, box, listtl, region) VALUES ($1, $2, $3, $4)`, r.Description, string(box), string(list), r.Region)
 	if err != nil {
-		return err
+		return errors.New(errCantWriteInBD)
 	}
 	return nil
 }
@@ -51,18 +65,18 @@ func (r *Route) Update(db *sqlx.DB) error {
 		rowRoute := db.QueryRow(`SELECT describ FROM public.cross WHERE region = $1 AND area = $2 AND id = $3`, route.Pos.Region, route.Pos.Area, route.Pos.Id)
 		_ = rowRoute.Scan(&r.List[numR].Description)
 	}
-	_, err := db.Exec(`UPDATE public.routes SET description = $1, box = $2, listtl = $3 WHERE id = $4 AND region = $5`, r.Description, string(box), string(list), r.Id, r.Region)
+	_, err := db.Exec(`UPDATE public.routes SET box = $1, listtl = $2 WHERE description = $3  AND region = $4`, string(box), string(list), r.Description, r.Region)
 	if err != nil {
-		return err
+		return errors.New(errCantWriteInBD)
 	}
 	return nil
 }
 
 //Delete удаление маршрута из БД
 func (r *Route) Delete(db *sqlx.DB) error {
-	_, err := db.Exec(`DELETE FROM public.routes WHERE id = $1 AND region = $2`, r.Id, r.Region)
+	_, err := db.Exec(`DELETE FROM public.routes WHERE description = $1 AND region = $2`, r.Description, r.Region)
 	if err != nil {
-		return err
+		return errors.New(errCantDeleteFromBD)
 	}
 	return nil
 }

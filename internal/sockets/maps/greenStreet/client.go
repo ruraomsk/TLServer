@@ -77,10 +77,11 @@ func (c *ClientGS) readPump(db *sqlx.DB) {
 				resp := newGSMess(typeCreateRout, nil)
 				err := temp.Create(db)
 				if err != nil {
-					resp.Data[typeError] = errCantWriteInBD
+					resp.Data[typeError] = err.Error()
 					c.send <- resp
 				} else {
 					resp.Data["route"] = temp
+					resp.Data["login"] = c.cInfo.Login
 					c.hub.broadcast <- resp
 				}
 			}
@@ -91,7 +92,7 @@ func (c *ClientGS) readPump(db *sqlx.DB) {
 				resp := newGSMess(typeUpdateRout, nil)
 				err := temp.Update(db)
 				if err != nil {
-					resp.Data[typeError] = errCantWriteInBD
+					resp.Data[typeError] = err.Error()
 					c.send <- resp
 				} else {
 					resp.Data["route"] = temp
@@ -105,7 +106,7 @@ func (c *ClientGS) readPump(db *sqlx.DB) {
 				resp := newGSMess(typeDeleteRout, nil)
 				err := temp.Delete(db)
 				if err != nil {
-					resp.Data[typeError] = errCantDeleteFromBD
+					resp.Data[typeError] = err.Error()
 					c.send <- resp
 				} else {
 					resp.Data["route"] = temp

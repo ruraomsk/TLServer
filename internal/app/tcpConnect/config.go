@@ -6,7 +6,7 @@ type TCPConfig struct {
 	PortState          string `toml:"portState"`          //порт для обмена Стате
 	PortArmComm        string `toml:"portArmCommand"`     //порт для обмена арм командами
 	PortChangeProtocol string `toml:"portChangeProtocol"` //порт для обмена сообщениями смены протокола
-	PortGPS            string `toml:"portGPS"`
+	PortGPRS           string `toml:"portGPRS"`
 }
 
 //getStateIP возвращает ip+port для State соединения

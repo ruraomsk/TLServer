@@ -2,6 +2,7 @@ package techArm
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/model/device"
 	"github.com/JanFant/TLServer/internal/sockets"
@@ -71,7 +72,7 @@ func (c *ClientTechArm) readPump(db *sqlx.DB) {
 			}
 		}
 		resp.Data[typeDevices] = tempDevises
-		resp.Data["gps"] = GPSInfo
+		resp.Data["gprs"] = GPRSInfo
 		c.send <- resp
 	}
 
@@ -117,20 +118,25 @@ func (c *ClientTechArm) readPump(db *sqlx.DB) {
 				}
 				mess.SendToTCPServer()
 			}
-		case typeGPS:
+		case typeGPRS:
 			{
-				gps := comm.ChangeProtocol{}
-				_ = json.Unmarshal(p, &gps)
-				gps.User = c.armInfo.AccInfo.Login
-				var mess = tcpConnect.TCPMessage{
-					User:        c.armInfo.AccInfo.Login,
-					TCPType:     tcpConnect.TypeChangeProtocol,
-					Idevice:     gps.ID,
-					Data:        gps,
-					From:        tcpConnect.FromTechArmSoc,
-					CommandType: typeGPS,
-				}
-				mess.SendToTCPServer()
+				var temp = struct {
+					Type string              `json:"type"`
+					Gprs comm.ChangeProtocol `json:"gprs"`
+				}{}
+
+				_ = json.Unmarshal(p, &temp)
+				temp.Gprs.User = c.armInfo.AccInfo.Login
+				fmt.Println(temp)
+				//var mess = tcpConnect.TCPMessage{
+				//	User:        c.armInfo.AccInfo.Login,
+				//	TCPType:     tcpConnect.TypeChangeProtocol,
+				//	Idevice:     gps.ID,
+				//	Data:        gps,
+				//	From:        tcpConnect.FromTechArmSoc,
+				//	CommandType: typeGPS,
+				//}
+				//mess.SendToTCPServer()
 			}
 		}
 	}
