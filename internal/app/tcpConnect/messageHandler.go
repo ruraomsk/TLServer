@@ -31,6 +31,7 @@ var (
 	FromCrControlSoc = "crControlSoc" //обозначение сокета CrossControl
 	FromMapSoc       = "mapSoc"       //обозначение сокета Map
 	FromTechArmSoc   = "techArmSoc"   //обозначение сокета TechArm
+	FromServer       = "server"       //обозначение самого сервера
 )
 
 //TCPMessage структура данных для обработки и отправки ТСП сообщений
@@ -83,6 +84,14 @@ func tcpRespBroadcast() {
 				case FromTechArmSoc:
 					{
 						TCPRespTArm <- msg
+					}
+				case FromServer:
+					{
+
+					}
+				default:
+					{
+
 					}
 				}
 			}
