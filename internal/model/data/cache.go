@@ -138,6 +138,8 @@ func FillMapAreaZone() {
 	CacheArea.Mux.Lock()
 	CacheArea.Areas = tempAreaCache
 	CacheArea.Mux.Unlock()
+
+	go CreateCrossesJSON(db)
 }
 
 //GetRegionInfo получить таблицу регионов

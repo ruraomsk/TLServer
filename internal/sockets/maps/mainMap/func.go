@@ -70,7 +70,7 @@ func checkToken(cookie string, ip string, db *sqlx.DB) (flag bool, t *accToken.T
 }
 
 //logIn обработчик авторизации пользователя в системе
-func logIn(login, password, ip string, db *sqlx.DB) (map[string]interface{}, *accToken.Token) {
+func logIn(login, password, ip string, db *sqlx.DB) (map[string]interface{}, *accToken.Token, string) {
 	resp := make(map[string]interface{})
 	ipSplit := strings.Split(ip, ":")
 	account := &data.Account{}
@@ -79,12 +79,12 @@ func logIn(login, password, ip string, db *sqlx.DB) (map[string]interface{}, *ac
 	if rows == nil {
 		resp["status"] = false
 		resp["message"] = fmt.Sprintf("Неверно указан логин или пароль")
-		return resp, nil
+		return resp, nil, ""
 	}
 	if err != nil {
 		resp["status"] = false
 		resp["message"] = "Потеряно соединение с сервером БД"
-		return resp, nil
+		return resp, nil, ""
 	}
 	for rows.Next() {
 		_ = rows.Scan(&account.Login, &account.Password, &account.WorkTime, &account.Description)
@@ -96,7 +96,7 @@ func logIn(login, password, ip string, db *sqlx.DB) (map[string]interface{}, *ac
 	if err != nil {
 		resp["status"] = false
 		resp["message"] = fmt.Sprintf("Неверно указан логин или пароль")
-		return resp, nil
+		return resp, nil, ""
 	}
 
 	//Сравниваю хэши полученного пароля и пароля взятого из БД
@@ -104,7 +104,7 @@ func logIn(login, password, ip string, db *sqlx.DB) (map[string]interface{}, *ac
 	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
 		resp["status"] = false
 		resp["message"] = fmt.Sprintf("Неверно указан логин или пароль")
-		return resp, nil
+		return resp, nil, ""
 	}
 	//Залогинились, создаем токен
 	account.Password = ""
@@ -131,7 +131,7 @@ func logIn(login, password, ip string, db *sqlx.DB) (map[string]interface{}, *ac
 	if err != nil {
 		resp["status"] = false
 		resp["message"] = "Потеряно соединение с сервером БД"
-		return resp, nil
+		return resp, nil, ""
 	}
 
 	//Формируем ответ
@@ -155,7 +155,7 @@ func logIn(login, password, ip string, db *sqlx.DB) (map[string]interface{}, *ac
 	data.CacheArea.Mux.Lock()
 	resp["areaZone"] = data.CacheArea.Areas
 	data.CacheArea.Mux.Unlock()
-	return resp, tk
+	return resp, tk, tokenStr
 }
 
 //logOut выход из учетной записи

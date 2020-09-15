@@ -74,7 +74,9 @@ func DisplayDeviceLog(accInfo *accToken.Token, db *sqlx.DB) u.Response {
 			logger.Error.Println("|Message: Data can't convert ", err.Error())
 			return u.Message(http.StatusInternalServerError, "data can't convert. Please report it to Admin")
 		}
-		devices = append(devices, tempDev)
+		if tempDev.ID != 0 && tempDev.Area != "0" && tempDev.Region != "0" {
+			devices = append(devices, tempDev)
+		}
 	}
 	resp := u.Message(http.StatusOK, "list of device")
 	resp.Obj["devices"] = devices

@@ -24,7 +24,8 @@ const (
 	// Send pings to peer with this period. Must be less than pongWait.
 	pingPeriod = (pongWait * 9) / 10
 
-	crossTick = time.Second * 5
+	crossTick           = time.Second * 5
+	checkTokensValidity = time.Minute * 1
 )
 
 var UserLogoutGS chan string //канал для закрытия сокетов, пользователя который вышел из системы
@@ -76,26 +77,29 @@ func (c *ClientMainMap) readPump(db *sqlx.DB) {
 		case typeLogin: //отправка default
 			{
 				var (
-					account = &data.Account{}
-					token   *accToken.Token
+					account  = &data.Account{}
+					token    *accToken.Token
+					tokenStr string
 				)
 				_ = json.Unmarshal(p, &account)
 				resp := newMapMess(typeLogin, nil)
-				resp.Data, token = logIn(account.Login, account.Password, c.conn.RemoteAddr().String(), db)
+				resp.Data, token, tokenStr = logIn(account.Login, account.Password, c.conn.RemoteAddr().String(), db)
 				if token != nil {
 					c.cInfo = token
+					c.cookie = tokenStr
 				}
 				c.send <- resp
 			}
 		case typeChangeAccount:
 			{
 				var (
-					account = &data.Account{}
-					token   *accToken.Token
+					account  = &data.Account{}
+					token    *accToken.Token
+					tokenStr string
 				)
 				_ = json.Unmarshal(p, &account)
 				resp := newMapMess(typeLogin, nil)
-				resp.Data, token = logIn(account.Login, account.Password, c.conn.RemoteAddr().String(), db)
+				resp.Data, token, tokenStr = logIn(account.Login, account.Password, c.conn.RemoteAddr().String(), db)
 				if token != nil {
 					//делаем выход из аккаунта
 					respLO := newMapMess(typeLogOut, nil)
@@ -103,6 +107,7 @@ func (c *ClientMainMap) readPump(db *sqlx.DB) {
 					if status {
 						logOutSockets(c.cInfo.Login)
 						c.cInfo = token
+						c.cookie = tokenStr
 					}
 					c.send <- respLO
 				}
@@ -118,6 +123,7 @@ func (c *ClientMainMap) readPump(db *sqlx.DB) {
 						logOutSockets(c.cInfo.Login)
 					}
 					c.cInfo = new(accToken.Token)
+					c.cookie = ""
 					c.send <- resp
 				}
 			}

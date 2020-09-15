@@ -3,6 +3,7 @@ package mainMap
 import (
 	"fmt"
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
+	"github.com/JanFant/TLServer/internal/model/accToken"
 	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/sockets/crossSock/mainCross"
 	"github.com/JanFant/TLServer/internal/sockets/maps"
@@ -33,8 +34,12 @@ func (h *HubMainMap) Run(db *sqlx.DB) {
 
 	UserLogoutGS = make(chan string)
 	data.AccAction = make(chan string)
+	checkValidityTicker := time.NewTicker(checkTokensValidity)
 	crossReadTick := time.NewTicker(crossTick)
-	defer crossReadTick.Stop()
+	defer func() {
+		crossReadTick.Stop()
+		checkValidityTicker.Stop()
+	}()
 
 	oldTFs := maps.SelectTL(db)
 
@@ -183,6 +188,23 @@ func (h *HubMainMap) Run(db *sqlx.DB) {
 					}
 				}
 				logOutSockets(login)
+			}
+		case <-checkValidityTicker.C:
+			{
+				for client := range h.clients {
+					if client.cookie != "" {
+						if client.cInfo.Valid() != nil {
+							resp := newMapMess(typeLogOut, nil)
+							status := logOut(client.cInfo.Login, db)
+							if status {
+								resp.Data["authorizedFlag"] = false
+							}
+							client.cInfo = new(accToken.Token)
+							client.cookie = ""
+							client.send <- resp
+						}
+					}
+				}
 			}
 		}
 	}
