@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+//GenerateRandomKey генерация колюча заданной длинны
 func GenerateRandomKey(n int) string {
 	var letter = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 	b := make([]rune, n)

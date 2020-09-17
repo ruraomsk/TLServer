@@ -9,27 +9,32 @@ import (
 	"strconv"
 )
 
+//CrossesJSON структура в json
 type CrossesJSON struct {
 	Regions []RegionCross `json:"regions"`
 }
 
+//RegionCross описание региона в json
 type RegionCross struct {
-	Region string      `json:"region"`
-	Id     int         `json:"id"`
+	Region string      `json:"region"` //текстовое название региона
+	Id     int         `json:"id"`     //числовое значение региона
 	Areas  []AreaCross `json:"areas"`
 }
 
+//AreaCross описание района в json
 type AreaCross struct {
-	Area         string        `json:"area"`
-	Id           int           `json:"id"`
+	Area         string        `json:"area"` //текстовое название района
+	Id           int           `json:"id"`   //числовое значение района
 	Descriptions []Description `json:"descriptions"`
 }
 
+//Description описания перекрестка в json
 type Description struct {
-	Description string `json:"description"`
-	Id          int    `json:"id"`
+	Description string `json:"description"` //текстовое описание перекрестка
+	Id          int    `json:"id"`          //номер перекрестка в бд
 }
 
+//crossInfo необходимая информация для запроса из бд
 type crossInfo struct {
 	region   string
 	area     string
