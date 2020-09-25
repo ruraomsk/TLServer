@@ -18,6 +18,7 @@ type DeviceLog struct {
 	Time    time.Time `json:"time"`    //время записи
 	ID      int       `json:"id"`      //id устройства которое прислало информацию
 	Text    string    `json:"text"`    //информация о событие
+	Type    int       `json:"type"`    //тип поосбщения
 	Devices BusyArm   `json:"devices"` //информация о девайсе
 }
 
@@ -91,14 +92,14 @@ func DisplayDeviceLogInfo(arms LogDeviceInfo, db *sqlx.DB) u.Response {
 		return u.Message(http.StatusBadRequest, "no one devices selected")
 	}
 	for _, arm := range arms.Devices {
-		sqlStr := fmt.Sprintf(`SELECT tm, id, txt FROM public.logdevice WHERE crossinfo::jsonb @> '{"ID": %v, "area": "%v", "region": "%v"}'::jsonb and tm > '%v' and tm < '%v'`, arm.ID, arm.Area, arm.Region, arms.TimeStart.Format("2006-01-02 15:04"), arms.TimeEnd.Format("2006-01-02 15:04"))
+		sqlStr := fmt.Sprintf(`SELECT tm, id, txt, crossinfo->'type' FROM public.logdevice WHERE crossinfo::jsonb @> '{"ID": %v, "area": "%v", "region": "%v"}'::jsonb and tm > '%v' and tm < '%v'`, arm.ID, arm.Area, arm.Region, arms.TimeStart.Format("2006-01-02 15:04:05"), arms.TimeEnd.Format("2006-01-02 15:04:05"))
 		rowsDevices, err := db.Query(sqlStr)
 		if err != nil {
 			return u.Message(http.StatusInternalServerError, "Connection to DB error. Please try again")
 		}
 		for rowsDevices.Next() {
 			var tempDev DeviceLog
-			err := rowsDevices.Scan(&tempDev.Time, &tempDev.ID, &tempDev.Text)
+			err := rowsDevices.Scan(&tempDev.Time, &tempDev.ID, &tempDev.Text, &tempDev.Type)
 			if err != nil {
 				logger.Error.Println("|Message: Incorrect data ", err.Error())
 				return u.Message(http.StatusInternalServerError, "incorrect data. Please report it to Admin")

@@ -31,8 +31,10 @@ type ControlSokResponse struct {
 
 //StateHandler структура приема / отправки state
 type StateHandler struct {
-	Type  string         `json:"type"`
-	State agspudge.Cross `json:"state"`
+	Type    string         `json:"type"`
+	State   agspudge.Cross `json:"state"`
+	RePaint bool           `json:"rePaint"`
+	Z       int            `json:"z"`
 }
 
 //newCrossMess создание нового сообщения

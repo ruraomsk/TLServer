@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
+	"github.com/JanFant/TLServer/internal/model/crossCreator"
 	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/JanFant/TLServer/internal/sockets/crossSock"
 	"github.com/JanFant/TLServer/logger"
@@ -75,6 +76,15 @@ func (c *ClientControlCr) readPump(db *sqlx.DB) {
 					}
 				)
 				mess.SendToTCPServer()
+				if temp.RePaint {
+					resp := newControlMess(typeSendB, nil)
+					if crossCreator.ShortCreateDirPng(temp.State.Region, temp.State.Area, temp.State.ID, temp.Z, temp.State.Dgis) {
+						resp.Data["message"] = "позиция изменена"
+					} else {
+						resp.Data["message"] = "при изменении позиции произошла ошибка - свяжитесь с Администраторов"
+					}
+					c.send <- resp
+				}
 			}
 		case typeCheckB: //проверка state
 			{
@@ -85,11 +95,7 @@ func (c *ClientControlCr) readPump(db *sqlx.DB) {
 			}
 		case typeCreateB: //создание перекрестка
 			{
-				temp := struct {
-					Type  string         `json:"type"`
-					State agspudge.Cross `json:"state"`
-					Z     int            `json:"z"`
-				}{}
+				temp := StateHandler{}
 				_ = json.Unmarshal(p, &temp)
 				resp := newControlMess(typeCreateB, nil)
 				resp.Data = createCrossData(temp.State, c.crossInfo.Pos, c.crossInfo.AccInfo.Login, temp.Z, db)
