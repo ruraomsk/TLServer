@@ -69,7 +69,7 @@ func (h *HubMainMap) Run(db *sqlx.DB) {
 							for _, oTF := range oldTFs {
 								if oTF.Idevice == nTF.Idevice {
 									flagAdd = false
-									if oTF.Sost.Num != nTF.Sost.Num || oTF.Description != nTF.Description {
+									if oTF.Sost.Num != nTF.Sost.Num || oTF.Description != nTF.Description || oTF.Points != nTF.Points {
 										flagAdd = true
 									}
 									if oTF.Subarea != nTF.Subarea {

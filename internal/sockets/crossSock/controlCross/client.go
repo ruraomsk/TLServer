@@ -80,8 +80,10 @@ func (c *ClientControlCr) readPump(db *sqlx.DB) {
 					resp := newControlMess(typeSendB, nil)
 					if crossCreator.ShortCreateDirPng(temp.State.Region, temp.State.Area, temp.State.ID, temp.Z, temp.State.Dgis) {
 						resp.Data["message"] = "позиция изменена"
+						resp.Data["status"] = true
 					} else {
 						resp.Data["message"] = "при изменении позиции произошла ошибка - свяжитесь с Администраторов"
+						resp.Data["status"] = true
 					}
 					c.send <- resp
 				}
