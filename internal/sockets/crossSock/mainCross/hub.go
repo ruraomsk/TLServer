@@ -58,7 +58,7 @@ func (h *HubCross) Run(db *sqlx.DB) {
 		stateStr string
 	}
 	globArrCross := make(map[int]crossUpdateInfo)
-	globArrPhase := make(map[int]phaseInfo)
+	//globArrPhase := make(map[int]phaseInfo)
 
 	updateTicker := time.NewTicker(readCrossTick)
 	checkValidityTicker := time.NewTicker(checkTokensValidity)
@@ -74,7 +74,7 @@ func (h *HubCross) Run(db *sqlx.DB) {
 				if len(h.clients) > 0 {
 					aPos := make([]int, 0)
 					arrayCross := make(map[int]crossUpdateInfo)
-					arrayPhase := make(map[int]phaseInfo)
+					//arrayPhase := make(map[int]phaseInfo)
 					for client := range h.clients {
 						if len(aPos) == 0 {
 							aPos = append(aPos, client.crossInfo.Idevice)
@@ -139,51 +139,18 @@ func (h *HubCross) Run(db *sqlx.DB) {
 							}
 						}
 						globArrCross = arrayCross
-
-						//запрос phase
-						var copyDev = make(map[int]agspudge.Controller)
-						device.GlobalDevices.Mux.Lock()
-						for key, c := range device.GlobalDevices.MapDevices {
-							copyDev[key] = c.Controller
-						}
-						device.GlobalDevices.Mux.Unlock()
-						for _, pos := range aPos {
-							if c, ok := copyDev[pos]; ok {
-								var tempPhase = phaseInfo{Pdk: c.DK.PDK, Fdk: c.DK.FDK, Tdk: c.DK.TDK, idevice: c.ID}
-								arrayPhase[pos] = tempPhase
-							}
-						}
-
-						for idevice, newData := range arrayPhase {
-							if oldData, ok := globArrPhase[idevice]; ok {
-								//если запись есть нужно сравнить и если есть разница отправить изменения
-								if oldData.Pdk != newData.Pdk || oldData.Tdk != newData.Tdk || oldData.Fdk != newData.Fdk {
-									for client := range h.clients {
-										if client.crossInfo.Idevice == newData.idevice {
-											msg := newCrossMess(typePhase, nil)
-											msg.Data["idevice"] = newData.idevice
-											msg.Data["fdk"] = newData.Fdk
-											msg.Data["tdk"] = newData.Tdk
-											msg.Data["pdk"] = newData.Pdk
-											client.send <- msg
-										}
-									}
-								}
-							} else {
-								//если не существует старой записи ее нужно отправить
-								for client := range h.clients {
-									if client.crossInfo.Idevice == newData.idevice {
-										msg := newCrossMess(typePhase, nil)
-										msg.Data["idevice"] = newData.idevice
-										msg.Data["fdk"] = newData.Fdk
-										msg.Data["tdk"] = newData.Tdk
-										msg.Data["pdk"] = newData.Pdk
-										client.send <- msg
-									}
-								}
-							}
-						}
-						globArrPhase = arrayPhase
+					}
+				}
+			}
+		case phase := <-tcpConnect.ChanChangePhase:
+			{
+				for client := range h.clients {
+					if client.crossInfo.Idevice == phase.Idevice {
+						msg := newCrossMess(typePhase, nil)
+						msg.Data["idevice"] = phase.Idevice
+						msg.Data["fdk"] = phase.Fdk
+						msg.Data["tdk"] = phase.Tdk
+						client.send <- msg
 					}
 				}
 			}

@@ -15,7 +15,9 @@ tcpServerAddress = "192.168.115.115"
 portState = "2002"
 portArmCommand = "2001"
 portChangeProtocol = "2003"
+portPhaseConn = "2004"
 portGPRS = "1093"
+sendGPRS = false
 
 #настройки для постгреса
 [database]

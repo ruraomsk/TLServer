@@ -8,12 +8,13 @@ var (
 	typeDButton    = "dispatch"
 	typeChangeEdit = "changeEdit"
 
-	typeSendB     = "sendB"
-	typeCheckB    = "checkB"
-	typeCreateB   = "createB"
-	typeDeleteB   = "deleteB"
-	typeUpdateB   = "updateB"
-	typeEditInfoB = "editInfoB"
+	typeSendB        = "sendB"
+	typeCheckB       = "checkB"
+	typeCreateB      = "createB"
+	typeDeleteB      = "deleteB"
+	typeUpdateB      = "updateB"
+	typeEditInfoB    = "editInfoB"
+	typeRepaintCheck = "repaintCheck"
 
 	typeControlBuild = "controlInfo"
 

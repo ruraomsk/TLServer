@@ -44,6 +44,7 @@ var (
 	GPRSInfo = struct {
 		IP   string `json:"ip" ,toml:"tcpServerAddress"`
 		Port string `json:"port" ,toml:"portGPRS"`
+		Send bool   `json:"send" ,toml:"sendGPRS"`
 	}{}
 )
 

@@ -162,6 +162,8 @@ github.com/ruraomsk/ag-server v0.0.0-20200825051710-89c03d63e5ac h1:lp8o9R53S1TW
 github.com/ruraomsk/ag-server v0.0.0-20200825051710-89c03d63e5ac/go.mod h1:kDkkBE++mPwNAxJrRMOX4Z87AA5XqR7QTpSiKT3XiTU=
 github.com/ruraomsk/ag-server v0.0.0-20200911045755-542fc825fd02 h1:Ew+1VnFe8LZ+Fo/Ew0AhyPxAeWeQ4v7DwwI8P5THCIQ=
 github.com/ruraomsk/ag-server v0.0.0-20200911045755-542fc825fd02/go.mod h1:kDkkBE++mPwNAxJrRMOX4Z87AA5XqR7QTpSiKT3XiTU=
+github.com/ruraomsk/ag-server v0.0.0-20200930025327-b00f300ce96e h1:IrGstGVhB2un00jE6b47gdRrBsPwgdHu2P37eGoUbyI=
+github.com/ruraomsk/ag-server v0.0.0-20200930025327-b00f300ce96e/go.mod h1:kDkkBE++mPwNAxJrRMOX4Z87AA5XqR7QTpSiKT3XiTU=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=

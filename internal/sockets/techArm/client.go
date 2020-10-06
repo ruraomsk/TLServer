@@ -2,7 +2,6 @@ package techArm
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/model/device"
 	"github.com/JanFant/TLServer/internal/sockets"
@@ -127,16 +126,15 @@ func (c *ClientTechArm) readPump(db *sqlx.DB) {
 
 				_ = json.Unmarshal(p, &temp)
 				temp.Gprs.User = c.armInfo.AccInfo.Login
-				fmt.Println(temp)
-				//var mess = tcpConnect.TCPMessage{
-				//	User:        c.armInfo.AccInfo.Login,
-				//	TCPType:     tcpConnect.TypeChangeProtocol,
-				//	Idevice:     gps.ID,
-				//	Data:        gps,
-				//	From:        tcpConnect.FromTechArmSoc,
-				//	CommandType: typeGPS,
-				//}
-				//mess.SendToTCPServer()
+				var mess = tcpConnect.TCPMessage{
+					User:        c.armInfo.AccInfo.Login,
+					TCPType:     tcpConnect.TypeChangeProtocol,
+					Idevice:     temp.Gprs.ID,
+					Data:        temp.Gprs,
+					From:        tcpConnect.FromTechArmSoc,
+					CommandType: typeGPRS,
+				}
+				mess.SendToTCPServer()
 			}
 		}
 	}

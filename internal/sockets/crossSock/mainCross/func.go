@@ -3,26 +3,11 @@ package mainCross
 import (
 	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/model/device"
+	"github.com/JanFant/TLServer/internal/model/phaseInfo"
 	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/JanFant/TLServer/internal/sockets/crossSock"
 	"github.com/jmoiron/sqlx"
-	agspudge "github.com/ruraomsk/ag-server/pudge"
 )
-
-//phaseInfo инофрмация о фазах
-type phaseInfo struct {
-	idevice int  //идентификатор утройства
-	Fdk     int  `json:"fdk"` //фаза
-	Tdk     int  `json:"tdk"` //время обработки
-	Pdk     bool `json:"pdk"` //переходный период
-}
-
-//get запрос фазы из базы
-func (p *phaseInfo) setPhase(c agspudge.Controller) {
-	p.Fdk = c.DK.FDK
-	p.Tdk = c.DK.TDK
-	p.Pdk = c.DK.PDK
-}
 
 //takeCrossInfo формарование необходимой информации о перекрестке
 func takeCrossInfo(pos sockets.PosInfo, db *sqlx.DB) (resp crossResponse, idev int, description string) {
@@ -60,15 +45,14 @@ func takeCrossInfo(pos sockets.PosInfo, db *sqlx.DB) (resp crossResponse, idev i
 	dev, ok := device.GlobalDevices.MapDevices[TLignt.Idevice]
 	device.GlobalDevices.Mux.Unlock()
 	if ok {
-		var phase = phaseInfo{
-			idevice: TLignt.Idevice,
+		var phase = phaseInfo.Phase{
+			Idevice: TLignt.Idevice,
 			Tdk:     dev.Controller.DK.TDK,
 			Fdk:     dev.Controller.DK.FDK,
-			Pdk:     dev.Controller.DK.PDK,
 		}
 		resp.Data["phase"] = phase
 	} else {
-		resp.Data["phase"] = phaseInfo{}
+		resp.Data["phase"] = phaseInfo.Phase{}
 	}
 
 	resp.Data["cross"] = TLignt

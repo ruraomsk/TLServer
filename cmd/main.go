@@ -36,6 +36,7 @@ func init() {
 	}
 	techArm.GPRSInfo.IP = config.GlobalConfig.TCPConfig.ServerAddr
 	techArm.GPRSInfo.Port = config.GlobalConfig.TCPConfig.PortGPRS
+	techArm.GPRSInfo.Send = config.GlobalConfig.TCPConfig.SendGPRS
 	if _, err := toml.DecodeFile(configPath, &logger.LogGlobalConf); err != nil {
 		fmt.Println("Can't load config file - ", err.Error())
 		os.Exit(1)

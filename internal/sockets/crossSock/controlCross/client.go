@@ -77,13 +77,13 @@ func (c *ClientControlCr) readPump(db *sqlx.DB) {
 				)
 				mess.SendToTCPServer()
 				if temp.RePaint {
-					resp := newControlMess(typeSendB, nil)
+					resp := newControlMess(typeRepaintCheck, nil)
 					if crossCreator.ShortCreateDirPng(temp.State.Region, temp.State.Area, temp.State.ID, temp.Z, temp.State.Dgis) {
 						resp.Data["message"] = "позиция изменена"
 						resp.Data["status"] = true
 					} else {
 						resp.Data["message"] = "при изменении позиции произошла ошибка - свяжитесь с Администраторов"
-						resp.Data["status"] = true
+						resp.Data["status"] = false
 					}
 					c.send <- resp
 				}
