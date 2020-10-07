@@ -3,10 +3,10 @@ package mainCross
 import (
 	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/model/device"
-	"github.com/JanFant/TLServer/internal/model/phaseInfo"
 	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/JanFant/TLServer/internal/sockets/crossSock"
 	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/ag-server/pudge"
 )
 
 //takeCrossInfo формарование необходимой информации о перекрестке
@@ -45,14 +45,9 @@ func takeCrossInfo(pos sockets.PosInfo, db *sqlx.DB) (resp crossResponse, idev i
 	dev, ok := device.GlobalDevices.MapDevices[TLignt.Idevice]
 	device.GlobalDevices.Mux.Unlock()
 	if ok {
-		var phase = phaseInfo.Phase{
-			Idevice: TLignt.Idevice,
-			Tdk:     dev.Controller.DK.TDK,
-			Fdk:     dev.Controller.DK.FDK,
-		}
-		resp.Data["phase"] = phase
+		resp.Data["dk"] = dev.Controller.DK
 	} else {
-		resp.Data["phase"] = phaseInfo.Phase{}
+		resp.Data["dk"] = pudge.DK{}
 	}
 
 	resp.Data["cross"] = TLignt

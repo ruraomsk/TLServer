@@ -142,14 +142,13 @@ func (h *HubCross) Run(db *sqlx.DB) {
 					}
 				}
 			}
-		case phase := <-tcpConnect.ChanChangePhase:
+		case dkInfo := <-tcpConnect.ChanChangeDk:
 			{
 				for client := range h.clients {
-					if client.crossInfo.Idevice == phase.Idevice {
+					if client.crossInfo.Idevice == dkInfo.Idevice {
 						msg := newCrossMess(typePhase, nil)
-						msg.Data["idevice"] = phase.Idevice
-						msg.Data["fdk"] = phase.Fdk
-						msg.Data["tdk"] = phase.Tdk
+						msg.Data["idevice"] = dkInfo.Idevice
+						msg.Data["dk"] = dkInfo.DK
 						client.send <- msg
 					}
 				}

@@ -26,7 +26,7 @@ func TCPClientStart(tcpConfig TCPConfig) {
 	typeInfo[TypeDispatch] = tcpConfig.getArmIP()
 	typeInfo[TypeState] = tcpConfig.getStateIP()
 	typeInfo[TypeChangeProtocol] = tcpConfig.getChangeProtocolIP()
-	go PhaseListen(tcpConfig)
+	go DkListen(tcpConfig)
 	go TCPBroadcast(typeInfo)
 }
 
