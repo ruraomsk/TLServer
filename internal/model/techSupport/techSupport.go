@@ -15,7 +15,7 @@ import (
 )
 
 type EmailJS struct {
-	Text string `json:"text"`
+	Text string `json:"text"` //сообщение
 }
 
 //SendEmail подготовка и отправка сообщения на почту, с сохранением в бд

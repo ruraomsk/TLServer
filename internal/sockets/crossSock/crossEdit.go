@@ -8,8 +8,8 @@ import (
 
 //CrossDisc информация о занятых на редактирования страницах
 type CrossDisc struct {
-	Arms    []CrossInfo `json:"arms"`
-	Crosses []CrossInfo `json:"crosses"`
+	Arms    []CrossInfo `json:"arms"`    //список занятых АРМов управления
+	Crosses []CrossInfo `json:"crosses"` //список занятых АРМов редактирования привязки
 }
 
 //DisplayCrossEditInfo сбор информации для отображения информации о редактируемых страницах

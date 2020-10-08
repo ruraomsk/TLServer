@@ -95,11 +95,6 @@
   "routes": [
     {
       "permission": 1,
-      "path": "/chat",
-      "description": "чат на сервере"
-    },
-    {
-      "permission": 1,
       "path": "/chatW",
       "description": "чат на сервере (вебсокет)"
     },

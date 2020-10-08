@@ -80,9 +80,6 @@ func StartServer(conf *ServerConf, db *sqlx.DB) {
 
 	//--------- SocketS--------------
 	//чат
-	mainRouter.GET("/:slug/chat", func(c *gin.Context) { //работа с основной страничкой чата (страница)
-		c.HTML(http.StatusOK, "chat.html", nil)
-	})
 	mainRouter.GET("/:slug/chatW", func(c *gin.Context) { //обработчик веб сокета для чата
 		chat.HChat(c, chatHub, db)
 	})
@@ -153,7 +150,7 @@ func StartServer(conf *ServerConf, db *sqlx.DB) {
 	mainRouter.POST("/:slug/manage/crossEditControl", handlers.CrossEditInfo)      //обработчик по управлению занятых перекрестков
 	mainRouter.POST("/:slug/manage/crossEditControl/free", handlers.CrossEditFree) //обработчик по управлению освобождению перекрестка
 
-	//проверка БД на признак не правльно заполененных state
+	//проверка БД на признак не правильно заполененных state
 	mainRouter.GET("/:slug/manage/stateTest", func(c *gin.Context) { //обработчик проверки всего State (страничка)
 		c.HTML(http.StatusOK, "stateTest.html", nil)
 	})

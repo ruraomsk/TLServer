@@ -17,7 +17,7 @@ type ShortAccount struct {
 	Description string     `json:"description"` //описание
 	Password    string     `json:"password"`    //пароль пользователя
 	Role        Role       `json:"role"`        //роль пользователя
-	Privilege   string     `json:"-"`           //привелегии (не уходят на верх)
+	Privilege   string     `json:"-"`           //привилегии (не уходят на верх)
 	Region      RegionInfo `json:"region"`      //регион работы пользователя
 	Area        []AreaInfo `json:"area"`        //районы работы пользователя
 }

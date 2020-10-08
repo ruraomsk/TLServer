@@ -51,10 +51,10 @@ type ErrorMessage struct {
 
 //Message структура для приема сообщений
 type Message struct {
-	From    string    `json:"from"`
-	To      string    `json:"to"`
-	Message string    `json:"message"`
-	Time    time.Time `json:"time"`
+	From    string    `json:"from"`    //от какого пользователя
+	To      string    `json:"to"`      //какому пользователю
+	Message string    `json:"message"` //сообщение
+	Time    time.Time `json:"time"`    //время отправки сообщения
 }
 
 //SaveMessage сохранение сообщения в БД

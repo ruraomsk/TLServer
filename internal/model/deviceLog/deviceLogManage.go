@@ -18,7 +18,7 @@ type DeviceLog struct {
 	Time    time.Time `json:"time"`    //время записи
 	ID      int       `json:"id"`      //id устройства которое прислало информацию
 	Text    string    `json:"text"`    //информация о событие
-	Type    int       `json:"type"`    //тип поосбщения
+	Type    int       `json:"type"`    //тип сообщения
 	Devices BusyArm   `json:"devices"` //информация о девайсе
 }
 
