@@ -95,6 +95,8 @@ func TestCrossStateData(accInfo *accToken.Token, db *sqlx.DB) u.Response {
 func VerifiedState(cross *agspudge.Cross, result *stateVerified.StateResult, db *sqlx.DB) {
 	resultMainWind := stateVerified.MainWindVerified(cross, db)
 	appendResult(result, resultMainWind)
+	resultPK := stateVerified.PkVerified(cross)
+	appendResult(result, resultPK)
 	resultDay := stateVerified.DaySetsVerified(cross)
 	appendResult(result, resultDay)
 	resultWeek, empty := stateVerified.WeekSetsVerified(cross)
