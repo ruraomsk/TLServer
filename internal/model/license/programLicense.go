@@ -34,6 +34,7 @@ type LicenseToken struct {
 
 //LicenseFields обращение к полям токена
 var LicenseFields licenseInfo
+var LogOutAllFromLicense chan bool //канал для закрытия сокетов, если введена новая лицензия
 
 //licenseInfo информация о полях лицензии
 type licenseInfo struct {
@@ -101,6 +102,7 @@ func (licInfo *licenseInfo) ParseFields(token *LicenseToken) {
 	licInfo.CompanyName = token.Name
 	licInfo.Address = token.Address
 	licInfo.TechEmail = token.TechEmail
+
 }
 
 //LicenseCheck проверка лицензи на старте
@@ -133,8 +135,12 @@ func LicenseInfo() u.Response {
 		return []byte(key), nil
 	})
 	resp := u.Message(http.StatusOK, "license Info")
-	resp.Obj["tk"] = tk
-	resp.Obj["Time END"] = time.Unix(tk.ExpiresAt, 0)
+	resp.Obj["numDev"] = tk.NumDevice
+	resp.Obj["numAcc"] = tk.NumAcc
+	resp.Obj["name"] = tk.Name
+	resp.Obj["address"] = tk.Address
+	resp.Obj["phone"] = tk.Phone
+	resp.Obj["timeEnd"] = time.Unix(tk.ExpiresAt, 0)
 	return resp
 }
 
@@ -149,6 +155,7 @@ func LicenseNewKey(keyStr string) u.Response {
 		return u.Message(http.StatusInternalServerError, "error write license.key file")
 	}
 	LicenseFields.ParseFields(tk)
+	LogOutAllFromLicense <- true
 	resp := u.Message(http.StatusOK, "new key saved")
 	return resp
 }

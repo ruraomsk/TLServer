@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/model/crossCreator"
+	"github.com/JanFant/TLServer/internal/model/device"
 	"github.com/JanFant/TLServer/internal/model/stateVerified"
 	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/JanFant/TLServer/internal/sockets/crossSock"
@@ -32,8 +33,21 @@ func takeControlInfo(pos sockets.PosInfo, db *sqlx.DB) (resp ControlSokResponse,
 		resp.Data["message"] = "failed to parse cross information"
 		return resp, 0, ""
 	}
+
 	resp = newControlMess(typeControlBuild, nil)
 	resp.Data["state"] = rState
+
+	device.GlobalDevices.Mux.Lock()
+	for _, c := range device.GlobalDevices.MapDevices {
+		if c.Controller.ID == rState.IDevice {
+			resp.Data["deviceIP"] = c.Controller.IPHost
+			break
+		} else {
+			resp.Data["deviceIP"] = ""
+		}
+	}
+	device.GlobalDevices.Mux.Unlock()
+
 	return resp, rState.IDevice, rState.Name
 }
 

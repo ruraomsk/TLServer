@@ -179,6 +179,13 @@ func StartServer(conf *ServerConf, db *sqlx.DB) {
 	mainRouter.POST("/:slug/deviceLog", handlers.DisplayDeviceLogFile) //обработка лога устройства
 	mainRouter.POST("/:slug/deviceLog/info", handlers.LogDeviceInfo)   //обработка лога устройства по выбранному интеревалу времени
 
+	//лог устройств (копия)
+	mainRouter.GET("/:slug/devLogCopy", func(c *gin.Context) { //обработка лога устройства (страничка)
+		c.HTML(http.StatusOK, "devLogCopy.html", nil)
+	})
+	mainRouter.POST("/:slug/devLogCopy", handlers.DisplayDeviceLogFile) //обработка лога устройства
+	mainRouter.POST("/:slug/devLogCopy/info", handlers.LogDeviceInfo)   //обработка лога устройства по выбранному интеревалу времени
+
 	//работа с лицензией
 	mainRouter.GET("/:slug/license", func(c *gin.Context) { //обработка работы с лицензиями (страничка)
 		c.HTML(http.StatusOK, "license.html", nil)

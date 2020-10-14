@@ -244,6 +244,16 @@
       "description": "обработка лога устройства по выбранному интеревалу времени"
     },
     {
+      "permission": 5,
+      "path": "/devLogCopy",
+      "description": "обработка лога от устройства"
+    },
+    {
+      "permission": 5,
+      "path": "/devLogCopy/info",
+      "description": "обработка лога устройства по выбранному интеревалу времени"
+    },
+    {
       "permission": 6,
       "path": "/license",
       "description": "обработчик сбора начальной информации о лицензии"

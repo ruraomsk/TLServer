@@ -5,6 +5,7 @@ import (
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/model/accToken"
 	"github.com/JanFant/TLServer/internal/model/data"
+	"github.com/JanFant/TLServer/internal/model/license"
 	"github.com/JanFant/TLServer/internal/sockets/crossSock/mainCross"
 	"github.com/JanFant/TLServer/internal/sockets/maps"
 	"github.com/jmoiron/sqlx"
@@ -31,9 +32,9 @@ func NewMainMapHub() *HubMainMap {
 
 //Run запуск хаба для mainMap
 func (h *HubMainMap) Run(db *sqlx.DB) {
-
 	UserLogoutGS = make(chan string)
-	data.AccAction = make(chan string)
+	data.AccAction = make(chan string, 50)
+	license.LogOutAllFromLicense = make(chan bool)
 	checkValidityTicker := time.NewTicker(checkTokensValidity)
 	crossReadTick := time.NewTicker(crossTick)
 	defer func() {
@@ -204,6 +205,12 @@ func (h *HubMainMap) Run(db *sqlx.DB) {
 							client.send <- resp
 						}
 					}
+				}
+			}
+		case <-license.LogOutAllFromLicense:
+			{
+				for client := range h.clients {
+					data.AccAction <- client.cInfo.Login
 				}
 			}
 		}
