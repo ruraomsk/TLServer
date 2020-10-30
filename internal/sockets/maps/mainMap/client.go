@@ -2,7 +2,6 @@ package mainMap
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/model/accToken"
 	"github.com/JanFant/TLServer/internal/model/data"
@@ -150,7 +149,6 @@ func (c *ClientMainMap) readPump(db *sqlx.DB) {
 			}
 		default:
 			{
-				fmt.Println("asdasd")
 				resp := newMapMess("type", nil)
 				resp.Data["type"] = typeSelect
 				c.send <- resp

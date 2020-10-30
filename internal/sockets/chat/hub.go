@@ -1,7 +1,6 @@
 package chat
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -54,12 +53,6 @@ func (h *HubChat) Run() {
 
 				h.clients[client] = true
 				//отправим собранные данные клиенту
-
-				fmt.Printf("Chat reg: ")
-				for hClient := range h.clients {
-					fmt.Printf("%v ", hClient.clientInfo.accInfo.Login)
-				}
-				fmt.Printf("\n")
 			}
 		case client := <-h.unregister:
 			{
@@ -84,12 +77,6 @@ func (h *HubChat) Run() {
 						}
 					}
 				}
-
-				fmt.Printf("Chat UnReg: ")
-				for hClient := range h.clients {
-					fmt.Printf("%v ", hClient.clientInfo.accInfo.Login)
-				}
-				fmt.Printf("\n")
 			}
 		case mess := <-h.broadcast:
 			{

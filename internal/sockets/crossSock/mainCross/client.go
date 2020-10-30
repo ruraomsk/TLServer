@@ -2,7 +2,6 @@ package mainCross
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/JanFant/TLServer/internal/sockets/crossSock"
@@ -75,7 +74,6 @@ func (c *ClientCross) readPump(db *sqlx.DB) {
 			}
 		default:
 			{
-				fmt.Println(typeSelect)
 				resp := newCrossMess("type", nil)
 				resp.Data["type"] = typeSelect
 				c.send <- resp

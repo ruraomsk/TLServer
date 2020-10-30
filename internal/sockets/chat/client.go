@@ -2,7 +2,6 @@ package chat
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/JanFant/TLServer/logger"
 	"github.com/gorilla/websocket"
@@ -100,7 +99,6 @@ func (c *ClientChat) readPump(db *sqlx.DB) {
 			}
 		default:
 			{
-				fmt.Println(typeSelect)
 				resp := newChatMess("type", nil)
 				resp.Data["type"] = typeSelect
 				c.send <- resp

@@ -1,7 +1,6 @@
 package mainMap
 
 import (
-	"fmt"
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/model/accToken"
 	"github.com/JanFant/TLServer/internal/model/data"
@@ -128,12 +127,6 @@ func (h *HubMainMap) Run(db *sqlx.DB) {
 				}
 
 				h.clients[client] = true
-
-				fmt.Printf("mainMap reg: ")
-				for hClient := range h.clients {
-					fmt.Printf("%v ", hClient.cInfo.Login)
-				}
-				fmt.Printf("\n")
 			}
 		case client := <-h.unregister:
 			{
@@ -142,12 +135,6 @@ func (h *HubMainMap) Run(db *sqlx.DB) {
 					close(client.send)
 					_ = client.conn.Close()
 				}
-
-				fmt.Printf("mainMap unReg: ")
-				for hClient := range h.clients {
-					fmt.Printf("%v ", hClient.cInfo.Login)
-				}
-				fmt.Printf("\n")
 			}
 		case mess := <-h.broadcast:
 			{

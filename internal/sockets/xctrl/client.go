@@ -2,7 +2,6 @@ package xctrl
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/JanFant/TLServer/internal/model/accToken"
 	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/sockets"
@@ -190,7 +189,6 @@ func (c *ClientXctrl) readPump(db *sqlx.DB) {
 			}
 		default:
 			{
-				fmt.Println("asdasd")
 				resp := newXctrlMess("type", nil)
 				resp.Data["type"] = typeSelect
 				c.send <- resp

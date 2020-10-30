@@ -1,18 +1,22 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
-	"github.com/JanFant/TLServer/internal/sockets/techArm"
-	"os"
-
 	"github.com/BurntSushi/toml"
 	"github.com/JanFant/TLServer/internal/app/apiserver"
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/model/config"
 	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/model/license"
+	"github.com/JanFant/TLServer/internal/sockets/techArm"
 	"github.com/JanFant/TLServer/logger"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 )
 
 var err error
@@ -71,8 +75,26 @@ func main() {
 	////----------------------------------------------------------------------
 	//
 	//запуск сервера
-	apiserver.StartServer(apiserver.ServerConfig, dbConn)
+	srv := apiserver.StartServer(apiserver.ServerConfig, dbConn)
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Error.Println("|Message: Error start server ", err.Error())
+			fmt.Println("Error start server ", err.Error())
+		}
+	}()
 
-	logger.Info.Println("|Message: Exit working...")
-	fmt.Println("Exit working...")
+	quit := make(chan os.Signal)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		logger.Info.Println("|Message: Server forced shutdown...", err)
+		fmt.Println("Server forced shutdown...", err)
+	}
+
+	logger.Info.Println("|Message: Shutting down server...")
+	fmt.Println("Shutting down server...")
 }

@@ -2,7 +2,6 @@ package greenStreet
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/model/accToken"
 	"github.com/JanFant/TLServer/internal/model/data"
@@ -189,7 +188,6 @@ func (c *ClientGS) readPump(db *sqlx.DB) {
 			}
 		default:
 			{
-				fmt.Println("asdasd")
 				resp := newGSMess("type", nil)
 				resp.Data["type"] = typeSelect
 				c.send <- resp

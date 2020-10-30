@@ -3,6 +3,8 @@ package mainCross
 import (
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/model/device"
@@ -13,7 +15,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/ag-server/comm"
 	agspudge "github.com/ruraomsk/ag-server/pudge"
-	"time"
 )
 
 //HubCross структура хаба для cross
@@ -227,7 +228,6 @@ func (h *HubCross) Run(db *sqlx.DB) {
 						}
 						mess.SendToTCPServer()
 
-						fmt.Println("Отправка 4.1 кросс")
 						tDev.TurnOnFlag = true
 					}
 					tDev.BusyCount++
@@ -246,12 +246,6 @@ func (h *HubCross) Run(db *sqlx.DB) {
 				if client.crossInfo.Edit {
 					CrossUsersForMap <- h.usersList()
 				}
-
-				fmt.Printf("mainCross reg: ")
-				for client := range h.clients {
-					fmt.Printf("%v ", client.crossInfo.AccInfo.Login)
-				}
-				fmt.Printf("\n")
 			}
 		case client := <-h.unregister:
 			{
@@ -302,12 +296,6 @@ func (h *HubCross) Run(db *sqlx.DB) {
 
 					}
 				}
-
-				fmt.Printf("mainCross UnReg: ")
-				for client := range h.clients {
-					fmt.Printf("%v ", client.crossInfo.AccInfo.Login)
-				}
-				fmt.Printf("\n")
 			}
 		case mess := <-h.broadcast:
 			{

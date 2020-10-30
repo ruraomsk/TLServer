@@ -1,7 +1,6 @@
 package greenStreet
 
 import (
-	"fmt"
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/model/device"
@@ -101,12 +100,6 @@ func (h *HubGStreet) Run(db *sqlx.DB) {
 		case client := <-h.register:
 			{
 				h.clients[client] = true
-
-				fmt.Printf("gStreet reg: ")
-				for client := range h.clients {
-					fmt.Printf("%v ", client.cInfo.Login)
-				}
-				fmt.Printf("\n")
 			}
 		case client := <-h.unregister:
 			{
@@ -141,12 +134,6 @@ func (h *HubGStreet) Run(db *sqlx.DB) {
 					}
 					device.GlobalDevEdit.Mux.Unlock()
 				}
-
-				fmt.Println("gStreet unReg: ")
-				for client := range h.clients {
-					fmt.Printf("%v ", client.cInfo.Login)
-				}
-				fmt.Printf("\n")
 			}
 		case mess := <-h.broadcast:
 			{

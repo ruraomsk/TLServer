@@ -2,7 +2,6 @@ package controlCross
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/model/data"
 	"github.com/JanFant/TLServer/internal/sockets/crossSock"
@@ -100,12 +99,6 @@ func (h *HubControlCross) Run(db *sqlx.DB) {
 				h.clients[client] = true
 				//отправим собранные данные клиенту
 				client.send <- resp
-
-				fmt.Printf("Cross ARM reg: ")
-				for client := range h.clients {
-					fmt.Printf("%v ", client.crossInfo.AccInfo.Login)
-				}
-				fmt.Printf("\n")
 			}
 		case client := <-h.unregister:
 			{
@@ -129,12 +122,6 @@ func (h *HubControlCross) Run(db *sqlx.DB) {
 						}
 					}
 				}
-
-				fmt.Printf("Cross ARM UnReg: ")
-				for client := range h.clients {
-					fmt.Printf("%v ", client.crossInfo.AccInfo.Login)
-				}
-				fmt.Printf("\n")
 			}
 		case mess := <-h.broadcast:
 			{

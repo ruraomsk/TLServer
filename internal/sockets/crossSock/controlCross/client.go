@@ -2,7 +2,6 @@ package controlCross
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/model/crossCreator"
 	"github.com/JanFant/TLServer/internal/sockets"
@@ -164,7 +163,6 @@ func (c *ClientControlCr) readPump(db *sqlx.DB) {
 			}
 		default:
 			{
-				fmt.Println(typeSelect)
 				resp := newControlMess("type", nil)
 				resp.Data["type"] = typeSelect
 				c.send <- resp

@@ -92,6 +92,7 @@ func DisplayDeviceLogInfo(arms LogDeviceInfo, db *sqlx.DB) u.Response {
 		return u.Message(http.StatusBadRequest, "no one devices selected")
 	}
 	for _, arm := range arms.Devices {
+		var listDevicesLog []DeviceLog
 		sqlStr := fmt.Sprintf(`SELECT tm, id, txt, crossinfo->'type' FROM public.logdevice WHERE crossinfo::jsonb @> '{"ID": %v, "area": "%v", "region": "%v"}'::jsonb and tm > '%v' and tm < '%v'`, arm.ID, arm.Area, arm.Region, arms.TimeStart.Format("2006-01-02 15:04:05"), arms.TimeEnd.Format("2006-01-02 15:04:05"))
 		rowsDevices, err := db.Query(sqlStr)
 		if err != nil {
@@ -105,9 +106,21 @@ func DisplayDeviceLogInfo(arms LogDeviceInfo, db *sqlx.DB) u.Response {
 				return u.Message(http.StatusInternalServerError, "incorrect data. Please report it to Admin")
 			}
 			tempDev.Devices = arm
-			deviceLogs = append(deviceLogs, tempDev)
+			listDevicesLog = append(listDevicesLog, tempDev)
 		}
+		if len(listDevicesLog) == 0 {
+			var tempDev DeviceLog
+			sqlStr := fmt.Sprintf(`SELECT tm, id, txt, crossinfo->'type' FROM public.logdevice WHERE crossinfo::jsonb @> '{"ID": %v, "area": "%v", "region": "%v"}'::jsonb LIMIT 1`, arm.ID, arm.Area, arm.Region)
+			err = db.QueryRow(sqlStr).Scan(&tempDev.Time, &tempDev.ID, &tempDev.Text, &tempDev.Type)
+			if err != nil {
+				logger.Error.Println("|Message: Incorrect data ", err.Error())
+				return u.Message(http.StatusInternalServerError, "incorrect data. Please report it to Admin")
+			}
+			listDevicesLog = append(listDevicesLog, tempDev)
+		}
+		deviceLogs = append(deviceLogs, listDevicesLog...)
 	}
+
 	if deviceLogs == nil {
 		deviceLogs = make([]DeviceLog, 0)
 	}

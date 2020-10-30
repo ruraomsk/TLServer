@@ -1,10 +1,10 @@
 package apiserver
 
 import (
-	"fmt"
 	"github.com/JanFant/TLServer/internal/app/handlers/crossH"
 	"github.com/JanFant/TLServer/internal/app/handlers/licenseH"
 	"github.com/JanFant/TLServer/internal/model/device"
+	"github.com/JanFant/TLServer/internal/model/license"
 	"github.com/JanFant/TLServer/internal/sockets/chat"
 	"github.com/JanFant/TLServer/internal/sockets/crossSock/controlCross"
 	"github.com/JanFant/TLServer/internal/sockets/crossSock/mainCross"
@@ -15,9 +15,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	"net/http"
 
-	"github.com/JanFant/TLServer/internal/model/license"
-	"github.com/JanFant/TLServer/logger"
-
 	"github.com/JanFant/TLServer/internal/app/handlers"
 	"github.com/JanFant/TLServer/internal/app/middleWare"
 	"github.com/gin-contrib/cors"
@@ -25,7 +22,7 @@ import (
 )
 
 //StartServer запуск сервера
-func StartServer(conf *ServerConf, db *sqlx.DB) {
+func StartServer(conf *ServerConf, db *sqlx.DB) *http.Server {
 	mainMapHub := mainMap.NewMainMapHub()
 	mainCrossHub := mainCross.NewCrossHub()
 	controlCrHub := controlCross.NewCrossHub()
@@ -44,6 +41,7 @@ func StartServer(conf *ServerConf, db *sqlx.DB) {
 	go chatHub.Run()
 
 	// Создаем engine для соединений
+	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 	router.Use(cors.Default())
 
@@ -212,8 +210,13 @@ func StartServer(conf *ServerConf, db *sqlx.DB) {
 
 	//------------------------------------------------------------------------------------------------------------------
 	// Запуск HTTP сервера
-	if err := router.Run(conf.ServerIP); err != nil {
-		logger.Error.Println("|Message: Error start server ", err.Error())
-		fmt.Println("Error start server ", err.Error())
-	}
+	srv := &http.Server{Handler: router, Addr: conf.ServerIP}
+	return srv
+
+	// Запуск HTTP сервера
+	//if err := router.Run(conf.ServerIP); err != nil {
+	//	logger.Error.Println("|Message: Error start server ", err.Error())
+	//	fmt.Println("Error start server ", err.Error())
+	//}
+
 }

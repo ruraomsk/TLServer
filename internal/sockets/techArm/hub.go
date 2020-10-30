@@ -1,7 +1,6 @@
 package techArm
 
 import (
-	"fmt"
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/jmoiron/sqlx"
@@ -160,12 +159,6 @@ func (h *HubTechArm) Run(db *sqlx.DB) {
 		case client := <-h.register:
 			{
 				h.clients[client] = true
-
-				fmt.Printf("techArm reg: ")
-				for client := range h.clients {
-					fmt.Printf("%v ", client.armInfo.AccInfo.Login)
-				}
-				fmt.Printf("\n")
 			}
 		case client := <-h.unregister:
 			{
@@ -174,12 +167,6 @@ func (h *HubTechArm) Run(db *sqlx.DB) {
 					close(client.send)
 					_ = client.conn.Close()
 				}
-
-				fmt.Printf("techArm unReg: ")
-				for client := range h.clients {
-					fmt.Printf("%v ", client.armInfo.AccInfo.Login)
-				}
-				fmt.Printf("\n")
 			}
 		case mess := <-h.broadcast:
 			{
