@@ -75,14 +75,20 @@ func main() {
 	////----------------------------------------------------------------------
 	//
 	//запуск сервера
-	srv := apiserver.StartServer(apiserver.ServerConfig, dbConn)
+	srv1 := apiserver.MainServer(apiserver.ServerConfig, dbConn)
 	go func() {
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Error.Println("|Message: Error start server ", err.Error())
-			fmt.Println("Error start server ", err.Error())
+		if err := srv1.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Error.Println("|Message: Error start main server ", err.Error())
+			fmt.Println("Error start main server ", err.Error())
 		}
 	}()
-
+	srv2 := apiserver.ExchangeServer(apiserver.ServerConfig, dbConn)
+	go func() {
+		if err := srv2.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Error.Println("|Message: Error start exchange server ", err.Error())
+			fmt.Println("Error start exchange server ", err.Error())
+		}
+	}()
 	quit := make(chan os.Signal)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
@@ -90,7 +96,12 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
-	if err := srv.Shutdown(ctx); err != nil {
+	if err := srv1.Shutdown(ctx); err != nil {
+		logger.Info.Println("|Message: Server forced shutdown...", err)
+		fmt.Println("Server forced shutdown...", err)
+	}
+
+	if err := srv2.Shutdown(ctx); err != nil {
 		logger.Info.Println("|Message: Server forced shutdown...", err)
 		fmt.Println("Server forced shutdown...", err)
 	}

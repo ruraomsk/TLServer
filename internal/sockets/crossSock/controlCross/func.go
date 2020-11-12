@@ -113,7 +113,7 @@ func createCrossData(state agspudge.Cross, pos sockets.PosInfo, login string, z 
 	if crossCreator.ShortCreateDirPng(state.Region, state.Area, state.ID, z, state.Dgis) {
 		resp["message"] = "перекресток создан"
 	} else {
-		resp["message"] = "перекресток создан без красположения - свяжитесь с Администратором"
+		resp["message"] = "перекресток создан без расположения - свяжитесь с Администратором"
 	}
 	return resp
 }

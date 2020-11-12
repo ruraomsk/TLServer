@@ -64,7 +64,7 @@
     {
       "id": 4,
       "visible": false,
-      "description": "Работа с АРМом устройств"
+      "description": "Работа с привязкой устройств"
     },
     {
       "id": 5,
@@ -111,12 +111,12 @@
     {
       "permission": 4,
       "path": "/cross/control",
-      "description": "страничка работы с АРМом перекрестка"
+      "description": "страничка работы с привязкой перекрестка"
     },
     {
       "permission": 4,
       "path": "/cross/controlW",
-      "description": "вебсокет АРМа перекрестка"
+      "description": "вебсокет привязкой перекрестка"
     },
     {
       "permission": 7,

@@ -8,7 +8,8 @@ import (
 
 //Point координаты точки
 type Point struct {
-	Y, X float64 //Координата Х и Y
+	Y float64
+	X float64
 }
 
 //BoxPoint координаты для отрисовки зоны работы пользователя

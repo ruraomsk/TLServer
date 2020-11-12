@@ -2,6 +2,7 @@ package apiserver
 
 import (
 	"github.com/JanFant/TLServer/internal/app/handlers/crossH"
+	"github.com/JanFant/TLServer/internal/app/handlers/exchangeServ"
 	"github.com/JanFant/TLServer/internal/app/handlers/licenseH"
 	"github.com/JanFant/TLServer/internal/model/device"
 	"github.com/JanFant/TLServer/internal/model/license"
@@ -21,8 +22,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-//StartServer запуск сервера
-func StartServer(conf *ServerConf, db *sqlx.DB) *http.Server {
+//MainServer настройка основного сервера
+func MainServer(conf *ServerConf, db *sqlx.DB) *http.Server {
 	mainMapHub := mainMap.NewMainMapHub()
 	mainCrossHub := mainCross.NewCrossHub()
 	controlCrHub := controlCross.NewCrossHub()
@@ -212,11 +213,47 @@ func StartServer(conf *ServerConf, db *sqlx.DB) *http.Server {
 	// Запуск HTTP сервера
 	srv := &http.Server{Handler: router, Addr: conf.ServerIP}
 	return srv
+}
 
+//ExchangeServer настройка сервера обменов
+func ExchangeServer(conf *ServerConf, db *sqlx.DB) *http.Server {
+
+	// Создаем engine для соединений
+	gin.SetMode(gin.ReleaseMode)
+	router := gin.Default()
+	router.Use(cors.Default())
+
+	apiGroup := router.Group("api")
+	apiGroup.GET("/Controllers/controllers", func(c *gin.Context) {
+		exchangeServ.ControllerHandler(c, db)
+	})
+
+	apiGroup.GET("/Phases/list", func(c *gin.Context) {
+		exchangeServ.PhasesHandler(c, db)
+	})
+	apiGroup.GET("/Plans/list", func(c *gin.Context) {
+		exchangeServ.PlansHandler(c, db)
+	})
+
+	//------------------------------------------------------------------------------------------------------------------
+	//обязательный общий путь
+	//mainRouter := router.Group("/user")
+	//mainRouter.Use(middleWare.JwtAuth())       //мидл проверки токена
+	//mainRouter.Use(middleWare.AccessControl()) //мидл проверки url пути
+
+	////арм технолога
+	//mainRouter.GET("/:slug/techArm", func(c *gin.Context) {
+	//	c.HTML(http.StatusOK, "techControl.html", nil)
+	//})
+	//mainRouter.GET("/:slug/techArmW", func(c *gin.Context) {
+	//	techArm.HTechArm(c, techArmHub, db)
+	//})
+
+	//mainRouter.POST("/:slug/license", licenseH.LicenseInfo)            //обработчик сбора начальной информаци
+	//mainRouter.POST("/:slug/license/newToken", licenseH.LicenseNewKey) //обработчик сохранения нового токена
+
+	//------------------------------------------------------------------------------------------------------------------
 	// Запуск HTTP сервера
-	//if err := router.Run(conf.ServerIP); err != nil {
-	//	logger.Error.Println("|Message: Error start server ", err.Error())
-	//	fmt.Println("Error start server ", err.Error())
-	//}
-
+	srv := &http.Server{Handler: router, Addr: conf.ServerExchange}
+	return srv
 }
