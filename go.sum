@@ -118,6 +118,8 @@ github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZN
 github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4/go.mod h1:xMI15A0UPsDsEKsMN9yxemIoYk6Tm2C1GtYGdfGttqA=
 github.com/ruraomsk/ag-server v0.0.0-20201013014044-87fb281f9ff8 h1:NsVK++YY5Su13URkXz+WVyYuT2JnUoRw0CDNc0rMerE=
 github.com/ruraomsk/ag-server v0.0.0-20201013014044-87fb281f9ff8/go.mod h1:kDkkBE++mPwNAxJrRMOX4Z87AA5XqR7QTpSiKT3XiTU=
+github.com/ruraomsk/ag-server v0.0.0-20201119081818-959138841bf4 h1:8BXMNovxEfO7ZdD/HIGTMkuWFVOAFWTMknegXigHdXw=
+github.com/ruraomsk/ag-server v0.0.0-20201119081818-959138841bf4/go.mod h1:kDkkBE++mPwNAxJrRMOX4Z87AA5XqR7QTpSiKT3XiTU=
 github.com/shopspring/decimal v1.2.0 h1:abSATXmQEYyShuxI4/vyW3tV1MrKAJzCZ/0zLUXYbsQ=
 github.com/shopspring/decimal v1.2.0/go.mod h1:DKyhrW/HYNuLGql+MJL6WCR6knT2jwCFRcu2hWCYk4o=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
