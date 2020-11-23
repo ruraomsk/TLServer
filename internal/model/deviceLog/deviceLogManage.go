@@ -50,7 +50,7 @@ func (busyArm *BusyArm) toStruct(str string) (err error) {
 //DisplayDeviceLog формирование начальной информации отображения логов устройства
 func DisplayDeviceLog(accInfo *accToken.Token, db *sqlx.DB) u.Response {
 	var devices []BusyArm
-	var sqlStr = fmt.Sprintf(`SELECT distinct on (crossinfo->'region', crossinfo->'area', crossinfo->'ID') crossinfo, id FROM public.logdevice`)
+	var sqlStr = fmt.Sprintf(`SELECT distinct on (crossinfo->'region', crossinfo->'area', crossinfo->'ID', id) crossinfo, id FROM public.logdevice`)
 	if accInfo.Region != "*" {
 		sqlStr += fmt.Sprintf(` WHERE crossinfo::jsonb @> '{"region": "%v"}'::jsonb`, accInfo.Region)
 	}
