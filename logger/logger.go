@@ -13,7 +13,7 @@ import (
 type LogFile struct {
 	flog  *os.File //дескриптор открытого файла
 	mutex sync.Mutex
-	path  string //путь да текущего файла лога
+	path  string //путь до текущего файла лога
 	date  string //текущая дата
 }
 
@@ -26,7 +26,7 @@ var (
 	Trace *log.Logger
 	//Info Send info message
 	Info *log.Logger
-	//Warning send warnig message
+	//Warning send warning message
 	Warning *log.Logger
 	//Error  send error message
 	Error *log.Logger

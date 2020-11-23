@@ -62,29 +62,22 @@ func (c *ClientControlCr) readPump(db *sqlx.DB) {
 			{
 				temp := StateHandler{}
 				_ = json.Unmarshal(p, &temp)
-				var (
-					userCross = agspudge.UserCross{User: c.crossInfo.AccInfo.Login, State: temp.State}
-					mess      = tcpConnect.TCPMessage{
-						User:        c.crossInfo.AccInfo.Login,
-						TCPType:     tcpConnect.TypeState,
-						Idevice:     temp.State.IDevice,
-						Data:        userCross,
-						From:        tcpConnect.FromCrControlSoc,
-						CommandType: typeSendB,
-						Pos:         c.crossInfo.Pos,
-					}
-				)
-				mess.SendToTCPServer()
-				if temp.RePaint {
-					resp := newControlMess(typeRepaintCheck, nil)
-					if crossCreator.ShortCreateDirPng(temp.State.Region, temp.State.Area, temp.State.ID, temp.Z, temp.State.Dgis) {
-						resp.Data["message"] = "позиция изменена"
-						resp.Data["status"] = true
-					} else {
-						resp.Data["message"] = "при изменении позиции произошла ошибка - свяжитесь с Администраторов"
-						resp.Data["status"] = false
-					}
+				resp := newControlMess(typeSendB, nil)
+				resp.Data = sendCrossData(temp.State, c.crossInfo.Idevice, c.crossInfo.Pos, c.crossInfo.AccInfo.Login, db)
+				if len(resp.Data) > 0 {
 					c.send <- resp
+				} else {
+					if temp.RePaint {
+						resp := newControlMess(typeRepaintCheck, nil)
+						if crossCreator.ShortCreateDirPng(temp.State.Region, temp.State.Area, temp.State.ID, temp.Z, temp.State.Dgis) {
+							resp.Data["message"] = "позиция изменена"
+							resp.Data["status"] = true
+						} else {
+							resp.Data["message"] = "при изменении позиции произошла ошибка - свяжитесь с Администраторов"
+							resp.Data["status"] = false
+						}
+						c.send <- resp
+					}
 				}
 			}
 		case typeCheckB: //проверка state

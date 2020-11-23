@@ -81,7 +81,7 @@ func createCrossData(state agspudge.Cross, pos sockets.PosInfo, login string, z 
 		verRes   []string
 		stateSql string
 	)
-	sqlStr := fmt.Sprintf(`SELECT state FROM public.cross WHERE state::jsonb @> '{"Idevice":%v}'::jsonb OR (region = %v and area = %v and id = %v)`, state.IDevice, state.Region, state.Area, state.ID)
+	sqlStr := fmt.Sprintf(`SELECT state FROM public.cross WHERE state::jsonb @> '{"idevice":%v}'::jsonb OR (region = %v and area = %v and id = %v)`, state.IDevice, state.Region, state.Area, state.ID)
 	rows, err := db.Query(sqlStr)
 	if err != nil {
 		logger.Error.Println("|Message: control socket (create Button), DB not respond : ", err.Error())
@@ -93,13 +93,14 @@ func createCrossData(state agspudge.Cross, pos sockets.PosInfo, login string, z 
 
 	for rows.Next() {
 		_ = rows.Scan(&stateSql)
-		if strings.Contains(stateSql, fmt.Sprintf(`"Idevice": %v`, state.IDevice)) {
+		if strings.Contains(stateSql, fmt.Sprintf(`"idevice": %v`, state.IDevice)) {
 			verRes = append(verRes, fmt.Sprintf("№ %v модема уже используется в системе", state.IDevice))
 		}
 		if strings.Contains(stateSql, fmt.Sprintf(`"id": %v`, state.ID)) {
 			verRes = append(verRes, fmt.Sprintf("Данный ID = %v уже занят в регионе: %v районе: %v", state.ID, state.Region, state.Area))
 		}
 	}
+
 	if len(verRes) > 0 {
 		resp := make(map[string]interface{})
 		resp["status"] = false
@@ -115,5 +116,42 @@ func createCrossData(state agspudge.Cross, pos sockets.PosInfo, login string, z 
 	} else {
 		resp["message"] = "перекресток создан без расположения - свяжитесь с Администратором"
 	}
+	return resp
+}
+
+func sendCrossData(state agspudge.Cross, cIDev int, pos sockets.PosInfo, login string, db *sqlx.DB) map[string]interface{} {
+	var (
+		userCross = agspudge.UserCross{User: login, State: state}
+		mess      = tcpConnect.TCPMessage{
+			User:        login,
+			TCPType:     tcpConnect.TypeState,
+			Idevice:     state.IDevice,
+			Data:        userCross,
+			From:        tcpConnect.FromCrControlSoc,
+			CommandType: typeSendB,
+			Pos:         pos,
+		}
+		resp   = make(map[string]interface{})
+		verRes []string
+	)
+	if cIDev != state.IDevice {
+		var strRow string
+		sqlStr := fmt.Sprintf(`SELECT state FROM public.cross WHERE state::jsonb @> '{"idevice":%v}'::jsonb`, state.IDevice)
+		err := db.QueryRow(sqlStr).Scan(&strRow)
+		if err != nil {
+			logger.Error.Println("|Message: control socket (create Button), DB not respond : ", err.Error())
+			resp["status"] = false
+			resp["message"] = "DB not respond"
+			return resp
+		}
+		if strings.Contains(strRow, fmt.Sprintf(`"idevice": %v`, state.IDevice)) {
+			verRes = append(verRes, fmt.Sprintf("№ %v модема уже используется в системе", state.IDevice))
+			resp["status"] = false
+			resp["result"] = verRes
+			return resp
+		}
+	}
+	mess.SendToTCPServer()
+
 	return resp
 }
