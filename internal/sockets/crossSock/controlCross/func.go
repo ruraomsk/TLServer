@@ -1,6 +1,7 @@
 package controlCross
 
 import (
+	"database/sql"
 	"fmt"
 	"github.com/JanFant/TLServer/internal/app/tcpConnect"
 	"github.com/JanFant/TLServer/internal/model/crossCreator"
@@ -138,8 +139,8 @@ func sendCrossData(state agspudge.Cross, cIDev int, pos sockets.PosInfo, login s
 		var strRow string
 		sqlStr := fmt.Sprintf(`SELECT state FROM public.cross WHERE state::jsonb @> '{"idevice":%v}'::jsonb`, state.IDevice)
 		err := db.QueryRow(sqlStr).Scan(&strRow)
-		if err != nil {
-			logger.Error.Println("|Message: control socket (create Button), DB not respond : ", err.Error())
+		if err != nil && err != sql.ErrNoRows {
+			logger.Error.Println("|Message: control socket (send Button), DB not respond : ", err.Error())
 			resp["status"] = false
 			resp["message"] = "DB not respond"
 			return resp
