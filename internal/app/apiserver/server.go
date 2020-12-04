@@ -224,15 +224,15 @@ func ExchangeServer(conf *ServerConf, db *sqlx.DB) *http.Server {
 	router.Use(cors.Default())
 
 	apiGroup := router.Group("api")
-	apiGroup.GET("/Controllers/controllers", func(c *gin.Context) {
+	apiGroup.GET("/Controllers", func(c *gin.Context) {
 		exchangeServ.ControllerHandler(c, db)
 	})
 
-	apiGroup.GET("/Phases/list", func(c *gin.Context) {
-		exchangeServ.PhasesHandler(c, db)
+	apiGroup.GET("/States", func(c *gin.Context) {
+		exchangeServ.StatesHandler(c, db)
 	})
-	apiGroup.GET("/Plans/list", func(c *gin.Context) {
-		exchangeServ.PlansHandler(c, db)
+	apiGroup.GET("/Devices", func(c *gin.Context) {
+		exchangeServ.DevicesHandler(c)
 	})
 
 	//------------------------------------------------------------------------------------------------------------------

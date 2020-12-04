@@ -10,8 +10,8 @@ import (
 	"strconv"
 )
 
-//plansHandler обработчик запроса фаз
-func PlansHandler(c *gin.Context, db *sqlx.DB) {
+//StatesHandler обработчик запроса фаз
+func StatesHandler(c *gin.Context, db *sqlx.DB) {
 	iDevicesStr := c.QueryArray("controller_id")
 	if len(iDevicesStr) <= 0 {
 		resp := u.Message(http.StatusBadRequest, "blank field: controller_id")
@@ -28,6 +28,6 @@ func PlansHandler(c *gin.Context, db *sqlx.DB) {
 		}
 		iDevices = append(iDevices, id)
 	}
-	resp := exchangeData.GetPlans(iDevices, db)
+	resp := exchangeData.GetStates(iDevices, db)
 	c.JSON(resp.Code, resp.Obj)
 }

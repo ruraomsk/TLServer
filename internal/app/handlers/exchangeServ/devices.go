@@ -5,13 +5,12 @@ import (
 	"github.com/JanFant/TLServer/internal/model/exchangeData"
 	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/gin-gonic/gin"
-	"github.com/jmoiron/sqlx"
 	"net/http"
 	"strconv"
 )
 
-//PhasesHandler обработчик запроса фаз
-func PhasesHandler(c *gin.Context, db *sqlx.DB) {
+//DevicesHandler обработчик запроса фаз
+func DevicesHandler(c *gin.Context) {
 	iDevicesStr := c.QueryArray("controller_id")
 	if len(iDevicesStr) <= 0 {
 		resp := u.Message(http.StatusBadRequest, "blank field: controller_id")
@@ -28,6 +27,6 @@ func PhasesHandler(c *gin.Context, db *sqlx.DB) {
 		}
 		iDevices = append(iDevices, id)
 	}
-	resp := exchangeData.GetPhases(iDevices, db)
+	resp := exchangeData.GetDevices(iDevices)
 	c.JSON(resp.Code, resp.Obj)
 }
