@@ -2,8 +2,6 @@ package tcpConnect
 
 import (
 	"github.com/JanFant/TLServer/internal/model/device"
-	"github.com/JanFant/TLServer/internal/sockets"
-	"github.com/ruraomsk/ag-server/comm"
 	"net"
 	"time"
 
@@ -94,20 +92,20 @@ func TCPBroadcast(typeIP map[string]string) {
 						devicesId = append(devicesId, key)
 					}
 					device.GlobalDevices.Mux.Unlock()
-					arm := comm.CommandARM{User: "Server", Command: 4, Params: 0}
-					for _, devId := range devicesId {
-						arm.ID = devId
-						var mess = TCPMessage{
-							TCPType:     TypeDispatch,
-							User:        arm.User,
-							From:        FromServer,
-							Data:        arm,
-							CommandType: "dispatch",
-							Pos:         sockets.PosInfo{},
-							Idevice:     arm.ID,
-						}
-						mess.SendToTCPServer()
-					}
+					//arm := comm.CommandARM{User: "Server", Command: 4, Params: 0}
+					//for _, devId := range devicesId {
+					//	arm.ID = devId
+					//	var mess = TCPMessage{
+					//		TCPType:     TypeDispatch,
+					//		User:        arm.User,
+					//		From:        FromServer,
+					//		Data:        arm,
+					//		CommandType: "dispatch",
+					//		Pos:         sockets.PosInfo{},
+					//		Idevice:     arm.ID,
+					//	}
+					//	mess.SendToTCPServer()
+					//}
 					startSys = false
 				}
 			}

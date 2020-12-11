@@ -234,6 +234,9 @@ func ExchangeServer(conf *ServerConf, db *sqlx.DB) *http.Server {
 	apiGroup.GET("/Devices", func(c *gin.Context) {
 		exchangeServ.DevicesHandler(c)
 	})
+	apiGroup.GET("/Svgs", func(c *gin.Context) {
+		exchangeServ.SvgsHandler(c, db)
+	})
 
 	//------------------------------------------------------------------------------------------------------------------
 	//обязательный общий путь
