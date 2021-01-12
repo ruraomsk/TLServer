@@ -1,6 +1,7 @@
 package exchangeData
 
 import (
+	"github.com/JanFant/TLServer/internal/model/license"
 	"github.com/JanFant/TLServer/internal/sockets/crossSock"
 	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/jmoiron/sqlx"
@@ -10,7 +11,7 @@ import (
 
 func GetStates(iDevice []int, db *sqlx.DB) u.Response {
 	var (
-		StatesList = make([]pudge.Cross, 0)
+		statesList = make([]pudge.Cross, 0)
 	)
 
 	query, args, err := sqlx.In(`SELECT state FROM public.cross WHERE idevice IN (?)`, iDevice)
@@ -32,10 +33,16 @@ func GetStates(iDevice []int, db *sqlx.DB) u.Response {
 
 		state, _ := crossSock.ConvertStateStrToStruct(stateStr)
 
-		StatesList = append(StatesList, state)
+		statesList = append(statesList, state)
+	}
+
+	//обережим количество устройств по количеству доступному в лицензии
+	numDev := license.LicenseFields.NumDev
+	if len(statesList) > numDev {
+		statesList = statesList[:numDev]
 	}
 
 	resp := u.Response{Code: http.StatusOK, Obj: map[string]interface{}{}}
-	resp.Obj["data"] = StatesList
+	resp.Obj["data"] = statesList
 	return resp
 }

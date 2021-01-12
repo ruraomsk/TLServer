@@ -13,8 +13,11 @@ import (
 	"github.com/JanFant/TLServer/internal/sockets/maps/mainMap"
 	"github.com/JanFant/TLServer/internal/sockets/techArm"
 	"github.com/JanFant/TLServer/internal/sockets/xctrl"
+	"github.com/JanFant/TLServer/logger"
 	"github.com/jmoiron/sqlx"
 	"net/http"
+	"os"
+	"time"
 
 	"github.com/JanFant/TLServer/internal/app/handlers"
 	"github.com/JanFant/TLServer/internal/app/middleWare"
@@ -43,6 +46,14 @@ func MainServer(conf *ServerConf, db *sqlx.DB) *http.Server {
 
 	// Создаем engine для соединений
 	gin.SetMode(gin.ReleaseMode)
+	gin.DisableConsoleColor()
+
+	date := time.Now().Format(time.RFC3339)[0:10]
+
+	path := logger.LogGlobalConf.GinLogPath + "/ginLog" + date + ".log"
+	file, _ := os.Create(path)
+
+	gin.DefaultWriter = file
 	router := gin.Default()
 	router.Use(cors.Default())
 

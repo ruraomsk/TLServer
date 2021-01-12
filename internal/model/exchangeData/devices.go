@@ -2,6 +2,7 @@ package exchangeData
 
 import (
 	"github.com/JanFant/TLServer/internal/model/device"
+	"github.com/JanFant/TLServer/internal/model/license"
 	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/ruraomsk/ag-server/pudge"
 	"net/http"
@@ -9,7 +10,7 @@ import (
 
 func GetDevices(iDevice []int) u.Response {
 	var (
-		DevicesList     = make([]pudge.Controller, 0)
+		devicesList     = make([]pudge.Controller, 0)
 		mapActivDevices = make(map[int]device.DevInfo)
 	)
 
@@ -19,11 +20,17 @@ func GetDevices(iDevice []int) u.Response {
 
 	for _, numDev := range iDevice {
 		if dev, ok := mapActivDevices[numDev]; ok {
-			DevicesList = append(DevicesList, dev.Controller)
+			devicesList = append(devicesList, dev.Controller)
 		}
 	}
 
+	//обережим количество устройств по количеству доступному в лицензии
+	numDev := license.LicenseFields.NumDev
+	if len(devicesList) > numDev {
+		devicesList = devicesList[:numDev]
+	}
+
 	resp := u.Response{Code: http.StatusOK, Obj: map[string]interface{}{}}
-	resp.Obj["data"] = DevicesList
+	resp.Obj["data"] = devicesList
 	return resp
 }

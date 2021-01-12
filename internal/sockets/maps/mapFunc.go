@@ -3,6 +3,7 @@ package maps
 import (
 	"encoding/json"
 	"github.com/JanFant/TLServer/internal/model/data"
+	"github.com/JanFant/TLServer/internal/model/license"
 	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/JanFant/TLServer/logger"
 	"github.com/gin-gonic/gin"
@@ -41,6 +42,12 @@ func SelectTL(db *sqlx.DB) (tfdata []data.TrafficLights) {
 		temp.Sost.Control = data.CacheInfo.MapTLSost[temp.Sost.Num].Control
 		data.CacheInfo.Mux.Unlock()
 		tfdata = append(tfdata, temp)
+	}
+
+	//обережим количество устройств по количеству доступному в лицензии
+	numDev := license.LicenseFields.NumDev
+	if len(tfdata) > numDev {
+		tfdata = tfdata[:numDev]
 	}
 	return tfdata
 }
