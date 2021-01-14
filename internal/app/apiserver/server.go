@@ -1,6 +1,7 @@
 package apiserver
 
 import (
+	"bufio"
 	"github.com/JanFant/TLServer/internal/app/handlers/crossH"
 	"github.com/JanFant/TLServer/internal/app/handlers/exchangeServ"
 	"github.com/JanFant/TLServer/internal/app/handlers/licenseH"
@@ -17,6 +18,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/JanFant/TLServer/internal/app/handlers"
@@ -48,12 +50,8 @@ func MainServer(conf *ServerConf, db *sqlx.DB) *http.Server {
 	gin.SetMode(gin.ReleaseMode)
 	gin.DisableConsoleColor()
 
-	date := time.Now().Format(time.RFC3339)[0:10]
+	setLogFile()
 
-	path := logger.LogGlobalConf.GinLogPath + "/ginLog" + date + ".log"
-	file, _ := os.Create(path)
-
-	gin.DefaultWriter = file
 	router := gin.Default()
 	router.Use(cors.Default())
 
@@ -270,4 +268,39 @@ func ExchangeServer(conf *ServerConf, db *sqlx.DB) *http.Server {
 	// Запуск HTTP сервера
 	srv := &http.Server{Handler: router, Addr: conf.ServerExchange}
 	return srv
+}
+
+func setLogFile() {
+	path := logger.LogGlobalConf.GinLogPath + "/ginLog.log"
+	readF, _ := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+
+	path2 := logger.LogGlobalConf.GinLogPath + "/ginLogW.log"
+	writeF, _ := os.OpenFile(path2, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+
+	scanner := bufio.NewScanner(readF)
+	writer := bufio.NewWriter(writeF)
+	for scanner.Scan() {
+		str := scanner.Text()
+		if str == "" {
+			continue
+		}
+		splitStr := strings.Split(str, " ")
+		timea, err := time.Parse("2006/01/02", splitStr[1])
+		if err != nil {
+			continue
+		}
+		if !time.Now().After(timea.Add(time.Hour * 24 * 30)) {
+			_, _ = writer.WriteString(scanner.Text() + "\n")
+		}
+	}
+	_ = writer.Flush()
+	readF.Close()
+	writeF.Close()
+
+	_ = os.Remove(path)
+	_ = os.Rename(path2, path)
+
+	file, _ := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	gin.DefaultWriter = file
+
 }
