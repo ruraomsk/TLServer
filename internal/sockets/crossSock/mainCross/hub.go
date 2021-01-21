@@ -59,7 +59,7 @@ func (h *HubCross) Run(db *sqlx.DB) {
 		stateStr string
 	}
 	globArrCross := make(map[int]crossUpdateInfo)
-	//globArrPhase := make(map[int]phaseInfo)
+	globArrDevice := make(map[int]device.DevInfo)
 
 	updateTicker := time.NewTicker(readCrossTick)
 	checkValidityTicker := time.NewTicker(checkTokensValidity)
@@ -75,7 +75,7 @@ func (h *HubCross) Run(db *sqlx.DB) {
 				if len(h.clients) > 0 {
 					aPos := make([]int, 0)
 					arrayCross := make(map[int]crossUpdateInfo)
-					//arrayPhase := make(map[int]phaseInfo)
+					arrayDevice := make(map[int]device.DevInfo)
 					for client := range h.clients {
 						if len(aPos) == 0 {
 							aPos = append(aPos, client.crossInfo.Idevice)
@@ -139,7 +139,39 @@ func (h *HubCross) Run(db *sqlx.DB) {
 								}
 							}
 						}
+
+						device.GlobalDevices.Mux.Lock()
+						for key, c := range device.GlobalDevices.MapDevices {
+							arrayDevice[key] = c
+						}
+						device.GlobalDevices.Mux.Unlock()
+
+						for idevice, newDev := range arrayDevice {
+							if oldDev, ok := globArrDevice[idevice]; ok {
+								if oldDev.Controller.StatusConnection != newDev.Controller.StatusConnection || oldDev.Controller.Status.Ethernet != newDev.Controller.Status.Ethernet {
+									for client := range h.clients {
+										if client.crossInfo.Idevice == newDev.Controller.ID {
+											msg := newCrossMess(typeCrossConnection, nil)
+											msg.Data["scon"] = newDev.Controller.StatusConnection
+											msg.Data["eth"] = newDev.Controller.Status.Ethernet
+											client.send <- msg
+										}
+									}
+								}
+							} else {
+								for client := range h.clients {
+									if client.crossInfo.Idevice == newDev.Controller.ID {
+										msg := newCrossMess(typeCrossConnection, nil)
+										msg.Data["scon"] = newDev.Controller.StatusConnection
+										msg.Data["eth"] = newDev.Controller.Status.Ethernet
+										client.send <- msg
+									}
+								}
+							}
+						}
+
 						globArrCross = arrayCross
+						globArrDevice = arrayDevice
 					}
 				}
 			}

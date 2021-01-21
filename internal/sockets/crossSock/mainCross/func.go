@@ -50,6 +50,20 @@ func takeCrossInfo(pos sockets.PosInfo, db *sqlx.DB) (resp crossResponse, idev i
 		resp.Data["dk"] = pudge.DK{}
 	}
 
+	arrayDevice := make(map[int]device.DevInfo)
+	device.GlobalDevices.Mux.Lock()
+	for key, c := range device.GlobalDevices.MapDevices {
+		arrayDevice[key] = c
+	}
+	device.GlobalDevices.Mux.Unlock()
+	for idevice, newDev := range arrayDevice {
+		if idevice == TLignt.Idevice {
+			resp.Data["scon"] = newDev.Controller.StatusConnection
+			resp.Data["eth"] = newDev.Controller.Status.Ethernet
+			break
+		}
+	}
+
 	resp.Data["cross"] = TLignt
 	resp.Data["phases"] = rState.Arrays.SetDK.GetPhases()
 	resp.Data["state"] = rState

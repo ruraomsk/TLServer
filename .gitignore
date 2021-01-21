@@ -1,8 +1,8 @@
 # Created by .ignore support plugin (hsz.mobi)
 
 .idea/**
-logfiles/
-logfiles/**
+logfiles/custLog/**
+logfiles/ginLog/**
 .idea/dataSources.local.xml
 
 web
@@ -10,6 +10,7 @@ web/**
 static
 static/**
 ssl/**
+configs/**
 
 release
 release/**

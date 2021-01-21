@@ -247,25 +247,6 @@ func ExchangeServer(conf *ServerConf, db *sqlx.DB) *http.Server {
 		exchangeServ.SvgsHandler(c, db)
 	})
 
-	//------------------------------------------------------------------------------------------------------------------
-	//обязательный общий путь
-	//mainRouter := router.Group("/user")
-	//mainRouter.Use(middleWare.JwtAuth())       //мидл проверки токена
-	//mainRouter.Use(middleWare.AccessControl()) //мидл проверки url пути
-
-	////арм технолога
-	//mainRouter.GET("/:slug/techArm", func(c *gin.Context) {
-	//	c.HTML(http.StatusOK, "techControl.html", nil)
-	//})
-	//mainRouter.GET("/:slug/techArmW", func(c *gin.Context) {
-	//	techArm.HTechArm(c, techArmHub, db)
-	//})
-
-	//mainRouter.POST("/:slug/license", licenseH.LicenseInfo)            //обработчик сбора начальной информаци
-	//mainRouter.POST("/:slug/license/newToken", licenseH.LicenseNewKey) //обработчик сохранения нового токена
-
-	//------------------------------------------------------------------------------------------------------------------
-	// Запуск HTTP сервера
 	srv := &http.Server{Handler: router, Addr: conf.ServerExchange}
 	return srv
 }

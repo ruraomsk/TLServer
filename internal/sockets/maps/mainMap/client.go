@@ -84,6 +84,15 @@ func (c *ClientMainMap) readPump(db *sqlx.DB) {
 				resp := newMapMess(typeLogin, nil)
 				resp.Data, token, tokenStr = logIn(account.Login, account.Password, c.conn.RemoteAddr().String(), db)
 				if token != nil {
+					//делаем выход из аккаунта
+					for client := range c.hub.clients {
+						if client.cInfo.Login == account.Login {
+							logOutSockets(account.Login)
+							respLO := newMapMess(typeLogOut, nil)
+							client.send <- respLO
+							break
+						}
+					}
 					c.cInfo = token
 					c.cookie = tokenStr
 				}

@@ -8,7 +8,7 @@ static_path = "resources/static"
 web_path = "resources/web"
 free_path = "resources/free"
 ssl_path = "ssl"
-server_ip = ":8082"   #ip + port основного сервера
+server_ip = ":80"   #ip + port основного сервера
 server_exchange = ":8085" #ip + port сервера обмена
 
 #настройка подключения к тсп серверу обемена командами

@@ -12,6 +12,7 @@ import (
 	"github.com/JanFant/TLServer/internal/model/license"
 	"github.com/JanFant/TLServer/internal/sockets/techArm"
 	"github.com/JanFant/TLServer/logger"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"os/signal"
@@ -77,9 +78,20 @@ func main() {
 	//запуск сервера
 	srv1 := apiserver.MainServer(apiserver.ServerConfig, dbConn)
 	go func() {
-		if err := srv1.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Error.Println("|Message: Error start main server ", err.Error())
-			fmt.Println("Error start main server ", err.Error())
+		if _, err := ioutil.ReadFile("ssl/domain.key"); err == nil {
+			fmt.Println("Start server with SSL")
+			logger.Info.Println("|Message: Start server with SSL")
+			if err := srv1.ListenAndServeTLS("ssl/domain.crt", "ssl/domain.key"); err != nil && err != http.ErrServerClosed {
+				logger.Error.Println("|Message: Error start main server ", err.Error())
+				fmt.Println("Error start main server ", err.Error())
+			}
+		} else {
+			fmt.Println("Start server without SSL")
+			logger.Info.Println("|Message: Start server without SSL")
+			if err := srv1.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				logger.Error.Println("|Message: Error start main server ", err.Error())
+				fmt.Println("Error start main server ", err.Error())
+			}
 		}
 	}()
 	srv2 := apiserver.ExchangeServer(apiserver.ServerConfig, dbConn)

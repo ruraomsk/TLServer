@@ -31,7 +31,7 @@ func NewMainMapHub() *HubMainMap {
 
 //Run запуск хаба для mainMap
 func (h *HubMainMap) Run(db *sqlx.DB) {
-	UserLogoutGS = make(chan string)
+	UserLogoutGS = make(chan string, 5)
 	data.AccAction = make(chan string, 50)
 	license.LogOutAllFromLicense = make(chan bool)
 	checkValidityTicker := time.NewTicker(checkTokensValidity)

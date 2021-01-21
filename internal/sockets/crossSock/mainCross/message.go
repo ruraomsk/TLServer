@@ -1,15 +1,16 @@
 package mainCross
 
 var (
-	typeError          = "error"
-	typeClose          = "close"
-	typeDButton        = "dispatch"
-	typeChangeEdit     = "changeEdit"
-	typeCrossBuild     = "crossBuild"
-	typePhase          = "phase"
-	typeCrossUpdate    = "crossUpdate"
-	typeStateChange    = "stateChange"
-	typeEditCrossUsers = "editCrossUsers"
+	typeError           = "error"
+	typeClose           = "close"
+	typeDButton         = "dispatch"
+	typeChangeEdit      = "changeEdit"
+	typeCrossBuild      = "crossBuild"
+	typePhase           = "phase"
+	typeCrossUpdate     = "crossUpdate"
+	typeCrossConnection = "crossConnection"
+	typeStateChange     = "stateChange"
+	typeEditCrossUsers  = "editCrossUsers"
 
 	errParseType = "Сервер не смог обработать запрос"
 
