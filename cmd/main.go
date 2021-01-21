@@ -78,10 +78,10 @@ func main() {
 	//запуск сервера
 	srv1 := apiserver.MainServer(apiserver.ServerConfig, dbConn)
 	go func() {
-		if _, err := ioutil.ReadFile("ssl/domain.key"); err == nil {
+		if _, err := ioutil.ReadFile("ssl/cert.crt"); err == nil {
 			fmt.Println("Start server with SSL")
 			logger.Info.Println("|Message: Start server with SSL")
-			if err := srv1.ListenAndServeTLS("ssl/domain.crt", "ssl/domain.key"); err != nil && err != http.ErrServerClosed {
+			if err := srv1.ListenAndServeTLS("ssl/cert.crt", "ssl/cert.key"); err != nil && err != http.ErrServerClosed {
 				logger.Error.Println("|Message: Error start main server ", err.Error())
 				fmt.Println("Error start main server ", err.Error())
 			}
