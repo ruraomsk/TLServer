@@ -76,19 +76,27 @@ func main() {
 	////----------------------------------------------------------------------
 	//
 	//запуск сервера
-	srv1 := apiserver.MainServer(apiserver.ServerConfig, dbConn)
+	srvHttp, srvHttps := apiserver.MainServer(apiserver.ServerConfig, dbConn)
 	go func() {
+		//Сервер на порте 80 - для переадресации
+		go func() {
+			if err := srvHttp.ListenAndServe(); err != nil {
+				logger.Error.Println("|Message: Error start main server ", err.Error())
+				fmt.Println("Error start main server ", err.Error())
+			}
+		}()
+		//Запуск сервера на порте 443 - с проверкой ключа в каталоге ssl
 		if _, err := ioutil.ReadFile("ssl/cert.crt"); err == nil {
 			fmt.Println("Start server with SSL")
 			logger.Info.Println("|Message: Start server with SSL")
-			if err := srv1.ListenAndServeTLS("ssl/cert.crt", "ssl/cert.key"); err != nil && err != http.ErrServerClosed {
+			if err := srvHttps.ListenAndServeTLS("ssl/cert.crt", "ssl/cert.key"); err != nil && err != http.ErrServerClosed {
 				logger.Error.Println("|Message: Error start main server ", err.Error())
 				fmt.Println("Error start main server ", err.Error())
 			}
 		} else {
 			fmt.Println("Start server without SSL")
 			logger.Info.Println("|Message: Start server without SSL")
-			if err := srv1.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			if err := srvHttps.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 				logger.Error.Println("|Message: Error start main server ", err.Error())
 				fmt.Println("Error start main server ", err.Error())
 			}
@@ -108,13 +116,17 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
-	if err := srv1.Shutdown(ctx); err != nil {
-		logger.Info.Println("|Message: Server forced shutdown...", err)
+	if err := srvHttp.Shutdown(ctx); err != nil {
+		logger.Info.Println("|Message: Server (http) forced shutdown...", err)
+		fmt.Println("Server forced shutdown...", err)
+	}
+	if err := srvHttps.Shutdown(ctx); err != nil {
+		logger.Info.Println("|Message: Server (https) forced shutdown...", err)
 		fmt.Println("Server forced shutdown...", err)
 	}
 
 	if err := srv2.Shutdown(ctx); err != nil {
-		logger.Info.Println("|Message: Server forced shutdown...", err)
+		logger.Info.Println("|Message: Server (exchange) forced shutdown...", err)
 		fmt.Println("Server forced shutdown...", err)
 	}
 

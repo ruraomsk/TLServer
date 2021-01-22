@@ -7,7 +7,8 @@ type ServerConf struct {
 	StaticPath     string `toml:"static_path"`     //путь до каталога static
 	FreePath       string `toml:"free_path"`       //путь до каталога free
 	WebPath        string `toml:"web_path"`        //путь до каталога web
-	ServerIP       string `toml:"server_ip"`       //ip сервера / порт
+	PortHTTP       string `toml:"portHTTP"`        // порт http
+	PortHTTPS      string `toml:"portHTTPS"`       // порт https
 	ServerExchange string `toml:"server_exchange"` //ip  / порт сервера обмена
 }
 

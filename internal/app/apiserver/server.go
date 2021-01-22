@@ -16,6 +16,7 @@ import (
 	"github.com/JanFant/TLServer/internal/sockets/xctrl"
 	"github.com/JanFant/TLServer/logger"
 	"github.com/jmoiron/sqlx"
+	"github.com/unrolled/secure"
 	"net/http"
 	"os"
 	"strings"
@@ -28,7 +29,7 @@ import (
 )
 
 //MainServer настройка основного сервера
-func MainServer(conf *ServerConf, db *sqlx.DB) *http.Server {
+func MainServer(conf *ServerConf, db *sqlx.DB) (srvHttp *http.Server, srvHttps *http.Server) {
 	mainMapHub := mainMap.NewMainMapHub()
 	mainCrossHub := mainCross.NewCrossHub()
 	controlCrHub := controlCross.NewCrossHub()
@@ -54,7 +55,7 @@ func MainServer(conf *ServerConf, db *sqlx.DB) *http.Server {
 
 	router := gin.Default()
 	router.Use(cors.Default())
-
+	router.Use(secureHandle())
 	router.LoadHTMLGlob(conf.WebPath + "/html/**")
 
 	//скрипт и иконка которые должны быть доступны всем
@@ -220,8 +221,9 @@ func MainServer(conf *ServerConf, db *sqlx.DB) *http.Server {
 
 	//------------------------------------------------------------------------------------------------------------------
 	// Запуск HTTP сервера
-	srv := &http.Server{Handler: router, Addr: conf.ServerIP}
-	return srv
+	srvHttp = &http.Server{Handler: router, Addr: conf.PortHTTP, ErrorLog: logger.Warning}
+	srvHttps = &http.Server{Handler: router, Addr: conf.PortHTTPS, ErrorLog: logger.Warning}
+	return
 }
 
 //ExchangeServer настройка сервера обменов
@@ -247,8 +249,21 @@ func ExchangeServer(conf *ServerConf, db *sqlx.DB) *http.Server {
 		exchangeServ.SvgsHandler(c, db)
 	})
 
-	srv := &http.Server{Handler: router, Addr: conf.ServerExchange}
+	srv := &http.Server{Handler: router, Addr: conf.ServerExchange, ErrorLog: logger.Warning}
 	return srv
+}
+
+var secureHandle = func() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		secureMidle := secure.New(secure.Options{
+			SSLRedirect: true,
+		})
+		err := secureMidle.Process(c.Writer, c.Request)
+		if err != nil {
+			return
+		}
+		c.Next()
+	}
 }
 
 func setLogFile() {
