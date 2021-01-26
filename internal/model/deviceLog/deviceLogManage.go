@@ -105,29 +105,24 @@ func DisplayDeviceLogInfo(arms LogDeviceInfo, db *sqlx.DB) u.Response {
 			rawByte, _     = json.Marshal(tempInfo) //перобразование структуру в строку для использования в ключе
 		)
 		mapDevice[string(rawByte)] = make([]DeviceLog, 0)
-		sqlStr := fmt.Sprintf(`SELECT tm, id, txt, crossinfo->'type' FROM public.logdevice WHERE crossinfo::jsonb @> '{"ID": %v, "area": "%v", "region": "%v"}'::jsonb and tm > '%v' and tm < '%v' ORDER BY tm DESC`, arm.ID, arm.Area, arm.Region, arms.TimeStart.Format("2006-01-02 15:04:05"), arms.TimeEnd.Format("2006-01-02 15:04:05"))
+		crossInfo := fmt.Sprintf(`crossinfo::jsonb @> '{"ID": %v, "area": "%v", "region": "%v"}'::jsonb`, arm.ID, arm.Area, arm.Region)
+		timeInfo := fmt.Sprintf(`tm > '%v' and tm < '%v'`, arms.TimeStart.Format("2006-01-02 15:04:05"), arms.TimeEnd.Format("2006-01-02 15:04:05"))
+		sqlStr := fmt.Sprintf(`SELECT crossinfo->'type', tm, id, txt FROM public.logdevice where %v and %v
+									UNION (SELECT distinct on (crossinfo->'type') crossinfo->'type', tm, id, txt  FROM public.logdevice where %v and tm <'%v' ORDER BY crossinfo->'type', tm desc)
+									ORDER BY tm DESC`,
+			crossInfo, timeInfo, crossInfo, arms.TimeStart.Format("2006-01-02 15:04:05"))
 		rowsDevices, err := db.Query(sqlStr)
 		if err != nil {
 			return u.Message(http.StatusInternalServerError, "Connection to DB error. Please try again")
 		}
 		for rowsDevices.Next() {
 			var tempDev DeviceLog
-			err := rowsDevices.Scan(&tempDev.Time, &tempDev.ID, &tempDev.Text, &tempDev.Type)
+			err := rowsDevices.Scan(&tempDev.Type, &tempDev.Time, &tempDev.ID, &tempDev.Text)
 			if err != nil {
 				logger.Error.Println("|Message: Incorrect data ", err.Error())
 				return u.Message(http.StatusInternalServerError, "incorrect data. Please report it to Admin")
 			}
 			//tempDev.Devices = arm
-			listDevicesLog = append(listDevicesLog, tempDev)
-		}
-		if len(listDevicesLog) == 0 {
-			var tempDev DeviceLog
-			sqlStr := fmt.Sprintf(`SELECT tm, id, txt, crossinfo->'type' FROM public.logdevice WHERE crossinfo::jsonb @> '{"ID": %v, "area": "%v", "region": "%v"}'::jsonb ORDER BY tm DESC LIMIT 1`, arm.ID, arm.Area, arm.Region)
-			err = db.QueryRow(sqlStr).Scan(&tempDev.Time, &tempDev.ID, &tempDev.Text, &tempDev.Type)
-			if err != nil {
-				logger.Error.Println("|Message: Incorrect data ", err.Error())
-				return u.Message(http.StatusInternalServerError, "incorrect data. Please report it to Admin")
-			}
 			listDevicesLog = append(listDevicesLog, tempDev)
 		}
 		mapDevice[string(rawByte)] = listDevicesLog

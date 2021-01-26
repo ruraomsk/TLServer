@@ -17,7 +17,7 @@ type StateResult struct {
 //DaySetsVerified проверка суточных карт
 func DaySetsVerified(cross *agspudge.Cross) (result StateResult) {
 	daySets := cross.Arrays.DaySets
-	dkSets := cross.Arrays.SetDK
+	//dkSets := cross.Arrays.SetDK
 	result.SumResult = append(result.SumResult, "Проверка: Суточные карты")
 	if len(daySets.DaySets) > 12 {
 		result.SumResult = append(result.SumResult, "Превышено количество суточных карт")
@@ -62,10 +62,10 @@ func DaySetsVerified(cross *agspudge.Cross) (result StateResult) {
 			} else {
 				//-----------
 				if line.PKNom != 0 {
-					if dkSets.IsEmpty(1, line.PKNom) {
-						result.SumResult = append(result.SumResult, fmt.Sprintf("Карта № (%v) стр. № (%v): нельзя искользовать пустой ПК(%v)", numDay+1, numLine+1, line.PKNom))
-						result.Err = errors.New("detected")
-					}
+					//if dkSets.IsEmpty(1, line.PKNom) {
+					//	result.SumResult = append(result.SumResult, fmt.Sprintf("Карта № (%v) стр. № (%v): нельзя искользовать пустой ПК(%v)", numDay+1, numLine+1, line.PKNom))
+					//	result.Err = errors.New("detected")
+					//}
 					if numLine != 11 {
 						if line.Hour > daySets.DaySets[numDay].Lines[numLine+1].Hour && daySets.DaySets[numDay].Lines[numLine+1].PKNom != 0 {
 							result.SumResult = append(result.SumResult, fmt.Sprintf("Карта № (%v) стр. № (%v): текущее значение времени часа %v больше следующего %v", numDay+1, numLine+1, line.Hour, daySets.DaySets[numDay].Lines[numLine+1].Hour))
