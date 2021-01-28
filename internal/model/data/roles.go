@@ -161,10 +161,12 @@ func (privilege *Privilege) DisplayInfoForAdmin(accInfo *accToken.Token) u.Respo
 	//собираю в кучу разрешения без указания команд
 	chosenPermisson := make(map[int]shortPermission)
 	for key, value := range RoleInfo.MapPermisson {
-		if value.Visible {
-			var shValue shortPermission
-			shValue.transform(value)
-			chosenPermisson[key] = shValue
+		for _, permCreator := range privilege.Role.Perm {
+			if value.Visible && permCreator == value.ID {
+				var shValue shortPermission
+				shValue.transform(value)
+				chosenPermisson[key] = shValue
+			}
 		}
 	}
 	resp.Obj["permInfo"] = chosenPermisson

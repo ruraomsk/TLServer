@@ -132,8 +132,7 @@ func sendCrossData(state agspudge.Cross, cIDev int, pos sockets.PosInfo, login s
 			CommandType: typeSendB,
 			Pos:         pos,
 		}
-		resp   = make(map[string]interface{})
-		verRes []string
+		resp = make(map[string]interface{})
 	)
 	if cIDev != state.IDevice {
 		var strRow string
@@ -142,13 +141,12 @@ func sendCrossData(state agspudge.Cross, cIDev int, pos sockets.PosInfo, login s
 		if err != nil && err != sql.ErrNoRows {
 			logger.Error.Println("|Message: control socket (send Button), DB not respond : ", err.Error())
 			resp["status"] = false
-			resp["message"] = "DB not respond"
+			resp["message"] = "сервер баз данных не отвечает"
 			return resp
 		}
 		if strings.Contains(strRow, fmt.Sprintf(`"idevice": %v`, state.IDevice)) {
-			verRes = append(verRes, fmt.Sprintf("№ %v модема уже используется в системе", state.IDevice))
 			resp["status"] = false
-			resp["result"] = verRes
+			resp["message"] = fmt.Sprintf("№ %v модема уже используется в системе", state.IDevice)
 			return resp
 		}
 	}
