@@ -2,14 +2,14 @@ package serverLog
 
 import (
 	"fmt"
-	"github.com/JanFant/TLServer/internal/model/accToken"
+	"github.com/ruraomsk/TLServer/internal/model/accToken"
 	"io/ioutil"
 	"net/http"
 	"strings"
 
-	u "github.com/JanFant/TLServer/internal/utils"
-	"github.com/JanFant/TLServer/logger"
 	"github.com/jmoiron/sqlx"
+	u "github.com/ruraomsk/TLServer/internal/utils"
+	"github.com/ruraomsk/TLServer/logger"
 )
 
 //ServerLogInfo данные для хранения информации лог файлов

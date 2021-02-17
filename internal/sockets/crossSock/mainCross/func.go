@@ -1,11 +1,11 @@
 package mainCross
 
 import (
-	"github.com/JanFant/TLServer/internal/model/data"
-	"github.com/JanFant/TLServer/internal/model/device"
-	"github.com/JanFant/TLServer/internal/sockets"
-	"github.com/JanFant/TLServer/internal/sockets/crossSock"
 	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/TLServer/internal/model/data"
+	"github.com/ruraomsk/TLServer/internal/model/device"
+	"github.com/ruraomsk/TLServer/internal/sockets"
+	"github.com/ruraomsk/TLServer/internal/sockets/crossSock"
 	"github.com/ruraomsk/ag-server/pudge"
 )
 

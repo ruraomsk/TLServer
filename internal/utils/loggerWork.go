@@ -3,7 +3,7 @@ package utils
 import (
 	"fmt"
 
-	"github.com/JanFant/TLServer/logger"
+	"github.com/ruraomsk/TLServer/logger"
 )
 
 //writeLogMessage обработчик u.message преобразует сообщение для записи в лог файл

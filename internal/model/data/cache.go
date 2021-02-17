@@ -1,11 +1,11 @@
 package data
 
 import (
-	"github.com/JanFant/TLServer/internal/model/locations"
+	"github.com/ruraomsk/TLServer/internal/model/locations"
 	"sync"
 	"time"
 
-	"github.com/JanFant/TLServer/logger"
+	"github.com/ruraomsk/TLServer/logger"
 )
 
 //CacheInfo глобальная переменная для обращения к данным

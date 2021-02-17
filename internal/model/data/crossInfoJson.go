@@ -2,8 +2,8 @@ package data
 
 import (
 	"encoding/json"
-	"github.com/JanFant/TLServer/internal/model/config"
 	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/TLServer/internal/model/config"
 	"io/ioutil"
 	"os"
 	"strconv"

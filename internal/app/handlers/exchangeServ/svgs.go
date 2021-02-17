@@ -2,10 +2,10 @@ package exchangeServ
 
 import (
 	"fmt"
-	"github.com/JanFant/TLServer/internal/model/exchangeData"
-	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/TLServer/internal/model/exchangeData"
+	u "github.com/ruraomsk/TLServer/internal/utils"
 	"net/http"
 	"strconv"
 )

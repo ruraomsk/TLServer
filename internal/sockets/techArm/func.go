@@ -3,9 +3,9 @@ package techArm
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/JanFant/TLServer/internal/model/device"
-	"github.com/JanFant/TLServer/logger"
 	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/TLServer/internal/model/device"
+	"github.com/ruraomsk/TLServer/logger"
 )
 
 //getCross запроса состояния перекрестков

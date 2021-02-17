@@ -1,14 +1,14 @@
 package middleWare
 
 import (
-	"github.com/JanFant/TLServer/internal/model/accToken"
-	"github.com/JanFant/TLServer/logger"
+	"github.com/ruraomsk/TLServer/internal/model/accToken"
+	"github.com/ruraomsk/TLServer/logger"
 	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/JanFant/TLServer/internal/model/data"
+	"github.com/ruraomsk/TLServer/internal/model/data"
 )
 
 //AccessControl проверка разрешен ли пользователя доступ к запрашиваемому ресурсу

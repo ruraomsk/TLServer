@@ -2,15 +2,15 @@ package middleWare
 
 import (
 	"fmt"
-	"github.com/JanFant/TLServer/internal/model/accToken"
+	"github.com/ruraomsk/TLServer/internal/model/accToken"
 	"net/http"
 	"strings"
 
-	"github.com/JanFant/TLServer/logger"
+	"github.com/ruraomsk/TLServer/logger"
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/JanFant/TLServer/internal/model/data"
+	"github.com/ruraomsk/TLServer/internal/model/data"
 )
 
 //JwtAuth контроль токена для всех прошедших регистрацию и обрашающихся к ресурсу

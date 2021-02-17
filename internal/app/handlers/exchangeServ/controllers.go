@@ -1,9 +1,9 @@
 package exchangeServ
 
 import (
-	"github.com/JanFant/TLServer/internal/model/exchangeData"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/TLServer/internal/model/exchangeData"
 )
 
 //ControllerHandler обработчик запроса контроллеров

@@ -1,7 +1,7 @@
 package techArm
 
 import (
-	"github.com/JanFant/TLServer/internal/model/accToken"
+	"github.com/ruraomsk/TLServer/internal/model/accToken"
 	"github.com/ruraomsk/ag-server/pudge"
 )
 

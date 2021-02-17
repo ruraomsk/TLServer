@@ -1,13 +1,13 @@
 package handlers
 
 import (
-	"github.com/JanFant/TLServer/internal/model/accToken"
+	"github.com/ruraomsk/TLServer/internal/model/accToken"
 	"net/http"
 
-	"github.com/JanFant/TLServer/internal/model/data"
-	"github.com/JanFant/TLServer/internal/model/deviceLog"
-	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/ruraomsk/TLServer/internal/model/data"
+	"github.com/ruraomsk/TLServer/internal/model/deviceLog"
+	u "github.com/ruraomsk/TLServer/internal/utils"
 )
 
 //DisplayDeviceLogFile обработчик отображения файлов лога устройства

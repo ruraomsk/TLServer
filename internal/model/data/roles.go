@@ -3,13 +3,13 @@ package data
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/JanFant/TLServer/internal/model/accToken"
+	"github.com/ruraomsk/TLServer/internal/model/accToken"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"sync"
 
-	u "github.com/JanFant/TLServer/internal/utils"
+	u "github.com/ruraomsk/TLServer/internal/utils"
 )
 
 //RoleInfo глабальная переменная для обращения к мапам

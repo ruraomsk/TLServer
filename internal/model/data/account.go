@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/JanFant/TLServer/internal/model/license"
-	"github.com/JanFant/TLServer/internal/model/locations"
-	u "github.com/JanFant/TLServer/internal/utils"
 	validation "github.com/go-ozzo/ozzo-validation"
+	"github.com/ruraomsk/TLServer/internal/model/license"
+	"github.com/ruraomsk/TLServer/internal/model/locations"
+	u "github.com/ruraomsk/TLServer/internal/utils"
 	"golang.org/x/crypto/bcrypt"
 )
 

@@ -1,11 +1,11 @@
 package tcpConnect
 
 import (
-	"github.com/JanFant/TLServer/internal/model/device"
+	"github.com/ruraomsk/TLServer/internal/model/device"
 	"net"
 	"time"
 
-	"github.com/JanFant/TLServer/logger"
+	"github.com/ruraomsk/TLServer/logger"
 )
 
 //poolTCPConnect хранилише подключений (ключ ip, значение информация о соединении)

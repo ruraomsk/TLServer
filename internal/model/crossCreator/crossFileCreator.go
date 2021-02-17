@@ -2,18 +2,18 @@ package crossCreator
 
 import (
 	"fmt"
-	"github.com/JanFant/TLServer/internal/model/config"
-	"github.com/JanFant/TLServer/internal/model/data"
+	"github.com/ruraomsk/TLServer/internal/model/config"
+	"github.com/ruraomsk/TLServer/internal/model/data"
 	"io"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 
-	"github.com/JanFant/TLServer/internal/model/locations"
+	"github.com/ruraomsk/TLServer/internal/model/locations"
 
-	u "github.com/JanFant/TLServer/internal/utils"
-	"github.com/JanFant/TLServer/logger"
+	u "github.com/ruraomsk/TLServer/internal/utils"
+	"github.com/ruraomsk/TLServer/logger"
 )
 
 //SelectedData общая структура обмена

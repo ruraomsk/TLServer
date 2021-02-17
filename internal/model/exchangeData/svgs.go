@@ -2,9 +2,9 @@ package exchangeData
 
 import (
 	"fmt"
-	"github.com/JanFant/TLServer/internal/model/config"
-	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/TLServer/internal/model/config"
+	u "github.com/ruraomsk/TLServer/internal/utils"
 	"io/ioutil"
 	"net/http"
 )

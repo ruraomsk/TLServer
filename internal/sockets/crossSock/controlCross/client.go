@@ -2,13 +2,13 @@ package controlCross
 
 import (
 	"encoding/json"
-	"github.com/JanFant/TLServer/internal/app/tcpConnect"
-	"github.com/JanFant/TLServer/internal/model/crossCreator"
-	"github.com/JanFant/TLServer/internal/sockets"
-	"github.com/JanFant/TLServer/internal/sockets/crossSock"
-	"github.com/JanFant/TLServer/logger"
 	"github.com/gorilla/websocket"
 	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/TLServer/internal/app/tcpConnect"
+	"github.com/ruraomsk/TLServer/internal/model/crossCreator"
+	"github.com/ruraomsk/TLServer/internal/sockets"
+	"github.com/ruraomsk/TLServer/internal/sockets/crossSock"
+	"github.com/ruraomsk/TLServer/logger"
 	"github.com/ruraomsk/ag-server/comm"
 	agspudge "github.com/ruraomsk/ag-server/pudge"
 	"time"

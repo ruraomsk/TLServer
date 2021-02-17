@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	"github.com/JanFant/TLServer/internal/model/accToken"
-	"github.com/JanFant/TLServer/internal/model/data"
-	"github.com/JanFant/TLServer/internal/sockets/crossSock"
-	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/ruraomsk/TLServer/internal/model/accToken"
+	"github.com/ruraomsk/TLServer/internal/model/data"
+	"github.com/ruraomsk/TLServer/internal/sockets/crossSock"
+	u "github.com/ruraomsk/TLServer/internal/utils"
 	"net/http"
 )
 

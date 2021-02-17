@@ -2,16 +2,16 @@ package techSupport
 
 import (
 	"fmt"
-	"github.com/JanFant/TLServer/internal/model/data"
-	"github.com/JanFant/TLServer/internal/model/license"
-	"github.com/JanFant/TLServer/internal/sockets/chat"
 	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/TLServer/internal/model/data"
+	"github.com/ruraomsk/TLServer/internal/model/license"
+	"github.com/ruraomsk/TLServer/internal/sockets/chat"
 	"net/http"
 	"net/smtp"
 	"time"
 
-	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/jordan-wright/email"
+	u "github.com/ruraomsk/TLServer/internal/utils"
 )
 
 type EmailJS struct {

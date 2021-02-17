@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"github.com/JanFant/TLServer/internal/model/locations"
-	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/TLServer/internal/model/locations"
+	"github.com/ruraomsk/TLServer/internal/sockets"
 )
 
 //Route маршрут движения

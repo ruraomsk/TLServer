@@ -3,9 +3,9 @@ package licenseH
 import (
 	"net/http"
 
-	"github.com/JanFant/TLServer/internal/model/license"
-	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/ruraomsk/TLServer/internal/model/license"
+	u "github.com/ruraomsk/TLServer/internal/utils"
 )
 
 //LicenseInfo обработчик сборки начальной информации

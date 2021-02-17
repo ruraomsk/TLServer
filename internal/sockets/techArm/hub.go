@@ -1,9 +1,9 @@
 package techArm
 
 import (
-	"github.com/JanFant/TLServer/internal/app/tcpConnect"
-	"github.com/JanFant/TLServer/internal/sockets"
 	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/TLServer/internal/app/tcpConnect"
+	"github.com/ruraomsk/TLServer/internal/sockets"
 	"reflect"
 	"strconv"
 	"time"

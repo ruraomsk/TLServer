@@ -1,8 +1,8 @@
 package accToken
 
 import (
-	"github.com/JanFant/TLServer/internal/model/license"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/ruraomsk/TLServer/internal/model/license"
 )
 
 //Token (JWT) структура токена доступа

@@ -2,10 +2,10 @@ package chat
 
 import (
 	"encoding/json"
-	"github.com/JanFant/TLServer/internal/sockets"
-	"github.com/JanFant/TLServer/logger"
 	"github.com/gorilla/websocket"
 	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/TLServer/internal/sockets"
+	"github.com/ruraomsk/TLServer/logger"
 	"time"
 )
 

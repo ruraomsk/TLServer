@@ -3,7 +3,7 @@ package tcpConnect
 import (
 	"bufio"
 	"encoding/json"
-	"github.com/JanFant/TLServer/logger"
+	"github.com/ruraomsk/TLServer/logger"
 	"github.com/ruraomsk/ag-server/pudge"
 	"net"
 	"time"

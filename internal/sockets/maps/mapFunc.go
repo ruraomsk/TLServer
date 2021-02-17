@@ -2,12 +2,12 @@ package maps
 
 import (
 	"encoding/json"
-	"github.com/JanFant/TLServer/internal/model/data"
-	"github.com/JanFant/TLServer/internal/model/license"
-	u "github.com/JanFant/TLServer/internal/utils"
-	"github.com/JanFant/TLServer/logger"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/TLServer/internal/model/data"
+	"github.com/ruraomsk/TLServer/internal/model/license"
+	u "github.com/ruraomsk/TLServer/internal/utils"
+	"github.com/ruraomsk/TLServer/logger"
 	"github.com/ruraomsk/ag-server/binding"
 	"net/http"
 	"strconv"

@@ -1,15 +1,15 @@
 package handlers
 
 import (
-	"github.com/JanFant/TLServer/internal/model/accToken"
+	"github.com/ruraomsk/TLServer/internal/model/accToken"
 	"net/http"
 
-	"github.com/JanFant/TLServer/internal/model/data"
-	"github.com/JanFant/TLServer/internal/model/serverLog"
-	"github.com/JanFant/TLServer/logger"
 	"github.com/gin-gonic/gin"
+	"github.com/ruraomsk/TLServer/internal/model/data"
+	"github.com/ruraomsk/TLServer/internal/model/serverLog"
+	"github.com/ruraomsk/TLServer/logger"
 
-	u "github.com/JanFant/TLServer/internal/utils"
+	u "github.com/ruraomsk/TLServer/internal/utils"
 )
 
 //DisplayServerLogFile обработчик отображения файлов лога сервера

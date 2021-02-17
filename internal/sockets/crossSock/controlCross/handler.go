@@ -1,14 +1,14 @@
 package controlCross
 
 import (
-	"github.com/JanFant/TLServer/internal/model/accToken"
-	"github.com/JanFant/TLServer/internal/sockets"
-	"github.com/JanFant/TLServer/internal/sockets/crossSock"
-	"github.com/JanFant/TLServer/internal/sockets/maps"
-	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/TLServer/internal/model/accToken"
+	"github.com/ruraomsk/TLServer/internal/sockets"
+	"github.com/ruraomsk/TLServer/internal/sockets/crossSock"
+	"github.com/ruraomsk/TLServer/internal/sockets/maps"
+	u "github.com/ruraomsk/TLServer/internal/utils"
 	"net/http"
 )
 

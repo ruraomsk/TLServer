@@ -1,8 +1,8 @@
 package chat
 
 import (
-	"github.com/JanFant/TLServer/internal/model/accToken"
 	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/TLServer/internal/model/accToken"
 )
 
 type clientInfo struct {

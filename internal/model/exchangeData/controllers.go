@@ -1,9 +1,9 @@
 package exchangeData
 
 import (
-	"github.com/JanFant/TLServer/internal/model/device"
-	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/TLServer/internal/model/device"
+	u "github.com/ruraomsk/TLServer/internal/utils"
 	"net/http"
 	"strconv"
 	"strings"

@@ -1,8 +1,8 @@
 package crossSock
 
 import (
-	"github.com/JanFant/TLServer/internal/model/accToken"
-	u "github.com/JanFant/TLServer/internal/utils"
+	"github.com/ruraomsk/TLServer/internal/model/accToken"
+	u "github.com/ruraomsk/TLServer/internal/utils"
 	"net/http"
 )
 

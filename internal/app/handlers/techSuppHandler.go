@@ -1,14 +1,14 @@
 package handlers
 
 import (
-	"github.com/JanFant/TLServer/internal/model/accToken"
-	"github.com/JanFant/TLServer/internal/model/data"
+	"github.com/ruraomsk/TLServer/internal/model/accToken"
+	"github.com/ruraomsk/TLServer/internal/model/data"
 	"net/http"
 
-	"github.com/JanFant/TLServer/internal/model/license"
-	"github.com/JanFant/TLServer/internal/model/techSupport"
-	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/ruraomsk/TLServer/internal/model/license"
+	"github.com/ruraomsk/TLServer/internal/model/techSupport"
+	u "github.com/ruraomsk/TLServer/internal/utils"
 )
 
 //TechSupp обработчик отправления сообщения в тех поддержку

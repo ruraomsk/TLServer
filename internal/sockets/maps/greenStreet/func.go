@@ -2,9 +2,9 @@ package greenStreet
 
 import (
 	"encoding/json"
-	"github.com/JanFant/TLServer/internal/model/routeGS"
-	"github.com/JanFant/TLServer/logger"
 	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/TLServer/internal/model/routeGS"
+	"github.com/ruraomsk/TLServer/logger"
 )
 
 //executeRoute управление светофорами

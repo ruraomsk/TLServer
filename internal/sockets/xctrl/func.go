@@ -2,9 +2,9 @@ package xctrl
 
 import (
 	"encoding/json"
-	"github.com/JanFant/TLServer/internal/model/data"
-	"github.com/JanFant/TLServer/logger"
 	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/TLServer/internal/model/data"
+	"github.com/ruraomsk/TLServer/logger"
 	"github.com/ruraomsk/ag-server/xcontrol"
 	"sort"
 )

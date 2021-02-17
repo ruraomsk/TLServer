@@ -1,9 +1,9 @@
 package exchangeData
 
 import (
-	"github.com/JanFant/TLServer/internal/model/device"
-	"github.com/JanFant/TLServer/internal/model/license"
-	u "github.com/JanFant/TLServer/internal/utils"
+	"github.com/ruraomsk/TLServer/internal/model/device"
+	"github.com/ruraomsk/TLServer/internal/model/license"
+	u "github.com/ruraomsk/TLServer/internal/utils"
 	"github.com/ruraomsk/ag-server/pudge"
 	"net/http"
 )

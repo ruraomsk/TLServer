@@ -3,10 +3,10 @@ package data
 import (
 	"fmt"
 
-	"github.com/JanFant/TLServer/internal/model/config"
-	"github.com/JanFant/TLServer/logger"
 	_ "github.com/jackc/pgx"
 	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/TLServer/internal/model/config"
+	"github.com/ruraomsk/TLServer/logger"
 )
 
 var (

@@ -1,11 +1,11 @@
 package chat
 
 import (
-	"github.com/JanFant/TLServer/internal/model/accToken"
-	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/TLServer/internal/model/accToken"
+	u "github.com/ruraomsk/TLServer/internal/utils"
 	"net/http"
 )
 

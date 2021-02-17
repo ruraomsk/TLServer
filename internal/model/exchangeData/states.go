@@ -1,10 +1,10 @@
 package exchangeData
 
 import (
-	"github.com/JanFant/TLServer/internal/model/license"
-	"github.com/JanFant/TLServer/internal/sockets/crossSock"
-	u "github.com/JanFant/TLServer/internal/utils"
 	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/TLServer/internal/model/license"
+	"github.com/ruraomsk/TLServer/internal/sockets/crossSock"
+	u "github.com/ruraomsk/TLServer/internal/utils"
 	"github.com/ruraomsk/ag-server/pudge"
 	"net/http"
 )

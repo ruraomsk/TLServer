@@ -1,13 +1,13 @@
 package greenStreet
 
 import (
-	"github.com/JanFant/TLServer/internal/app/tcpConnect"
-	"github.com/JanFant/TLServer/internal/model/data"
-	"github.com/JanFant/TLServer/internal/model/device"
-	"github.com/JanFant/TLServer/internal/sockets"
-	"github.com/JanFant/TLServer/internal/sockets/maps"
-	"github.com/JanFant/TLServer/internal/sockets/maps/mainMap"
 	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/TLServer/internal/app/tcpConnect"
+	"github.com/ruraomsk/TLServer/internal/model/data"
+	"github.com/ruraomsk/TLServer/internal/model/device"
+	"github.com/ruraomsk/TLServer/internal/sockets"
+	"github.com/ruraomsk/TLServer/internal/sockets/maps"
+	"github.com/ruraomsk/TLServer/internal/sockets/maps/mainMap"
 	"github.com/ruraomsk/ag-server/comm"
 	"time"
 )

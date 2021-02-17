@@ -3,8 +3,8 @@ package data
 import (
 	"errors"
 	"fmt"
-	"github.com/JanFant/TLServer/internal/model/locations"
-	"github.com/JanFant/TLServer/logger"
+	"github.com/ruraomsk/TLServer/internal/model/locations"
+	"github.com/ruraomsk/TLServer/logger"
 )
 
 //TrafficLights информация о светофоре

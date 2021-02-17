@@ -52,7 +52,7 @@ func (h *HubXctrl) Run(db *sqlx.DB) {
 								flagNew = false
 								if !reflect.DeepEqual(nX.Calculates, oX.Calculates) ||
 									!reflect.DeepEqual(nX.Status, oX.Status) ||
-									!reflect.DeepEqual(nX.Strategys, oX.Strategys) ||
+									//!reflect.DeepEqual(nX.Strategys, oX.Strategys) ||
 									!reflect.DeepEqual(nX.PKLast, oX.PKLast) ||
 									!reflect.DeepEqual(nX.PKCalc, oX.PKCalc) ||
 									!reflect.DeepEqual(nX.PKNow, oX.PKNow) ||

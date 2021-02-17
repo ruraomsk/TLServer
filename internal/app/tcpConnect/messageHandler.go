@@ -3,7 +3,7 @@ package tcpConnect
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/JanFant/TLServer/internal/sockets"
+	"github.com/ruraomsk/TLServer/internal/sockets"
 )
 
 //SendRespTCPMess канал приема сообщений от сервера

@@ -2,13 +2,13 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/JanFant/TLServer/internal/model/accToken"
+	"github.com/ruraomsk/TLServer/internal/model/accToken"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/JanFant/TLServer/internal/model/data"
-	u "github.com/JanFant/TLServer/internal/utils"
+	"github.com/ruraomsk/TLServer/internal/model/data"
+	u "github.com/ruraomsk/TLServer/internal/utils"
 )
 
 //ActUpdateAccount обработчик запроса обновления (работа с пользователями)

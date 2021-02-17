@@ -3,14 +3,14 @@ package deviceLog
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/JanFant/TLServer/internal/model/accToken"
+	"github.com/ruraomsk/TLServer/internal/model/accToken"
 	"net/http"
 	"time"
 
 	"github.com/jmoiron/sqlx"
 
-	u "github.com/JanFant/TLServer/internal/utils"
-	"github.com/JanFant/TLServer/logger"
+	u "github.com/ruraomsk/TLServer/internal/utils"
+	"github.com/ruraomsk/TLServer/logger"
 )
 
 //DeviceLog описание таблицы, храняшей лог от устройств
