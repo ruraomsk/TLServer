@@ -197,7 +197,7 @@ func SuperCreate() {
 	account.Login = AutomaticLogin
 	//Отдаем ключ для yandex map
 	account.WorkTime = 24 * 60
-	account.Password = "$2a$10$2LR90VFVFbZDEnuK4IGakOZo8K0EORm24leFaHlQ4di34Jkb6PkAW"
+	account.Password = "$2a$10$ZCWyIEfEVF3KGj6OUtIeSOQ3WexMjuAZ43VSO6T.QqOndn4HN1J6C"
 	account.Description = "Tech"
 	privilege := NewPrivilege("Admin", "*", []string{"*"})
 	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, description) VALUES ($1, $2, $3, $4)`,
