@@ -140,6 +140,7 @@ func LicenseInfo() u.Response {
 	resp.Obj["name"] = tk.Name
 	resp.Obj["address"] = tk.Address
 	resp.Obj["phone"] = tk.Phone
+	resp.Obj["license"] = fmt.Sprintf("S%03dD%04dA%04d", tk.Id, tk.NumDevice, tk.NumAcc)
 	resp.Obj["timeEnd"] = time.Unix(tk.ExpiresAt, 0)
 	return resp
 }
