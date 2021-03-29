@@ -80,15 +80,17 @@ type ArmInfo struct {
 
 //CrossInfo информация о перекрестке для техАРМ
 type CrossInfo struct {
-	Region    int         `json:"region"`    //регион
-	Area      int         `json:"area"`      //район
-	ID        int         `json:"id"`        //id
-	Idevice   int         `json:"idevice"`   //идентификатор устройства
-	Subarea   int         `json:"subarea"`   //подрайон
-	ArrayType int         `json:"arrayType"` //тип устройства
-	Describe  string      `json:"describe"`  //описание
-	Phone     string      `json:"phone"`     //телефон
-	Model     pudge.Model `json:"Model"`     //модель устройства
+	Region     int         `json:"region"`    //регион
+	Area       int         `json:"area"`      //район
+	ID         int         `json:"id"`        //id
+	Idevice    int         `json:"idevice"`   //идентификатор устройства
+	Subarea    int         `json:"subarea"`   //подрайон
+	ArrayType  int         `json:"arrayType"` //тип устройства
+	Describe   string      `json:"describe"`  //описание
+	Phone      string      `json:"phone"`     //телефон
+	StatusCode int         `json:statuscode`  //статус кодом
+	Status     string      `json:"status"`    //статус строкой
+	Model      pudge.Model `json:"Model"`     //модель устройства
 
 }
 

@@ -3,7 +3,6 @@ package xctrl
 import (
 	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/ag-server/xcontrol"
-	"reflect"
 	"time"
 )
 
@@ -50,19 +49,19 @@ func (h *HubXctrl) Run(db *sqlx.DB) {
 						for _, oX := range oldXctrl {
 							if oX.Region == nX.Region && oX.Area == nX.Area && oX.SubArea == nX.SubArea {
 								flagNew = false
-								if !reflect.DeepEqual(nX.Calculates, oX.Calculates) ||
-									!reflect.DeepEqual(nX.Status, oX.Status) ||
-									//!reflect.DeepEqual(nX.Strategys, oX.Strategys) ||
-									!reflect.DeepEqual(nX.PKLast, oX.PKLast) ||
-									!reflect.DeepEqual(nX.PKCalc, oX.PKCalc) ||
-									!reflect.DeepEqual(nX.PKNow, oX.PKNow) ||
-									!reflect.DeepEqual(nX.LastTime, oX.LastTime) ||
-									!reflect.DeepEqual(nX.Switch, oX.Switch) ||
-									!reflect.DeepEqual(nX.Release, oX.Release) ||
-									!reflect.DeepEqual(nX.Results, oX.Results) ||
-									!reflect.DeepEqual(nX.Step, oX.Step) {
-									tempXctrl = append(tempXctrl, nX)
-								}
+								//if !reflect.DeepEqual(nX.Calculates, oX.Calculates) ||
+								//	!reflect.DeepEqual(nX.Status, oX.Status) ||
+								//	//!reflect.DeepEqual(nX.Strategys, oX.Strategys) ||
+								//	!reflect.DeepEqual(nX.PKLast, oX.PKLast) ||
+								//	!reflect.DeepEqual(nX.PKCalc, oX.PKCalc) ||
+								//	!reflect.DeepEqual(nX.PKNow, oX.PKNow) ||
+								//	!reflect.DeepEqual(nX.LastTime, oX.LastTime) ||
+								//	!reflect.DeepEqual(nX.Switch, oX.Switch) ||
+								//	!reflect.DeepEqual(nX.Release, oX.Release) ||
+								//	!reflect.DeepEqual(nX.Results, oX.Results) ||
+								//	!reflect.DeepEqual(nX.Step, oX.Step) {
+								//	tempXctrl = append(tempXctrl, nX)
+								//}
 								break
 							}
 						}

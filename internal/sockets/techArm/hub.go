@@ -45,7 +45,6 @@ func (h *HubTechArm) Run(db *sqlx.DB) {
 		oldDevice = getDevice()
 		oldCross  = getCross(-1, db)
 	)
-
 	for {
 		select {
 		case <-readDeviceTick.C:

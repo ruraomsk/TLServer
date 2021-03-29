@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/TLServer/internal/model/data"
 	"github.com/ruraomsk/TLServer/internal/model/device"
 	"github.com/ruraomsk/TLServer/logger"
 )
@@ -22,6 +23,7 @@ func getCross(reg int, db *sqlx.DB) []CrossInfo {
   					subarea, 
   					state->'arrays'->'type',
   					state->'phone',
+       				state ->'status',
   					state->'Model' 
   					FROM public.cross`
 	)
@@ -42,8 +44,10 @@ func getCross(reg int, db *sqlx.DB) []CrossInfo {
 			&temp.Subarea,
 			&temp.ArrayType,
 			&temp.Phone,
+			&temp.StatusCode,
 			&model)
 		_ = json.Unmarshal(model, &temp.Model)
+		temp.Status = data.CacheInfo.MapTLSost[temp.StatusCode].Description
 		crosses = append(crosses, temp)
 	}
 	return crosses

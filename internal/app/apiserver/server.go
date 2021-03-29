@@ -108,6 +108,12 @@ func MainServer(conf *ServerConf, db *sqlx.DB) (srvHttp *http.Server, srvHttps *
 	mainRouter.GET("/:slug/cross/controlW", func(c *gin.Context) {
 		controlCross.HControlCross(c, controlCrHub, db)
 	})
+	mainRouter.GET("/:slug/multipleCross", func(c *gin.Context) { //Просмотр нескольких страниц
+		c.HTML(http.StatusOK, "multipleCross.html", nil)
+	})
+	mainRouter.GET("/:slug/multipleCrossW", func(c *gin.Context) {
+		controlCross.HControlCross(c, controlCrHub, db)
+	})
 
 	//арм технолога
 	mainRouter.GET("/:slug/techArm", func(c *gin.Context) {
