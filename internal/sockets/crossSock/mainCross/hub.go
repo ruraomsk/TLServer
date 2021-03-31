@@ -201,19 +201,19 @@ func (h *HubCross) Run(db *sqlx.DB) {
 				}
 
 				//проверка открыт ли у этого пользователя такой перекресток
-				for hubClient := range h.clients {
-					if client.crossInfo.Pos == hubClient.crossInfo.Pos && client.crossInfo.AccInfo.Login == hubClient.crossInfo.AccInfo.Login {
-						close(client.send)
-						_ = client.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, errDoubleOpeningDevice))
-						_ = client.conn.Close()
-						regStatus = false
-						client.regStatus <- regStatus
-						break
-					}
-				}
-				if !regStatus {
-					continue
-				}
+				//for hubClient := range h.clients {
+				//	if client.crossInfo.Pos == hubClient.crossInfo.Pos && client.crossInfo.AccInfo.Login == hubClient.crossInfo.AccInfo.Login {
+				//		close(client.send)
+				//		_ = client.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, errDoubleOpeningDevice))
+				//		_ = client.conn.Close()
+				//		regStatus = false
+				//		client.regStatus <- regStatus
+				//		break
+				//	}
+				//}
+				//if !regStatus {
+				//	continue
+				//}
 				//кромешный пи**** с созданием нормального клиента
 				resp, Idevice, description := takeCrossInfo(client.crossInfo.Pos, db)
 				client.crossInfo.Idevice = Idevice
@@ -242,26 +242,24 @@ func (h *HubCross) Run(db *sqlx.DB) {
 					//если есть полномочия запишим что он на перекрестке
 					device.GlobalDevEdit.Mux.Lock()
 					tDev := device.GlobalDevEdit.MapDevices[client.crossInfo.Idevice]
-					if tDev.BusyCount == 0 || tDev.TurnOnFlag == false {
-						arm := comm.CommandARM{
-							User:    client.crossInfo.Login,
-							ID:      Idevice,
-							Command: 4,
-							Params:  1,
-						}
-						var mess = tcpConnect.TCPMessage{
-							User:        client.crossInfo.AccInfo.Login,
-							TCPType:     tcpConnect.TypeDispatch,
-							Idevice:     arm.ID,
-							Data:        arm,
-							From:        tcpConnect.FromCrossSoc,
-							CommandType: typeDButton,
-							Pos:         client.crossInfo.Pos,
-						}
-						mess.SendToTCPServer()
-
-						tDev.TurnOnFlag = true
+					arm := comm.CommandARM{
+						User:    client.crossInfo.Login,
+						ID:      Idevice,
+						Command: 4,
+						Params:  1,
 					}
+					var mess = tcpConnect.TCPMessage{
+						User:        client.crossInfo.AccInfo.Login,
+						TCPType:     tcpConnect.TypeDispatch,
+						Idevice:     arm.ID,
+						Data:        arm,
+						From:        tcpConnect.FromCrossSoc,
+						CommandType: typeDButton,
+						Pos:         client.crossInfo.Pos,
+					}
+					mess.SendToTCPServer()
+
+					tDev.TurnOnFlag = true
 					tDev.BusyCount++
 
 					device.GlobalDevEdit.MapDevices[client.crossInfo.Idevice] = tDev
@@ -285,48 +283,48 @@ func (h *HubCross) Run(db *sqlx.DB) {
 					delete(h.clients, client)
 					close(client.send)
 					_ = client.conn.Close()
-					if client.crossInfo.Edit {
+					//if client.crossInfo.Edit {
 
-						//если есть полномочия запишим что он на перекрестке
-						device.GlobalDevEdit.Mux.Lock()
-						tDev := device.GlobalDevEdit.MapDevices[client.crossInfo.Idevice]
-						tDev.BusyCount--
-						if tDev.BusyCount == 0 && tDev.TurnOnFlag == true {
-							arm := comm.CommandARM{
-								User:    client.crossInfo.Login,
-								ID:      client.crossInfo.Idevice,
-								Command: 4,
-								Params:  0,
-							}
-							var mess = tcpConnect.TCPMessage{
-								User:        client.crossInfo.AccInfo.Login,
-								TCPType:     tcpConnect.TypeDispatch,
-								Idevice:     arm.ID,
-								Data:        arm,
-								From:        tcpConnect.FromCrossSoc,
-								CommandType: typeDButton,
-								Pos:         client.crossInfo.Pos,
-							}
-							mess.SendToTCPServer()
-
-							tDev.TurnOnFlag = false
-						}
-						device.GlobalDevEdit.MapDevices[client.crossInfo.Idevice] = tDev
-						device.GlobalDevEdit.Mux.Unlock()
-
-						for aClient := range h.clients {
-							if (aClient.crossInfo.Pos == client.crossInfo.Pos) && (aClient.crossInfo.AccInfo.Role != "Viewer") {
-								aClient.crossInfo.Edit = true
-								resp := newCrossMess(typeChangeEdit, nil)
-								resp.Data["edit"] = true
-								aClient.send <- resp
-								break
-							}
-						}
-						//отправить на мапу подключенные устройства которые редактируют
-						CrossUsersForMap <- h.usersList()
-
+					//если есть полномочия запишим что он на перекрестке
+					device.GlobalDevEdit.Mux.Lock()
+					tDev := device.GlobalDevEdit.MapDevices[client.crossInfo.Idevice]
+					tDev.BusyCount--
+					//if tDev.BusyCount == 0 && tDev.TurnOnFlag == true {
+					arm := comm.CommandARM{
+						User:    client.crossInfo.Login,
+						ID:      client.crossInfo.Idevice,
+						Command: 4,
+						Params:  0,
 					}
+					var mess = tcpConnect.TCPMessage{
+						User:        client.crossInfo.AccInfo.Login,
+						TCPType:     tcpConnect.TypeDispatch,
+						Idevice:     arm.ID,
+						Data:        arm,
+						From:        tcpConnect.FromCrossSoc,
+						CommandType: typeDButton,
+						Pos:         client.crossInfo.Pos,
+					}
+					mess.SendToTCPServer()
+
+					//	tDev.TurnOnFlag = false
+					//}
+					device.GlobalDevEdit.MapDevices[client.crossInfo.Idevice] = tDev
+					device.GlobalDevEdit.Mux.Unlock()
+
+					for aClient := range h.clients {
+						if (aClient.crossInfo.Pos == client.crossInfo.Pos) && (aClient.crossInfo.AccInfo.Role != "Viewer") {
+							aClient.crossInfo.Edit = true
+							resp := newCrossMess(typeChangeEdit, nil)
+							resp.Data["edit"] = true
+							aClient.send <- resp
+							break
+						}
+					}
+					//отправить на мапу подключенные устройства которые редактируют
+					CrossUsersForMap <- h.usersList()
+
+					//}
 				}
 			}
 		case mess := <-h.broadcast:

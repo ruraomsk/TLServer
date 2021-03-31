@@ -96,6 +96,7 @@ func (c *ClientTechArm) readPump(db *sqlx.DB) {
 				arm := comm.CommandARM{}
 				_ = json.Unmarshal(p, &arm)
 				arm.User = c.armInfo.AccInfo.Login
+				reset := false
 				if arm.Command == 4 {
 					device.GlobalDevEdit.Mux.Lock()
 					tDev := device.GlobalDevEdit.MapDevices[arm.ID]
@@ -103,9 +104,22 @@ func (c *ClientTechArm) readPump(db *sqlx.DB) {
 						tDev.TurnOnFlag = true
 					} else if arm.Params == 0 {
 						tDev.TurnOnFlag = false
+						tDev.BusyCount = 0
+						reset = true
 					}
 					device.GlobalDevEdit.MapDevices[arm.ID] = tDev
 					device.GlobalDevEdit.Mux.Unlock()
+					if reset {
+						arm.Params = -1
+						var mess = tcpConnect.TCPMessage{
+							User:        arm.User,
+							TCPType:     tcpConnect.TypeDispatch,
+							From:        tcpConnect.FromGsSoc,
+							CommandType: typeDButton,
+							Pos:         sockets.PosInfo{},
+						}
+						mess.SendToTCPServer()
+					}
 				}
 				var mess = tcpConnect.TCPMessage{
 					User:        c.armInfo.AccInfo.Login,

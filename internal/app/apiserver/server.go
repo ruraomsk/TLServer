@@ -8,6 +8,7 @@ import (
 	"github.com/ruraomsk/TLServer/internal/app/handlers/licenseH"
 	"github.com/ruraomsk/TLServer/internal/model/device"
 	"github.com/ruraomsk/TLServer/internal/model/license"
+	"github.com/ruraomsk/TLServer/internal/sockets/alarm"
 	"github.com/ruraomsk/TLServer/internal/sockets/chat"
 	"github.com/ruraomsk/TLServer/internal/sockets/crossSock/controlCross"
 	"github.com/ruraomsk/TLServer/internal/sockets/crossSock/mainCross"
@@ -34,6 +35,7 @@ func MainServer(conf *ServerConf, db *sqlx.DB) (srvHttp *http.Server, srvHttps *
 	mainCrossHub := mainCross.NewCrossHub()
 	controlCrHub := controlCross.NewCrossHub()
 	techArmHub := techArm.NewTechArmHub()
+	alarmHub := alarm.NewAlarmHub()
 	xctrlHub := xctrl.NewXctrlHub()
 	gsHub := greenStreet.NewGSHub()
 	chatHub := chat.NewChatHub()
@@ -43,6 +45,7 @@ func MainServer(conf *ServerConf, db *sqlx.DB) (srvHttp *http.Server, srvHttps *
 	go mainCrossHub.Run(db)
 	go controlCrHub.Run(db)
 	go techArmHub.Run(db)
+	go alarmHub.Run(db)
 	go xctrlHub.Run(db)
 	go gsHub.Run(db)
 	go chatHub.Run()
@@ -112,7 +115,7 @@ func MainServer(conf *ServerConf, db *sqlx.DB) (srvHttp *http.Server, srvHttps *
 		c.HTML(http.StatusOK, "multipleCross.html", nil)
 	})
 	mainRouter.GET("/:slug/multipleCrossW", func(c *gin.Context) {
-		controlCross.HControlCross(c, controlCrHub, db)
+		mainCross.HMainCross(c, mainCrossHub, db)
 	})
 
 	//арм технолога
@@ -121,6 +124,13 @@ func MainServer(conf *ServerConf, db *sqlx.DB) (srvHttp *http.Server, srvHttps *
 	})
 	mainRouter.GET("/:slug/techArmW", func(c *gin.Context) {
 		techArm.HTechArm(c, techArmHub, db)
+	})
+	//Предупреждения
+	mainRouter.GET("/:slug/alarm", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "alarm.html", nil)
+	})
+	mainRouter.GET("/:slug/alarmW", func(c *gin.Context) {
+		alarm.HAlarm(c, alarmHub, db)
 	})
 
 	//зеленая улица
@@ -296,8 +306,8 @@ func setLogFile() {
 		}
 	}
 	_ = writer.Flush()
-	readF.Close()
-	writeF.Close()
+	_ = readF.Close()
+	_ = writeF.Close()
 
 	_ = os.Remove(path)
 	_ = os.Rename(path2, path)
