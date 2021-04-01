@@ -7,6 +7,7 @@ var (
 	typeJump    = "jump"
 	typeRepaint = "repaint"
 	typeTFlight = "tflight"
+	typePhases  = "phases"
 
 	typeRoute      = "route"
 	typeCreateRout = "createRoute"

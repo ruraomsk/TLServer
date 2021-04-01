@@ -5,12 +5,39 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/TLServer/internal/model/routeGS"
 	"github.com/ruraomsk/TLServer/logger"
+	"github.com/ruraomsk/ag-server/pudge"
+	"strconv"
 )
 
 //executeRoute управление светофорами
 type executeRoute struct {
 	Devices []int `json:"devices"`
 	TurnOn  bool  `json:"turnOn"`
+}
+
+func getPhases(devices []int, db *sqlx.DB) []*Phase {
+	result := make([]*Phase, 0)
+	for _, i := range devices {
+		rows, err := db.Query(`SELECT device FROM public.devices where id=` + strconv.Itoa(i))
+		if err != nil {
+			logger.Error.Printf("|IP: - |Login: - |Resource: /greenStreet |Message: %v", err.Error())
+			return result
+		}
+		var s []byte
+		var state pudge.Controller
+		for rows.Next() {
+			rows.Scan(&s)
+			err = json.Unmarshal(s, &state)
+			if err != nil {
+				logger.Error.Printf("|IP: - |Login: - |Resource: /greenStreet |Message: %v", err.Error())
+				return result
+			}
+			result = append(result, &Phase{Device: i, Phase: state.DK.FDK})
+			break
+		}
+	}
+	//logger.Debug.Printf("devs %v  %v",devices,result)
+	return result
 }
 
 //getAllModes вернуть из базы все маршруты

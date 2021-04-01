@@ -34,15 +34,31 @@ func NewGSHub() *HubGStreet {
 func (h *HubGStreet) Run(db *sqlx.DB) {
 
 	crossReadTick := time.NewTicker(crossPeriod)
+	deviceReadTick := time.NewTicker(devicePeriod)
 	checkValidityTicker := time.NewTicker(checkTokensValidity)
 	defer func() {
 		crossReadTick.Stop()
+		deviceReadTick.Stop()
 		checkValidityTicker.Stop()
 	}()
 
 	oldTFs := maps.SelectTL(db)
 	for {
 		select {
+		case <-deviceReadTick.C:
+			if len(h.clients) == 0 {
+				break
+			}
+			for c := range h.clients {
+				if len(c.devices) == 0 || !c.sendPhases {
+					continue
+				}
+				if c.sendPhases {
+					resp := newGSMess(typePhases, nil)
+					resp.Data[typePhases] = getPhases(c.devices, c.db)
+					c.send <- resp
+				}
+			}
 		case <-crossReadTick.C:
 			{
 				if len(h.clients) > 0 {
@@ -108,7 +124,7 @@ func (h *HubGStreet) Run(db *sqlx.DB) {
 					close(client.send)
 					_ = client.conn.Close()
 				}
-
+				client.sendPhases = false
 				if len(client.devices) != 0 {
 					arm := comm.CommandARM{Command: 4, Params: 0, User: client.cInfo.Login}
 					var mess = tcpConnect.TCPMessage{

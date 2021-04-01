@@ -27,17 +27,23 @@ const (
 	pingPeriod = (pongWait * 9) / 10
 
 	crossPeriod         = time.Second * 5
+	devicePeriod        = time.Second * 5
 	checkTokensValidity = time.Minute * 1
 )
 
 //ClientGS информация о подключившемся пользователе
 type ClientGS struct {
-	hub  *HubGStreet
-	conn *websocket.Conn
-	send chan gSResponse
-
-	cInfo   *accToken.Token
-	devices []int
+	hub        *HubGStreet
+	conn       *websocket.Conn
+	send       chan gSResponse
+	db         *sqlx.DB
+	cInfo      *accToken.Token
+	devices    []int
+	sendPhases bool
+}
+type Phase struct {
+	Device int `json:"device"`
+	Phase  int `json:"phase"`
 }
 
 //readPump обработчик чтения сокета
@@ -50,6 +56,9 @@ func (c *ClientGS) readPump(db *sqlx.DB) {
 		data.CacheArea.Mux.Lock()
 		resp.Data["areaZone"] = data.CacheArea.Areas
 		data.CacheArea.Mux.Unlock()
+		if c.sendPhases {
+			resp.Data[typePhases] = getPhases(c.devices, c.db)
+		}
 		c.send <- resp
 	}
 
@@ -151,7 +160,9 @@ func (c *ClientGS) readPump(db *sqlx.DB) {
 					Pos:         sockets.PosInfo{},
 				}
 				if execRoute.TurnOn {
+					c.sendPhases = true
 					c.devices = execRoute.Devices
+					//logger.Debug.Printf("client devs %v",c.devices)
 					arm.Params = 1
 					device.GlobalDevEdit.Mux.Lock()
 					for _, dev := range execRoute.Devices {
@@ -168,6 +179,7 @@ func (c *ClientGS) readPump(db *sqlx.DB) {
 					}
 					device.GlobalDevEdit.Mux.Unlock()
 				} else {
+					c.sendPhases = false
 					arm.Params = 0
 					device.GlobalDevEdit.Mux.Lock()
 					for _, dev := range c.devices {
