@@ -2,7 +2,7 @@ package alarm
 
 import (
 	"github.com/gorilla/websocket"
-	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/TLServer/internal/model/data"
 	"sort"
 	"time"
 )
@@ -37,7 +37,9 @@ type ClientAlarm struct {
 func (c *ClientAlarm) makeResponse() {
 	c.CrossRing.Ring = false
 	change := false
-	for _, nc := range getCross(c.armInfo.Region, c.hub.db) {
+	db := data.GetDB("ClientAlarm")
+	defer data.FreeDB("ClientAlarm")
+	for _, nc := range getCross(c.armInfo.Region, db) {
 		_, is := c.CrossRing.CrossInfo[key(nc.Region, nc.Area, nc.ID)]
 		if !nc.Control {
 			if !is {
@@ -73,7 +75,7 @@ func (c *ClientAlarm) makeResponse() {
 }
 
 //readPump обработчик чтения сокета
-func (c *ClientAlarm) readPump(db *sqlx.DB) {
+func (c *ClientAlarm) readPump() {
 
 	//если нужно указать лимит пакета
 	//c.conn.SetReadLimit(maxMessageSize)

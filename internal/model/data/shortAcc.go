@@ -92,7 +92,10 @@ func (shortAcc *ShortAccount) ValidCreate(role string, region string) (err error
 func (shortAcc *ShortAccount) ValidDelete(role string, region string) (account *Account, err error) {
 	account = &Account{}
 	//Забираю из базы запись с подходящей почтой
-	rows, err := GetDB().Query(`SELECT login, password, token, work_time FROM public.accounts WHERE login=$1`, shortAcc.Login)
+	db := GetDB("ValidDelete")
+	defer FreeDB("ValidDelete")
+
+	rows, err := db.Query(`SELECT login, password, token, work_time FROM public.accounts WHERE login=$1`, shortAcc.Login)
 	if rows == nil {
 		return nil, errors.New(fmt.Sprintf("login: %s, not found", shortAcc.Login))
 	}
@@ -126,7 +129,10 @@ func (shortAcc *ShortAccount) ValidDelete(role string, region string) (account *
 func (shortAcc *ShortAccount) ValidChangePW(role string, region string) (account *Account, err error) {
 	account = &Account{}
 	//Забираю из базы запись с подходящим логином
-	rows, err := GetDB().Query(`SELECT login, password, token, work_time FROM public.accounts WHERE login=$1`, shortAcc.Login)
+	db := GetDB("ValidChangePW")
+	defer FreeDB("ValidChangePW")
+
+	rows, err := db.Query(`SELECT login, password, token, work_time FROM public.accounts WHERE login=$1`, shortAcc.Login)
 	if rows == nil {
 		return nil, errors.New(fmt.Sprintf("Пользователь: %s, не найден", shortAcc.Login))
 	}
@@ -160,7 +166,10 @@ func (shortAcc *ShortAccount) ValidChangePW(role string, region string) (account
 func (passChange *PassChange) ValidOldNewPW(login string) (account *Account, err error) {
 	account = &Account{}
 	//Забираю из базы запись с подходящей почтой
-	rows, err := GetDB().Query(`SELECT login, password, token, work_time FROM public.accounts WHERE login=$1`, login)
+	db := GetDB("ValidOldNewPW")
+	defer FreeDB("ValidOldNewPW")
+
+	rows, err := db.Query(`SELECT login, password, token, work_time FROM public.accounts WHERE login=$1`, login)
 	if rows == nil {
 		return nil, errors.New(fmt.Sprintf("login: %s, not found", login))
 	}

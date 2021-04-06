@@ -2,6 +2,7 @@ package data
 
 import (
 	"fmt"
+	"sync"
 
 	_ "github.com/jackc/pgx"
 	"github.com/jmoiron/sqlx"
@@ -46,18 +47,22 @@ var (
 	//FirstCreate флаг первого создания базы
 	FirstCreate bool
 )
+var dbMap map[string]*sqlx.DB
+var mutex sync.Mutex
+var first = true
 
 //ConnectDB подключение к БД
 func ConnectDB() (*sqlx.DB, error) {
-
+	if first {
+		dbMap = make(map[string]*sqlx.DB)
+		first = false
+	}
 	conn, err := sqlx.Open(config.GlobalConfig.DBConfig.Type, config.GlobalConfig.DBConfig.GetDBurl())
 	if err != nil {
 		return nil, err
 	}
 
 	db = conn
-	db.SetMaxOpenConns(config.GlobalConfig.DBConfig.SetMaxOpenConst)
-	db.SetMaxIdleConns(config.GlobalConfig.DBConfig.SetMaxIdleConst)
 
 	_, err = db.Exec(`SELECT * FROM public.accounts;`)
 	if err != nil {
@@ -74,11 +79,28 @@ func ConnectDB() (*sqlx.DB, error) {
 		logger.Info.Println("|Message: chat table not found - created")
 		db.MustExec(chatTable)
 	}
-
 	return db, nil
 }
 
 //GetDB обращение к БД
-func GetDB() *sqlx.DB {
-	return db
+func GetDB(name string) *sqlx.DB {
+	mutex.Lock()
+	defer mutex.Unlock()
+	conn, is := dbMap[name]
+	if is {
+		logger.Debug.Printf("Повторное открытие %s ", name)
+		conn.Close()
+	}
+	conn, _ = sqlx.Open(config.GlobalConfig.DBConfig.Type, config.GlobalConfig.DBConfig.GetDBurl())
+	dbMap[name] = conn
+	return conn
+}
+func FreeDB(name string) {
+	mutex.Lock()
+	defer mutex.Unlock()
+	conn, is := dbMap[name]
+	if is {
+		conn.Close()
+	}
+	delete(dbMap, name)
 }

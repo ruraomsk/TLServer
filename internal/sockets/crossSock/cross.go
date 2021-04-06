@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/TLServer/internal/model/accToken"
+	"github.com/ruraomsk/TLServer/internal/model/data"
 	"github.com/ruraomsk/TLServer/internal/model/deviceLog"
 	"github.com/ruraomsk/TLServer/internal/model/stateVerified"
 	"github.com/ruraomsk/TLServer/internal/sockets"
@@ -53,12 +54,15 @@ func ConvertStateStrToStruct(str string) (rState agspudge.Cross, err error) {
 }
 
 //TestCrossStateData проверить все стрейты на наличие ошибок
-func TestCrossStateData(accInfo *accToken.Token, db *sqlx.DB) u.Response {
+func TestCrossStateData(accInfo *accToken.Token) u.Response {
 	var (
 		stateSql  string
 		stateInfo []deviceLog.BusyArm
 		state     deviceLog.BusyArm
 	)
+	db := data.GetDB("TestCrossStateData")
+	defer data.FreeDB("TestCrossStateData")
+
 	sqlStr := fmt.Sprintf(`SELECT state FROM public.cross `)
 	if accInfo.Region != "*" {
 		sqlStr += fmt.Sprintf(`WHERE region = %v `, accInfo.Region)

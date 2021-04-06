@@ -3,7 +3,6 @@ package xctrl
 import (
 	"encoding/json"
 	"github.com/gorilla/websocket"
-	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/TLServer/internal/model/accToken"
 	"github.com/ruraomsk/TLServer/internal/model/data"
 	"github.com/ruraomsk/TLServer/internal/sockets"
@@ -38,8 +37,9 @@ type ClientXctrl struct {
 }
 
 //readPump обработчик чтения сокета
-func (c *ClientXctrl) readPump(db *sqlx.DB) {
-
+func (c *ClientXctrl) readPump() {
+	db := data.GetDB("ClientXctrl")
+	defer data.FreeDB("ClientXctrl")
 	//если нужно указать лимит пакета
 	//c.conn.SetReadLimit(maxMessageSize)
 

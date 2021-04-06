@@ -9,6 +9,7 @@ import (
 	"github.com/ruraomsk/TLServer/internal/sockets/maps"
 	"github.com/ruraomsk/TLServer/internal/sockets/maps/mainMap"
 	"github.com/ruraomsk/ag-server/comm"
+	"sync"
 	"time"
 )
 
@@ -30,6 +31,8 @@ func NewGSHub() *HubGStreet {
 	}
 }
 
+var mutex sync.Mutex
+
 //Run запуск хаба для GS
 func (h *HubGStreet) Run(db *sqlx.DB) {
 
@@ -46,72 +49,85 @@ func (h *HubGStreet) Run(db *sqlx.DB) {
 	for {
 		select {
 		case <-deviceReadTick.C:
+			//logger.Debug.Printf("deviceReadTick in")
 			if len(h.clients) == 0 {
+				//logger.Debug.Printf("deviceReadTick empty")
 				break
 			}
 			for c := range h.clients {
 				if len(c.devices) == 0 || !c.sendPhases {
+					//logger.Debug.Printf("deviceReadTick empty two")
 					continue
 				}
 				if c.sendPhases {
 					resp := newGSMess(typePhases, nil)
-					resp.Data[typePhases] = getPhases(c.devices, c.db)
+					resp.Data[typePhases] = getPhases(c.devices, db)
 					c.send <- resp
+					//logger.Debug.Printf("deviceReadTick send %v",getPhases(c.devices, c.db))
 				}
 			}
 		case <-crossReadTick.C:
 			{
-				if len(h.clients) > 0 {
-					newTFs := maps.SelectTL(db)
-					if len(newTFs) != len(oldTFs) {
-						resp := newGSMess(typeRepaint, nil)
-						resp.Data["tflight"] = newTFs
-						data.CacheArea.Mux.Lock()
-						resp.Data["areaZone"] = data.CacheArea.Areas
-						data.CacheArea.Mux.Unlock()
+				//logger.Debug.Printf("crossReadTick in")
+				if len(h.clients) == 0 {
+					//logger.Debug.Printf("crossReadTick zerro")
+					break
+				}
+				mutex.Lock()
+				newTFs := maps.SelectTL(db)
+				mutex.Unlock()
+				if len(newTFs) != len(oldTFs) {
+					//logger.Debug.Printf("crossReadTick in len(newTFs) != len(oldTFs)")
+					resp := newGSMess(typeRepaint, nil)
+					resp.Data["tflight"] = newTFs
+					data.CacheArea.Mux.Lock()
+					resp.Data["areaZone"] = data.CacheArea.Areas
+					data.CacheArea.Mux.Unlock()
+					for client := range h.clients {
+						client.send <- resp
+					}
+				} else {
+					//logger.Debug.Printf("crossReadTick in NOT len(newTFs) != len(oldTFs)")
+					var (
+						tempTF   []data.TrafficLights
+						flagFill = false
+					)
+					for _, nTF := range newTFs {
+						var flagAdd = true
+						for _, oTF := range oldTFs {
+							if oTF.Idevice == nTF.Idevice {
+								flagAdd = false
+								if oTF.Sost.Num != nTF.Sost.Num || oTF.Description != nTF.Description {
+									flagAdd = true
+								}
+								if oTF.Subarea != nTF.Subarea {
+									flagAdd = true
+									flagFill = true
+								}
+								break
+							}
+						}
+						if flagAdd {
+							tempTF = append(tempTF, nTF)
+						}
+					}
+					//logger.Debug.Printf("crossReadTick in len(tempTF) > 0")
+					if len(tempTF) > 0 {
+						resp := newGSMess(typeTFlight, nil)
+						if flagFill {
+							data.FillMapAreaZone()
+							data.CacheArea.Mux.Lock()
+							resp.Data["areaZone"] = data.CacheArea.Areas
+							data.CacheArea.Mux.Unlock()
+						}
+						resp.Data["tflight"] = tempTF
 						for client := range h.clients {
 							client.send <- resp
 						}
-					} else {
-						var (
-							tempTF   []data.TrafficLights
-							flagFill = false
-						)
-						for _, nTF := range newTFs {
-							var flagAdd = true
-							for _, oTF := range oldTFs {
-								if oTF.Idevice == nTF.Idevice {
-									flagAdd = false
-									if oTF.Sost.Num != nTF.Sost.Num || oTF.Description != nTF.Description {
-										flagAdd = true
-									}
-									if oTF.Subarea != nTF.Subarea {
-										flagAdd = true
-										flagFill = true
-									}
-									break
-								}
-							}
-							if flagAdd {
-								tempTF = append(tempTF, nTF)
-							}
-						}
-						if len(tempTF) > 0 {
-							resp := newGSMess(typeTFlight, nil)
-							if flagFill {
-								data.FillMapAreaZone()
-								data.CacheArea.Mux.Lock()
-								resp.Data["areaZone"] = data.CacheArea.Areas
-								data.CacheArea.Mux.Unlock()
-							}
-							resp.Data["tflight"] = tempTF
-							for client := range h.clients {
-								client.send <- resp
-							}
-						}
 					}
-					oldTFs = newTFs
 				}
+				oldTFs = newTFs
+
 			}
 		case client := <-h.register:
 			{

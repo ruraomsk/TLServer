@@ -48,7 +48,9 @@ func (data *Account) Validate() error {
 	}
 	//логин аккаунта должен быть уникальным
 	temp := &Account{}
-	rows, err := GetDB().Query(`SELECT id, login, password FROM public.accounts WHERE login=$1`, data.Login)
+	db := GetDB("Validate")
+	defer FreeDB("Validate")
+	rows, err := db.Query(`SELECT id, login, password FROM public.accounts WHERE login=$1`, data.Login)
 	if rows != nil && err != nil {
 		return errors.New("connection error, please try again")
 	}
@@ -64,7 +66,9 @@ func (data *Account) Create(privilege Privilege) u.Response {
 		count int
 		login string
 	)
-	if err := GetDB().QueryRow(`SELECT count(*) FROM public.accounts`).Scan(&count); err != nil {
+	db := GetDB("Create")
+	defer FreeDB("Create")
+	if err := db.QueryRow(`SELECT count(*) FROM public.accounts`).Scan(&count); err != nil {
 		return u.Message(http.StatusInternalServerError, errorConnectDB)
 	}
 	if (count - 1) >= license.LicenseFields.NumAcc {
@@ -78,7 +82,7 @@ func (data *Account) Create(privilege Privilege) u.Response {
 	//Отдаем ключ для yandex map
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(data.Password), bcrypt.DefaultCost)
 	data.Password = string(hashedPassword)
-	row := GetDB().QueryRow(`INSERT INTO  public.accounts (login, password, work_time, description) VALUES ($1, $2, $3, $4) RETURNING login`,
+	row := db.QueryRow(`INSERT INTO  public.accounts (login, password, work_time, description) VALUES ($1, $2, $3, $4) RETURNING login`,
 		data.Login, data.Password, data.WorkTime, data.Description)
 	if err := row.Scan(&login); err != nil {
 		return u.Message(http.StatusInternalServerError, errorDuplicateUser)
@@ -104,7 +108,10 @@ func (data *Account) Update(privilege Privilege) u.Response {
 	privilege.Role.Perm = append(privilege.Role.Perm, RoleInfo.MapRoles[privilege.Role.Name]...)
 	RoleInfo.Mux.Unlock()
 	privStr, _ := json.Marshal(privilege)
-	_, err := GetDB().Exec(`UPDATE public.accounts SET privilege = $1, work_time = $2, description = $3, token = $4 WHERE login = $5`, string(privStr), data.WorkTime, data.Description, "", data.Login)
+	db := GetDB("Update")
+	defer FreeDB("Update")
+
+	_, err := db.Exec(`UPDATE public.accounts SET privilege = $1, work_time = $2, description = $3, token = $4 WHERE login = $5`, string(privStr), data.WorkTime, data.Description, "", data.Login)
 	if err != nil {
 		resp := u.Message(http.StatusInternalServerError, fmt.Sprintf("Account update error: %s", err.Error()))
 		return resp
@@ -116,7 +123,9 @@ func (data *Account) Update(privilege Privilege) u.Response {
 
 //Delete удаление аккаунта из БД
 func (data *Account) Delete() u.Response {
-	_, err := GetDB().Exec(`DELETE FROM public.accounts WHERE login = $1`, data.Login)
+	db := GetDB("Delete")
+	defer FreeDB("Delete")
+	_, err := db.Exec(`DELETE FROM public.accounts WHERE login = $1`, data.Login)
 	if err != nil {
 		resp := u.Message(http.StatusInternalServerError, "data deletion error "+err.Error())
 		return resp
@@ -133,7 +142,10 @@ func (data *Account) ResetPass() u.Response {
 	//Отдаем ключ для yandex map
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(data.Password), bcrypt.DefaultCost)
 	data.Password = string(hashedPassword)
-	_, err := GetDB().Exec(`UPDATE public.accounts SET password = $1, token = $2 WHERE login = $3`, data.Password, "", data.Login)
+	db := GetDB("ResetPass")
+	defer FreeDB("ResetPass")
+
+	_, err := db.Exec(`UPDATE public.accounts SET password = $1, token = $2 WHERE login = $3`, data.Password, "", data.Login)
 	if err != nil {
 		resp := u.Message(http.StatusInternalServerError, fmt.Sprintf("Ошибка сброса пароля: %s", err.Error()))
 		return resp
@@ -151,7 +163,9 @@ func (data *Account) ChangePW() u.Response {
 	data.Password = string(hashedPassword)
 
 	sqlStr := fmt.Sprintf(`UPDATE public.accounts SET password = '%v' WHERE login = '%v'; UPDATE public.accounts SET token = '' WHERE login = '%v'`, data.Password, data.Login, data.Login)
-	_, err := GetDB().Exec(sqlStr)
+	db := GetDB("ChangePW")
+	defer FreeDB("ChangePW")
+	_, err := db.Exec(sqlStr)
 	if err != nil {
 		resp := u.Message(http.StatusInternalServerError, "password change error "+err.Error())
 		return resp
@@ -175,7 +189,10 @@ func (data *Account) ParserBoxPointsUser() (err error) {
 	if !strings.EqualFold(privilege.Region, "*") {
 		sqlString = sqlString + fmt.Sprintf(" where region = %s;", privilege.Region)
 	}
-	row := GetDB().QueryRow(sqlString)
+	db := GetDB("Parser")
+	defer FreeDB("Parser")
+
+	row := db.QueryRow(sqlString)
 	err = row.Scan(&boxpoint.Point0.Y, &boxpoint.Point0.X, &boxpoint.Point1.Y, &boxpoint.Point1.X)
 	if err != nil {
 		return fmt.Errorf("parserPoints. Request error: %s", err.Error())
@@ -200,7 +217,10 @@ func SuperCreate() {
 	account.Password = "$2a$10$ZCWyIEfEVF3KGj6OUtIeSOQ3WexMjuAZ43VSO6T.QqOndn4HN1J6C"
 	account.Description = "Tech"
 	privilege := NewPrivilege("Admin", "*", []string{"*"})
-	GetDB().MustExec(`INSERT INTO  public.accounts (login, password, work_time, description) VALUES ($1, $2, $3, $4)`,
+	db := GetDB("SuperCreate")
+	defer FreeDB("SuperCreate")
+
+	db.MustExec(`INSERT INTO  public.accounts (login, password, work_time, description) VALUES ($1, $2, $3, $4)`,
 		account.Login, account.Password, account.WorkTime, account.Description)
 	////Записываю координаты в базу!!!
 	_ = privilege.WriteRoleInBD(account.Login)

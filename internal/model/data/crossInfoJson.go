@@ -2,7 +2,6 @@ package data
 
 import (
 	"encoding/json"
-	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/TLServer/internal/model/config"
 	"io/ioutil"
 	"os"
@@ -43,7 +42,10 @@ type crossInfo struct {
 }
 
 //CreateCrossesJSON создание json файла с содержанием всех перекрестков с их местом положения и описания
-func CreateCrossesJSON(db *sqlx.DB) {
+func CreateCrossesJSON() {
+	db := GetDB("CreateCrossesJSON")
+	defer FreeDB("CreateCrossesJSON")
+
 	cross := new(CrossesJSON)
 	var tempCrosses []crossInfo
 

@@ -3,9 +3,9 @@ package controlCross
 import (
 	"encoding/json"
 	"github.com/gorilla/websocket"
-	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/TLServer/internal/app/tcpConnect"
 	"github.com/ruraomsk/TLServer/internal/model/crossCreator"
+	"github.com/ruraomsk/TLServer/internal/model/data"
 	"github.com/ruraomsk/TLServer/internal/sockets"
 	"github.com/ruraomsk/TLServer/internal/sockets/crossSock"
 	"github.com/ruraomsk/TLServer/logger"
@@ -38,7 +38,9 @@ type ClientControlCr struct {
 var UserLogoutCrControl chan string
 
 //readPump обработчик чтения сокета
-func (c *ClientControlCr) readPump(db *sqlx.DB) {
+func (c *ClientControlCr) readPump() {
+	db := data.GetDB("ClientControlCr")
+	defer data.FreeDB("ClientControlCr")
 	_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error { _ = c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 

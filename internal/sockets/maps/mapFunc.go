@@ -16,11 +16,13 @@ import (
 //SelectTL возвращает массив в котором содержатся светофоры, которые попали в указанную область
 func SelectTL(db *sqlx.DB) (tfdata []data.TrafficLights) {
 	var dgis string
+	//logger.Debug.Printf("SelectTL in %s",db.DriverName())
 	rowsTL, err := db.Query(`SELECT region, area, subarea, id, idevice, dgis, describ, status, state->'arrays'->'SetDK' FROM public.cross`)
 	if err != nil {
 		logger.Error.Println("|Message: db not respond", err.Error())
 		return nil
 	}
+	//logger.Debug.Printf("SelectTL after Query")
 	for rowsTL.Next() {
 		var (
 			temp      = data.TrafficLights{}
@@ -32,15 +34,18 @@ func SelectTL(db *sqlx.DB) (tfdata []data.TrafficLights) {
 			logger.Error.Println("|Message: No result at these points", err.Error())
 			return nil
 		}
+		//logger.Debug.Printf("SelectTL after scan")
 		_ = json.Unmarshal([]byte(dkStr), &tempSetDK)
 		temp.Phases = tempSetDK.GetPhases()
 		temp.Points.StrToFloat(dgis)
 		data.CacheInfo.Mux.Lock()
+		//logger.Debug.Printf("SelectTL after lock")
 		temp.Region.NameRegion = data.CacheInfo.MapRegion[temp.Region.Num]
 		temp.Area.NameArea = data.CacheInfo.MapArea[temp.Region.NameRegion][temp.Area.Num]
 		temp.Sost.Description = data.CacheInfo.MapTLSost[temp.Sost.Num].Description
 		temp.Sost.Control = data.CacheInfo.MapTLSost[temp.Sost.Num].Control
 		data.CacheInfo.Mux.Unlock()
+		//logger.Debug.Printf("SelectTL after unlock")
 		tfdata = append(tfdata, temp)
 	}
 
@@ -49,6 +54,7 @@ func SelectTL(db *sqlx.DB) (tfdata []data.TrafficLights) {
 	if len(tfdata) > numDev {
 		tfdata = tfdata[:numDev]
 	}
+	//logger.Debug.Printf("SelectTL out")
 	return tfdata
 }
 

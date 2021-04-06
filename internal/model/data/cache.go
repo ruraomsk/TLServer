@@ -84,7 +84,9 @@ func CacheInfoDataUpdate() {
 func FillMapAreaZone() {
 	tempAreaCache := make([]locations.AreaZone, 0)
 	//запрос уникальных регионов и районов
-	rows, err := GetDB().Query(`SELECT distinct on (region, area) region, area, array_agg(dgis) as aDgis   FROM public.cross  group by region, area`)
+	db := GetDB("FillMapAreaZone")
+	defer FreeDB("FillMapAreaZone")
+	rows, err := db.Query(`SELECT distinct on (region, area) region, area, array_agg(dgis) as aDgis   FROM public.cross  group by region, area`)
 	if err != nil {
 		logger.Error.Printf("|IP: Server  |Login: Server |Resource: Server |Message: %v \n", err.Error())
 		return
@@ -102,7 +104,7 @@ func FillMapAreaZone() {
 	}
 
 	//запрос уникальных подрайонов
-	rows, err = GetDB().Query(`SELECT distinct on (region, area, subarea) region, area, subarea, array_agg(dgis) as aDgis FROM public.cross  group by region, area, subarea`)
+	rows, err = db.Query(`SELECT distinct on (region, area, subarea) region, area, subarea, array_agg(dgis) as aDgis FROM public.cross  group by region, area, subarea`)
 	if err != nil {
 		logger.Error.Printf("|IP: Server  |Login: Server |Resource: Server |Message: %v \n", err.Error())
 		return
@@ -139,14 +141,17 @@ func FillMapAreaZone() {
 	CacheArea.Areas = tempAreaCache
 	CacheArea.Mux.Unlock()
 
-	go CreateCrossesJSON(db)
+	go CreateCrossesJSON()
 }
 
 //GetRegionInfo получить таблицу регионов
 func GetRegionInfo() (region map[string]string, area map[string]map[string]string, err error) {
 	region = make(map[string]string)
 	area = make(map[string]map[string]string)
-	rows, err := GetDB().Query(`SELECT region, nameregion, area, namearea FROM public.region`)
+	db := GetDB("GetRegionInfo")
+	defer FreeDB("GetRegionInfo")
+
+	rows, err := db.Query(`SELECT region, nameregion, area, namearea FROM public.region`)
 	if err != nil {
 		return CacheInfo.MapRegion, CacheInfo.MapArea, err
 	}
@@ -184,7 +189,10 @@ func GetRegionInfo() (region map[string]string, area map[string]map[string]strin
 //getTLSost получить данные о состоянии светофоров
 func getTLSost() (TLsost map[int]TLSostInfo, err error) {
 	TLsost = make(map[int]TLSostInfo, 0)
-	statusRow, err := GetDB().Query(`SELECT id, description, control FROM public.status`)
+	db := GetDB("getTLSost")
+	defer FreeDB("getTLSost")
+
+	statusRow, err := db.Query(`SELECT id, description, control FROM public.status`)
 	if err != nil {
 		logger.Error.Printf("|IP: Server  |Login: Server |Resource: Server |Message: %v \n", err.Error())
 		return TLsost, err

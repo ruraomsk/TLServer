@@ -3,7 +3,6 @@ package greenStreet
 import (
 	"encoding/json"
 	"github.com/gorilla/websocket"
-	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/TLServer/internal/app/tcpConnect"
 	"github.com/ruraomsk/TLServer/internal/model/accToken"
 	"github.com/ruraomsk/TLServer/internal/model/data"
@@ -36,7 +35,6 @@ type ClientGS struct {
 	hub        *HubGStreet
 	conn       *websocket.Conn
 	send       chan gSResponse
-	db         *sqlx.DB
 	cInfo      *accToken.Token
 	devices    []int
 	sendPhases bool
@@ -47,19 +45,25 @@ type Phase struct {
 }
 
 //readPump обработчик чтения сокета
-func (c *ClientGS) readPump(db *sqlx.DB) {
+func (c *ClientGS) readPump() {
+	db := data.GetDB("ClientGS")
+	defer data.FreeDB("ClientGS")
 	_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error { _ = c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	{
+		mutex.Lock()
 		resp := newGSMess(typeMapInfo, maps.MapOpenInfo(db))
 		resp.Data["routes"] = getAllModes(db)
+		mutex.Unlock()
 		data.CacheArea.Mux.Lock()
 		resp.Data["areaZone"] = data.CacheArea.Areas
 		data.CacheArea.Mux.Unlock()
 		if c.sendPhases {
-			resp.Data[typePhases] = getPhases(c.devices, c.db)
+			logger.Debug.Print("ping")
+			resp.Data[typePhases] = getPhases(c.devices, db)
 		}
 		c.send <- resp
+		logger.Debug.Print("pong")
 	}
 
 	for {
@@ -83,7 +87,10 @@ func (c *ClientGS) readPump(db *sqlx.DB) {
 				temp := routeGS.Route{}
 				_ = json.Unmarshal(p, &temp)
 				resp := newGSMess(typeCreateRout, nil)
+				mutex.Lock()
 				err := temp.Create(db)
+				mutex.Unlock()
+
 				if err != nil {
 					resp.Data[typeError] = err.Error()
 					c.send <- resp
@@ -98,7 +105,9 @@ func (c *ClientGS) readPump(db *sqlx.DB) {
 				temp := routeGS.Route{}
 				_ = json.Unmarshal(p, &temp)
 				resp := newGSMess(typeUpdateRout, nil)
+				mutex.Lock()
 				err := temp.Update(db)
+				mutex.Unlock()
 				if err != nil {
 					resp.Data[typeError] = err.Error()
 					c.send <- resp
@@ -112,7 +121,9 @@ func (c *ClientGS) readPump(db *sqlx.DB) {
 				temp := routeGS.Route{}
 				_ = json.Unmarshal(p, &temp)
 				resp := newGSMess(typeDeleteRout, nil)
+				mutex.Lock()
 				err := temp.Delete(db)
+				mutex.Unlock()
 				if err != nil {
 					resp.Data[typeError] = err.Error()
 					c.send <- resp

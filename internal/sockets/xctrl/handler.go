@@ -3,7 +3,6 @@ package xctrl
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/TLServer/internal/model/accToken"
 	u "github.com/ruraomsk/TLServer/internal/utils"
 	"net/http"
@@ -15,7 +14,7 @@ var upgrader = websocket.Upgrader{
 }
 
 //HXctrl обработчик открытия сокета
-func HXctrl(c *gin.Context, hub *HubXctrl, db *sqlx.DB) {
+func HXctrl(c *gin.Context, hub *HubXctrl) {
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		u.SendRespond(c, u.Message(http.StatusBadRequest, "bad socket connect"))
@@ -28,5 +27,5 @@ func HXctrl(c *gin.Context, hub *HubXctrl, db *sqlx.DB) {
 	client.hub.register <- client
 
 	go client.writePump()
-	go client.readPump(db)
+	go client.readPump()
 }

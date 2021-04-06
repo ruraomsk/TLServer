@@ -3,7 +3,6 @@ package crossH
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/ruraomsk/TLServer/internal/model/accToken"
-	"github.com/ruraomsk/TLServer/internal/model/data"
 	"github.com/ruraomsk/TLServer/internal/sockets/crossSock"
 	u "github.com/ruraomsk/TLServer/internal/utils"
 )
@@ -12,6 +11,6 @@ import (
 var ControlTestState = func(c *gin.Context) {
 	accTK, _ := c.Get("tk")
 	accInfo, _ := accTK.(*accToken.Token)
-	resp := crossSock.TestCrossStateData(accInfo, data.GetDB())
+	resp := crossSock.TestCrossStateData(accInfo)
 	u.SendRespond(c, resp)
 }

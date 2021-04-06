@@ -3,7 +3,6 @@ package controlCross
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/TLServer/internal/model/accToken"
 	"github.com/ruraomsk/TLServer/internal/sockets"
 	"github.com/ruraomsk/TLServer/internal/sockets/crossSock"
@@ -18,7 +17,7 @@ var upgrader = websocket.Upgrader{
 }
 
 //HControlCross обработчик открытия сокета
-func HControlCross(c *gin.Context, hub *HubControlCross, db *sqlx.DB) {
+func HControlCross(c *gin.Context, hub *HubControlCross) {
 	var (
 		crEdit sockets.PosInfo
 		err    error
@@ -55,6 +54,6 @@ func HControlCross(c *gin.Context, hub *HubControlCross, db *sqlx.DB) {
 	rs := <-client.regStatus
 	if rs {
 		go client.writePump()
-		go client.readPump(db)
+		go client.readPump()
 	}
 }

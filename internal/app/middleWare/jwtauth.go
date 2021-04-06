@@ -59,7 +59,8 @@ var JwtAuth = func() gin.HandlerFunc {
 			userPrivilege  data.Privilege
 			tokenStrFromBd string
 		)
-		rows, err := data.GetDB().Query(`SELECT token, privilege FROM public.accounts WHERE login = $1`, tk.Login)
+		db := data.GetDB("JwtAuth")
+		rows, err := db.Query(`SELECT token, privilege FROM public.accounts WHERE login = $1`, tk.Login)
 		if err != nil {
 			c.HTML(http.StatusForbidden, "accessDenied.html", gin.H{"status": http.StatusForbidden, "message": "can't take token from BD"})
 			c.Abort()
@@ -68,7 +69,7 @@ var JwtAuth = func() gin.HandlerFunc {
 		for rows.Next() {
 			_ = rows.Scan(&tokenStrFromBd, &userPrivilege.PrivilegeStr)
 		}
-
+		data.FreeDB("JwtAuth")
 		if tokenSTR != tokenStrFromBd {
 			c.HTML(http.StatusForbidden, "accessDenied.html", gin.H{"status": http.StatusForbidden, "message": "token is out of date, log in"})
 			logger.Warning.Printf("|IP: %s |Login: %s |Resource: %s |Message: %v", ip, tk.Login, c.Request.RequestURI, "token is out of date, log in")
@@ -162,7 +163,10 @@ var JwtFile = func() gin.HandlerFunc {
 			userPrivilege  data.Privilege
 			tokenStrFromBd string
 		)
-		rows, err := data.GetDB().Query(`SELECT token, privilege FROM public.accounts WHERE login = $1`, tk.Login)
+		db := data.GetDB("JwtFile")
+		defer data.FreeDB("JwtFile")
+
+		rows, err := db.Query(`SELECT token, privilege FROM public.accounts WHERE login = $1`, tk.Login)
 		if err != nil {
 			c.HTML(http.StatusForbidden, "accessDenied.html", gin.H{"status": http.StatusForbidden, "message": "can't take token from BD"})
 			c.Abort()

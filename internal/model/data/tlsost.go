@@ -31,7 +31,10 @@ func GetAllTrafficLights() (tfData []TrafficLights) {
 	var dgis string
 	temp := &TrafficLights{}
 	sqlStr := fmt.Sprintf("SELECT region, id, area, dgis, describ FROM public.cross")
-	rows, err := GetDB().Query(sqlStr)
+	db := GetDB("GetAllTrafficLights")
+	defer FreeDB("GetAllTrafficLights")
+
+	rows, err := db.Query(sqlStr)
 	if err != nil {
 		logger.Error.Println("|Message: db not respond", err.Error())
 		return nil
@@ -60,7 +63,10 @@ func (l *Locations) MakeBoxPoint() (box locations.BoxPoint, err error) {
 		tempStr += ")"
 		sqlStr += tempStr
 	}
-	row := GetDB().QueryRow(sqlStr)
+	db := GetDB("MakeBoxPoint")
+	defer FreeDB("MakeBoxPoint")
+
+	row := db.QueryRow(sqlStr)
 	err = row.Scan(&box.Point0.Y, &box.Point0.X, &box.Point1.Y, &box.Point1.X)
 	if err != nil {
 		return box, errors.New(fmt.Sprintf("parserPoints. Request error: %s", err.Error()))

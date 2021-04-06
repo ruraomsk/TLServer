@@ -3,7 +3,6 @@ package alarm
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/TLServer/internal/model/accToken"
 	u "github.com/ruraomsk/TLServer/internal/utils"
 	"net/http"
@@ -16,7 +15,7 @@ var upgrader = websocket.Upgrader{
 }
 
 //HTechArm обработчик открытия сокета
-func HAlarm(c *gin.Context, hub *HubAlarm, db *sqlx.DB) {
+func HAlarm(c *gin.Context, hub *HubAlarm) {
 	region := c.Query("Region")
 	var reg int
 	if len(region) != 0 {
@@ -48,5 +47,5 @@ func HAlarm(c *gin.Context, hub *HubAlarm, db *sqlx.DB) {
 	client.hub.register <- client
 
 	go client.writePump()
-	go client.readPump(db)
+	go client.readPump()
 }

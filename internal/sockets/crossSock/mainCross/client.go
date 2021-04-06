@@ -3,7 +3,6 @@ package mainCross
 import (
 	"encoding/json"
 	"github.com/gorilla/websocket"
-	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/TLServer/internal/app/tcpConnect"
 	"github.com/ruraomsk/TLServer/internal/sockets"
 	"github.com/ruraomsk/TLServer/internal/sockets/crossSock"
@@ -36,7 +35,7 @@ type ClientCross struct {
 }
 
 //readPump обработчик чтения сокета
-func (c *ClientCross) readPump(db *sqlx.DB) {
+func (c *ClientCross) readPump() {
 	_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error { _ = c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 

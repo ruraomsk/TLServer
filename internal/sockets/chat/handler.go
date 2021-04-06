@@ -3,7 +3,6 @@ package chat
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/TLServer/internal/model/accToken"
 	u "github.com/ruraomsk/TLServer/internal/utils"
 	"net/http"
@@ -15,8 +14,7 @@ var upgrader = websocket.Upgrader{
 }
 
 //HChat обработчик открытия сокета
-func HChat(c *gin.Context, hub *HubChat, db *sqlx.DB) {
-
+func HChat(c *gin.Context, hub *HubChat) {
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		u.SendRespond(c, u.Message(http.StatusBadRequest, "bad socket connect"))
@@ -34,5 +32,5 @@ func HChat(c *gin.Context, hub *HubChat, db *sqlx.DB) {
 
 	client.hub.register <- client
 	go client.writePump()
-	go client.readPump(db)
+	go client.readPump()
 }

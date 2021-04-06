@@ -6,6 +6,7 @@ import (
 	"github.com/ruraomsk/TLServer/internal/app/handlers/crossH"
 	"github.com/ruraomsk/TLServer/internal/app/handlers/exchangeServ"
 	"github.com/ruraomsk/TLServer/internal/app/handlers/licenseH"
+	"github.com/ruraomsk/TLServer/internal/model/data"
 	"github.com/ruraomsk/TLServer/internal/model/device"
 	"github.com/ruraomsk/TLServer/internal/model/license"
 	"github.com/ruraomsk/TLServer/internal/sockets/alarm"
@@ -40,14 +41,14 @@ func MainServer(conf *ServerConf, db *sqlx.DB) (srvHttp *http.Server, srvHttps *
 	gsHub := greenStreet.NewGSHub()
 	chatHub := chat.NewChatHub()
 
-	go device.StartReadDevices(db)
-	go mainMapHub.Run(db)
-	go mainCrossHub.Run(db)
-	go controlCrHub.Run(db)
-	go techArmHub.Run(db)
-	go alarmHub.Run(db)
-	go xctrlHub.Run(db)
-	go gsHub.Run(db)
+	go device.StartReadDevices(data.GetDB("startReadDevices"))
+	go mainMapHub.Run(data.GetDB("mapHub"))
+	go mainCrossHub.Run(data.GetDB("mainCrossHub"))
+	go controlCrHub.Run(data.GetDB("controlCrHub"))
+	go techArmHub.Run(data.GetDB("techArmHub"))
+	go alarmHub.Run(data.GetDB("alarmHub"))
+	go xctrlHub.Run(data.GetDB("xctrlHub"))
+	go gsHub.Run(data.GetDB("gsHub"))
 	go chatHub.Run()
 
 	// Создаем engine для соединений
@@ -81,7 +82,7 @@ func MainServer(conf *ServerConf, db *sqlx.DB) (srvHttp *http.Server, srvHttps *
 
 	//сокет карты
 	router.GET("/mapW", func(c *gin.Context) {
-		mainMap.HMainMap(c, mainMapHub, db)
+		mainMap.HMainMap(c, mainMapHub)
 	})
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -93,7 +94,7 @@ func MainServer(conf *ServerConf, db *sqlx.DB) (srvHttp *http.Server, srvHttps *
 	//--------- SocketS--------------
 	//чат
 	mainRouter.GET("/:slug/chatW", func(c *gin.Context) { //обработчик веб сокета для чата
-		chat.HChat(c, chatHub, db)
+		chat.HChat(c, chatHub)
 	})
 
 	//перекресток
@@ -101,7 +102,7 @@ func MainServer(conf *ServerConf, db *sqlx.DB) (srvHttp *http.Server, srvHttps *
 		c.HTML(http.StatusOK, "cross.html", nil)
 	})
 	mainRouter.GET("/:slug/crossW", func(c *gin.Context) {
-		mainCross.HMainCross(c, mainCrossHub, db)
+		mainCross.HMainCross(c, mainCrossHub)
 	})
 
 	//арм перекрестка
@@ -109,13 +110,13 @@ func MainServer(conf *ServerConf, db *sqlx.DB) (srvHttp *http.Server, srvHttps *
 		c.HTML(http.StatusOK, "crossControl.html", nil)
 	})
 	mainRouter.GET("/:slug/cross/controlW", func(c *gin.Context) {
-		controlCross.HControlCross(c, controlCrHub, db)
+		controlCross.HControlCross(c, controlCrHub)
 	})
 	mainRouter.GET("/:slug/multipleCross", func(c *gin.Context) { //Просмотр нескольких страниц
 		c.HTML(http.StatusOK, "multipleCross.html", nil)
 	})
 	mainRouter.GET("/:slug/multipleCrossW", func(c *gin.Context) {
-		mainCross.HMainCross(c, mainCrossHub, db)
+		mainCross.HMainCross(c, mainCrossHub)
 	})
 
 	//арм технолога
@@ -123,14 +124,14 @@ func MainServer(conf *ServerConf, db *sqlx.DB) (srvHttp *http.Server, srvHttps *
 		c.HTML(http.StatusOK, "techControl.html", nil)
 	})
 	mainRouter.GET("/:slug/techArmW", func(c *gin.Context) {
-		techArm.HTechArm(c, techArmHub, db)
+		techArm.HTechArm(c, techArmHub)
 	})
 	//Предупреждения
 	mainRouter.GET("/:slug/alarm", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "alarm.html", nil)
 	})
 	mainRouter.GET("/:slug/alarmW", func(c *gin.Context) {
-		alarm.HAlarm(c, alarmHub, db)
+		alarm.HAlarm(c, alarmHub)
 	})
 
 	//зеленая улица
@@ -138,7 +139,7 @@ func MainServer(conf *ServerConf, db *sqlx.DB) (srvHttp *http.Server, srvHttps *
 		c.HTML(http.StatusOK, "greenStreet.html", gin.H{"yaKey": license.LicenseFields.YaKey})
 	})
 	mainRouter.GET("/:slug/greenStreetW", func(c *gin.Context) {
-		greenStreet.HGStreet(c, gsHub, db)
+		greenStreet.HGStreet(c, gsHub)
 	})
 
 	//CharPoints
@@ -146,7 +147,7 @@ func MainServer(conf *ServerConf, db *sqlx.DB) (srvHttp *http.Server, srvHttps *
 		c.HTML(http.StatusOK, "charPoints.html", gin.H{"yaKey": license.LicenseFields.YaKey})
 	})
 	mainRouter.GET("/:slug/charPointsW", func(c *gin.Context) {
-		xctrl.HXctrl(c, xctrlHub, db)
+		xctrl.HXctrl(c, xctrlHub)
 	})
 
 	//--------- SocketS--------------

@@ -17,6 +17,8 @@ type executeRoute struct {
 
 func getPhases(devices []int, db *sqlx.DB) []*Phase {
 	result := make([]*Phase, 0)
+	mutex.Lock()
+	defer mutex.Unlock()
 	for _, i := range devices {
 		rows, err := db.Query(`SELECT device FROM public.devices where id=` + strconv.Itoa(i))
 		if err != nil {

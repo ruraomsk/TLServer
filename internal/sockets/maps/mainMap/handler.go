@@ -4,7 +4,6 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/TLServer/internal/model/accToken"
 	u "github.com/ruraomsk/TLServer/internal/utils"
 	"net/http"
@@ -16,7 +15,7 @@ var upgrader = websocket.Upgrader{
 }
 
 //HMainMap обработчик открытия сокета
-func HMainMap(c *gin.Context, hub *HubMainMap, db *sqlx.DB) {
+func HMainMap(c *gin.Context, hub *HubMainMap) {
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		u.SendRespond(c, u.Message(http.StatusBadRequest, "bad socket connect"))
@@ -36,5 +35,5 @@ func HMainMap(c *gin.Context, hub *HubMainMap, db *sqlx.DB) {
 	client.hub.register <- client
 
 	go client.writePump()
-	go client.readPump(db)
+	go client.readPump()
 }

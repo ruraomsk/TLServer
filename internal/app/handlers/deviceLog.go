@@ -14,7 +14,8 @@ import (
 var DisplayDeviceLogFile = func(c *gin.Context) {
 	accTK, _ := c.Get("tk")
 	accInfo, _ := accTK.(*accToken.Token)
-	resp := deviceLog.DisplayDeviceLog(accInfo, data.GetDB())
+	resp := deviceLog.DisplayDeviceLog(accInfo, data.GetDB("DisplayDeviceLogFile"))
+	data.FreeDB("DisplayDeviceLogFile")
 	data.CacheInfo.Mux.Lock()
 	resp.Obj["regionInfo"] = data.CacheInfo.MapRegion
 	resp.Obj["areaInfo"] = data.CacheInfo.MapArea
@@ -30,6 +31,7 @@ var LogDeviceInfo = func(c *gin.Context) {
 		return
 	}
 
-	resp := deviceLog.DisplayDeviceLogInfo(*arm, data.GetDB())
+	resp := deviceLog.DisplayDeviceLogInfo(*arm, data.GetDB("LogDeviceInfo"))
+	data.FreeDB("LogDeviceInfo")
 	u.SendRespond(c, resp)
 }

@@ -3,8 +3,8 @@ package techArm
 import (
 	"encoding/json"
 	"github.com/gorilla/websocket"
-	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/TLServer/internal/app/tcpConnect"
+	"github.com/ruraomsk/TLServer/internal/model/data"
 	"github.com/ruraomsk/TLServer/internal/model/device"
 	"github.com/ruraomsk/TLServer/internal/sockets"
 	"github.com/ruraomsk/TLServer/logger"
@@ -39,8 +39,9 @@ type ClientTechArm struct {
 }
 
 //readPump обработчик чтения сокета
-func (c *ClientTechArm) readPump(db *sqlx.DB) {
-
+func (c *ClientTechArm) readPump() {
+	db := data.GetDB("ClientTechArm")
+	defer data.FreeDB("ClientTechArm")
 	//если нужно указать лимит пакета
 	//c.conn.SetReadLimit(maxMessageSize)
 

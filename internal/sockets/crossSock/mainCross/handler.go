@@ -3,7 +3,6 @@ package mainCross
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/TLServer/internal/model/accToken"
 	"github.com/ruraomsk/TLServer/internal/sockets"
 	"github.com/ruraomsk/TLServer/internal/sockets/crossSock"
@@ -18,7 +17,7 @@ var upgrader = websocket.Upgrader{
 }
 
 //HMainCross обработчик открытия сокета
-func HMainCross(c *gin.Context, hub *HubCross, db *sqlx.DB) {
+func HMainCross(c *gin.Context, hub *HubCross) {
 	var (
 		crEdit sockets.PosInfo
 		err    error
@@ -50,6 +49,6 @@ func HMainCross(c *gin.Context, hub *HubCross, db *sqlx.DB) {
 	rs := <-client.regStatus
 	if rs {
 		go client.writePump()
-		go client.readPump(db)
+		go client.readPump()
 	}
 }

@@ -3,7 +3,6 @@ package mainMap
 import (
 	"encoding/json"
 	"github.com/gorilla/websocket"
-	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/TLServer/internal/app/tcpConnect"
 	"github.com/ruraomsk/TLServer/internal/model/accToken"
 	"github.com/ruraomsk/TLServer/internal/model/data"
@@ -41,9 +40,10 @@ type ClientMainMap struct {
 }
 
 //readPump обработчик чтения сокета
-func (c *ClientMainMap) readPump(db *sqlx.DB) {
+func (c *ClientMainMap) readPump() {
 	//если нужно указать лимит пакета
-
+	db := data.GetDB("ClientMainMap")
+	defer data.FreeDB("ClientMainMap")
 	_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error { _ = c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 

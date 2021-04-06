@@ -3,7 +3,6 @@ package techArm
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/TLServer/internal/model/accToken"
 	u "github.com/ruraomsk/TLServer/internal/utils"
 	"net/http"
@@ -16,7 +15,7 @@ var upgrader = websocket.Upgrader{
 }
 
 //HTechArm обработчик открытия сокета
-func HTechArm(c *gin.Context, hub *HubTechArm, db *sqlx.DB) {
+func HTechArm(c *gin.Context, hub *HubTechArm) {
 	region := c.Query("Region")
 	var reg int
 	if region != "" {
@@ -55,5 +54,5 @@ func HTechArm(c *gin.Context, hub *HubTechArm, db *sqlx.DB) {
 	client.hub.register <- client
 
 	go client.writePump()
-	go client.readPump(db)
+	go client.readPump()
 }
