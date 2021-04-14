@@ -46,24 +46,24 @@ type Phase struct {
 
 //readPump обработчик чтения сокета
 func (c *ClientGS) readPump() {
-	db := data.GetDB("ClientGS")
-	defer data.FreeDB("ClientGS")
+	//db := data.GetDB("ClientGS")
+	//defer data.FreeDB("ClientGS")
 	_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error { _ = c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	{
 		mutex.Lock()
-		resp := newGSMess(typeMapInfo, maps.MapOpenInfo(db))
-		resp.Data["routes"] = getAllModes(db)
+		resp := newGSMess(typeMapInfo, maps.MapOpenInfo())
+		resp.Data["routes"] = getAllModes()
 		mutex.Unlock()
 		data.CacheArea.Mux.Lock()
 		resp.Data["areaZone"] = data.CacheArea.Areas
 		data.CacheArea.Mux.Unlock()
 		if c.sendPhases {
 			logger.Debug.Print("ping")
-			resp.Data[typePhases] = getPhases(c.devices, db)
+			resp.Data[typePhases] = getPhases(c.devices)
 		}
 		c.send <- resp
-		logger.Debug.Print("pong")
+		//logger.Debug.Print("pong")
 	}
 
 	for {
@@ -88,7 +88,7 @@ func (c *ClientGS) readPump() {
 				_ = json.Unmarshal(p, &temp)
 				resp := newGSMess(typeCreateRout, nil)
 				mutex.Lock()
-				err := temp.Create(db)
+				err := temp.Create()
 				mutex.Unlock()
 
 				if err != nil {
@@ -106,7 +106,7 @@ func (c *ClientGS) readPump() {
 				_ = json.Unmarshal(p, &temp)
 				resp := newGSMess(typeUpdateRout, nil)
 				mutex.Lock()
-				err := temp.Update(db)
+				err := temp.Update()
 				mutex.Unlock()
 				if err != nil {
 					resp.Data[typeError] = err.Error()
@@ -122,7 +122,7 @@ func (c *ClientGS) readPump() {
 				_ = json.Unmarshal(p, &temp)
 				resp := newGSMess(typeDeleteRout, nil)
 				mutex.Lock()
-				err := temp.Delete(db)
+				err := temp.Delete()
 				mutex.Unlock()
 				if err != nil {
 					resp.Data[typeError] = err.Error()

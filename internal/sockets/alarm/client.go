@@ -2,7 +2,6 @@ package alarm
 
 import (
 	"github.com/gorilla/websocket"
-	"github.com/ruraomsk/TLServer/internal/model/data"
 	"sort"
 	"time"
 )
@@ -31,17 +30,19 @@ type ClientAlarm struct {
 
 	armInfo   *Info
 	CrossRing *CrossRing
+	sendOne   bool
 }
 
 //makeResponse всегда готовит изменение и ответ для клиента
 func (c *ClientAlarm) makeResponse() {
 	c.CrossRing.Ring = false
 	change := false
-	db := data.GetDB("ClientAlarm")
-	defer data.FreeDB("ClientAlarm")
-	for _, nc := range getCross(c.armInfo.Region, db) {
+	notwork := 0
+	tcrs := getCross(c.armInfo.Region)
+	for _, nc := range tcrs {
 		_, is := c.CrossRing.CrossInfo[key(nc.Region, nc.Area, nc.ID)]
 		if !nc.Control {
+			notwork++
 			if !is {
 				//Первый раз попадает в мапу
 				c.CrossRing.Ring = true
@@ -58,7 +59,10 @@ func (c *ClientAlarm) makeResponse() {
 		change = true
 		delete(c.CrossRing.CrossInfo, key(nc.Region, nc.Area, nc.ID))
 	}
-	if !change {
+	if !change && notwork != 0 {
+		return
+	}
+	if notwork == 0 && c.sendOne {
 		return
 	}
 	var crossResponse = CrossResponse{Ring: c.CrossRing.Ring, CrossInfo: make([]*CrossInfo, 0)}
@@ -72,6 +76,7 @@ func (c *ClientAlarm) makeResponse() {
 	resp := newAlarmMess(typeRingData, nil)
 	resp.Data[typeRingData] = crossResponse
 	c.send <- resp
+	c.sendOne = true
 }
 
 //readPump обработчик чтения сокета

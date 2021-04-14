@@ -22,7 +22,7 @@ type LicenseToken struct {
 	NumDevice int      //количество устройств
 	YaKey     string   //ключ яндекса
 	TokenPass string   //пароль для шифрования токена https запросов
-	NumAcc    int      //колическво аккаунтов
+	NumAcc    int      //количество аккаунтов
 	Name      string   //название фирмы
 	Address   string   //расположение фирмы
 	Phone     string   //телефон фирмы
@@ -51,7 +51,7 @@ type licenseInfo struct {
 
 //CheckLicenseKey проверка токена лицензии
 func CheckLicenseKey(tokenSTR string) (*LicenseToken, error) {
-	tk := &LicenseToken{}
+	tk := new(LicenseToken)
 	token, err := jwt.ParseWithClaims(tokenSTR, tk, func(token *jwt.Token) (interface{}, error) {
 		return []byte(key), nil
 	})
@@ -102,7 +102,7 @@ func (licInfo *licenseInfo) ParseFields(token *LicenseToken) {
 	licInfo.CompanyName = token.Name
 	licInfo.Address = token.Address
 	licInfo.TechEmail = token.TechEmail
-
+	logger.Debug.Printf("ParseFields %d %d", token.NumAcc, token.NumDevice)
 }
 
 //LicenseCheck проверка лицензи на старте
@@ -130,7 +130,7 @@ func LicenseInfo() u.Response {
 		logger.Error.Println("|Message: license.key file don't read: ", err.Error())
 		fmt.Println("license.key file don't read: ", err.Error())
 	}
-	tk := &LicenseToken{}
+	tk := new(LicenseToken)
 	_, _ = jwt.ParseWithClaims(keyStr, tk, func(token *jwt.Token) (interface{}, error) {
 		return []byte(key), nil
 	})

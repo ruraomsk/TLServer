@@ -313,5 +313,6 @@ func AccessCheck(login string, acts ...int) map[int]bool {
 			}
 		}
 	}
+	accessMap[10] = true
 	return accessMap
 }

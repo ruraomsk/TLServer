@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/TLServer/internal/model/data"
 	"github.com/ruraomsk/TLServer/internal/model/locations"
 	"github.com/ruraomsk/TLServer/internal/sockets"
 )
@@ -33,7 +33,9 @@ var (
 )
 
 //Create создание/запись маршрута в БД
-func (r *Route) Create(db *sqlx.DB) error {
+func (r *Route) Create() error {
+	db := data.GetDB("Create")
+	defer data.FreeDB("Create")
 	r.setBox()
 	list, _ := json.Marshal(r.List)
 	box, _ := json.Marshal(r.Box)
@@ -57,7 +59,10 @@ func (r *Route) Create(db *sqlx.DB) error {
 }
 
 //Update обновление маршрута в БД
-func (r *Route) Update(db *sqlx.DB) error {
+func (r *Route) Update() error {
+	db := data.GetDB("Update")
+	defer data.FreeDB("Update")
+
 	r.setBox()
 	list, _ := json.Marshal(r.List)
 	box, _ := json.Marshal(r.Box)
@@ -73,7 +78,9 @@ func (r *Route) Update(db *sqlx.DB) error {
 }
 
 //Delete удаление маршрута из БД
-func (r *Route) Delete(db *sqlx.DB) error {
+func (r *Route) Delete() error {
+	db := data.GetDB("Delete")
+	defer data.FreeDB("Delete")
 	_, err := db.Exec(`DELETE FROM public.routes WHERE description = $1 AND region = $2`, r.Description, r.Region)
 	if err != nil {
 		return errors.New(errCantDeleteFromBD)

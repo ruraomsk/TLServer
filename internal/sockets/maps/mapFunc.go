@@ -59,7 +59,9 @@ func SelectTL(db *sqlx.DB) (tfdata []data.TrafficLights) {
 }
 
 //MapOpenInfo сбор всех данных для отображения информации на карте
-func MapOpenInfo(db *sqlx.DB) (obj map[string]interface{}) {
+func MapOpenInfo() (obj map[string]interface{}) {
+	db := data.GetDB("MapOpenInfo")
+	defer data.FreeDB("MapOpenInfo")
 	obj = make(map[string]interface{})
 
 	location := &data.Locations{}

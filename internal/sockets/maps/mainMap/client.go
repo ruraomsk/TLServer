@@ -139,9 +139,9 @@ func (c *ClientMainMap) readPump() {
 			{
 				resp := newMapMess(typeCheckConn, nil)
 				statusDB := false
-				_, err := db.Exec(`SELECT * FROM public.accounts;`)
-				if err == nil {
+				if data.GetDB("CheckConn") != nil {
 					statusDB = true
+					data.FreeDB("CheckConn")
 				}
 				resp.Data["statusBD"] = statusDB
 				var tcpPackage = tcpConnect.TCPMessage{

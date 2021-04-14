@@ -2,7 +2,7 @@ package greenStreet
 
 import (
 	"encoding/json"
-	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/TLServer/internal/model/data"
 	"github.com/ruraomsk/TLServer/internal/model/routeGS"
 	"github.com/ruraomsk/TLServer/logger"
 	"github.com/ruraomsk/ag-server/pudge"
@@ -15,7 +15,9 @@ type executeRoute struct {
 	TurnOn  bool  `json:"turnOn"`
 }
 
-func getPhases(devices []int, db *sqlx.DB) []*Phase {
+func getPhases(devices []int) []*Phase {
+	db := data.GetDB("getPhases")
+	defer data.FreeDB("getPhases")
 	result := make([]*Phase, 0)
 	mutex.Lock()
 	defer mutex.Unlock()
@@ -43,7 +45,9 @@ func getPhases(devices []int, db *sqlx.DB) []*Phase {
 }
 
 //getAllModes вернуть из базы все маршруты
-func getAllModes(db *sqlx.DB) interface{} {
+func getAllModes() interface{} {
+	db := data.GetDB("getAllModes")
+	defer data.FreeDB("getAllModes")
 	var (
 		modes = make([]routeGS.Route, 0)
 	)

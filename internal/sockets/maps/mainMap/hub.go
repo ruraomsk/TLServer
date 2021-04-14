@@ -104,10 +104,10 @@ func (h *HubMainMap) Run(db *sqlx.DB) {
 			{
 				{
 					flag, tk := checkToken(client.cookie, client.cInfo.IP, db)
-					resp := newMapMess(typeMapInfo, maps.MapOpenInfo(db))
+					resp := newMapMess(typeMapInfo, maps.MapOpenInfo())
 					if flag {
 						resp.Data["role"] = tk.Role
-						resp.Data["access"] = data.AccessCheck(tk.Login, 2, 5, 6, 7, 8, 9)
+						resp.Data["access"] = data.AccessCheck(tk.Login, 2, 5, 6, 7, 8, 9, 10)
 						resp.Data["description"] = tk.Description
 						resp.Data["authorizedFlag"] = true
 						resp.Data["region"] = tk.Region

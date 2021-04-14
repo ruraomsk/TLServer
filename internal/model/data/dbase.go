@@ -89,9 +89,14 @@ func GetDB(name string) *sqlx.DB {
 	conn, is := dbMap[name]
 	if is {
 		logger.Debug.Printf("Повторное открытие %s ", name)
+		delete(dbMap, name)
 		conn.Close()
 	}
-	conn, _ = sqlx.Open(config.GlobalConfig.DBConfig.Type, config.GlobalConfig.DBConfig.GetDBurl())
+	conn, err := sqlx.Open(config.GlobalConfig.DBConfig.Type, config.GlobalConfig.DBConfig.GetDBurl())
+	if err != nil {
+		logger.Error.Printf("Ошибка открытия БД %s ", err.Error())
+		return nil
+	}
 	dbMap[name] = conn
 	return conn
 }

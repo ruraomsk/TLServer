@@ -61,7 +61,7 @@ func (h *HubGStreet) Run(db *sqlx.DB) {
 				}
 				if c.sendPhases {
 					resp := newGSMess(typePhases, nil)
-					resp.Data[typePhases] = getPhases(c.devices, db)
+					resp.Data[typePhases] = getPhases(c.devices)
 					c.send <- resp
 					//logger.Debug.Printf("deviceReadTick send %v",getPhases(c.devices, c.db))
 				}

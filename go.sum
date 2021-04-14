@@ -15,6 +15,7 @@ github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZm
 github.com/envoyproxy/go-control-plane v0.9.1-0.20191026205805-5f8ba28d4473/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7+kN2VEUnK/pcBlmesArF7c=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
+github.com/gammazero/deque v0.0.0-20201010052221-3932da5530cc/go.mod h1:IlBLfYXnuw9sspy1XS6ctu5exGb6WHGKQsyo4s7bOEA=
 github.com/gin-contrib/cors v1.3.1 h1:doAsuITavI4IOcd0Y19U4B+O0dNWihRyX//nn4sEmgA=
 github.com/gin-contrib/cors v1.3.1/go.mod h1:jjEJ4268OPZUcU7k9Pm653S7lXUGcqMADzFA61xsmDk=
 github.com/gin-contrib/sse v0.1.0 h1:Y/yl/+YNO8GZSjAhjMsSuLt29uWRFHdHYUb5lYOV9qE=
@@ -35,6 +36,8 @@ github.com/go-playground/universal-translator v0.17.0/go.mod h1:UkSxE5sNxxRwHyU+
 github.com/go-playground/validator/v10 v10.2.0/go.mod h1:uOYAAleCW8F/7oMFd6aG0GOhaH6EGOAJShg8Id5JGkI=
 github.com/go-playground/validator/v10 v10.4.1 h1:pH2c5ADXtd66mxoE0Zm9SUhxE20r7aM3F26W0hOn+GE=
 github.com/go-playground/validator/v10 v10.4.1/go.mod h1:nlOn6nFhuKACm19sB/8EGNn9GlaMV7XkbRSipzJ0Ii4=
+github.com/go-playground/validator/v10 v10.5.0 h1:X9rflw/KmpACwT8zdrm1upefpvdy6ur8d1kWyq6sg3E=
+github.com/go-playground/validator/v10 v10.5.0/go.mod h1:xm76BBt941f7yWdGnI2DVPFFg1UK3YY04qifoXU3lOk=
 github.com/go-redis/redis v6.15.5+incompatible/go.mod h1:NAIEuMOZ/fxfXJIrKDQDz8wamY7mA7PouImQ2Jvg6kA=
 github.com/go-sql-driver/mysql v1.5.0 h1:ozyZYNQW3x3HtqT1jira07DN2PArx2v7/mN66gGcHOs=
 github.com/go-sql-driver/mysql v1.5.0/go.mod h1:DCzpHaOWr8IXmIStZouvnhqoel9Qv2LBy8hT2VhHyBg=
@@ -77,6 +80,8 @@ github.com/jasonlvhit/gocron v0.0.1 h1:qTt5qF3b3srDjeOIR4Le1LfeyvoYzJlYpqvG7tJX5
 github.com/jasonlvhit/gocron v0.0.1/go.mod h1:k9a3TV8VcU73XZxfVHCHWMWF9SOqgoku0/QlY2yvlA4=
 github.com/jmoiron/sqlx v1.3.1 h1:aLN7YINNZ7cYOPK3QC83dbM6KT0NMqVMw961TqrejlE=
 github.com/jmoiron/sqlx v1.3.1/go.mod h1:2BljVx/86SuTyjE+aPYlHCTNvZrnJXghYGpNiXLBMCQ=
+github.com/jmoiron/sqlx v1.3.3 h1:j82X0bf7oQ27XeqxicSZsTU5suPwKElg3oyxNn43iTk=
+github.com/jmoiron/sqlx v1.3.3/go.mod h1:2BljVx/86SuTyjE+aPYlHCTNvZrnJXghYGpNiXLBMCQ=
 github.com/jordan-wright/email v4.0.1-0.20210109023952-943e75fe5223+incompatible h1:jdpOPRN1zP63Td1hDQbZW73xKmzDvZHzVdNYxhnTMDA=
 github.com/jordan-wright/email v4.0.1-0.20210109023952-943e75fe5223+incompatible/go.mod h1:1c7szIrayyPPB/987hsnvNzLushdWf4o/79s3P08L8A=
 github.com/json-iterator/go v1.1.7/go.mod h1:KdQUCv79m/52Kvf8AW2vK1V8akMuk1QjK/uOdHXbAo4=
@@ -117,6 +122,7 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4/go.mod h1:xMI15A0UPsDsEKsMN9yxemIoYk6Tm2C1GtYGdfGttqA=
 github.com/ruraomsk/TLServer v0.0.0-20210217115252-9213ce7cf083/go.mod h1:13MnFtU8WWELyBDpvhV2jssD7degyW//4IohAR/oiW4=
+github.com/ruraomsk/TLServer v0.0.0-20210406045801-7be6f944312e/go.mod h1:gI4E8debBX48NdV+s7XxSRC1gU/yUVKRCX76QQwEsFA=
 github.com/ruraomsk/ag-server v0.0.0-20210227092638-6cd7dfd8c96c h1:RV3ew7tBjtieAlQWYS7KNPvbao6oDSDFsWj0ghxY0LY=
 github.com/ruraomsk/ag-server v0.0.0-20210227092638-6cd7dfd8c96c/go.mod h1:GA82ZD7L8MdRq7SCNrN0cMOlzpmAvFJ+uFrg5mEul5Q=
 github.com/ruraomsk/ag-server v0.0.0-20210311102206-03d58415f49d h1:V9rCEodn33Nu22MBwS3NEg/hsTlTWlvsrSPeuOhiGH0=
@@ -125,6 +131,10 @@ github.com/ruraomsk/ag-server v0.0.0-20210319062112-d15ac4ef959d h1:CfDP0ThNTNht
 github.com/ruraomsk/ag-server v0.0.0-20210319062112-d15ac4ef959d/go.mod h1:GA82ZD7L8MdRq7SCNrN0cMOlzpmAvFJ+uFrg5mEul5Q=
 github.com/ruraomsk/ag-server v0.0.0-20210331101359-3eb5e2a69177 h1:SPUdKZ4QX0J/b3kYlQ+WhCfcORqqsPnLyCUw26utfmw=
 github.com/ruraomsk/ag-server v0.0.0-20210331101359-3eb5e2a69177/go.mod h1:GA82ZD7L8MdRq7SCNrN0cMOlzpmAvFJ+uFrg5mEul5Q=
+github.com/ruraomsk/ag-server v0.0.0-20210406061055-2f8fce2585ab h1:vCwyihSYeRZnj2OJ4i5ZdvbETi1t+/KXLcLvrgwGwdk=
+github.com/ruraomsk/ag-server v0.0.0-20210406061055-2f8fce2585ab/go.mod h1:GA82ZD7L8MdRq7SCNrN0cMOlzpmAvFJ+uFrg5mEul5Q=
+github.com/ruraomsk/ag-server v0.0.0-20210408071510-b560643080fc h1:LHEcxBaefCvNCsOuAiH5Sa7L/lCf/Azy3CXWlCKqJzA=
+github.com/ruraomsk/ag-server v0.0.0-20210408071510-b560643080fc/go.mod h1:DBL8eczWqzYkkDRJ0lpOOrzDzGdv5p+gbwsQROMdOuY=
 github.com/shopspring/decimal v1.2.0 h1:abSATXmQEYyShuxI4/vyW3tV1MrKAJzCZ/0zLUXYbsQ=
 github.com/shopspring/decimal v1.2.0/go.mod h1:DKyhrW/HYNuLGql+MJL6WCR6knT2jwCFRcu2hWCYk4o=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=

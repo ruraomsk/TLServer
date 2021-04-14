@@ -7,6 +7,7 @@ import (
 	"github.com/ruraomsk/TLServer/internal/model/accToken"
 	"github.com/ruraomsk/TLServer/internal/model/data"
 	"github.com/ruraomsk/TLServer/internal/model/license"
+	"github.com/ruraomsk/TLServer/internal/sockets/alarm"
 	"github.com/ruraomsk/TLServer/internal/sockets/chat"
 	"github.com/ruraomsk/TLServer/internal/sockets/crossSock/controlCross"
 	"github.com/ruraomsk/TLServer/internal/sockets/crossSock/mainCross"
@@ -139,7 +140,7 @@ func logIn(login, password, ip string, db *sqlx.DB) (map[string]interface{}, *ac
 	resp["login"] = account.Login
 	resp["token"] = tokenStr
 	resp["role"] = privilege.Role.Name
-	resp["access"] = data.AccessCheck(login, 2, 5, 6, 7, 8, 9)
+	resp["access"] = data.AccessCheck(login, 2, 5, 6, 7, 8, 9, 10)
 	resp["authorizedFlag"] = true
 	resp["description"] = account.Description
 	resp["region"] = privilege.Region
@@ -174,5 +175,6 @@ func logOutSockets(login string) {
 	mainCross.UserLogoutCross <- login
 	techArm.UserLogoutTech <- login
 	xctrl.UserLogoutXctrl <- login
+	alarm.UserLogoutAlarm <- login
 	UserLogoutGS <- login
 }
