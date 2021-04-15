@@ -1,7 +1,6 @@
 package techArm
 
 import (
-	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/TLServer/internal/app/tcpConnect"
 	"github.com/ruraomsk/TLServer/internal/sockets"
 	"reflect"
@@ -28,7 +27,7 @@ func NewTechArmHub() *HubTechArm {
 }
 
 //Run запуск хаба для techArm
-func (h *HubTechArm) Run(db *sqlx.DB) {
+func (h *HubTechArm) Run() {
 	UserLogoutTech = make(chan string)
 	sockets.DispatchMessageFromAnotherPlace = make(chan sockets.DBMessage, 50)
 
@@ -43,7 +42,7 @@ func (h *HubTechArm) Run(db *sqlx.DB) {
 
 	var (
 		oldDevice = getDevice()
-		oldCross  = getCross(-1, db)
+		oldCross  = getCross(-1)
 	)
 	for {
 		select {
@@ -102,7 +101,7 @@ func (h *HubTechArm) Run(db *sqlx.DB) {
 		case <-readCrossTick.C:
 			{
 				if len(h.clients) > 0 {
-					newCross := getCross(-1, db)
+					newCross := getCross(-1)
 					if len(oldCross) != len(newCross) {
 						for client := range h.clients {
 							var tempCrosses []CrossInfo

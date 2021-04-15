@@ -42,8 +42,6 @@ type ClientMainMap struct {
 //readPump обработчик чтения сокета
 func (c *ClientMainMap) readPump() {
 	//если нужно указать лимит пакета
-	db := data.GetDB("ClientMainMap")
-	defer data.FreeDB("ClientMainMap")
 	_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error { _ = c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 
@@ -82,7 +80,7 @@ func (c *ClientMainMap) readPump() {
 				)
 				_ = json.Unmarshal(p, &account)
 				resp := newMapMess(typeLogin, nil)
-				resp.Data, token, tokenStr = logIn(account.Login, account.Password, c.conn.RemoteAddr().String(), db)
+				resp.Data, token, tokenStr = logIn(account.Login, account.Password, c.conn.RemoteAddr().String())
 				if token != nil {
 					//делаем выход из аккаунта
 					for client := range c.hub.clients {
@@ -107,11 +105,11 @@ func (c *ClientMainMap) readPump() {
 				)
 				_ = json.Unmarshal(p, &account)
 				resp := newMapMess(typeLogin, nil)
-				resp.Data, token, tokenStr = logIn(account.Login, account.Password, c.conn.RemoteAddr().String(), db)
+				resp.Data, token, tokenStr = logIn(account.Login, account.Password, c.conn.RemoteAddr().String())
 				if token != nil {
 					//делаем выход из аккаунта
 					respLO := newMapMess(typeLogOut, nil)
-					status := logOut(c.cInfo.Login, db)
+					status := logOut(c.cInfo.Login)
 					if status {
 						logOutSockets(c.cInfo.Login)
 						c.cInfo = token
@@ -125,7 +123,7 @@ func (c *ClientMainMap) readPump() {
 			{
 				if c.cInfo.Login != "" {
 					resp := newMapMess(typeLogOut, nil)
-					status := logOut(c.cInfo.Login, db)
+					status := logOut(c.cInfo.Login)
 					if status {
 						resp.Data["authorizedFlag"] = false
 						logOutSockets(c.cInfo.Login)
@@ -139,9 +137,10 @@ func (c *ClientMainMap) readPump() {
 			{
 				resp := newMapMess(typeCheckConn, nil)
 				statusDB := false
-				if data.GetDB("CheckConn") != nil {
+				db, id := data.GetDB()
+				if db != nil {
 					statusDB = true
-					data.FreeDB("CheckConn")
+					data.FreeDB(id)
 				}
 				resp.Data["statusBD"] = statusDB
 				var tcpPackage = tcpConnect.TCPMessage{

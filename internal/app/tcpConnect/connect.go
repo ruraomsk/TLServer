@@ -1,7 +1,6 @@
 package tcpConnect
 
 import (
-	"github.com/ruraomsk/TLServer/internal/model/device"
 	"net"
 	"time"
 
@@ -30,7 +29,7 @@ func TCPClientStart(tcpConfig TCPConfig) {
 
 //TCPBroadcast обработка подключений к сервера ТСП и отправка сообщений на него
 func TCPBroadcast(typeIP map[string]string) {
-	startSys := true
+	//startSys := true
 	poolTCPConnect = make(map[string]tcpInfo)
 	SendMessageToTCPServer = make(chan TCPMessage, 20)
 	SendRespTCPMess = make(chan TCPMessage, 20)
@@ -84,30 +83,30 @@ func TCPBroadcast(typeIP map[string]string) {
 					}
 				}
 
-				//отправим на страте всем устройствам подключенным к системе команду 4.0
-				if startSys {
-					devicesId := make([]int, 0)
-					device.GlobalDevices.Mux.Lock()
-					for key := range device.GlobalDevices.MapDevices {
-						devicesId = append(devicesId, key)
-					}
-					device.GlobalDevices.Mux.Unlock()
-					//arm := comm.CommandARM{User: "Server", Command: 4, Params: 0}
-					//for _, devId := range devicesId {
-					//	arm.ID = devId
-					//	var mess = TCPMessage{
-					//		TCPType:     TypeDispatch,
-					//		User:        arm.User,
-					//		From:        FromServer,
-					//		Data:        arm,
-					//		CommandType: "dispatch",
-					//		Pos:         sockets.PosInfo{},
-					//		Idevice:     arm.ID,
-					//	}
-					//	mess.SendToTCPServer()
-					//}
-					startSys = false
-				}
+				////отправим на страте всем устройствам подключенным к системе команду 4.0
+				//if startSys {
+				//	devicesId := make([]int, 0)
+				//	device.GlobalDevices.Mux.Lock()
+				//	for key := range device.GlobalDevices.MapDevices {
+				//		devicesId = append(devicesId, key)
+				//	}
+				//	device.GlobalDevices.Mux.Unlock()
+				//	//arm := comm.CommandARM{User: "Server", Command: 4, Params: 0}
+				//	//for _, devId := range devicesId {
+				//	//	arm.ID = devId
+				//	//	var mess = TCPMessage{
+				//	//		TCPType:     TypeDispatch,
+				//	//		User:        arm.User,
+				//	//		From:        FromServer,
+				//	//		Data:        arm,
+				//	//		CommandType: "dispatch",
+				//	//		Pos:         sockets.PosInfo{},
+				//	//		Idevice:     arm.ID,
+				//	//	}
+				//	//	mess.SendToTCPServer()
+				//	//}
+				//	startSys = false
+				//}
 			}
 		case msg := <-SendMessageToTCPServer:
 			{

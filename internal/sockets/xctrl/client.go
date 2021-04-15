@@ -38,8 +38,6 @@ type ClientXctrl struct {
 
 //readPump обработчик чтения сокета
 func (c *ClientXctrl) readPump() {
-	db := data.GetDB("ClientXctrl")
-	defer data.FreeDB("ClientXctrl")
 	//если нужно указать лимит пакета
 	//c.conn.SetReadLimit(maxMessageSize)
 
@@ -47,7 +45,7 @@ func (c *ClientXctrl) readPump() {
 	c.conn.SetPongHandler(func(string) error { _ = c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 
 	{
-		allXctrl, err := getXctrl(db)
+		allXctrl, err := getXctrl()
 		if err != nil {
 			logger.Error.Printf("|IP: %v |Login: %v |Resource: /charPoint |Message: %v \n", c.xInfo.IP, c.xInfo.Login, err.Error())
 			resp := newXctrlMess(typeError, nil)
@@ -101,7 +99,7 @@ func (c *ClientXctrl) readPump() {
 					State []xcontrol.State `json:"state"`
 				}{}
 				_ = json.Unmarshal(p, &temp)
-				err = changeXctrl(temp.State, db)
+				err = changeXctrl(temp.State)
 				if err != nil {
 					logger.Error.Printf("|IP: %v |Login: %v |Resource: /charPoint |Message: %v \n", c.xInfo.IP, c.xInfo.Login, err.Error())
 					resp := newXctrlMess(typeError, nil)
@@ -113,7 +111,7 @@ func (c *ClientXctrl) readPump() {
 					c.send <- resp
 					//обновим данные
 					respI := newXctrlMess(typeXctrlReInfo, nil)
-					allXctrl, _ := getXctrl(db)
+					allXctrl, _ := getXctrl()
 					respI.Data[typeXctrlInfo] = allXctrl
 					c.hub.broadcast <- respI
 				}
@@ -125,7 +123,7 @@ func (c *ClientXctrl) readPump() {
 					State xcontrol.State `json:"state"`
 				}{}
 				_ = json.Unmarshal(p, &temp)
-				err := createXctrl(temp.State, db)
+				err := createXctrl(temp.State)
 				if err != nil {
 					logger.Error.Printf("|IP: %v |Login: %v |Resource: /charPoint |Message: %v \n", c.xInfo.IP, c.xInfo.Login, err.Error())
 					resp := newXctrlMess(typeError, nil)
@@ -137,7 +135,7 @@ func (c *ClientXctrl) readPump() {
 					c.send <- resp
 					//обновим данные
 					respI := newXctrlMess(typeXctrlReInfo, nil)
-					allXctrl, _ := getXctrl(db)
+					allXctrl, _ := getXctrl()
 					respI.Data[typeXctrlInfo] = allXctrl
 					c.hub.broadcast <- respI
 				}
@@ -151,7 +149,7 @@ func (c *ClientXctrl) readPump() {
 					SubArea int    `json:"subarea"`
 				}{}
 				_ = json.Unmarshal(p, &temp)
-				err := deleteXctrl(temp.Region, temp.Area, temp.SubArea, db)
+				err := deleteXctrl(temp.Region, temp.Area, temp.SubArea)
 				if err != nil {
 					logger.Error.Printf("|IP: %v |Login: %v |Resource: /charPoint |Message: %v \n", c.xInfo.IP, c.xInfo.Login, err.Error())
 					resp := newXctrlMess(typeError, nil)
@@ -163,7 +161,7 @@ func (c *ClientXctrl) readPump() {
 					c.send <- resp
 					//обновим данные
 					respI := newXctrlMess(typeXctrlReInfo, nil)
-					allXctrl, _ := getXctrl(db)
+					allXctrl, _ := getXctrl()
 					respI.Data[typeXctrlInfo] = allXctrl
 					c.hub.broadcast <- respI
 				}
@@ -175,7 +173,7 @@ func (c *ClientXctrl) readPump() {
 					Area   int `json:"area"`
 				}{}
 				_ = json.Unmarshal(p, &temp)
-				tfLight, err := getAreaTF(temp.Region, temp.Area, db)
+				tfLight, err := getAreaTF(temp.Region, temp.Area)
 				if err != nil {
 					logger.Error.Printf("|IP: %v |Login: %v |Resource: /charPoint |Message: %v \n", c.xInfo.IP, c.xInfo.Login, err.Error())
 					resp := newXctrlMess(typeError, nil)

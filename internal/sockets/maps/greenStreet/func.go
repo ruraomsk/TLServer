@@ -16,8 +16,8 @@ type executeRoute struct {
 }
 
 func getPhases(devices []int) []*Phase {
-	db := data.GetDB("getPhases")
-	defer data.FreeDB("getPhases")
+	db, id := data.GetDB()
+	defer data.FreeDB(id)
 	result := make([]*Phase, 0)
 	mutex.Lock()
 	defer mutex.Unlock()
@@ -46,8 +46,8 @@ func getPhases(devices []int) []*Phase {
 
 //getAllModes вернуть из базы все маршруты
 func getAllModes() interface{} {
-	db := data.GetDB("getAllModes")
-	defer data.FreeDB("getAllModes")
+	db, id := data.GetDB()
+	defer data.FreeDB(id)
 	var (
 		modes = make([]routeGS.Route, 0)
 	)

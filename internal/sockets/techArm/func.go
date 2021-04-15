@@ -3,14 +3,13 @@ package techArm
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/TLServer/internal/model/data"
 	"github.com/ruraomsk/TLServer/internal/model/device"
 	"github.com/ruraomsk/TLServer/logger"
 )
 
 //getCross запроса состояния перекрестков
-func getCross(reg int, db *sqlx.DB) []CrossInfo {
+func getCross(reg int) []CrossInfo {
 	var (
 		temp    CrossInfo
 		crosses []CrossInfo
@@ -30,6 +29,8 @@ func getCross(reg int, db *sqlx.DB) []CrossInfo {
 	if reg != -1 {
 		sqlStr += fmt.Sprintf(` WHERE region = %v`, reg)
 	}
+	db, id := data.GetDB()
+	defer data.FreeDB(id)
 	rows, err := db.Query(sqlStr)
 	if err != nil {
 		logger.Error.Println("|IP: server |Login: server |Resource: /techArm |Message: Error get Cross from BD ", err.Error())

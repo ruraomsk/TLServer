@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"github.com/gorilla/websocket"
 	"github.com/ruraomsk/TLServer/internal/app/tcpConnect"
-	"github.com/ruraomsk/TLServer/internal/model/data"
 	"github.com/ruraomsk/TLServer/internal/model/device"
 	"github.com/ruraomsk/TLServer/internal/sockets"
 	"github.com/ruraomsk/TLServer/logger"
@@ -40,8 +39,8 @@ type ClientTechArm struct {
 
 //readPump обработчик чтения сокета
 func (c *ClientTechArm) readPump() {
-	db := data.GetDB("ClientTechArm")
-	defer data.FreeDB("ClientTechArm")
+	//db := data.GetDB("ClientTechArm")
+	//defer data.FreeDB("ClientTechArm")
 	//если нужно указать лимит пакета
 	//c.conn.SetReadLimit(maxMessageSize)
 
@@ -49,7 +48,7 @@ func (c *ClientTechArm) readPump() {
 	c.conn.SetPongHandler(func(string) error { _ = c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	{
 		var tempCrosses = make([]CrossInfo, 0)
-		crosses := getCross(c.armInfo.Region, db)
+		crosses := getCross(c.armInfo.Region)
 		for _, cross := range crosses {
 			for _, area := range c.armInfo.Area {
 				tArea, _ := strconv.Atoi(area)

@@ -3,7 +3,6 @@ package maps
 import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
-	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/TLServer/internal/model/data"
 	"github.com/ruraomsk/TLServer/internal/model/license"
 	u "github.com/ruraomsk/TLServer/internal/utils"
@@ -14,7 +13,9 @@ import (
 )
 
 //SelectTL возвращает массив в котором содержатся светофоры, которые попали в указанную область
-func SelectTL(db *sqlx.DB) (tfdata []data.TrafficLights) {
+func SelectTL() (tfdata []data.TrafficLights) {
+	db, id := data.GetDB()
+	defer data.FreeDB(id)
 	var dgis string
 	//logger.Debug.Printf("SelectTL in %s",db.DriverName())
 	rowsTL, err := db.Query(`SELECT region, area, subarea, id, idevice, dgis, describ, status, state->'arrays'->'SetDK' FROM public.cross`)
@@ -60,14 +61,12 @@ func SelectTL(db *sqlx.DB) (tfdata []data.TrafficLights) {
 
 //MapOpenInfo сбор всех данных для отображения информации на карте
 func MapOpenInfo() (obj map[string]interface{}) {
-	db := data.GetDB("MapOpenInfo")
-	defer data.FreeDB("MapOpenInfo")
 	obj = make(map[string]interface{})
 
 	location := &data.Locations{}
 	box, _ := location.MakeBoxPoint()
 	obj["boxPoint"] = &box
-	obj["tflight"] = SelectTL(db)
+	obj["tflight"] = SelectTL()
 	obj["authorizedFlag"] = false
 
 	//собираю в кучу регионы для отображения

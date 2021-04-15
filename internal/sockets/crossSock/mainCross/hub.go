@@ -42,7 +42,7 @@ var CrossUsersForMap chan []crossSock.CrossInfo
 var ArmDeleted chan tcpConnect.TCPMessage
 
 //Run запуск хаба для mainCross
-func (h *HubCross) Run(db *sqlx.DB) {
+func (h *HubCross) Run() {
 	ChangeState = make(chan tcpConnect.TCPMessage)
 	GetCrossUserForMap = make(chan bool)
 	UserLogoutCross = make(chan string)
@@ -96,6 +96,7 @@ func (h *HubCross) Run(db *sqlx.DB) {
 							logger.Error.Println("|Message: cross socket cant make IN ", err.Error())
 							continue
 						}
+						db, id := data.GetDB()
 						query = db.Rebind(query)
 						rows, err := db.Queryx(query, args...)
 						if err != nil {
@@ -112,6 +113,7 @@ func (h *HubCross) Run(db *sqlx.DB) {
 							tempCR.State, _ = crossSock.ConvertStateStrToStruct(tempCR.stateStr)
 							arrayCross[tempCR.Idevice] = tempCR
 						}
+						data.FreeDB(id)
 						for idevice, newData := range arrayCross {
 							if oldData, ok := globArrCross[idevice]; ok {
 								//если запись есть нужно сравнить и если есть разница отправить изменения
@@ -190,7 +192,7 @@ func (h *HubCross) Run(db *sqlx.DB) {
 			{
 				var regStatus = true
 				//проверка на существование такого перекрестка (сбос если нету)
-				_, err := crossSock.GetNewState(client.crossInfo.Pos, db)
+				_, err := crossSock.GetNewState(client.crossInfo.Pos)
 				if err != nil {
 					close(client.send)
 					_ = client.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, errCrossDoesntExist))
@@ -215,7 +217,7 @@ func (h *HubCross) Run(db *sqlx.DB) {
 				//	continue
 				//}
 				//кромешный пи**** с созданием нормального клиента
-				resp, Idevice, description := takeCrossInfo(client.crossInfo.Pos, db)
+				resp, Idevice, description := takeCrossInfo(client.crossInfo.Pos)
 				client.crossInfo.Idevice = Idevice
 				client.crossInfo.Description = description
 				resp.Data["access"] = false

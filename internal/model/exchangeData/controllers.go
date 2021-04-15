@@ -1,7 +1,7 @@
 package exchangeData
 
 import (
-	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/TLServer/internal/model/data"
 	"github.com/ruraomsk/TLServer/internal/model/device"
 	u "github.com/ruraomsk/TLServer/internal/utils"
 	"net/http"
@@ -21,12 +21,13 @@ type point struct {
 	Y float64 `json:"y"`
 }
 
-func GetController(db *sqlx.DB) u.Response {
+func GetController() u.Response {
 	var (
 		controllerList  = make([]controllersInfo, 0)
 		mapActivDevices = make(map[int]device.DevInfo)
 	)
-
+	db, id := data.GetDB()
+	defer data.FreeDB(id)
 	rows, err := db.Query(`SELECT idevice, describ, dgis FROM public.cross`)
 	if err != nil {
 		return u.Message(http.StatusInternalServerError, "db server not response")

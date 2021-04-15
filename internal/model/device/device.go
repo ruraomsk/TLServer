@@ -2,7 +2,7 @@ package device
 
 import (
 	"encoding/json"
-	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/TLServer/internal/model/data"
 	agspudge "github.com/ruraomsk/ag-server/pudge"
 	"sync"
 	"time"
@@ -38,14 +38,16 @@ type ControllerEdit struct {
 }
 
 //StartReadDevices чтение БД таблицы public.devices
-func StartReadDevices(db *sqlx.DB) {
+func StartReadDevices() {
 	GlobalDevices.MapDevices = make(map[int]DevInfo, 0)
 	GlobalDevEdit.MapDevices = make(map[int]ControllerEdit, 0)
 	for {
 		var (
 			tempDevice = make(map[int]DevInfo)
 		)
+		db, id := data.GetDB()
 		rows, err := db.Query(`SELECT c.region, c.area, d.device FROM public.cross as c, public.devices as d WHERE c.idevice IN(d.id)`)
+		data.FreeDB(id)
 		if err != nil {
 			continue
 		}

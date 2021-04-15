@@ -2,7 +2,6 @@ package xctrl
 
 import (
 	"encoding/json"
-	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/TLServer/internal/model/data"
 	"github.com/ruraomsk/TLServer/logger"
 	"github.com/ruraomsk/ag-server/xcontrol"
@@ -10,7 +9,9 @@ import (
 )
 
 //getXctrl формирует массив записей из таблицы xctrl
-func getXctrl(db *sqlx.DB) ([]xcontrol.State, error) {
+func getXctrl() ([]xcontrol.State, error) {
+	db, id := data.GetDB()
+	defer data.FreeDB(id)
 	rows, err := db.Query(`SELECT state FROM public.xctrl`)
 	if err != nil {
 		return nil, err
@@ -32,7 +33,9 @@ func getXctrl(db *sqlx.DB) ([]xcontrol.State, error) {
 }
 
 //changeXctrl запись массива state в базу
-func changeXctrl(states []xcontrol.State, db *sqlx.DB) error {
+func changeXctrl(states []xcontrol.State) error {
+	db, id := data.GetDB()
+	defer data.FreeDB(id)
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -54,7 +57,9 @@ func changeXctrl(states []xcontrol.State, db *sqlx.DB) error {
 }
 
 //createXctrl создание state в базу
-func createXctrl(state xcontrol.State, db *sqlx.DB) error {
+func createXctrl(state xcontrol.State) error {
+	db, id := data.GetDB()
+	defer data.FreeDB(id)
 	strState, _ := json.Marshal(state)
 	_, err := db.Exec(`INSERT INTO public.xctrl (region, area, subarea, state) VALUES ($1, $2, $3, $4)`, state.Region, state.Area, state.SubArea, string(strState))
 	if err != nil {
@@ -64,7 +69,10 @@ func createXctrl(state xcontrol.State, db *sqlx.DB) error {
 }
 
 //deleteXctrl удаление state из базы
-func deleteXctrl(reg, area, sub int, db *sqlx.DB) error {
+func deleteXctrl(reg, area, sub int) error {
+	db, id := data.GetDB()
+	defer data.FreeDB(id)
+
 	_, err := db.Exec(`DELETE FROM public.xctrl WHERE region = $1 AND area = $2 AND subarea= $3`, reg, area, sub)
 	if err != nil {
 		return err
@@ -73,7 +81,9 @@ func deleteXctrl(reg, area, sub int, db *sqlx.DB) error {
 }
 
 //getAreaTF генерация сортированного массива светофоров из базы
-func getAreaTF(region, area int, db *sqlx.DB) (tfdata []data.TrafficLights, err error) {
+func getAreaTF(region, area int) (tfdata []data.TrafficLights, err error) {
+	db, id := data.GetDB()
+	defer data.FreeDB(id)
 	rowsTL, err := db.Query(`SELECT region, area, subarea, id, describ FROM public.cross WHERE region = $1 AND area = $2`, region, area)
 	if err != nil {
 		logger.Error.Println("|Message: db not respond", err.Error())

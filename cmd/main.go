@@ -59,13 +59,12 @@ func main() {
 	license.LicenseCheck()
 
 	////Подключение к базе данных
-	dbConn, err := data.ConnectDB()
+	err := data.ConnectDB()
 	if err != nil {
 		logger.Error.Println("|Message: Error open DB", err.Error())
 		fmt.Println("Error open DB", err.Error())
 		return
 	}
-	defer dbConn.Close() // не забывает закрыть подключение
 
 	logger.Info.Println("|Message: Start work...")
 	fmt.Println("Start work...")
@@ -76,7 +75,7 @@ func main() {
 	////----------------------------------------------------------------------
 	//
 	//запуск сервера
-	srvHttp, srvHttps := apiserver.MainServer(apiserver.ServerConfig, dbConn)
+	srvHttp, srvHttps := apiserver.MainServer(apiserver.ServerConfig)
 	go func() {
 		//Сервер на порте 80 - для переадресации
 		go func() {
@@ -102,7 +101,7 @@ func main() {
 			}
 		}
 	}()
-	srv2 := apiserver.ExchangeServer(apiserver.ServerConfig, dbConn)
+	srv2 := apiserver.ExchangeServer(apiserver.ServerConfig)
 	go func() {
 		if err := srv2.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Error.Println("|Message: Error start exchange server ", err.Error())

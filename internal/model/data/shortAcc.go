@@ -92,8 +92,8 @@ func (shortAcc *ShortAccount) ValidCreate(role string, region string) (err error
 func (shortAcc *ShortAccount) ValidDelete(role string, region string) (account *Account, err error) {
 	account = &Account{}
 	//Забираю из базы запись с подходящей почтой
-	db := GetDB("ValidDelete")
-	defer FreeDB("ValidDelete")
+	db, id := GetDB()
+	defer FreeDB(id)
 
 	rows, err := db.Query(`SELECT login, password, token, work_time FROM public.accounts WHERE login=$1`, shortAcc.Login)
 	if rows == nil {
@@ -129,8 +129,8 @@ func (shortAcc *ShortAccount) ValidDelete(role string, region string) (account *
 func (shortAcc *ShortAccount) ValidChangePW(role string, region string) (account *Account, err error) {
 	account = &Account{}
 	//Забираю из базы запись с подходящим логином
-	db := GetDB("ValidChangePW")
-	defer FreeDB("ValidChangePW")
+	db, id := GetDB()
+	defer FreeDB(id)
 
 	rows, err := db.Query(`SELECT login, password, token, work_time FROM public.accounts WHERE login=$1`, shortAcc.Login)
 	if rows == nil {
@@ -166,8 +166,8 @@ func (shortAcc *ShortAccount) ValidChangePW(role string, region string) (account
 func (passChange *PassChange) ValidOldNewPW(login string) (account *Account, err error) {
 	account = &Account{}
 	//Забираю из базы запись с подходящей почтой
-	db := GetDB("ValidOldNewPW")
-	defer FreeDB("ValidOldNewPW")
+	db, id := GetDB()
+	defer FreeDB(id)
 
 	rows, err := db.Query(`SELECT login, password, token, work_time FROM public.accounts WHERE login=$1`, login)
 	if rows == nil {

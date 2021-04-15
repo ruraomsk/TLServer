@@ -1,7 +1,6 @@
 package xctrl
 
 import (
-	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/ag-server/xcontrol"
 	"time"
 )
@@ -25,7 +24,7 @@ func NewXctrlHub() *HubXctrl {
 }
 
 //Run запуск хаба для xctrl
-func (h *HubXctrl) Run(db *sqlx.DB) {
+func (h *HubXctrl) Run() {
 	UserLogoutXctrl = make(chan string)
 
 	updateTicker := time.NewTicker(stateTime)
@@ -35,14 +34,14 @@ func (h *HubXctrl) Run(db *sqlx.DB) {
 		checkValidityTicker.Stop()
 	}()
 
-	oldXctrl, _ := getXctrl(db)
+	oldXctrl, _ := getXctrl()
 
 	for {
 		select {
 		case <-updateTicker.C:
 			{
 				if len(h.clients) > 0 {
-					newXctrl, _ := getXctrl(db)
+					newXctrl, _ := getXctrl()
 					var tempXctrl []xcontrol.State
 					for _, nX := range newXctrl {
 						flagNew := true

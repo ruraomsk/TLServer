@@ -2,11 +2,9 @@ package apiserver
 
 import (
 	"bufio"
-	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/TLServer/internal/app/handlers/crossH"
 	"github.com/ruraomsk/TLServer/internal/app/handlers/exchangeServ"
 	"github.com/ruraomsk/TLServer/internal/app/handlers/licenseH"
-	"github.com/ruraomsk/TLServer/internal/model/data"
 	"github.com/ruraomsk/TLServer/internal/model/device"
 	"github.com/ruraomsk/TLServer/internal/model/license"
 	"github.com/ruraomsk/TLServer/internal/sockets/alarm"
@@ -31,7 +29,7 @@ import (
 )
 
 //MainServer настройка основного сервера
-func MainServer(conf *ServerConf, db *sqlx.DB) (srvHttp *http.Server, srvHttps *http.Server) {
+func MainServer(conf *ServerConf) (srvHttp *http.Server, srvHttps *http.Server) {
 	mainMapHub := mainMap.NewMainMapHub()
 	mainCrossHub := mainCross.NewCrossHub()
 	controlCrHub := controlCross.NewCrossHub()
@@ -41,14 +39,14 @@ func MainServer(conf *ServerConf, db *sqlx.DB) (srvHttp *http.Server, srvHttps *
 	gsHub := greenStreet.NewGSHub()
 	chatHub := chat.NewChatHub()
 
-	go device.StartReadDevices(data.GetDB("startReadDevices"))
-	go mainMapHub.Run(data.GetDB("mapHub"))
-	go mainCrossHub.Run(data.GetDB("mainCrossHub"))
-	go controlCrHub.Run(data.GetDB("controlCrHub"))
-	go techArmHub.Run(data.GetDB("techArmHub"))
-	go alarmHub.Run(data.GetDB("alarmHub"))
-	go xctrlHub.Run(data.GetDB("xctrlHub"))
-	go gsHub.Run(data.GetDB("gsHub"))
+	go device.StartReadDevices()
+	go mainMapHub.Run()
+	go mainCrossHub.Run()
+	go controlCrHub.Run()
+	go techArmHub.Run()
+	go alarmHub.Run()
+	go xctrlHub.Run()
+	go gsHub.Run()
 	go chatHub.Run()
 
 	// Создаем engine для соединений
@@ -244,7 +242,7 @@ func MainServer(conf *ServerConf, db *sqlx.DB) (srvHttp *http.Server, srvHttps *
 }
 
 //ExchangeServer настройка сервера обменов
-func ExchangeServer(conf *ServerConf, db *sqlx.DB) *http.Server {
+func ExchangeServer(conf *ServerConf) *http.Server {
 
 	// Создаем engine для соединений
 	gin.SetMode(gin.ReleaseMode)
@@ -253,17 +251,17 @@ func ExchangeServer(conf *ServerConf, db *sqlx.DB) *http.Server {
 
 	apiGroup := router.Group("api")
 	apiGroup.GET("/Controllers", func(c *gin.Context) {
-		exchangeServ.ControllerHandler(c, db)
+		exchangeServ.ControllerHandler(c)
 	})
 
 	apiGroup.GET("/States", func(c *gin.Context) {
-		exchangeServ.StatesHandler(c, db)
+		exchangeServ.StatesHandler(c)
 	})
 	apiGroup.GET("/Devices", func(c *gin.Context) {
 		exchangeServ.DevicesHandler(c)
 	})
 	apiGroup.GET("/Svgs", func(c *gin.Context) {
-		exchangeServ.SvgsHandler(c, db)
+		exchangeServ.SvgsHandler(c)
 	})
 
 	srv := &http.Server{Handler: router, Addr: conf.ServerExchange, ErrorLog: logger.Warning}

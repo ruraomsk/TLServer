@@ -1,7 +1,6 @@
 package mainCross
 
 import (
-	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/TLServer/internal/model/data"
 	"github.com/ruraomsk/TLServer/internal/model/device"
 	"github.com/ruraomsk/TLServer/internal/sockets"
@@ -10,11 +9,13 @@ import (
 )
 
 //takeCrossInfo формарование необходимой информации о перекрестке
-func takeCrossInfo(pos sockets.PosInfo, db *sqlx.DB) (resp crossResponse, idev int, description string) {
+func takeCrossInfo(pos sockets.PosInfo) (resp crossResponse, idev int, description string) {
 	var (
 		dgis     string
 		stateStr string
 	)
+	db, id := data.GetDB()
+	defer data.FreeDB(id)
 	TLignt := data.TrafficLights{Area: data.AreaInfo{Num: pos.Area}, Region: data.RegionInfo{Num: pos.Region}, ID: pos.Id}
 	rowsTL := db.QueryRow(`SELECT area, subarea, Idevice, dgis, describ, state FROM public.cross WHERE region = $1 and id = $2 and area = $3`, pos.Region, pos.Id, pos.Area)
 	err := rowsTL.Scan(&TLignt.Area.Num, &TLignt.Subarea, &TLignt.Idevice, &dgis, &TLignt.Description, &stateStr)

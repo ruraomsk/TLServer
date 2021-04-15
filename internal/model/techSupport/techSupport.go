@@ -34,7 +34,7 @@ func SendEmail(emailInfo EmailJS, login, companyName, companyLoc string, db *sql
 
 	mess := chat.Message{From: login, Time: time.Now(), To: data.AutomaticLogin}
 	mess.Message = fmt.Sprintf("Пользователь %v обратился в техподдержку, время обращения ( %v ), с вопросом: %v", mess.From, mess.Time.Format("2006-01-02 15:04:05"), emailInfo.Text)
-	_ = mess.SaveMessage(db)
+	_ = mess.SaveMessage()
 	resp := u.Message(http.StatusOK, "email sent")
 	return resp
 }

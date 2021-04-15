@@ -3,7 +3,6 @@ package mainMap
 import (
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/TLServer/internal/model/accToken"
 	"github.com/ruraomsk/TLServer/internal/model/data"
 	"github.com/ruraomsk/TLServer/internal/model/license"
@@ -19,7 +18,7 @@ import (
 )
 
 //checkToken проверка токена для вебсокета
-func checkToken(cookie string, ip string, db *sqlx.DB) (flag bool, t *accToken.Token) {
+func checkToken(cookie string, ip string) (flag bool, t *accToken.Token) {
 	if cookie == "" {
 		return false, nil
 	}
@@ -47,6 +46,8 @@ func checkToken(cookie string, ip string, db *sqlx.DB) (flag bool, t *accToken.T
 		userPrivilege  data.Privilege
 		tokenStrFromBd string
 	)
+	db, id := data.GetDB()
+	defer data.FreeDB(id)
 	rows, err := db.Query(`SELECT token, privilege FROM public.accounts WHERE login = $1`, tk.Login)
 	if err != nil {
 		return false, nil
@@ -71,7 +72,9 @@ func checkToken(cookie string, ip string, db *sqlx.DB) (flag bool, t *accToken.T
 }
 
 //logIn обработчик авторизации пользователя в системе
-func logIn(login, password, ip string, db *sqlx.DB) (map[string]interface{}, *accToken.Token, string) {
+func logIn(login, password, ip string) (map[string]interface{}, *accToken.Token, string) {
+	db, id := data.GetDB()
+	defer data.FreeDB(id)
 	resp := make(map[string]interface{})
 	ipSplit := strings.Split(ip, ":")
 	account := &data.Account{}
@@ -160,7 +163,10 @@ func logIn(login, password, ip string, db *sqlx.DB) (map[string]interface{}, *ac
 }
 
 //logOut выход из учетной записи
-func logOut(login string, db *sqlx.DB) bool {
+func logOut(login string) bool {
+	db, id := data.GetDB()
+	defer data.FreeDB(id)
+
 	_, err := db.Exec("UPDATE public.accounts SET token = $1 where login = $2", "", login)
 	if err != nil {
 		return false

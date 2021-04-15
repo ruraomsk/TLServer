@@ -84,8 +84,8 @@ func CacheInfoDataUpdate() {
 func FillMapAreaZone() {
 	tempAreaCache := make([]locations.AreaZone, 0)
 	//запрос уникальных регионов и районов
-	db := GetDB("FillMapAreaZone")
-	defer FreeDB("FillMapAreaZone")
+	db, id := GetDB()
+	defer FreeDB(id)
 	rows, err := db.Query(`SELECT distinct on (region, area) region, area, array_agg(dgis) as aDgis   FROM public.cross  group by region, area`)
 	if err != nil {
 		logger.Error.Printf("|IP: Server  |Login: Server |Resource: Server |Message: %v \n", err.Error())
@@ -148,8 +148,8 @@ func FillMapAreaZone() {
 func GetRegionInfo() (region map[string]string, area map[string]map[string]string, err error) {
 	region = make(map[string]string)
 	area = make(map[string]map[string]string)
-	db := GetDB("GetRegionInfo")
-	defer FreeDB("GetRegionInfo")
+	db, id := GetDB()
+	defer FreeDB(id)
 
 	rows, err := db.Query(`SELECT region, nameregion, area, namearea FROM public.region`)
 	if err != nil {
@@ -189,8 +189,8 @@ func GetRegionInfo() (region map[string]string, area map[string]map[string]strin
 //getTLSost получить данные о состоянии светофоров
 func getTLSost() (TLsost map[int]TLSostInfo, err error) {
 	TLsost = make(map[int]TLSostInfo, 0)
-	db := GetDB("getTLSost")
-	defer FreeDB("getTLSost")
+	db, id := GetDB()
+	defer FreeDB(id)
 
 	statusRow, err := db.Query(`SELECT id, description, control FROM public.status`)
 	if err != nil {

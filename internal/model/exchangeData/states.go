@@ -2,6 +2,7 @@ package exchangeData
 
 import (
 	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/TLServer/internal/model/data"
 	"github.com/ruraomsk/TLServer/internal/model/license"
 	"github.com/ruraomsk/TLServer/internal/sockets/crossSock"
 	u "github.com/ruraomsk/TLServer/internal/utils"
@@ -9,11 +10,12 @@ import (
 	"net/http"
 )
 
-func GetStates(iDevice []int, db *sqlx.DB) u.Response {
+func GetStates(iDevice []int) u.Response {
 	var (
 		statesList = make([]pudge.Cross, 0)
 	)
-
+	db, id := data.GetDB()
+	defer data.FreeDB(id)
 	query, args, err := sqlx.In(`SELECT state FROM public.cross WHERE idevice IN (?)`, iDevice)
 	if err != nil {
 		return u.Message(http.StatusInternalServerError, "error formatting IN query")

@@ -28,7 +28,8 @@ var DisplayServerLogInfo = func(c *gin.Context) {
 
 	accTK, _ := c.Get("tk")
 	accInfo, _ := accTK.(*accToken.Token)
-	resp := serverLog.DisplayServerFileLog(fileName, logger.LogGlobalConf.LogPath, accInfo, data.GetDB("DisplayServerLogInfo"))
-	data.FreeDB("DisplayServerLogInfo")
+	db, id := data.GetDB()
+	resp := serverLog.DisplayServerFileLog(fileName, logger.LogGlobalConf.LogPath, accInfo, db)
+	data.FreeDB(id)
 	u.SendRespond(c, resp)
 }

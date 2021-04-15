@@ -34,8 +34,8 @@ var (
 
 //Create создание/запись маршрута в БД
 func (r *Route) Create() error {
-	db := data.GetDB("Create")
-	defer data.FreeDB("Create")
+	db, id := data.GetDB()
+	defer data.FreeDB(id)
 	r.setBox()
 	list, _ := json.Marshal(r.List)
 	box, _ := json.Marshal(r.Box)
@@ -60,8 +60,8 @@ func (r *Route) Create() error {
 
 //Update обновление маршрута в БД
 func (r *Route) Update() error {
-	db := data.GetDB("Update")
-	defer data.FreeDB("Update")
+	db, id := data.GetDB()
+	defer data.FreeDB(id)
 
 	r.setBox()
 	list, _ := json.Marshal(r.List)
@@ -79,8 +79,8 @@ func (r *Route) Update() error {
 
 //Delete удаление маршрута из БД
 func (r *Route) Delete() error {
-	db := data.GetDB("Delete")
-	defer data.FreeDB("Delete")
+	db, id := data.GetDB()
+	defer data.FreeDB(id)
 	_, err := db.Exec(`DELETE FROM public.routes WHERE description = $1 AND region = $2`, r.Description, r.Region)
 	if err != nil {
 		return errors.New(errCantDeleteFromBD)

@@ -3,7 +3,6 @@ package chat
 import (
 	"encoding/json"
 	"github.com/gorilla/websocket"
-	"github.com/ruraomsk/TLServer/internal/model/data"
 	"github.com/ruraomsk/TLServer/internal/sockets"
 	"github.com/ruraomsk/TLServer/logger"
 	"time"
@@ -37,9 +36,7 @@ func (c *ClientChat) readPump() {
 	c.conn.SetPongHandler(func(string) error { _ = c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	//выгрузить список доступных пользователей
 	{
-		db := data.GetDB("ClientChat")
-		users, err := getAllUsers(c.hub, db)
-		data.FreeDB("ClientChat")
+		users, err := getAllUsers(c.hub)
 		if err != nil {
 			resp := newChatMess(typeError, nil)
 			resp.Data["message"] = ErrorMessage{Error: errNoAccessWithDatabase}
@@ -52,9 +49,8 @@ func (c *ClientChat) readPump() {
 	}
 	//выгрузить архив сообщений за последний день
 	{
-		db := data.GetDB("ClientChat")
 		var arc = ArchiveMessages{TimeStart: time.Now(), TimeEnd: time.Now().AddDate(0, 0, -1), To: globalMessage}
-		err := arc.takeArchive(db)
+		err := arc.takeArchive()
 		if err != nil {
 			resp := newChatMess(typeError, nil)
 			resp.Data["message"] = ErrorMessage{Error: errNoAccessWithDatabase}
@@ -64,7 +60,6 @@ func (c *ClientChat) readPump() {
 			resp.Data[typeArchive] = arc
 			c.send <- resp
 		}
-		data.FreeDB("ClientChat")
 	}
 	for {
 		_, p, err := c.conn.ReadMessage()
@@ -84,10 +79,9 @@ func (c *ClientChat) readPump() {
 		switch typeSelect {
 		case typeMessage:
 			{
-				db := data.GetDB("ClientChat")
 				var mF Message
 				_ = json.Unmarshal(p, &mF)
-				if err := mF.SaveMessage(db); err != nil {
+				if err := mF.SaveMessage(); err != nil {
 					resp := newChatMess(typeError, nil)
 					resp.Data["message"] = ErrorMessage{Error: errNoAccessWithDatabase}
 					c.send <- resp
@@ -101,7 +95,6 @@ func (c *ClientChat) readPump() {
 					resp.from = mF.From
 					c.hub.broadcast <- resp
 				}
-				data.FreeDB("ClientChat")
 			}
 		default:
 			{

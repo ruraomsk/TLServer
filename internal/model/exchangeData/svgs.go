@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/TLServer/internal/model/config"
+	"github.com/ruraomsk/TLServer/internal/model/data"
 	u "github.com/ruraomsk/TLServer/internal/utils"
 	"io/ioutil"
 	"net/http"
@@ -15,11 +16,12 @@ type svgData struct {
 }
 
 //GetSvgs обработчик запроса svg
-func GetSvgs(iDevice []int, db *sqlx.DB) u.Response {
+func GetSvgs(iDevice []int) u.Response {
 	var (
 		SvgsList = make([]svgData, 0)
 	)
-
+	db, id := data.GetDB()
+	defer data.FreeDB(id)
 	query, args, err := sqlx.In(`SELECT region, area, id, idevice FROM public.cross WHERE idevice IN (?)`, iDevice)
 	if err != nil {
 		return u.Message(http.StatusInternalServerError, "error formatting IN query")

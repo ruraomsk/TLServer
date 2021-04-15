@@ -1,7 +1,6 @@
 package greenStreet
 
 import (
-	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/TLServer/internal/app/tcpConnect"
 	"github.com/ruraomsk/TLServer/internal/model/data"
 	"github.com/ruraomsk/TLServer/internal/model/device"
@@ -34,7 +33,7 @@ func NewGSHub() *HubGStreet {
 var mutex sync.Mutex
 
 //Run запуск хаба для GS
-func (h *HubGStreet) Run(db *sqlx.DB) {
+func (h *HubGStreet) Run() {
 
 	crossReadTick := time.NewTicker(crossPeriod)
 	deviceReadTick := time.NewTicker(devicePeriod)
@@ -45,7 +44,7 @@ func (h *HubGStreet) Run(db *sqlx.DB) {
 		checkValidityTicker.Stop()
 	}()
 
-	oldTFs := maps.SelectTL(db)
+	oldTFs := maps.SelectTL()
 	for {
 		select {
 		case <-deviceReadTick.C:
@@ -74,7 +73,7 @@ func (h *HubGStreet) Run(db *sqlx.DB) {
 					break
 				}
 				mutex.Lock()
-				newTFs := maps.SelectTL(db)
+				newTFs := maps.SelectTL()
 				mutex.Unlock()
 				if len(newTFs) != len(oldTFs) {
 					//logger.Debug.Printf("crossReadTick in len(newTFs) != len(oldTFs)")

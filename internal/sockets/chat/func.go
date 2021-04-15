@@ -1,8 +1,8 @@
 package chat
 
 import (
-	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/TLServer/internal/model/accToken"
+	"github.com/ruraomsk/TLServer/internal/model/data"
 )
 
 type clientInfo struct {
@@ -27,8 +27,10 @@ func (u *userInfo) setStatus(h *HubChat) {
 }
 
 //getAllUsers запросить пользователей из БД
-func getAllUsers(h *HubChat, db *sqlx.DB) ([]userInfo, error) {
+func getAllUsers(h *HubChat) ([]userInfo, error) {
 	var users []userInfo
+	db, id := data.GetDB()
+	defer data.FreeDB(id)
 	rows, err := db.Query(`SELECT login FROM public.accounts`)
 	if err != nil {
 		return nil, err

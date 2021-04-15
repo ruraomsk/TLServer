@@ -3,9 +3,9 @@ package controlCross
 import (
 	"database/sql"
 	"fmt"
-	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/TLServer/internal/app/tcpConnect"
 	"github.com/ruraomsk/TLServer/internal/model/crossCreator"
+	"github.com/ruraomsk/TLServer/internal/model/data"
 	"github.com/ruraomsk/TLServer/internal/model/device"
 	"github.com/ruraomsk/TLServer/internal/model/stateVerified"
 	"github.com/ruraomsk/TLServer/internal/sockets"
@@ -16,10 +16,12 @@ import (
 )
 
 //takeControlInfo формарование необходимой информации о арме перекрестка
-func takeControlInfo(pos sockets.PosInfo, db *sqlx.DB) (resp ControlSokResponse, idev int, desc string) {
+func takeControlInfo(pos sockets.PosInfo) (resp ControlSokResponse, idev int, desc string) {
 	var (
 		stateStr string
 	)
+	db, id := data.GetDB()
+	defer data.FreeDB(id)
 	rowsTL := db.QueryRow(`SELECT state FROM public.cross WHERE region = $1 and id = $2 and area = $3`, pos.Region, pos.Id, pos.Area)
 	err := rowsTL.Scan(&stateStr)
 	if err != nil {
@@ -53,8 +55,10 @@ func takeControlInfo(pos sockets.PosInfo, db *sqlx.DB) (resp ControlSokResponse,
 }
 
 //checkCrossData проверка полученных данных
-func checkCrossData(state agspudge.Cross, db *sqlx.DB) ControlSokResponse {
+func checkCrossData(state agspudge.Cross) ControlSokResponse {
 	var verif stateVerified.StateResult
+	db, id := data.GetDB()
+	defer data.FreeDB(id)
 	crossSock.VerifiedState(&state, &verif, db)
 	resp := newControlMess(typeCheckB, nil)
 	if verif.Err != nil {
@@ -67,7 +71,7 @@ func checkCrossData(state agspudge.Cross, db *sqlx.DB) ControlSokResponse {
 }
 
 //createCrossData добавление нового перекрестка
-func createCrossData(state agspudge.Cross, pos sockets.PosInfo, login string, z int, db *sqlx.DB) map[string]interface{} {
+func createCrossData(state agspudge.Cross, pos sockets.PosInfo, login string, z int) map[string]interface{} {
 	var (
 		userCross = agspudge.UserCross{User: login, State: state}
 		mess      = tcpConnect.TCPMessage{
@@ -82,6 +86,8 @@ func createCrossData(state agspudge.Cross, pos sockets.PosInfo, login string, z 
 		verRes   []string
 		stateSql string
 	)
+	db, id := data.GetDB()
+	defer data.FreeDB(id)
 	sqlStr := fmt.Sprintf(`SELECT state FROM public.cross WHERE state::jsonb @> '{"idevice":%v}'::jsonb OR (region = %v and area = %v and id = %v)`, state.IDevice, state.Region, state.Area, state.ID)
 	rows, err := db.Query(sqlStr)
 	if err != nil {
@@ -120,7 +126,7 @@ func createCrossData(state agspudge.Cross, pos sockets.PosInfo, login string, z 
 	return resp
 }
 
-func sendCrossData(state agspudge.Cross, cIDev int, pos sockets.PosInfo, login string, db *sqlx.DB) map[string]interface{} {
+func sendCrossData(state agspudge.Cross, cIDev int, pos sockets.PosInfo, login string) map[string]interface{} {
 	var (
 		userCross = agspudge.UserCross{User: login, State: state}
 		mess      = tcpConnect.TCPMessage{
@@ -134,6 +140,8 @@ func sendCrossData(state agspudge.Cross, cIDev int, pos sockets.PosInfo, login s
 		}
 		resp = make(map[string]interface{})
 	)
+	db, id := data.GetDB()
+	defer data.FreeDB(id)
 	if cIDev != state.IDevice {
 		var strRow string
 		sqlStr := fmt.Sprintf(`SELECT state FROM public.cross WHERE state::jsonb @> '{"idevice":%v}'::jsonb`, state.IDevice)

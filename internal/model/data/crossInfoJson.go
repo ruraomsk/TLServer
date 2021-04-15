@@ -43,12 +43,11 @@ type crossInfo struct {
 
 //CreateCrossesJSON создание json файла с содержанием всех перекрестков с их местом положения и описания
 func CreateCrossesJSON() {
-	db := GetDB("CreateCrossesJSON")
-	defer FreeDB("CreateCrossesJSON")
 
 	cross := new(CrossesJSON)
 	var tempCrosses []crossInfo
 
+	db, id := GetDB()
 	rows, _ := db.Query(`SELECT region, area, id, describ FROM public.cross`)
 	for rows.Next() {
 		var (
@@ -57,6 +56,7 @@ func CreateCrossesJSON() {
 		_ = rows.Scan(&tempCross.region, &tempCross.area, &tempCross.id, &tempCross.describe)
 		tempCrosses = append(tempCrosses, tempCross)
 	}
+	FreeDB(id)
 
 	CacheInfo.Mux.Lock()
 	for idReg, nameReg := range CacheInfo.MapRegion {

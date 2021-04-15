@@ -1,7 +1,7 @@
 package chat
 
 import (
-	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/TLServer/internal/model/data"
 	"time"
 )
 
@@ -58,7 +58,9 @@ type Message struct {
 }
 
 //SaveMessage сохранение сообщения в БД
-func (m *Message) SaveMessage(db *sqlx.DB) error {
+func (m *Message) SaveMessage() error {
+	db, id := data.GetDB()
+	defer data.FreeDB(id)
 	_, err := db.Exec(`INSERT INTO public.chat (time, fromu, tou, message) VALUES ($1, $2, $3, $4)`, m.Time, m.From, m.To, m.Message)
 	if err != nil {
 		return err

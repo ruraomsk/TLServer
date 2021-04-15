@@ -82,8 +82,8 @@ func (privilege *Privilege) DisplayInfoForAdmin(accInfo *accToken.Token) u.Respo
 		//sqlStr += fmt.Sprintf(`and privilege::jsonb @> '{"region":"%s"}'::jsonb`, privilege.Region)
 		sqlStr += fmt.Sprintf(`where privilege::jsonb @> '{"region":"%s"}'::jsonb`, privilege.Region)
 	}
-	db := GetDB("DisplayInfoForAdmin")
-	defer FreeDB("DisplayInfoForAdmin")
+	db, id := GetDB()
+	defer FreeDB(id)
 	rowsTL, err := db.Query(sqlStr)
 	if err != nil {
 		return u.Message(http.StatusBadRequest, "display info: Bad request")
@@ -231,8 +231,8 @@ func (roleAccess *RoleAccess) ReadRoleAccessFile() (err error) {
 //ToSqlStrUpdate запись привилегий в базу
 func (privilege *Privilege) WriteRoleInBD(login string) (err error) {
 	privilegeStr, _ := json.Marshal(privilege)
-	db := GetDB("WriteRoleInBD")
-	defer FreeDB("WriteRoleInBD")
+	db, id := GetDB()
+	defer FreeDB(id)
 
 	_, err = db.Exec(`UPDATE public.accounts set privilege = $1 where login = $2`, string(privilegeStr), login)
 	return
@@ -241,8 +241,8 @@ func (privilege *Privilege) WriteRoleInBD(login string) (err error) {
 //ReadFromBD прочитать данные из бд и разобрать
 func (privilege *Privilege) ReadFromBD(login string) error {
 	var privilegeStr string
-	db := GetDB("ReadFromBD")
-	defer FreeDB("ReadFromBD")
+	db, id := GetDB()
+	defer FreeDB(id)
 	err := db.QueryRow(`SELECT privilege FROM public.accounts WHERE login = $1`, login).Scan(&privilegeStr)
 	if err != nil {
 		return err

@@ -3,7 +3,6 @@ package controlCross
 import (
 	"encoding/json"
 	"github.com/gorilla/websocket"
-	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/TLServer/internal/app/tcpConnect"
 	"github.com/ruraomsk/TLServer/internal/model/data"
 	"github.com/ruraomsk/TLServer/internal/sockets/crossSock"
@@ -31,7 +30,7 @@ func NewCrossHub() *HubControlCross {
 }
 
 //Run запуск хаба для controlCross
-func (h *HubControlCross) Run(db *sqlx.DB) {
+func (h *HubControlCross) Run() {
 	crossSock.GetArmUsersForDisplay = make(chan bool)
 	crossSock.CrArmUsersForDisplay = make(chan []crossSock.CrossInfo)
 	crossSock.DiscArmUsers = make(chan []crossSock.CrossInfo)
@@ -45,7 +44,7 @@ func (h *HubControlCross) Run(db *sqlx.DB) {
 			{
 				var regStatus = true
 				//проверка на существование такого перекрестка (сбос если нету)
-				_, err := crossSock.GetNewState(client.crossInfo.Pos, db)
+				_, err := crossSock.GetNewState(client.crossInfo.Pos)
 				if err != nil {
 					close(client.send)
 					_ = client.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, errCrossDoesntExist))
@@ -71,7 +70,7 @@ func (h *HubControlCross) Run(db *sqlx.DB) {
 					continue
 				}
 				//кромешный пи**** с созданием нормального клиента
-				resp, Idevice, description := takeControlInfo(client.crossInfo.Pos, db)
+				resp, Idevice, description := takeControlInfo(client.crossInfo.Pos)
 				client.crossInfo.Idevice = Idevice
 				client.crossInfo.Description = description
 				data.CacheInfo.Mux.Lock()

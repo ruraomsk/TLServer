@@ -11,8 +11,8 @@ import (
 //getCross запроса состояния перекрестков
 func getCross(reg int) []*CrossInfo {
 	var crosses = make([]*CrossInfo, 0)
-	db := data.GetDB("getCrossAlarm")
-	defer data.FreeDB("getCrossAlarm")
+	db, id := data.GetDB()
+	defer data.FreeDB(id)
 	w := fmt.Sprintf("SELECT device,state FROM public.devices LEFT JOIN public.\"cross\" ON public.devices.id = public.\"cross\".idevice WHERE public.\"cross\".region=%d;", reg)
 	rows, err := db.Query(w)
 	if err != nil {

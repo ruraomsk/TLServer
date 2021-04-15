@@ -3,7 +3,6 @@ package exchangeServ
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/TLServer/internal/model/exchangeData"
 	u "github.com/ruraomsk/TLServer/internal/utils"
 	"net/http"
@@ -11,7 +10,7 @@ import (
 )
 
 //SvgsHandler обработчик запроса svg
-func SvgsHandler(c *gin.Context, db *sqlx.DB) {
+func SvgsHandler(c *gin.Context) {
 	iDevicesStr := c.QueryArray("controller_id")
 	if len(iDevicesStr) <= 0 {
 		resp := u.Message(http.StatusBadRequest, "blank field: controller_id")
@@ -28,6 +27,6 @@ func SvgsHandler(c *gin.Context, db *sqlx.DB) {
 		}
 		iDevices = append(iDevices, id)
 	}
-	resp := exchangeData.GetSvgs(iDevices, db)
+	resp := exchangeData.GetSvgs(iDevices)
 	c.JSON(resp.Code, resp.Obj)
 }

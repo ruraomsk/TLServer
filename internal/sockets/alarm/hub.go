@@ -1,7 +1,6 @@
 package alarm
 
 import (
-	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/TLServer/internal/sockets"
 	"time"
 )
@@ -12,7 +11,6 @@ type HubAlarm struct {
 	broadcast  chan alarmResponse
 	register   chan *ClientAlarm
 	unregister chan *ClientAlarm
-	db         *sqlx.DB
 }
 
 //NewAlarmHub создание хаба
@@ -26,8 +24,7 @@ func NewAlarmHub() *HubAlarm {
 }
 
 //Run запуск хаба для techArm
-func (h *HubAlarm) Run(db *sqlx.DB) {
-	h.db = db
+func (h *HubAlarm) Run() {
 	UserLogoutAlarm = make(chan string)
 	sockets.DispatchMessageFromAnotherPlace = make(chan sockets.DBMessage, 50)
 

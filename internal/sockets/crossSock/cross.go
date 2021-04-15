@@ -34,8 +34,10 @@ var DiscCrossUsers chan []CrossInfo
 var DiscArmUsers chan []CrossInfo
 
 //GetNewState получение обновленного state
-func GetNewState(pos sockets.PosInfo, db *sqlx.DB) (agspudge.Cross, error) {
+func GetNewState(pos sockets.PosInfo) (agspudge.Cross, error) {
 	var stateStr string
+	db, id := data.GetDB()
+	defer data.FreeDB(id)
 	rowsTL := db.QueryRow(`SELECT state FROM public.cross WHERE region = $1 and id = $2 and area = $3`, pos.Region, pos.Id, pos.Area)
 	_ = rowsTL.Scan(&stateStr)
 	rState, err := ConvertStateStrToStruct(stateStr)
@@ -60,8 +62,8 @@ func TestCrossStateData(accInfo *accToken.Token) u.Response {
 		stateInfo []deviceLog.BusyArm
 		state     deviceLog.BusyArm
 	)
-	db := data.GetDB("TestCrossStateData")
-	defer data.FreeDB("TestCrossStateData")
+	db, id := data.GetDB()
+	defer data.FreeDB(id)
 
 	sqlStr := fmt.Sprintf(`SELECT state FROM public.cross `)
 	if accInfo.Region != "*" {

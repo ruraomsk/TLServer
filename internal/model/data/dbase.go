@@ -43,28 +43,34 @@ var (
 		end
 		$$ language plpgsql;`
 
-	db *sqlx.DB
 	//FirstCreate флаг первого создания базы
 	FirstCreate bool
 )
-var dbMap map[string]*sqlx.DB
+
+type usedDb struct {
+	db   *sqlx.DB
+	used bool
+}
+
+var dbPool []usedDb
 var mutex sync.Mutex
 var first = true
 
 //ConnectDB подключение к БД
-func ConnectDB() (*sqlx.DB, error) {
+func ConnectDB() error {
 	if first {
-		dbMap = make(map[string]*sqlx.DB)
+		dbPool = make([]usedDb, 0)
 		first = false
+		for i := 0; i < config.GlobalConfig.DBConfig.SetMaxOpenConst; i++ {
+			conn, err := sqlx.Open(config.GlobalConfig.DBConfig.Type, config.GlobalConfig.DBConfig.GetDBurl())
+			if err != nil {
+				return err
+			}
+			dbPool = append(dbPool, usedDb{db: conn, used: false})
+		}
 	}
-	conn, err := sqlx.Open(config.GlobalConfig.DBConfig.Type, config.GlobalConfig.DBConfig.GetDBurl())
-	if err != nil {
-		return nil, err
-	}
-
-	db = conn
-
-	_, err = db.Exec(`SELECT * FROM public.accounts;`)
+	db, id := GetDB()
+	_, err := db.Exec(`SELECT * FROM public.accounts;`)
 	if err != nil {
 		fmt.Println("accounts table not found - created")
 		logger.Info.Println("|Message: accounts table not found - created")
@@ -79,33 +85,29 @@ func ConnectDB() (*sqlx.DB, error) {
 		logger.Info.Println("|Message: chat table not found - created")
 		db.MustExec(chatTable)
 	}
-	return db, nil
+	FreeDB(id)
+	return nil
 }
 
 //GetDB обращение к БД
-func GetDB(name string) *sqlx.DB {
+func GetDB() (db *sqlx.DB, id int) {
 	mutex.Lock()
 	defer mutex.Unlock()
-	conn, is := dbMap[name]
-	if is {
-		logger.Debug.Printf("Повторное открытие %s ", name)
-		delete(dbMap, name)
-		conn.Close()
+	for i, d := range dbPool {
+		if !d.used {
+			dbPool[i].used = true
+			return d.db, i
+		}
 	}
-	conn, err := sqlx.Open(config.GlobalConfig.DBConfig.Type, config.GlobalConfig.DBConfig.GetDBurl())
-	if err != nil {
-		logger.Error.Printf("Ошибка открытия БД %s ", err.Error())
-		return nil
-	}
-	dbMap[name] = conn
-	return conn
+	logger.Error.Printf("dbase закончился пул соединений")
+	return nil, 0
 }
-func FreeDB(name string) {
+func FreeDB(id int) {
 	mutex.Lock()
 	defer mutex.Unlock()
-	conn, is := dbMap[name]
-	if is {
-		conn.Close()
+	if id < 0 || id >= len(dbPool) {
+		logger.Error.Printf("dbase freeDb неверный индекс %d", id)
+		return
 	}
-	delete(dbMap, name)
+	dbPool[id].used = false
 }

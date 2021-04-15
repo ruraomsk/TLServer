@@ -1,7 +1,6 @@
 package mainMap
 
 import (
-	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/TLServer/internal/app/tcpConnect"
 	"github.com/ruraomsk/TLServer/internal/model/accToken"
 	"github.com/ruraomsk/TLServer/internal/model/data"
@@ -30,7 +29,7 @@ func NewMainMapHub() *HubMainMap {
 }
 
 //Run запуск хаба для mainMap
-func (h *HubMainMap) Run(db *sqlx.DB) {
+func (h *HubMainMap) Run() {
 	UserLogoutGS = make(chan string, 5)
 	data.AccAction = make(chan string, 50)
 	license.LogOutAllFromLicense = make(chan bool)
@@ -41,14 +40,14 @@ func (h *HubMainMap) Run(db *sqlx.DB) {
 		checkValidityTicker.Stop()
 	}()
 
-	oldTFs := maps.SelectTL(db)
+	oldTFs := maps.SelectTL()
 
 	for {
 		select {
 		case <-crossReadTick.C:
 			{
 				if len(h.clients) > 0 {
-					newTFs := maps.SelectTL(db)
+					newTFs := maps.SelectTL()
 					if len(newTFs) != len(oldTFs) {
 						resp := newMapMess(typeRepaint, nil)
 						resp.Data["tflight"] = newTFs
@@ -103,7 +102,7 @@ func (h *HubMainMap) Run(db *sqlx.DB) {
 		case client := <-h.register:
 			{
 				{
-					flag, tk := checkToken(client.cookie, client.cInfo.IP, db)
+					flag, tk := checkToken(client.cookie, client.cInfo.IP)
 					resp := newMapMess(typeMapInfo, maps.MapOpenInfo())
 					if flag {
 						resp.Data["role"] = tk.Role
@@ -166,7 +165,7 @@ func (h *HubMainMap) Run(db *sqlx.DB) {
 		case login := <-data.AccAction:
 			{
 				respLO := newMapMess(typeLogOut, nil)
-				status := logOut(login, db)
+				status := logOut(login)
 				if status {
 					respLO.Data["authorizedFlag"] = false
 				}
@@ -183,7 +182,7 @@ func (h *HubMainMap) Run(db *sqlx.DB) {
 					if client.cookie != "" {
 						if client.cInfo.Valid() != nil {
 							resp := newMapMess(typeLogOut, nil)
-							status := logOut(client.cInfo.Login, db)
+							status := logOut(client.cInfo.Login)
 							if status {
 								resp.Data["authorizedFlag"] = false
 							}

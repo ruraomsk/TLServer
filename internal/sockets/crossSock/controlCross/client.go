@@ -5,7 +5,6 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/ruraomsk/TLServer/internal/app/tcpConnect"
 	"github.com/ruraomsk/TLServer/internal/model/crossCreator"
-	"github.com/ruraomsk/TLServer/internal/model/data"
 	"github.com/ruraomsk/TLServer/internal/sockets"
 	"github.com/ruraomsk/TLServer/internal/sockets/crossSock"
 	"github.com/ruraomsk/TLServer/logger"
@@ -39,8 +38,6 @@ var UserLogoutCrControl chan string
 
 //readPump обработчик чтения сокета
 func (c *ClientControlCr) readPump() {
-	db := data.GetDB("ClientControlCr")
-	defer data.FreeDB("ClientControlCr")
 	_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error { _ = c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 
@@ -65,7 +62,7 @@ func (c *ClientControlCr) readPump() {
 				temp := StateHandler{}
 				_ = json.Unmarshal(p, &temp)
 				resp := newControlMess(typeSendB, nil)
-				resp.Data = sendCrossData(temp.State, c.crossInfo.Idevice, c.crossInfo.Pos, c.crossInfo.AccInfo.Login, db)
+				resp.Data = sendCrossData(temp.State, c.crossInfo.Idevice, c.crossInfo.Pos, c.crossInfo.AccInfo.Login)
 				if len(resp.Data) > 0 {
 					c.send <- resp
 				} else {
@@ -86,7 +83,7 @@ func (c *ClientControlCr) readPump() {
 			{
 				temp := StateHandler{}
 				_ = json.Unmarshal(p, &temp)
-				resp := checkCrossData(temp.State, db)
+				resp := checkCrossData(temp.State)
 				c.send <- resp
 			}
 		case typeCreateB: //создание перекрестка
@@ -94,7 +91,7 @@ func (c *ClientControlCr) readPump() {
 				temp := StateHandler{}
 				_ = json.Unmarshal(p, &temp)
 				resp := newControlMess(typeCreateB, nil)
-				resp.Data = createCrossData(temp.State, c.crossInfo.Pos, c.crossInfo.AccInfo.Login, temp.Z, db)
+				resp.Data = createCrossData(temp.State, c.crossInfo.Pos, c.crossInfo.AccInfo.Login, temp.Z)
 				c.send <- resp
 			}
 		case typeDeleteB: //удаление state
@@ -117,7 +114,7 @@ func (c *ClientControlCr) readPump() {
 		case typeUpdateB: //обновление state
 			{
 				resp := newControlMess(typeUpdateB, nil)
-				resp, _, _ = takeControlInfo(c.crossInfo.Pos, db)
+				resp, _, _ = takeControlInfo(c.crossInfo.Pos)
 				resp.Data["edit"] = c.crossInfo.Edit
 				c.send <- resp
 			}

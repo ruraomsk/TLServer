@@ -31,8 +31,8 @@ func GetAllTrafficLights() (tfData []TrafficLights) {
 	var dgis string
 	temp := &TrafficLights{}
 	sqlStr := fmt.Sprintf("SELECT region, id, area, dgis, describ FROM public.cross")
-	db := GetDB("GetAllTrafficLights")
-	defer FreeDB("GetAllTrafficLights")
+	db, id := GetDB()
+	defer FreeDB(id)
 
 	rows, err := db.Query(sqlStr)
 	if err != nil {
@@ -63,8 +63,8 @@ func (l *Locations) MakeBoxPoint() (box locations.BoxPoint, err error) {
 		tempStr += ")"
 		sqlStr += tempStr
 	}
-	db := GetDB("MakeBoxPoint")
-	defer FreeDB("MakeBoxPoint")
+	db, id := GetDB()
+	defer FreeDB(id)
 
 	row := db.QueryRow(sqlStr)
 	err = row.Scan(&box.Point0.Y, &box.Point0.X, &box.Point1.Y, &box.Point1.X)

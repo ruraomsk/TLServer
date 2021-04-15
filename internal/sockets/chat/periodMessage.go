@@ -2,7 +2,7 @@ package chat
 
 import (
 	"encoding/json"
-	"github.com/jmoiron/sqlx"
+	"github.com/ruraomsk/TLServer/internal/model/data"
 	"time"
 )
 
@@ -15,7 +15,9 @@ type ArchiveMessages struct {
 }
 
 //takeArchive запросить архив сообщений из БД
-func (a *ArchiveMessages) takeArchive(db *sqlx.DB) error {
+func (a *ArchiveMessages) takeArchive() error {
+	db, id := data.GetDB()
+	defer data.FreeDB(id)
 	rows, err := db.Query(`SELECT time, fromu, tou, message FROM public.chat WHERE time < $1 AND time > $2 AND tou = $3`, a.TimeStart.Format("2006-01-02 15:04:05"), a.TimeEnd.Format("2006-01-02 15:04:05"), a.To)
 	if err != nil {
 		return err

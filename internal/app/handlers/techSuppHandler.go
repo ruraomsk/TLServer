@@ -21,7 +21,8 @@ var TechSupp = func(c *gin.Context) {
 	}
 	accTK, _ := c.Get("tk")
 	accInfo, _ := accTK.(*accToken.Token)
-	resp := techSupport.SendEmail(emailInfo, accInfo.Login, license.LicenseFields.CompanyName, license.LicenseFields.Address, data.GetDB("TechSupp"))
-	data.FreeDB("TechSupp")
+	db, id := data.GetDB()
+	resp := techSupport.SendEmail(emailInfo, accInfo.Login, license.LicenseFields.CompanyName, license.LicenseFields.Address, db)
+	data.FreeDB(id)
 	u.SendRespond(c, resp)
 }

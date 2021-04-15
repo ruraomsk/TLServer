@@ -157,8 +157,9 @@ func MakeSelectedDir(selData SelectedData) u.Response {
 					continue
 				}
 				if !selData.SelectedData[numFirst][numSecond][numCheck].PngStatus {
-					point, err := locations.TakePointFromBD(numFirst, numSecond, check.ID, data.GetDB("TakePointFromBD"))
-					data.FreeDB("TakePointFromBD")
+					db, id := data.GetDB()
+					point, err := locations.TakePointFromBD(numFirst, numSecond, check.ID, db)
+					data.FreeDB(id)
 					if err != nil {
 						logger.Error.Println(fmt.Sprintf("|Message: No result at point: (%v//%v//%v)", numFirst, numSecond, check.ID))
 						if count == 0 {
