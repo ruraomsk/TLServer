@@ -10,8 +10,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ruraomsk/TLServer/internal/model/locations"
-
 	u "github.com/ruraomsk/TLServer/internal/utils"
 	"github.com/ruraomsk/TLServer/logger"
 )
@@ -157,9 +155,7 @@ func MakeSelectedDir(selData SelectedData) u.Response {
 					continue
 				}
 				if !selData.SelectedData[numFirst][numSecond][numCheck].PngStatus {
-					db, id := data.GetDB()
-					point, err := locations.TakePointFromBD(numFirst, numSecond, check.ID, db)
-					data.FreeDB(id)
+					point, err := data.TakePointFromBD(numFirst, numSecond, check.ID)
 					if err != nil {
 						logger.Error.Println(fmt.Sprintf("|Message: No result at point: (%v//%v//%v)", numFirst, numSecond, check.ID))
 						if count == 0 {
@@ -191,7 +187,7 @@ func MakeSelectedDir(selData SelectedData) u.Response {
 func ShortCreateDirPng(region, area, id, z int, pointStr string) bool {
 	var (
 		pngSettings PngSettings
-		point       locations.Point
+		point       data.Point
 	)
 	pngSettings.stockData()
 	point.StrToFloat(pointStr)
@@ -248,7 +244,7 @@ var (
 )
 
 //createPng создание png файла
-func createPng(numReg, numArea, id string, settings PngSettings, point locations.Point) (err error) {
+func createPng(numReg, numArea, id string, settings PngSettings, point data.Point) (err error) {
 	url := fmt.Sprintf("https://static-maps.yandex.ru/1.x/?ll=%3.15f,%3.15f&z=%v&l=map&size=%v,%v", point.X, point.Y, settings.Z, settings.SizeX, settings.SizeY)
 	response, err := http.Get(url)
 	if err != nil {

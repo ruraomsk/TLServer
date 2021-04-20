@@ -4,10 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ruraomsk/TLServer/internal/model/accToken"
+	"github.com/ruraomsk/TLServer/internal/model/data"
 	"net/http"
 	"time"
-
-	"github.com/jmoiron/sqlx"
 
 	u "github.com/ruraomsk/TLServer/internal/utils"
 	"github.com/ruraomsk/TLServer/logger"
@@ -55,7 +54,9 @@ func (busyArm *BusyArm) toStruct(str string) (err error) {
 }
 
 //DisplayDeviceLog формирование начальной информации отображения логов устройства
-func DisplayDeviceLog(accInfo *accToken.Token, db *sqlx.DB) u.Response {
+func DisplayDeviceLog(accInfo *accToken.Token) u.Response {
+	db, id := data.GetDB()
+	defer data.FreeDB(id)
 	var devices []BusyArm
 	var sqlStr = fmt.Sprintf(`SELECT distinct on (crossinfo->'region', crossinfo->'area', crossinfo->'ID', id) crossinfo, id FROM public.logdevice`)
 	if accInfo.Region != "*" {
@@ -93,7 +94,9 @@ func DisplayDeviceLog(accInfo *accToken.Token, db *sqlx.DB) u.Response {
 }
 
 //DisplayDeviceLogInfo обработчик запроса пользователя, выгрузка логов за запрошенный период
-func DisplayDeviceLogInfo(arms LogDeviceInfo, db *sqlx.DB) u.Response {
+func DisplayDeviceLogInfo(arms LogDeviceInfo) u.Response {
+	db, id := data.GetDB()
+	defer data.FreeDB(id)
 	if len(arms.Devices) <= 0 {
 		return u.Message(http.StatusBadRequest, "no one devices selected")
 	}

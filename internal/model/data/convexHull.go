@@ -1,4 +1,4 @@
-package locations
+package data
 
 import (
 	"sort"

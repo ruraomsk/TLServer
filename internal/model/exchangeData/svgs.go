@@ -20,8 +20,8 @@ func GetSvgs(iDevice []int) u.Response {
 	var (
 		SvgsList = make([]svgData, 0)
 	)
-	db, id := data.GetDB()
-	defer data.FreeDB(id)
+	db, id := data.GetDBX()
+	defer data.FreeDBX(id)
 	query, args, err := sqlx.In(`SELECT region, area, id, idevice FROM public.cross WHERE idevice IN (?)`, iDevice)
 	if err != nil {
 		return u.Message(http.StatusInternalServerError, "error formatting IN query")

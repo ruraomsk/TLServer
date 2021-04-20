@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"github.com/ruraomsk/TLServer/internal/model/accToken"
-	"github.com/ruraomsk/TLServer/internal/model/data"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -21,8 +20,6 @@ var TechSupp = func(c *gin.Context) {
 	}
 	accTK, _ := c.Get("tk")
 	accInfo, _ := accTK.(*accToken.Token)
-	db, id := data.GetDB()
-	resp := techSupport.SendEmail(emailInfo, accInfo.Login, license.LicenseFields.CompanyName, license.LicenseFields.Address, db)
-	data.FreeDB(id)
+	resp := techSupport.SendEmail(emailInfo, accInfo.Login, license.LicenseFields.CompanyName, license.LicenseFields.Address)
 	u.SendRespond(c, resp)
 }

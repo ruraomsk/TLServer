@@ -14,8 +14,8 @@ func GetStates(iDevice []int) u.Response {
 	var (
 		statesList = make([]pudge.Cross, 0)
 	)
-	db, id := data.GetDB()
-	defer data.FreeDB(id)
+	db, id := data.GetDBX()
+	defer data.FreeDBX(id)
 	query, args, err := sqlx.In(`SELECT state FROM public.cross WHERE idevice IN (?)`, iDevice)
 	if err != nil {
 		return u.Message(http.StatusInternalServerError, "error formatting IN query")

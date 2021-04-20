@@ -3,11 +3,11 @@ package serverLog
 import (
 	"fmt"
 	"github.com/ruraomsk/TLServer/internal/model/accToken"
+	"github.com/ruraomsk/TLServer/internal/model/data"
 	"io/ioutil"
 	"net/http"
 	"strings"
 
-	"github.com/jmoiron/sqlx"
 	u "github.com/ruraomsk/TLServer/internal/utils"
 	"github.com/ruraomsk/TLServer/logger"
 )
@@ -42,7 +42,9 @@ func DisplayServerLogFiles(logPath string) u.Response {
 }
 
 //DisplayServerFileLog получение данных из заданного файла
-func DisplayServerFileLog(fileName, logPath string, accInfo *accToken.Token, db *sqlx.DB) u.Response {
+func DisplayServerFileLog(fileName, logPath string, accInfo *accToken.Token) u.Response {
+	db, id := data.GetDB()
+	defer data.FreeDB(id)
 	path := logPath + "//" + fileName + logFileSuffix
 	byteFile, err := ioutil.ReadFile(path)
 	if err != nil {

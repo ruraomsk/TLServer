@@ -14,10 +14,7 @@ import (
 var DisplayDeviceLogFile = func(c *gin.Context) {
 	accTK, _ := c.Get("tk")
 	accInfo, _ := accTK.(*accToken.Token)
-	db, id := data.GetDB()
-
-	resp := deviceLog.DisplayDeviceLog(accInfo, db)
-	data.FreeDB(id)
+	resp := deviceLog.DisplayDeviceLog(accInfo)
 	data.CacheInfo.Mux.Lock()
 	resp.Obj["regionInfo"] = data.CacheInfo.MapRegion
 	resp.Obj["areaInfo"] = data.CacheInfo.MapArea
@@ -32,8 +29,6 @@ var LogDeviceInfo = func(c *gin.Context) {
 		u.SendRespond(c, u.Message(http.StatusBadRequest, "Invalid request"))
 		return
 	}
-	db, id := data.GetDB()
-	resp := deviceLog.DisplayDeviceLogInfo(*arm, db)
-	data.FreeDB(id)
+	resp := deviceLog.DisplayDeviceLogInfo(*arm)
 	u.SendRespond(c, resp)
 }

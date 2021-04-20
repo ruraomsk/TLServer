@@ -1,6 +1,7 @@
 package data
 
 import (
+	"database/sql"
 	"fmt"
 	"sync"
 
@@ -48,10 +49,15 @@ var (
 )
 
 type usedDb struct {
+	db   *sql.DB
+	used bool
+}
+type usedDbx struct {
 	db   *sqlx.DB
 	used bool
 }
 
+var dbxPool []usedDbx
 var dbPool []usedDb
 var mutex sync.Mutex
 var first = true
@@ -62,14 +68,11 @@ func ConnectDB() error {
 		dbPool = make([]usedDb, 0)
 		first = false
 		for i := 0; i < config.GlobalConfig.DBConfig.SetMaxOpenConst; i++ {
-			conn, err := sqlx.Open(config.GlobalConfig.DBConfig.Type, config.GlobalConfig.DBConfig.GetDBurl())
-			if err != nil {
-				return err
-			}
-			dbPool = append(dbPool, usedDb{db: conn, used: false})
+			dbPool = append(dbPool, usedDb{db: nil, used: false})
+			dbxPool = append(dbxPool, usedDbx{db: nil, used: false})
 		}
 	}
-	db, id := GetDB()
+	db, id := GetDBX()
 	_, err := db.Exec(`SELECT * FROM public.accounts;`)
 	if err != nil {
 		fmt.Println("accounts table not found - created")
@@ -85,18 +88,27 @@ func ConnectDB() error {
 		logger.Info.Println("|Message: chat table not found - created")
 		db.MustExec(chatTable)
 	}
-	FreeDB(id)
+	FreeDBX(id)
 	return nil
 }
 
 //GetDB обращение к БД
-func GetDB() (db *sqlx.DB, id int) {
+func GetDB() (db *sql.DB, id int) {
 	mutex.Lock()
 	defer mutex.Unlock()
+	var err error
 	for i, d := range dbPool {
 		if !d.used {
+			//logger.Info.Printf("Выдали %d", i)
+			dbPool[i].db, err = sql.Open(config.GlobalConfig.DBConfig.Type, config.GlobalConfig.DBConfig.GetDBurl())
+			if err != nil {
+				logger.Error.Printf("dbase getdb %s", err.Error())
+
+				return nil, 0
+			}
+			dbPool[i].db.SetMaxOpenConns(1)
 			dbPool[i].used = true
-			return d.db, i
+			return dbPool[i].db, i
 		}
 	}
 	logger.Error.Printf("dbase закончился пул соединений")
@@ -109,5 +121,40 @@ func FreeDB(id int) {
 		logger.Error.Printf("dbase freeDb неверный индекс %d", id)
 		return
 	}
+	//logger.Info.Printf("Освободили %d", id)
+	dbPool[id].db.Close()
 	dbPool[id].used = false
+}
+
+//GetDB обращение к БД
+func GetDBX() (db *sqlx.DB, id int) {
+	mutex.Lock()
+	defer mutex.Unlock()
+	var err error
+	for i, d := range dbxPool {
+		if !d.used {
+			//logger.Info.Printf("Выдали dbx %d", i)
+			dbxPool[i].db, err = sqlx.Open(config.GlobalConfig.DBConfig.Type, config.GlobalConfig.DBConfig.GetDBurl())
+			if err != nil {
+				logger.Error.Printf("dbase getdb %s", err.Error())
+				return nil, 0
+			}
+			dbxPool[i].db.SetMaxOpenConns(1)
+			dbxPool[i].used = true
+			return dbxPool[i].db, i
+		}
+	}
+	logger.Error.Printf("dbasex закончился пул соединений")
+	return nil, 0
+}
+func FreeDBX(id int) {
+	mutex.Lock()
+	defer mutex.Unlock()
+	if id < 0 || id >= len(dbxPool) {
+		logger.Error.Printf("dbase freeDbx неверный индекс %d", id)
+		return
+	}
+	//logger.Info.Printf("Освободили x %d", id)
+	dbxPool[id].db.Close()
+	dbxPool[id].used = false
 }

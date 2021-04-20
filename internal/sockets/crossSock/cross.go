@@ -3,7 +3,6 @@ package crossSock
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/jmoiron/sqlx"
 	"github.com/ruraomsk/TLServer/internal/model/accToken"
 	"github.com/ruraomsk/TLServer/internal/model/data"
 	"github.com/ruraomsk/TLServer/internal/model/deviceLog"
@@ -83,7 +82,7 @@ func TestCrossStateData(accInfo *accToken.Token) u.Response {
 			return u.Message(http.StatusInternalServerError, "failed to parse cross information")
 		}
 		var verif stateVerified.StateResult
-		VerifiedState(&testState, &verif, db)
+		VerifiedState(&testState, &verif)
 		if verif.Err != nil {
 			state.ID = testState.ID
 			state.Region = strconv.Itoa(testState.Region)
@@ -98,8 +97,8 @@ func TestCrossStateData(accInfo *accToken.Token) u.Response {
 }
 
 //VerifiedState набор проверкок для стейта
-func VerifiedState(cross *agspudge.Cross, result *stateVerified.StateResult, db *sqlx.DB) {
-	resultMainWind := stateVerified.MainWindVerified(cross, db)
+func VerifiedState(cross *agspudge.Cross, result *stateVerified.StateResult) {
+	resultMainWind := stateVerified.MainWindVerified(cross)
 	appendResult(result, resultMainWind)
 	resultPK := stateVerified.PkVerified(cross)
 	appendResult(result, resultPK)

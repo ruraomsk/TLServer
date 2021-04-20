@@ -1,7 +1,6 @@
 package data
 
 import (
-	"github.com/ruraomsk/TLServer/internal/model/locations"
 	"sync"
 	"time"
 
@@ -12,7 +11,7 @@ import (
 var CacheInfo CacheData
 
 //CacheArea глобальная переменная для обращения к данным области
-var CacheArea locations.AreaOnMap
+var CacheArea AreaOnMap
 
 //CacheData Данные для обновления в определенный период
 type CacheData struct {
@@ -82,7 +81,7 @@ func CacheInfoDataUpdate() {
 
 //FillMapAreaBox заполнение мапы районов и регионов с координатами
 func FillMapAreaZone() {
-	tempAreaCache := make([]locations.AreaZone, 0)
+	tempAreaCache := make([]AreaZone, 0)
 	//запрос уникальных регионов и районов
 	db, id := GetDB()
 	defer FreeDB(id)
@@ -93,13 +92,13 @@ func FillMapAreaZone() {
 	}
 	for rows.Next() {
 		var (
-			temp     locations.AreaZone
+			temp     AreaZone
 			arrayStr string
 		)
 		_ = rows.Scan(&temp.Region, &temp.Area, &arrayStr)
 		temp.Zone.ParseFromStr(arrayStr)
 		temp.Zone = temp.Zone.ConvexHull()
-		temp.Sub = make([]locations.SybAreaZone, 0)
+		temp.Sub = make([]SybAreaZone, 0)
 		tempAreaCache = append(tempAreaCache, temp)
 	}
 
@@ -111,7 +110,7 @@ func FillMapAreaZone() {
 	}
 	for rows.Next() {
 		var (
-			tempSyb  locations.SybAreaZone
+			tempSyb  SybAreaZone
 			reg      string
 			area     string
 			arrayStr string

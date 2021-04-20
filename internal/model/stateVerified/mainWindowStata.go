@@ -3,12 +3,11 @@ package stateVerified
 import (
 	"errors"
 	"fmt"
-	"github.com/jmoiron/sqlx"
 	agspudge "github.com/ruraomsk/ag-server/pudge"
 )
 
 // MainWindVerified проверка основной страницы
-func MainWindVerified(cross *agspudge.Cross, db *sqlx.DB) (result StateResult) {
+func MainWindVerified(cross *agspudge.Cross) (result StateResult) {
 	model := cross.Model
 	result.SumResult = append(result.SumResult, "Проверка: Основной вкладки")
 

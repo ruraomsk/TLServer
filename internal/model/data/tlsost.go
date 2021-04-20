@@ -3,21 +3,20 @@ package data
 import (
 	"errors"
 	"fmt"
-	"github.com/ruraomsk/TLServer/internal/model/locations"
 	"github.com/ruraomsk/TLServer/logger"
 )
 
 //TrafficLights информация о светофоре
 type TrafficLights struct {
-	ID          int             `json:"ID"`          //Уникальный ID светофора
-	Region      RegionInfo      `json:"region"`      //Регион
-	Area        AreaInfo        `json:"area"`        //Район
-	Subarea     int             `json:"subarea"`     //ПодРайон
-	Idevice     int             `json:"idevice"`     //Реальный номер устройства
-	Sost        TLSostInfo      `json:"tlsost"`      //Состояние светофора
-	Description string          `json:"description"` //Описание светофора
-	Phases      []int           `json:"phases"`      //Доступные фазы
-	Points      locations.Point `json:"points"`      //Координата где находится светофор
+	ID          int        `json:"ID"`          //Уникальный ID светофора
+	Region      RegionInfo `json:"region"`      //Регион
+	Area        AreaInfo   `json:"area"`        //Район
+	Subarea     int        `json:"subarea"`     //ПодРайон
+	Idevice     int        `json:"idevice"`     //Реальный номер устройства
+	Sost        TLSostInfo `json:"tlsost"`      //Состояние светофора
+	Description string     `json:"description"` //Описание светофора
+	Phases      []int      `json:"phases"`      //Доступные фазы
+	Points      Point      `json:"points"`      //Координата где находится светофор
 }
 
 //Locations информация о запрашиваемом регионе и районе карты
@@ -48,7 +47,7 @@ func GetAllTrafficLights() (tfData []TrafficLights) {
 }
 
 //MakeBoxPoint расчет координат для перемещения по карте
-func (l *Locations) MakeBoxPoint() (box locations.BoxPoint, err error) {
+func (l *Locations) MakeBoxPoint() (box BoxPoint, err error) {
 	var sqlStr = `SELECT Min(dgis[0]) as "Y0", Min(convTo360(dgis[1])) as "X0", Max(dgis[0]) as "Y1", Max(convTo360(dgis[1])) as "X1"  FROM public."cross"`
 	if l.Region != "" {
 		tempStr := " WHERE "

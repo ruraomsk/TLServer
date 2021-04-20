@@ -11,6 +11,7 @@ import (
 	"github.com/ruraomsk/TLServer/internal/sockets/chat"
 	"github.com/ruraomsk/TLServer/internal/sockets/crossSock/controlCross"
 	"github.com/ruraomsk/TLServer/internal/sockets/crossSock/mainCross"
+	"github.com/ruraomsk/TLServer/internal/sockets/maps/dispatchControl"
 	"github.com/ruraomsk/TLServer/internal/sockets/maps/greenStreet"
 	"github.com/ruraomsk/TLServer/internal/sockets/maps/mainMap"
 	"github.com/ruraomsk/TLServer/internal/sockets/techArm"
@@ -37,6 +38,7 @@ func MainServer(conf *ServerConf) (srvHttp *http.Server, srvHttps *http.Server) 
 	alarmHub := alarm.NewAlarmHub()
 	xctrlHub := xctrl.NewXctrlHub()
 	gsHub := greenStreet.NewGSHub()
+	dcHub := dispatchControl.NewDCHub()
 	chatHub := chat.NewChatHub()
 
 	go device.StartReadDevices()
@@ -48,6 +50,7 @@ func MainServer(conf *ServerConf) (srvHttp *http.Server, srvHttps *http.Server) 
 	go xctrlHub.Run()
 	go gsHub.Run()
 	go chatHub.Run()
+	go dcHub.Run()
 
 	// Создаем engine для соединений
 	gin.SetMode(gin.ReleaseMode)
@@ -138,6 +141,13 @@ func MainServer(conf *ServerConf) (srvHttp *http.Server, srvHttps *http.Server) 
 	})
 	mainRouter.GET("/:slug/greenStreetW", func(c *gin.Context) {
 		greenStreet.HGStreet(c, gsHub)
+	})
+	//Диспетчерское управление (свободное ЗУ)
+	mainRouter.GET("/:slug/dispatchControl", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "dispatchControl.html", gin.H{"yaKey": license.LicenseFields.YaKey})
+	})
+	mainRouter.GET("/:slug/dispatchControlW", func(c *gin.Context) {
+		dispatchControl.HDispatchControl(c, dcHub)
 	})
 
 	//CharPoints

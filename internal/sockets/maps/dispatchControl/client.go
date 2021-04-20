@@ -1,4 +1,4 @@
-package greenStreet
+package dispatchControl
 
 import (
 	"encoding/json"
@@ -7,7 +7,6 @@ import (
 	"github.com/ruraomsk/TLServer/internal/model/accToken"
 	"github.com/ruraomsk/TLServer/internal/model/data"
 	"github.com/ruraomsk/TLServer/internal/model/device"
-	"github.com/ruraomsk/TLServer/internal/model/routeGS"
 	"github.com/ruraomsk/TLServer/internal/sockets"
 	"github.com/ruraomsk/TLServer/internal/sockets/maps"
 	"github.com/ruraomsk/TLServer/logger"
@@ -30,11 +29,11 @@ const (
 	checkTokensValidity = time.Minute * 1
 )
 
-//ClientGS информация о подключившемся пользователе
-type ClientGS struct {
-	hub        *HubGStreet
+//ClientDC информация о подключившемся пользователе
+type ClientDC struct {
+	hub        *HubDispCtrl
 	conn       *websocket.Conn
-	send       chan gSResponse
+	send       chan dCResponse
 	cInfo      *accToken.Token
 	devices    []int
 	sendPhases bool
@@ -45,27 +44,20 @@ type Phase struct {
 }
 
 //readPump обработчик чтения сокета
-func (c *ClientGS) readPump() {
+func (c *ClientDC) readPump() {
 	//db := data.GetDB("ClientGS")
 	//defer data.FreeDB("ClientGS")
 	_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error { _ = c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	{
-		//logger.Debug.Printf("Клиент %s",c.cInfo.Login)
-		resp := newGSMess(typeMapInfo, maps.MapOpenInfo())
-		//logger.Debug.Printf("Клиент %s mapOpenInfo",c.cInfo.Login)
-		resp.Data["routes"] = getAllModes()
-		//logger.Debug.Printf("Клиент %s getAllModes",c.cInfo.Login)
+		resp := newDCMess(typeMapInfo, maps.MapOpenInfo())
 		data.CacheArea.Mux.Lock()
 		resp.Data["areaZone"] = data.CacheArea.Areas
 		data.CacheArea.Mux.Unlock()
-		//logger.Debug.Printf("Клиент %s Areas",c.cInfo.Login)
 		if c.sendPhases {
 			resp.Data[typePhases] = getPhases(c.devices)
-			//logger.Debug.Printf("Клиент %s Phases",c.cInfo.Login)
 		}
 		c.send <- resp
-		//logger.Debug.Print("Send %s",c.cInfo.Login)
 	}
 
 	for {
@@ -78,62 +70,18 @@ func (c *ClientGS) readPump() {
 		typeSelect, err := sockets.ChoseTypeMessage(p)
 		if err != nil {
 			logger.Error.Printf("|IP: %v |Login: %v |Resource: /greenStreet |Message: %v \n", c.cInfo.IP, c.cInfo.Login, err.Error())
-			resp := newGSMess(typeError, nil)
+			resp := newDCMess(typeError, nil)
 			resp.Data["message"] = ErrorMessage{Error: errParseType}
 			c.send <- resp
 			continue
 		}
 		switch typeSelect {
-		case typeCreateRout:
-			{
-				temp := routeGS.Route{}
-				_ = json.Unmarshal(p, &temp)
-				resp := newGSMess(typeCreateRout, nil)
-				err := temp.Create()
-
-				if err != nil {
-					resp.Data[typeError] = err.Error()
-					c.send <- resp
-				} else {
-					resp.Data["route"] = temp
-					resp.Data["login"] = c.cInfo.Login
-					c.hub.broadcast <- resp
-				}
-			}
-		case typeUpdateRout:
-			{
-				temp := routeGS.Route{}
-				_ = json.Unmarshal(p, &temp)
-				resp := newGSMess(typeUpdateRout, nil)
-				err := temp.Update()
-				if err != nil {
-					resp.Data[typeError] = err.Error()
-					c.send <- resp
-				} else {
-					resp.Data["route"] = temp
-					c.hub.broadcast <- resp
-				}
-			}
-		case typeDeleteRout:
-			{
-				temp := routeGS.Route{}
-				_ = json.Unmarshal(p, &temp)
-				resp := newGSMess(typeDeleteRout, nil)
-				err := temp.Delete()
-				if err != nil {
-					resp.Data[typeError] = err.Error()
-					c.send <- resp
-				} else {
-					resp.Data["route"] = temp
-					c.hub.broadcast <- resp
-				}
-			}
 		case typeJump: //отправка default
 			{
 				location := &data.Locations{}
 				_ = json.Unmarshal(p, &location)
 				box, _ := location.MakeBoxPoint()
-				resp := newGSMess(typeJump, nil)
+				resp := newDCMess(typeJump, nil)
 				resp.Data["boxPoint"] = box
 				c.send <- resp
 			}
@@ -141,6 +89,40 @@ func (c *ClientGS) readPump() {
 			{
 				arm := comm.CommandARM{}
 				_ = json.Unmarshal(p, &arm)
+				if arm.Command == 4 && arm.Params == 1 {
+					found := false
+					for _, d := range c.devices {
+						if d == arm.ID {
+							found = true
+							break
+						}
+					}
+					if !found {
+						c.devices = append(c.devices, arm.ID)
+						c.sendPhases = true
+						//logger.Debug.Printf("добавил в device %v ",c.devices)
+					}
+				}
+				if arm.Command == 4 && arm.Params == 0 {
+					for i, d := range c.devices {
+						if d == arm.ID {
+							if len(c.devices) <= 1 {
+								c.devices = make([]int, 0)
+							} else {
+								if i+1 >= len(c.devices) {
+									c.devices = c.devices[:i]
+								} else {
+									c.devices = append(c.devices[:i], c.devices[i+1:]...)
+								}
+							}
+							break
+						}
+					}
+					//logger.Debug.Printf("убавил в device %v ",c.devices)
+					if len(c.devices) == 0 {
+						c.sendPhases = false
+					}
+				}
 				arm.User = c.cInfo.Login
 				var mess = tcpConnect.TCPMessage{
 					User:        arm.User,
@@ -207,7 +189,7 @@ func (c *ClientGS) readPump() {
 			}
 		default:
 			{
-				resp := newGSMess("type", nil)
+				resp := newDCMess("type", nil)
 				resp.Data["type"] = typeSelect
 				c.send <- resp
 			}
@@ -216,7 +198,7 @@ func (c *ClientGS) readPump() {
 }
 
 //writePump обработчик записи в сокет
-func (c *ClientGS) writePump() {
+func (c *ClientDC) writePump() {
 	pingTick := time.NewTicker(pingPeriod)
 	defer func() {
 		pingTick.Stop()

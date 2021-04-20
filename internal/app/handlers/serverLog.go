@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/ruraomsk/TLServer/internal/model/data"
 	"github.com/ruraomsk/TLServer/internal/model/serverLog"
 	"github.com/ruraomsk/TLServer/logger"
 
@@ -28,8 +27,6 @@ var DisplayServerLogInfo = func(c *gin.Context) {
 
 	accTK, _ := c.Get("tk")
 	accInfo, _ := accTK.(*accToken.Token)
-	db, id := data.GetDB()
-	resp := serverLog.DisplayServerFileLog(fileName, logger.LogGlobalConf.LogPath, accInfo, db)
-	data.FreeDB(id)
+	resp := serverLog.DisplayServerFileLog(fileName, logger.LogGlobalConf.LogPath, accInfo)
 	u.SendRespond(c, resp)
 }

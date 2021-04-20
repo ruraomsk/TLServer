@@ -2,6 +2,7 @@ package alarm
 
 import (
 	"github.com/gorilla/websocket"
+	"github.com/ruraomsk/TLServer/logger"
 	"sort"
 	"time"
 )
@@ -59,6 +60,7 @@ func (c *ClientAlarm) makeResponse() {
 		change = true
 		delete(c.CrossRing.CrossInfo, key(nc.Region, nc.Area, nc.ID))
 	}
+	logger.Info.Printf("change %t notwork %d", change, notwork)
 	if !change && notwork != 0 {
 		return
 	}

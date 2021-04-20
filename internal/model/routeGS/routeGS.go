@@ -5,16 +5,15 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/ruraomsk/TLServer/internal/model/data"
-	"github.com/ruraomsk/TLServer/internal/model/locations"
 	"github.com/ruraomsk/TLServer/internal/sockets"
 )
 
 //Route маршрут движения
 type Route struct {
-	Region      string             `json:"region"`      //регион
-	Description string             `json:"description"` //описание маршрута
-	Box         locations.BoxPoint `json:"box"`         //координаты на которые перемещаться при выборе маршрута
-	List        []RouteTL          `json:"listTL"`      //список светофоров входящих в маршрут
+	Region      string        `json:"region"`      //регион
+	Description string        `json:"description"` //описание маршрута
+	Box         data.BoxPoint `json:"box"`         //координаты на которые перемещаться при выборе маршрута
+	List        []RouteTL     `json:"listTL"`      //список светофоров входящих в маршрут
 }
 
 //RouteTL информация о перекрестке
@@ -22,7 +21,7 @@ type RouteTL struct {
 	Num         int             `json:"num"`         //порятковый новер светофора в маршруте
 	Phase       int             `json:"phase"`       //фаза заданная для данного перекрестка
 	Description string          `json:"description"` //описание светофора
-	Point       locations.Point `json:"point"`       //координаты перекретска
+	Point       data.Point      `json:"point"`       //координаты перекретска
 	Pos         sockets.PosInfo `json:"pos"`         //информация о перекрестка (где находится)
 }
 
@@ -91,7 +90,7 @@ func (r *Route) Delete() error {
 //setBox создать область в которую входять все перекрестки
 func (r *Route) setBox() {
 	var (
-		box locations.BoxPoint
+		box data.BoxPoint
 	)
 	for num, tl := range r.List {
 		//чтобы не мешалось отприцательное значение сделаем положительным

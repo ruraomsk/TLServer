@@ -1,4 +1,4 @@
-package greenStreet
+package dispatchControl
 
 import (
 	"github.com/ruraomsk/TLServer/internal/app/tcpConnect"
@@ -11,26 +11,26 @@ import (
 	"time"
 )
 
-//HubGStreet структура хаба для GStreet
-type HubGStreet struct {
-	clients    map[*ClientGS]bool
-	broadcast  chan gSResponse
-	register   chan *ClientGS
-	unregister chan *ClientGS
+//HubDispCtrl структура хаба для Диспетчерского управления
+type HubDispCtrl struct {
+	clients    map[*ClientDC]bool
+	broadcast  chan dCResponse
+	register   chan *ClientDC
+	unregister chan *ClientDC
 }
 
-//NewGSHub создание хаба
-func NewGSHub() *HubGStreet {
-	return &HubGStreet{
-		broadcast:  make(chan gSResponse),
-		clients:    make(map[*ClientGS]bool),
-		register:   make(chan *ClientGS),
-		unregister: make(chan *ClientGS),
+//NewDCHub создание хаба
+func NewDCHub() *HubDispCtrl {
+	return &HubDispCtrl{
+		broadcast:  make(chan dCResponse),
+		clients:    make(map[*ClientDC]bool),
+		register:   make(chan *ClientDC),
+		unregister: make(chan *ClientDC),
 	}
 }
 
-//Run запуск хаба для GS
-func (h *HubGStreet) Run() {
+//Run запуск хаба для DC
+func (h *HubDispCtrl) Run() {
 
 	crossReadTick := time.NewTicker(crossPeriod)
 	deviceReadTick := time.NewTicker(devicePeriod)
@@ -45,85 +45,82 @@ func (h *HubGStreet) Run() {
 	for {
 		select {
 		case <-deviceReadTick.C:
-			{
-				//logger.Debug.Printf("deviceReadTick in %d", len(h.clients))
-				if len(h.clients) != 0 {
-					for c := range h.clients {
-
-						if len(c.devices) == 0 || !c.sendPhases {
-							//logger.Debug.Printf("deviceReadTick empty devices")
-							continue
-						}
-						if c.sendPhases {
-							resp := newGSMess(typePhases, nil)
-							phs := getPhases(c.devices)
-							resp.Data[typePhases] = phs
-							c.send <- resp
-							//logger.Debug.Printf("deviceReadTick send %v", phs)
-						}
-					}
-
+			//logger.Debug.Printf("deviceReadTick in")
+			if len(h.clients) == 0 {
+				//logger.Debug.Printf("deviceReadTick empty")
+				break
+			}
+			for c := range h.clients {
+				if len(c.devices) == 0 || !c.sendPhases {
+					//logger.Debug.Printf("deviceReadTick empty two")
+					continue
 				}
-				//logger.Debug.Printf("deviceReadTick out")
+				if c.sendPhases {
+					resp := newDCMess(typePhases, nil)
+					resp.Data[typePhases] = getPhases(c.devices)
+					c.send <- resp
+					//logger.Debug.Printf("deviceReadTick send %v",getPhases(c.devices, c.db))
+				}
 			}
 		case <-crossReadTick.C:
 			{
-				//logger.Debug.Printf("crossReadTick in %d", len(h.clients))
-				if len(h.clients) != 0 {
-					newTFs := maps.SelectTL()
-					if len(newTFs) != len(oldTFs) {
-						//logger.Debug.Printf("crossReadTick in len(newTFs) %d != len(oldTFs) %d",len(newTFs),len(oldTFs))
-						resp := newGSMess(typeRepaint, nil)
-						resp.Data["tflight"] = newTFs
-						data.CacheArea.Mux.Lock()
-						resp.Data["areaZone"] = data.CacheArea.Areas
-						data.CacheArea.Mux.Unlock()
+				//logger.Debug.Printf("crossReadTick in")
+				if len(h.clients) == 0 {
+					//logger.Debug.Printf("crossReadTick zerro")
+					break
+				}
+				newTFs := maps.SelectTL()
+				if len(newTFs) != len(oldTFs) {
+					//logger.Debug.Printf("crossReadTick in len(newTFs) != len(oldTFs)")
+					resp := newDCMess(typeRepaint, nil)
+					resp.Data["tflight"] = newTFs
+					data.CacheArea.Mux.Lock()
+					resp.Data["areaZone"] = data.CacheArea.Areas
+					data.CacheArea.Mux.Unlock()
+					for client := range h.clients {
+						client.send <- resp
+					}
+				} else {
+					//logger.Debug.Printf("crossReadTick in NOT len(newTFs) != len(oldTFs)")
+					var (
+						tempTF   []data.TrafficLights
+						flagFill = false
+					)
+					for _, nTF := range newTFs {
+						var flagAdd = true
+						for _, oTF := range oldTFs {
+							if oTF.Idevice == nTF.Idevice {
+								flagAdd = false
+								if oTF.Sost.Num != nTF.Sost.Num || oTF.Description != nTF.Description {
+									flagAdd = true
+								}
+								if oTF.Subarea != nTF.Subarea {
+									flagAdd = true
+									flagFill = true
+								}
+								break
+							}
+						}
+						if flagAdd {
+							tempTF = append(tempTF, nTF)
+						}
+					}
+					//logger.Debug.Printf("crossReadTick in len(tempTF) > 0")
+					if len(tempTF) > 0 {
+						resp := newDCMess(typeTFlight, nil)
+						if flagFill {
+							data.FillMapAreaZone()
+							data.CacheArea.Mux.Lock()
+							resp.Data["areaZone"] = data.CacheArea.Areas
+							data.CacheArea.Mux.Unlock()
+						}
+						resp.Data["tflight"] = tempTF
 						for client := range h.clients {
 							client.send <- resp
 						}
-					} else {
-						//logger.Debug.Printf("crossReadTick in len(newTFs) == len(oldTFs) %d,",len(newTFs))
-						var (
-							tempTF   []data.TrafficLights
-							flagFill = false
-						)
-						for _, nTF := range newTFs {
-							var flagAdd = true
-							for _, oTF := range oldTFs {
-								if oTF.Idevice == nTF.Idevice {
-									flagAdd = false
-									if oTF.Sost.Num != nTF.Sost.Num || oTF.Description != nTF.Description {
-										flagAdd = true
-									}
-									if oTF.Subarea != nTF.Subarea {
-										flagAdd = true
-										flagFill = true
-									}
-									break
-								}
-							}
-							if flagAdd {
-								tempTF = append(tempTF, nTF)
-							}
-						}
-						if len(tempTF) > 0 {
-							//logger.Debug.Printf("crossReadTick in len(tempTF) > 0")
-							resp := newGSMess(typeTFlight, nil)
-							if flagFill {
-								data.FillMapAreaZone()
-								data.CacheArea.Mux.Lock()
-								resp.Data["areaZone"] = data.CacheArea.Areas
-								data.CacheArea.Mux.Unlock()
-							}
-							resp.Data["tflight"] = tempTF
-							for client := range h.clients {
-								client.send <- resp
-							}
-						}
 					}
-					oldTFs = newTFs
 				}
-				//logger.Debug.Printf("crossReadTick out")
+				oldTFs = newTFs
 
 			}
 		case client := <-h.register:
@@ -177,7 +174,7 @@ func (h *HubGStreet) Run() {
 			}
 		case login := <-mainMap.UserLogoutGS:
 			{
-				resp := newGSMess(typeClose, nil)
+				resp := newDCMess(typeClose, nil)
 				resp.Data["message"] = "пользователь вышел из системы"
 				for client := range h.clients {
 					if client.cInfo.Login == login {
@@ -189,7 +186,7 @@ func (h *HubGStreet) Run() {
 			{
 				for client := range h.clients {
 					if client.cInfo.Valid() != nil {
-						msg := newGSMess(typeClose, nil)
+						msg := newDCMess(typeClose, nil)
 						msg.Data["message"] = "вышло время сеанса пользователя"
 						client.send <- msg
 					}
@@ -197,7 +194,7 @@ func (h *HubGStreet) Run() {
 			}
 		case msg := <-tcpConnect.TCPRespGS:
 			{
-				resp := newGSMess(typeDButton, nil)
+				resp := newDCMess(typeDButton, nil)
 				resp.Data["status"] = msg.Status
 				if msg.Status {
 					resp.Data["command"] = msg.Data

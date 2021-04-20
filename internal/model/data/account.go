@@ -10,20 +10,19 @@ import (
 
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/ruraomsk/TLServer/internal/model/license"
-	"github.com/ruraomsk/TLServer/internal/model/locations"
 	u "github.com/ruraomsk/TLServer/internal/utils"
 	"golang.org/x/crypto/bcrypt"
 )
 
 //Account структура аккаунта пользователя
 type Account struct {
-	Description string             `json:"description"` //описание арм
-	Login       string             `json:"login"`       //Имя пользователя
-	Password    string             `json:"password"`    //Пароль
-	BoxPoint    locations.BoxPoint `json:"boxPoint"`    //Точки области отображения
-	WorkTime    time.Duration      `json:"workTime"`    //Время работы пользователя в часах
-	YaMapKey    string             `json:"ya_key"`      //Ключ доступа к яндекс карте
-	Token       string             `json:"token"`       //Токен пользователя
+	Description string        `json:"description"` //описание арм
+	Login       string        `json:"login"`       //Имя пользователя
+	Password    string        `json:"password"`    //Пароль
+	BoxPoint    BoxPoint      `json:"boxPoint"`    //Точки области отображения
+	WorkTime    time.Duration `json:"workTime"`    //Время работы пользователя в часах
+	YaMapKey    string        `json:"ya_key"`      //Ключ доступа к яндекс карте
+	Token       string        `json:"token"`       //Токен пользователя
 }
 
 var (
@@ -178,7 +177,7 @@ func (data *Account) ChangePW() u.Response {
 //ParserBoxPointsUser заполняет BoxPoint
 func (data *Account) ParserBoxPointsUser() (err error) {
 	var (
-		boxpoint  = locations.BoxPoint{}
+		boxpoint  = BoxPoint{}
 		privilege = Privilege{}
 	)
 	err = privilege.ReadFromBD(data.Login)
@@ -217,8 +216,8 @@ func SuperCreate() {
 	account.Password = "$2a$10$ZCWyIEfEVF3KGj6OUtIeSOQ3WexMjuAZ43VSO6T.QqOndn4HN1J6C"
 	account.Description = "Tech"
 	privilege := NewPrivilege("Admin", "*", []string{"*"})
-	db, id := GetDB()
-	defer FreeDB(id)
+	db, id := GetDBX()
+	defer FreeDBX(id)
 
 	db.MustExec(`INSERT INTO  public.accounts (login, password, work_time, description) VALUES ($1, $2, $3, $4)`,
 		account.Login, account.Password, account.WorkTime, account.Description)

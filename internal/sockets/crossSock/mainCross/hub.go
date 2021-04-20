@@ -96,7 +96,7 @@ func (h *HubCross) Run() {
 							logger.Error.Println("|Message: cross socket cant make IN ", err.Error())
 							continue
 						}
-						db, id := data.GetDB()
+						db, id := data.GetDBX()
 						query = db.Rebind(query)
 						rows, err := db.Queryx(query, args...)
 						if err != nil {
@@ -113,7 +113,7 @@ func (h *HubCross) Run() {
 							tempCR.State, _ = crossSock.ConvertStateStrToStruct(tempCR.stateStr)
 							arrayCross[tempCR.Idevice] = tempCR
 						}
-						data.FreeDB(id)
+						data.FreeDBX(id)
 						for idevice, newData := range arrayCross {
 							if oldData, ok := globArrCross[idevice]; ok {
 								//если запись есть нужно сравнить и если есть разница отправить изменения
