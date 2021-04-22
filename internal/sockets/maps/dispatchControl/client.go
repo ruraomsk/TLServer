@@ -24,8 +24,8 @@ const (
 	// Send pings to peer with this period. Must be less than pongWait.
 	pingPeriod = (pongWait * 9) / 10
 
-	crossPeriod         = time.Second * 5
-	devicePeriod        = time.Second * 5
+	crossPeriod         = time.Second * 2
+	devicePeriod        = time.Second * 2
 	checkTokensValidity = time.Minute * 1
 )
 
@@ -55,7 +55,10 @@ func (c *ClientDC) readPump() {
 		resp.Data["areaZone"] = data.CacheArea.Areas
 		data.CacheArea.Mux.Unlock()
 		if c.sendPhases {
-			resp.Data[typePhases] = getPhases(c.devices)
+			ph := getPhases(c.devices)
+			if len(ph) != 0 {
+				resp.Data[typePhases] = ph
+			}
 		}
 		c.send <- resp
 	}
@@ -129,7 +132,7 @@ func (c *ClientDC) readPump() {
 					TCPType:     tcpConnect.TypeDispatch,
 					Idevice:     arm.ID,
 					Data:        arm,
-					From:        tcpConnect.FromGsSoc,
+					From:        tcpConnect.FromCrossSoc,
 					CommandType: typeDButton,
 					Pos:         sockets.PosInfo{},
 				}
@@ -144,7 +147,7 @@ func (c *ClientDC) readPump() {
 				var mess = tcpConnect.TCPMessage{
 					User:        c.cInfo.Login,
 					TCPType:     tcpConnect.TypeDispatch,
-					From:        tcpConnect.FromGsSoc,
+					From:        tcpConnect.FromCrossSoc,
 					CommandType: typeDButton,
 					Pos:         sockets.PosInfo{},
 				}

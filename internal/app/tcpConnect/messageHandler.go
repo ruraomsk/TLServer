@@ -16,6 +16,7 @@ var (
 	TCPRespCrossSoc     chan TCPMessage //канал для отправки ответа в сокет Cross
 	TCPRespCrControlSoc chan TCPMessage //канал для отправки ответа в сокет CrossControl
 	TCPRespGS           chan TCPMessage //канал для отправки ответа в сокет GreenStreet
+	TCPRespDC           chan TCPMessage //канал для отправки ответа в сокет DispatchControl
 	TCPRespMap          chan TCPMessage //канал для отправки ответа в сокет Map
 	TCPRespTArm         chan TCPMessage //канал для отправки ответа в сокет TechArm
 
@@ -27,6 +28,7 @@ var (
 
 var (
 	FromGsSoc        = "gsSoc"        //обозначение сокета GreenStreet
+	FromDispatchSoc  = "dispatchSoc"  //обозначение сокета DispatchControl
 	FromCrossSoc     = "crossSoc"     //обозначение сокета Cross
 	FromCrControlSoc = "crControlSoc" //обозначение сокета CrossControl
 	FromMapSoc       = "mapSoc"       //обозначение сокета Map
@@ -72,6 +74,10 @@ func tcpRespBroadcast() {
 				case FromCrControlSoc:
 					{
 						TCPRespCrControlSoc <- msg
+					}
+				case FromDispatchSoc:
+					{
+						TCPRespDC <- msg
 					}
 				case FromGsSoc:
 					{

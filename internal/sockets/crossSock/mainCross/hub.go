@@ -56,6 +56,7 @@ func (h *HubCross) Run() {
 		Idevice  int             `json:"idevice"`
 		Status   data.TLSostInfo `json:"status"`
 		State    agspudge.Cross  `json:"state"`
+		SFDK     bool            `json:"sfdk"`
 		stateStr string
 	}
 	globArrCross := make(map[int]crossUpdateInfo)
@@ -91,7 +92,7 @@ func (h *HubCross) Run() {
 					//выполняем если хоть что-то есть
 					if len(aPos) > 0 {
 						//запрос статуса и state
-						query, args, err := sqlx.In("SELECT idevice, status, state FROM public.cross WHERE idevice IN (?)", aPos)
+						query, args, err := sqlx.In("SELECT idevice, status, state,device::jsonb->'StatusCommandDU' FROM public.cross,public.devices WHERE idevice IN (?) and idevice=public.devices.id", aPos)
 						if err != nil {
 							logger.Error.Println("|Message: cross socket cant make IN ", err.Error())
 							continue
@@ -104,26 +105,33 @@ func (h *HubCross) Run() {
 							continue
 						}
 						for rows.Next() {
+							var buffer []byte
+							sCmDu := new(agspudge.StatusCommandDU)
+
 							var tempCR crossUpdateInfo
-							_ = rows.Scan(&tempCR.Idevice, &tempCR.Status.Num, &tempCR.stateStr)
+							_ = rows.Scan(&tempCR.Idevice, &tempCR.Status.Num, &tempCR.stateStr, &buffer)
+							_ = json.Unmarshal(buffer, &sCmDu)
+							tempCR.SFDK = sCmDu.IsReqSFDK1 || sCmDu.IsReqSFDK2
 							data.CacheInfo.Mux.Lock()
 							tempCR.Status.Description = data.CacheInfo.MapTLSost[tempCR.Status.Num].Description
 							tempCR.Status.Control = data.CacheInfo.MapTLSost[tempCR.Status.Num].Control
 							data.CacheInfo.Mux.Unlock()
 							tempCR.State, _ = crossSock.ConvertStateStrToStruct(tempCR.stateStr)
+
 							arrayCross[tempCR.Idevice] = tempCR
 						}
 						data.FreeDBX(id)
 						for idevice, newData := range arrayCross {
 							if oldData, ok := globArrCross[idevice]; ok {
 								//если запись есть нужно сравнить и если есть разница отправить изменения
-								if oldData.State.PK != newData.State.PK || oldData.State.NK != newData.State.NK || oldData.State.CK != newData.State.CK || oldData.Status.Num != newData.Status.Num {
+								if oldData.State.PK != newData.State.PK || oldData.State.NK != newData.State.NK || oldData.State.CK != newData.State.CK || oldData.Status.Num != newData.Status.Num || oldData.SFDK != newData.SFDK {
 									for client := range h.clients {
 										if client.crossInfo.Idevice == newData.Idevice {
 											msg := newCrossMess(typeCrossUpdate, nil)
 											msg.Data["idevice"] = newData.Idevice
 											msg.Data["status"] = newData.Status
 											msg.Data["state"] = newData.State
+											msg.Data["sfdk"] = newData.SFDK
 											client.send <- msg
 										}
 									}
@@ -136,6 +144,7 @@ func (h *HubCross) Run() {
 										msg.Data["idevice"] = newData.Idevice
 										msg.Data["status"] = newData.Status
 										msg.Data["state"] = newData.State
+										msg.Data["sfdk"] = newData.SFDK
 										client.send <- msg
 									}
 								}
@@ -331,6 +340,7 @@ func (h *HubCross) Run() {
 			}
 		case mess := <-h.broadcast:
 			{
+				//logger.Debug.Printf("Message broadcast %v",mess)
 				for client := range h.clients {
 					select {
 					case client.send <- mess:

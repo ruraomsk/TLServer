@@ -143,7 +143,7 @@ func (h *HubGStreet) Run() {
 					var mess = tcpConnect.TCPMessage{
 						User:        client.cInfo.Login,
 						TCPType:     tcpConnect.TypeDispatch,
-						From:        tcpConnect.FromGsSoc,
+						From:        tcpConnect.FromCrossSoc,
 						CommandType: typeDButton,
 						Pos:         sockets.PosInfo{},
 					}

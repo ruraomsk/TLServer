@@ -64,16 +64,24 @@ var first = true
 
 //ConnectDB подключение к БД
 func ConnectDB() error {
+	var err error
 	if first {
 		dbPool = make([]usedDb, 0)
 		first = false
 		for i := 0; i < config.GlobalConfig.DBConfig.SetMaxOpenConst; i++ {
-			dbPool = append(dbPool, usedDb{db: nil, used: false})
+			d := new(usedDb)
+			d.used = false
+			d.db, err = sql.Open(config.GlobalConfig.DBConfig.Type, config.GlobalConfig.DBConfig.GetDBurl())
+			if err != nil {
+				logger.Error.Printf("dbase ConnectDB %s", err.Error())
+				return err
+			}
+			dbPool = append(dbPool, *d)
 			dbxPool = append(dbxPool, usedDbx{db: nil, used: false})
 		}
 	}
 	db, id := GetDBX()
-	_, err := db.Exec(`SELECT * FROM public.accounts;`)
+	_, err = db.Exec(`SELECT * FROM public.accounts;`)
 	if err != nil {
 		fmt.Println("accounts table not found - created")
 		logger.Info.Println("|Message: accounts table not found - created")
@@ -96,16 +104,9 @@ func ConnectDB() error {
 func GetDB() (db *sql.DB, id int) {
 	mutex.Lock()
 	defer mutex.Unlock()
-	var err error
 	for i, d := range dbPool {
 		if !d.used {
 			//logger.Info.Printf("Выдали %d", i)
-			dbPool[i].db, err = sql.Open(config.GlobalConfig.DBConfig.Type, config.GlobalConfig.DBConfig.GetDBurl())
-			if err != nil {
-				logger.Error.Printf("dbase getdb %s", err.Error())
-
-				return nil, 0
-			}
 			dbPool[i].db.SetMaxOpenConns(1)
 			dbPool[i].used = true
 			return dbPool[i].db, i
@@ -122,11 +123,11 @@ func FreeDB(id int) {
 		return
 	}
 	//logger.Info.Printf("Освободили %d", id)
-	dbPool[id].db.Close()
+	//dbPool[id].db.Close()
 	dbPool[id].used = false
 }
 
-//GetDB обращение к БД
+//GetDBX обращение к БД sqlx
 func GetDBX() (db *sqlx.DB, id int) {
 	mutex.Lock()
 	defer mutex.Unlock()

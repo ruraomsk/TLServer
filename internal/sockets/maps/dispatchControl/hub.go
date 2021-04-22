@@ -56,9 +56,12 @@ func (h *HubDispCtrl) Run() {
 					continue
 				}
 				if c.sendPhases {
-					resp := newDCMess(typePhases, nil)
-					resp.Data[typePhases] = getPhases(c.devices)
-					c.send <- resp
+					ph := getPhases(c.devices)
+					if len(ph) != 0 {
+						resp := newDCMess(typePhases, nil)
+						resp.Data[typePhases] = ph
+						c.send <- resp
+					}
 					//logger.Debug.Printf("deviceReadTick send %v",getPhases(c.devices, c.db))
 				}
 			}
@@ -140,7 +143,7 @@ func (h *HubDispCtrl) Run() {
 					var mess = tcpConnect.TCPMessage{
 						User:        client.cInfo.Login,
 						TCPType:     tcpConnect.TypeDispatch,
-						From:        tcpConnect.FromGsSoc,
+						From:        tcpConnect.FromCrossSoc,
 						CommandType: typeDButton,
 						Pos:         sockets.PosInfo{},
 					}
@@ -192,7 +195,7 @@ func (h *HubDispCtrl) Run() {
 					}
 				}
 			}
-		case msg := <-tcpConnect.TCPRespGS:
+		case msg := <-tcpConnect.TCPRespDC:
 			{
 				resp := newDCMess(typeDButton, nil)
 				resp.Data["status"] = msg.Status

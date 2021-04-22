@@ -25,8 +25,8 @@ const (
 	// Send pings to peer with this period. Must be less than pongWait.
 	pingPeriod = (pongWait * 9) / 10
 
-	crossPeriod         = time.Second * 5
-	devicePeriod        = time.Second * 5
+	crossPeriod         = time.Second * 2
+	devicePeriod        = time.Second * 2
 	checkTokensValidity = time.Minute * 1
 )
 
@@ -147,7 +147,7 @@ func (c *ClientGS) readPump() {
 					TCPType:     tcpConnect.TypeDispatch,
 					Idevice:     arm.ID,
 					Data:        arm,
-					From:        tcpConnect.FromGsSoc,
+					From:        tcpConnect.FromCrossSoc,
 					CommandType: typeDButton,
 					Pos:         sockets.PosInfo{},
 				}
@@ -162,7 +162,7 @@ func (c *ClientGS) readPump() {
 				var mess = tcpConnect.TCPMessage{
 					User:        c.cInfo.Login,
 					TCPType:     tcpConnect.TypeDispatch,
-					From:        tcpConnect.FromGsSoc,
+					From:        tcpConnect.FromCrossSoc,
 					CommandType: typeDButton,
 					Pos:         sockets.PosInfo{},
 				}
