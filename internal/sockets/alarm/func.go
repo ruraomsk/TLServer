@@ -34,7 +34,7 @@ func getCross(reg int) []*CrossInfo {
 		}
 		err = json.Unmarshal(state, &cross)
 		if err != nil {
-			logger.Error.Println("|IP: server |Login: server |Resource: /techArm |Message: Error get cross from BD ", err.Error())
+			logger.Error.Println("|IP: server |Login: server |Resource: /alarm |Message: Error get cross from BD ", err.Error())
 			return make([]*CrossInfo, 0)
 		}
 		temp.Region = cross.Region

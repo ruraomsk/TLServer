@@ -2,14 +2,18 @@ package controlCross
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/ruraomsk/TLServer/internal/app/tcpConnect"
 	"github.com/ruraomsk/TLServer/internal/model/crossCreator"
+	"github.com/ruraomsk/TLServer/internal/model/data"
 	"github.com/ruraomsk/TLServer/internal/sockets"
 	"github.com/ruraomsk/TLServer/internal/sockets/crossSock"
 	"github.com/ruraomsk/TLServer/logger"
 	"github.com/ruraomsk/ag-server/comm"
 	agspudge "github.com/ruraomsk/ag-server/pudge"
+	"reflect"
+	"strconv"
 	"time"
 )
 
@@ -36,6 +40,171 @@ type ClientControlCr struct {
 
 var UserLogoutCrControl chan string
 
+type History struct {
+	Time  time.Time `json:"time"`
+	Login string    `json:"login"`
+}
+type GetHistory struct {
+	Type string      `json:"type"`
+	Data DataHistory `json:"data""`
+}
+type DataHistory struct {
+	Time string `json:"time"`
+}
+
+func (c ClientControlCr) getHistory() []History {
+	hs := make([]History, 0)
+	var h History
+	db, id := data.GetDB()
+	defer data.FreeDB(id)
+	w := fmt.Sprintf("Select tm,login from public.history where region=%s and area=%s and id=%d;",
+		c.crossInfo.Pos.Region, c.crossInfo.Pos.Area, c.crossInfo.Pos.Id)
+	rows, err := db.Query(w)
+	if err != nil {
+		logger.Error.Printf("/History %s", err.Error())
+		return hs
+	}
+	for rows.Next() {
+		rows.Scan(&h.Time, &h.Login)
+		hs = append(hs, h)
+	}
+	return hs
+}
+func (c *ClientControlCr) getdHistoryData(tm string) map[string]interface{} {
+	resp := make(map[string]interface{})
+	db, id := data.GetDB()
+	defer data.FreeDB(id)
+	sqlStr := fmt.Sprintf("SELECT state FROM public.history WHERE region=%s and area=%s and id=%d and tm='%s' limit 1;",
+		c.crossInfo.Pos.Region, c.crossInfo.Pos.Area, c.crossInfo.Pos.Id, tm)
+	rows, err := db.Query(sqlStr)
+	if err != nil {
+		logger.Error.Println("|Message: control socket (send History), DB not respond : ", err.Error())
+		resp["status"] = false
+		resp["message"] = "сервер баз данных не отвечает или нет данных"
+		return resp
+	}
+	var strRow []byte
+	var oldstate agspudge.Cross
+	var nowstate agspudge.Cross
+
+	for rows.Next() {
+		_ = rows.Scan(&strRow)
+		_ = json.Unmarshal(strRow, &oldstate)
+	}
+	_ = rows.Close()
+	resp[typeSendHistory] = oldstate
+	sqlStr = fmt.Sprintf("SELECT state FROM public.\"cross\" WHERE region=%s and area=%s and id=%dlimit 1;",
+		c.crossInfo.Pos.Region, c.crossInfo.Pos.Area, c.crossInfo.Pos.Id)
+	rows, err = db.Query(sqlStr)
+	if err != nil {
+		logger.Error.Println("|Message: control socket (send History), DB not respond : ", err.Error())
+		resp["status"] = false
+		resp["message"] = "сервер баз данных не отвечает или нет данных"
+		return resp
+	}
+	for rows.Next() {
+		_ = rows.Scan(&strRow)
+		_ = json.Unmarshal(strRow, &nowstate)
+	}
+	resp[typeDiff] = diff(oldstate, nowstate)
+
+	return resp
+}
+func diff(ost agspudge.Cross, nst agspudge.Cross) []string {
+	res := make([]string, 0)
+	if reflect.DeepEqual(&ost.Arrays, &nst.Arrays) {
+		res = append(res, "В привязках изменений нет")
+		return res
+	}
+	res = append(res, "В привязках следующие изменения")
+	if ost.Arrays.TypeDevice != nst.Arrays.TypeDevice {
+		res = append(res, "Изменился тип устройства")
+	}
+	if !reflect.DeepEqual(&ost.Arrays.SetupDK, &nst.Arrays.SetupDK) {
+		res = append(res, "Изменились настройки ДК")
+	}
+	if !reflect.DeepEqual(&ost.Arrays.SetDK, &nst.Arrays.SetDK) {
+		//res = append(res, "Изменились планы координации")
+		for i, _ := range ost.Arrays.SetDK.DK {
+			opk := ost.Arrays.SetDK.DK[i]
+			npk := nst.Arrays.SetDK.DK[i]
+			if !reflect.DeepEqual(&opk, &npk) {
+				res = append(res, "Изменился ПК"+strconv.Itoa(i+1))
+			}
+		}
+	}
+	if !reflect.DeepEqual(&ost.Arrays.MonthSets, &nst.Arrays.MonthSets) {
+		for i, _ := range ost.Arrays.MonthSets.MonthSets {
+			oms := ost.Arrays.MonthSets.MonthSets[i]
+			nms := nst.Arrays.MonthSets.MonthSets[i]
+			if !reflect.DeepEqual(&oms, &nms) {
+				res = append(res, "Изменился в годовом плане месяц "+strconv.Itoa(i+1))
+			}
+		}
+	}
+	if !reflect.DeepEqual(&ost.Arrays.WeekSets, &nst.Arrays.WeekSets) {
+		for i, _ := range ost.Arrays.WeekSets.WeekSets {
+			oms := ost.Arrays.WeekSets.WeekSets[i]
+			nms := nst.Arrays.WeekSets.WeekSets[i]
+			if !reflect.DeepEqual(&oms, &nms) {
+				res = append(res, "Изменился недельный план номер "+strconv.Itoa(i+1))
+			}
+		}
+	}
+	if !reflect.DeepEqual(&ost.Arrays.DaySets, &nst.Arrays.DaySets) {
+		for i, _ := range ost.Arrays.DaySets.DaySets {
+			oms := ost.Arrays.DaySets.DaySets[i]
+			nms := nst.Arrays.DaySets.DaySets[i]
+			if !reflect.DeepEqual(&oms, &nms) {
+				res = append(res, "Изменился суточный план номер "+strconv.Itoa(i+1))
+			}
+		}
+	}
+	if !reflect.DeepEqual(&ost.Arrays.SetCtrl, &nst.Arrays.SetCtrl) {
+		for i, _ := range ost.Arrays.SetCtrl.Stage {
+			oms := ost.Arrays.SetCtrl.Stage[i]
+			nms := nst.Arrays.SetCtrl.Stage[i]
+			if !reflect.DeepEqual(&oms, &nms) {
+				res = append(res, "Изменился интервал контроля входов номер "+strconv.Itoa(i+1))
+			}
+		}
+	}
+	if !reflect.DeepEqual(&ost.Arrays.SetTimeUse, &nst.Arrays.SetTimeUse) {
+		res = append(res, "Изменились настройки внешних входов ")
+	}
+	if !reflect.DeepEqual(&ost.Arrays.TimeDivice, &nst.Arrays.TimeDivice) {
+		res = append(res, "Изменились настройки времени на устройстве ")
+	}
+	if !reflect.DeepEqual(&ost.Arrays.StatDefine, &nst.Arrays.StatDefine) {
+		for i, _ := range ost.Arrays.StatDefine.Levels {
+			oms := ost.Arrays.StatDefine.Levels[i]
+			nms := nst.Arrays.StatDefine.Levels[i]
+			if !reflect.DeepEqual(&oms, &nms) {
+				res = append(res, "Изменилась настройка канала сбора статистики номер "+strconv.Itoa(i+1))
+			}
+		}
+	}
+	if !reflect.DeepEqual(&ost.Arrays.PointSet, &nst.Arrays.PointSet) {
+		for i, _ := range ost.Arrays.PointSet.Points {
+			oms := ost.Arrays.PointSet.Points[i]
+			nms := nst.Arrays.PointSet.Points[i]
+			if !reflect.DeepEqual(&oms, &nms) {
+				res = append(res, "Изменилась настройка точки сбора статистики номер "+strconv.Itoa(i+1))
+			}
+		}
+	}
+	if !reflect.DeepEqual(&ost.Arrays.UseInput, &nst.Arrays.UseInput) {
+		for i, _ := range ost.Arrays.UseInput.Used {
+			oms := ost.Arrays.UseInput.Used[i]
+			nms := nst.Arrays.UseInput.Used[i]
+			if !reflect.DeepEqual(&oms, &nms) {
+				res = append(res, "Изменилось назначение точки сбора статистики номер "+strconv.Itoa(i+1))
+			}
+		}
+	}
+	return res
+}
+
 //readPump обработчик чтения сокета
 func (c *ClientControlCr) readPump() {
 	_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
@@ -57,6 +226,14 @@ func (c *ClientControlCr) readPump() {
 			continue
 		}
 		switch typeSelect {
+		case typeGetHistory: //Отправка state для данной истории
+			{
+				gh := GetHistory{}
+				_ = json.Unmarshal(p, &gh)
+				resp := newControlMess(typeSendHistory, nil)
+				resp.Data = c.getdHistoryData(gh.Data.Time)
+				c.send <- resp
+			}
 		case typeSendB: //отправка state
 			{
 				temp := StateHandler{}

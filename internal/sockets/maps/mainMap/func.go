@@ -182,5 +182,6 @@ func logOutSockets(login string) {
 	techArm.UserLogoutTech <- login
 	xctrl.UserLogoutXctrl <- login
 	alarm.UserLogoutAlarm <- login
+
 	UserLogoutGS <- login
 }

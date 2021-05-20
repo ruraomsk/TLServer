@@ -88,9 +88,11 @@ func (h *HubControlCross) Run() {
 				if !flagEdit {
 					resp.Data["edit"] = true
 					client.crossInfo.Edit = true
+					resp.Data[typeHistory] = client.getHistory()
 
 				} else {
 					resp.Data["edit"] = false
+					resp.Data[typeHistory] = client.getHistory()
 				}
 
 				client.regStatus <- regStatus

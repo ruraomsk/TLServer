@@ -63,7 +63,7 @@ var JwtAuth = func() gin.HandlerFunc {
 		rows, err := db.Query(`SELECT token, privilege FROM public.accounts WHERE login = $1`, tk.Login)
 		if err != nil {
 			c.HTML(http.StatusForbidden, "accessDenied.html", gin.H{"status": http.StatusForbidden, "message": "can't take token from BD"})
-			c.Abort()
+			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
 		for rows.Next() {
@@ -73,7 +73,7 @@ var JwtAuth = func() gin.HandlerFunc {
 		if tokenSTR != tokenStrFromBd {
 			c.HTML(http.StatusForbidden, "accessDenied.html", gin.H{"status": http.StatusForbidden, "message": "token is out of date, log in"})
 			logger.Warning.Printf("|IP: %s |Login: %s |Resource: %s |Message: %v", ip, tk.Login, c.Request.RequestURI, "token is out of date, log in")
-			c.Abort()
+			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
 
@@ -81,7 +81,7 @@ var JwtAuth = func() gin.HandlerFunc {
 		if tk.IP != ip[0] {
 			c.HTML(http.StatusForbidden, "accessDenied.html", gin.H{"status": http.StatusForbidden, "message": "Invalid token, log in again"})
 			logger.Warning.Printf("|IP: %s |Login: %s |Resource: %s |Message: %v", ip, tk.Login, c.Request.RequestURI, "Invalid token, log in again")
-			c.Abort()
+			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
 
@@ -89,7 +89,7 @@ var JwtAuth = func() gin.HandlerFunc {
 		if !token.Valid {
 			c.HTML(http.StatusForbidden, "accessDenied.html", gin.H{"status": http.StatusForbidden, "message": "Invalid auth token"})
 			logger.Warning.Printf("|IP: %s |Login: %s |Resource: %s |Message: %v", ip, tk.Login, c.Request.RequestURI, "Invalid token, log in again")
-			c.Abort()
+			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
 
@@ -98,7 +98,7 @@ var JwtAuth = func() gin.HandlerFunc {
 		if slug != tk.Login {
 			c.HTML(http.StatusForbidden, "accessDenied.html", gin.H{"status": http.StatusForbidden, "message": "token isn't registered for user"})
 			logger.Warning.Printf("|IP: %s |Login: %s |Resource: %s |Message: %v", ip, tk.Login, c.Request.RequestURI, fmt.Sprintf("token isn't registered for user: %s", slug))
-			c.Abort()
+			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
 
@@ -107,7 +107,7 @@ var JwtAuth = func() gin.HandlerFunc {
 		if userPrivilege.Role.Name != tk.Role {
 			c.HTML(http.StatusForbidden, "accessDenied.html", gin.H{"status": http.StatusForbidden, "message": "Access denied"})
 			logger.Warning.Printf("|IP: %s |Login: %s |Resource: %s |Message: %v", ip, tk.Login, c.Request.RequestURI, "Access denied")
-			c.Abort()
+			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
 
@@ -125,7 +125,7 @@ var JwtFile = func() gin.HandlerFunc {
 		//Проверка куков получили ли их вообще
 		if err != nil {
 			c.HTML(http.StatusForbidden, "accessDenied.html", gin.H{"status": http.StatusForbidden, "message": "missing cookie"})
-			c.Abort()
+			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
 		tokenString = cookie
@@ -134,14 +134,14 @@ var JwtFile = func() gin.HandlerFunc {
 		//проверка если ли токен, если нету ошибка 403 нужно авторизироваться!
 		if tokenString == "" {
 			c.HTML(http.StatusForbidden, "accessDenied.html", gin.H{"status": http.StatusForbidden, "message": "missing auth token"})
-			c.Abort()
+			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
 		//токен приходит строкой в формате {слово пробел слово} разделяем строку и забираем нужную нам часть
 		splitted := strings.Split(tokenString, " ")
 		if len(splitted) != 2 {
 			c.HTML(http.StatusForbidden, "accessDenied.html", gin.H{"status": http.StatusForbidden, "message": "invalid token"})
-			c.Abort()
+			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
 		//берем часть где хранится токен
@@ -154,7 +154,7 @@ var JwtFile = func() gin.HandlerFunc {
 		if err != nil {
 			c.HTML(http.StatusForbidden, "accessDenied.html", gin.H{"status": http.StatusForbidden, "message": "wrong auth token"})
 			logger.Warning.Printf("|IP: %s |Login: %s |Resource: %s |Message: %v", ip, tk.Login, c.Request.RequestURI, "wrong auth token")
-			c.Abort()
+			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
 
@@ -168,7 +168,7 @@ var JwtFile = func() gin.HandlerFunc {
 		rows, err := db.Query(`SELECT token, privilege FROM public.accounts WHERE login = $1`, tk.Login)
 		if err != nil {
 			c.HTML(http.StatusForbidden, "accessDenied.html", gin.H{"status": http.StatusForbidden, "message": "can't take token from BD"})
-			c.Abort()
+			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
 		for rows.Next() {
@@ -179,7 +179,7 @@ var JwtFile = func() gin.HandlerFunc {
 		if tokenSTR != tokenStrFromBd {
 			c.HTML(http.StatusForbidden, "accessDenied.html", gin.H{"status": http.StatusForbidden, "message": "token is out of date, log in"})
 			logger.Warning.Printf("|IP: %s |Login: %s |Resource: %s |Message: %v", ip, tk.Login, c.Request.RequestURI, "token is out of date, log in")
-			c.Abort()
+			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
 
@@ -187,7 +187,7 @@ var JwtFile = func() gin.HandlerFunc {
 		if tk.IP != ip[0] {
 			c.HTML(http.StatusForbidden, "accessDenied.html", gin.H{"status": http.StatusForbidden, "message": "Invalid token, log in again"})
 			logger.Warning.Printf("|IP: %s |Login: %s |Resource: %s |Message: %v", ip, tk.Login, c.Request.RequestURI, "Invalid token, log in again")
-			c.Abort()
+			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
 
@@ -195,7 +195,7 @@ var JwtFile = func() gin.HandlerFunc {
 		if !token.Valid {
 			c.HTML(http.StatusForbidden, "accessDenied.html", gin.H{"status": http.StatusForbidden, "message": "Invalid auth token"})
 			logger.Warning.Printf("|IP: %s |Login: %s |Resource: %s |Message: %v", ip, tk.Login, c.Request.RequestURI, "Invalid token, log in again")
-			c.Abort()
+			c.AbortWithStatus(http.StatusForbidden)
 			return
 		}
 

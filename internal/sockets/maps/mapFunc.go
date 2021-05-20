@@ -2,6 +2,7 @@ package maps
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/ruraomsk/TLServer/internal/model/data"
 	"github.com/ruraomsk/TLServer/internal/model/license"
@@ -87,6 +88,10 @@ func MapOpenInfo() (obj map[string]interface{}) {
 	delete(chosenArea, "Все регионы")
 	data.CacheInfo.Mux.Unlock()
 	obj["areaInfo"] = chosenArea
+	license.LicenseFields.Mux.Lock()
+	obj["license"] = fmt.Sprintf("S%03dD%04dA%04d", license.LicenseFields.Id, license.LicenseFields.NumDev, license.LicenseFields.NumAcc)
+	license.LicenseFields.Mux.Unlock()
+
 	return
 }
 

@@ -15,6 +15,10 @@ var (
 	typeUpdateB      = "updateB"
 	typeEditInfoB    = "editInfoB"
 	typeRepaintCheck = "repaintCheck"
+	typeHistory      = "history"
+	typeGetHistory   = "getHistory"
+	typeSendHistory  = "sendHistory"
+	typeDiff         = "diff"
 
 	typeControlBuild = "controlInfo"
 

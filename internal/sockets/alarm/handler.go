@@ -43,9 +43,9 @@ func HAlarm(c *gin.Context, hub *HubAlarm) {
 		AccInfo: accInfo,
 	}
 	var crossRing = CrossRing{Ring: false, CrossInfo: make(map[string]*CrossInfo, 0)}
-	client := &ClientAlarm{hub: hub, conn: conn, send: make(chan alarmResponse, 256), armInfo: &armInfo, CrossRing: &crossRing}
+	client := &ClientAlarm{hub: hub, conn: conn, send: make(chan alarmResponse, 256), armInfo: &armInfo, CrossRing: &crossRing, sendOne: false}
 	client.hub.register <- client
-
+	client.makeResponse()
 	go client.writePump()
 	go client.readPump()
 }

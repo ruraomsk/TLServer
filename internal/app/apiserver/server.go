@@ -135,6 +135,13 @@ func MainServer(conf *ServerConf) (srvHttp *http.Server, srvHttps *http.Server) 
 		alarm.HAlarm(c, alarmHub)
 	})
 
+	mainRouter.GET("/:slug/cameras", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "cameras.html", nil)
+	})
+	//mainRouter.GET("/:slug/camerasW", func(c *gin.Context) {
+	//	alarm.HAlarm(c, alarmHub)
+	//})
+
 	//зеленая улица
 	mainRouter.GET("/:slug/greenStreet", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "greenStreet.html", gin.H{"yaKey": license.LicenseFields.YaKey})
