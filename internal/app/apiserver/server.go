@@ -313,6 +313,9 @@ func setLogFile() {
 			continue
 		}
 		splitStr := strings.Split(str, " ")
+		if len(splitStr) < 2 {
+			continue
+		}
 		timea, err := time.Parse("2006/01/02", splitStr[1])
 		if err != nil {
 			continue
