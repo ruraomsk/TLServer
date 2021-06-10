@@ -96,7 +96,11 @@ func DisplayDeviceLog(accInfo *accToken.Token) u.Response {
 //DisplayDeviceLogInfo обработчик запроса пользователя, выгрузка логов за запрошенный период
 func DisplayDeviceLogInfo(arms LogDeviceInfo) u.Response {
 	db, id := data.GetDB()
-	defer data.FreeDB(id)
+	dbh, idh := data.GetDB()
+	defer func() {
+		data.FreeDB(id)
+		data.FreeDB(idh)
+	}()
 	if len(arms.Devices) <= 0 {
 		return u.Message(http.StatusBadRequest, "no one devices selected")
 	}
@@ -128,6 +132,25 @@ func DisplayDeviceLogInfo(arms LogDeviceInfo) u.Response {
 			//tempDev.Devices = arm
 			listDevicesLog = append(listDevicesLog, tempDev)
 		}
+		sqlStrH := fmt.Sprintf(`SELECT crossinfo->'type', tm, id, txt FROM public.loghistory where %v and %v
+									UNION (SELECT distinct on (crossinfo->'type') crossinfo->'type', tm, id, txt  FROM public.logdevice where %v and tm <'%v' ORDER BY crossinfo->'type', tm desc)
+									ORDER BY tm DESC`,
+			crossInfo, timeInfo, crossInfo, arms.TimeStart.Format("2006-01-02 15:04:05"))
+		rowsDevicesH, err := dbh.Query(sqlStrH)
+		if err != nil {
+			return u.Message(http.StatusInternalServerError, "Connection to DB error. Please try again")
+		}
+		for rowsDevicesH.Next() {
+			var tempDev DeviceLog
+			err := rowsDevicesH.Scan(&tempDev.Type, &tempDev.Time, &tempDev.ID, &tempDev.Text)
+			if err != nil {
+				logger.Error.Println("|Message: Incorrect data ", err.Error())
+				return u.Message(http.StatusInternalServerError, "incorrect data. Please report it to Admin")
+			}
+			//tempDev.Devices = arm
+			listDevicesLog = append(listDevicesLog, tempDev)
+		}
+
 		mapDevice[string(rawByte)] = listDevicesLog
 	}
 
